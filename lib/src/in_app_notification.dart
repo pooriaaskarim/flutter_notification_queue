@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'src/utils.dart';
+import 'utils/utils.dart';
 
-part 'in_app_notification_action.dart';
+import 'in_app_notification_action.dart';
 
 const _defaultDismissDuration = Duration(seconds: 3);
 

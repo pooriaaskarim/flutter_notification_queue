@@ -59,7 +59,7 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  in_app_notification:
+  in_app_notifications:
     dependency: "direct main"
     description:
       path: ".."

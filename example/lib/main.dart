@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:in_app_notification/in_app_notification.dart';
+import 'package:in_app_notifications/in_app_notifications.dart';
+import 'package:in_app_notifications/src/utils/utils.dart' as ut;
 
 void main() {
   runApp(const MyApp());
@@ -23,6 +24,7 @@ class DemoPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    ut.Utils.desktop;
     return Scaffold(
       appBar: AppBar(title: const Text('InAppNotification Demo')),
       body: Center(

@@ -1,5 +1,3 @@
-part of 'in_app_notification.dart';
-
 /// Creates an action for [InAppNotification].
 ///
 /// [InAppNotification] **will be dismissed**
