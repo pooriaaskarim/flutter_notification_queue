@@ -1,0 +1,17 @@
+name: in_app_notification_example
+description: 'Example of in_app_notification usage'
+publish_to:  none
+
+environment:
+  sdk: '>=2.18.0 <=3.9.0'
+  flutter: ">=3.0.0"
+
+dependencies:
+  in_app_notification:
+    path: ../
+    
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
