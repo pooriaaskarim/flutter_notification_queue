@@ -50,6 +50,7 @@ class InAppNotificationManager {
           ..._activeNotifications.value,
           latestNotification,
         ];
+        _activeNotifications.notifyListeners(); // Rebuild stack
 
         if (_overlayEntry == null) {
           _overlayEntry =
@@ -83,9 +84,9 @@ class InAppNotificationManager {
 -----------------------------Queue: ${_queue.length}
 -----------------------------Active Notifications: ${_activeNotifications.value.length}
 ''');
-        if (activeNotifications.isEmpty) {
-          return const SizedBox.shrink();
-        }
+        // if (activeNotifications.isEmpty) {
+        //   return const SizedBox.shrink();
+        // }
         return SafeArea(
           child: Column(
             children: [
@@ -113,36 +114,4 @@ class InAppNotificationManager {
       },
     );
   }
-
-  // void _removeNotification(
-  //   final InAppNotification widget,
-  //   final BuildContext context,
-  // ) {
-  //   final index = _activeNotifications.value.indexWhere(
-  //     (final activeNotification) => activeNotification == widget,
-  //   );
-  //
-  //   if (index == -1) {
-  //     return;
-  //   }
-  //   debugPrint('Removing notification at index: $index');
-  //   // _activeNotifications.value =
-  //   //     List.from(_activeNotifications.value..removeAt(index));
-  //   // // _activeNotifications.value.remove(widget);
-  //   // _activeNotifications.notifyListeners(); // Rebuild
-  //
-  //   // // Update positions of remaining (slide up)
-  //   // for (var i = index; i < _activeNotifications.value.length; i++) {
-  //   //   // _activeNotifications.value[i].verticalAlignmentNotifier.value =
-  //   //   //     _initialVerticalPosition(i);
-  //   // }
-  //
-  //   // if (_activeNotifications.value.isEmpty) {
-  //   //   _overlayEntry?.remove();
-  //   //   _overlayEntry?.dispose();
-  //   //   _overlayEntry = null;
-  //   // }
-  //
-  //   // _processQueue(context);
-  // }
 }
