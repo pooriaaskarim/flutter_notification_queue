@@ -1,8 +1,4 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'utils/utils.dart';
-
-import 'in_app_notification_action.dart';
+part of 'in_app_notification_manager.dart';
 
 const _defaultDismissDuration = Duration(seconds: 3);
 
@@ -18,11 +14,8 @@ const _defaultBorderRadius = BorderRadius.all(
   Radius.circular(5.0),
 );
 
-const double _initialAlignment = -0.9;
-const _dismissThreshold = -0.95;
-
-class InAppNotification {
-  InAppNotification({
+class InAppNotification extends StatefulWidget {
+  const InAppNotification({
     required this.message,
     this.icon,
     this.title,
@@ -33,65 +26,12 @@ class InAppNotification {
     this.dismissDuration = _defaultDismissDuration,
     this.padding,
     this.showCloseIcon,
+    super.key,
   }) : assert(
           dismissDuration != null || (action != null),
           'InAppNotification should have an action'
           ' or dismiss after a period of time.',
         );
-
-  factory InAppNotification.resolve(
-    final String type, {
-    required final String message,
-    final String? title,
-    final InAppNotificationAction? action,
-    final Duration? dismissDuration = _defaultDismissDuration,
-    final EdgeInsetsGeometry? padding,
-    final BorderRadius? borderRadius = _defaultBorderRadius,
-    final bool? showCloseIcon,
-  }) {
-    switch (type) {
-      case ('notification'):
-        return InAppNotification.warning(
-          message: message,
-          action: action,
-          dismissDuration: dismissDuration,
-          padding: padding,
-          borderRadius: borderRadius,
-          showCloseIcon: showCloseIcon,
-          title: title,
-        );
-      case ('success'):
-        return InAppNotification.success(
-          message: message,
-          action: action,
-          dismissDuration: dismissDuration,
-          padding: padding,
-          borderRadius: borderRadius,
-          showCloseIcon: showCloseIcon,
-          title: title,
-        );
-      case ('error'):
-        return InAppNotification.error(
-          message: message,
-          action: action,
-          dismissDuration: dismissDuration,
-          padding: padding,
-          borderRadius: borderRadius,
-          showCloseIcon: showCloseIcon,
-          title: title,
-        );
-      default:
-        return InAppNotification.info(
-          message: message,
-          action: action,
-          dismissDuration: dismissDuration,
-          padding: padding,
-          borderRadius: borderRadius,
-          showCloseIcon: showCloseIcon,
-          title: title,
-        );
-    }
-  }
 
   /// Bootstrap [InAppNotification] with success configuration
   ///
@@ -104,6 +44,7 @@ class InAppNotification {
     final Duration? dismissDuration = _defaultDismissDuration,
     final BorderRadius? borderRadius = _defaultBorderRadius,
     final EdgeInsetsGeometry? padding,
+    final Key? key,
     final bool? showCloseIcon,
   }) =>
       InAppNotification(
@@ -117,6 +58,7 @@ class InAppNotification {
         borderRadius: borderRadius,
         showCloseIcon: showCloseIcon,
         icon: const Icon(Icons.check_circle, color: _foregroundColor),
+        key: key,
       );
 
   /// Bootstrap [InAppNotification] with error configuration
@@ -131,6 +73,7 @@ class InAppNotification {
     final BorderRadius? borderRadius = _defaultBorderRadius,
     final EdgeInsetsGeometry? padding,
     final bool? showCloseIcon,
+    final Key? key,
   }) =>
       InAppNotification(
         backgroundColor: _errorColor,
@@ -143,6 +86,7 @@ class InAppNotification {
         padding: padding,
         showCloseIcon: showCloseIcon,
         icon: const Icon(Icons.error, color: _foregroundColor),
+        key: key,
       );
 
   /// Bootstrap [InAppNotification] with warning configuration
@@ -157,6 +101,7 @@ class InAppNotification {
     final BorderRadius? borderRadius = _defaultBorderRadius,
     final EdgeInsetsGeometry? padding,
     final bool? showCloseIcon,
+    final Key? key,
   }) =>
       InAppNotification(
         backgroundColor: _warningColor,
@@ -169,6 +114,7 @@ class InAppNotification {
         padding: padding,
         showCloseIcon: showCloseIcon,
         icon: const Icon(Icons.warning, color: _foregroundColor),
+        key: key,
       );
 
   /// Bootstrap [InAppNotification] with info configuration
@@ -183,6 +129,7 @@ class InAppNotification {
     final BorderRadius? borderRadius = _defaultBorderRadius,
     final EdgeInsetsGeometry? padding,
     final bool? showCloseIcon,
+    final Key? key,
   }) =>
       InAppNotification(
         backgroundColor: _infoColor,
@@ -195,6 +142,7 @@ class InAppNotification {
         padding: padding,
         showCloseIcon: showCloseIcon,
         icon: const Icon(Icons.info_outline, color: _foregroundColor),
+        key: key,
       );
 
   /// Notification title
@@ -212,13 +160,13 @@ class InAppNotification {
   /// Notification background color
   ///
   /// Colors notification body.
-  /// Defaults to ```Theme.of(context).colorScheme.surface```.
+  /// Defaults to ```Theme.of(context).colorScheme.primary```.
   final Color? backgroundColor;
 
   /// Notification foreground color.
   ///
   /// Colors notification texts.
-  /// Defaults to ```Theme.of(context).colorScheme.onSurface```.
+  /// Defaults to ```Theme.of(context).colorScheme.onPrimary```.
   final Color? foregroundColor;
 
   /// Notification content Padding
@@ -229,7 +177,7 @@ class InAppNotification {
 
   /// Notification dismiss duration
   ///
-  /// If set to null or less than ```Duration(milliseconds: 500)```,
+  /// If set to null or  ```Duration.zero```,
   /// [InAppNotification] will be permanent, but a
   /// [InAppNotificationAction] must be provided for user to interact
   /// with [InAppNotification].
@@ -237,247 +185,412 @@ class InAppNotification {
   final Duration? dismissDuration;
 
   /// Whether a non-zero [dismissDuration] is set
-  bool get _isDismissible =>
-      dismissDuration != null && (dismissDuration!.inMilliseconds >= 500);
+  bool get isDismissible =>
+      dismissDuration != null && dismissDuration!.inMilliseconds >= 0;
 
   /// Border Radius of [InAppNotification]
   ///
   /// Defaults to [_defaultBorderRadius]
   final BorderRadius? borderRadius;
 
-  ValueNotifier<double>? _verticalAlignmentNotifier;
-  OverlayEntry? _overlayEntry;
-  bool _isHolding = false;
-  bool _isShown = false; // Track consumption
-  bool _isDisposed = false; // Prevent reuse after dispose
+  @override
+  State<InAppNotification> createState() => _InAppNotificationState();
+}
 
-  /// Shows the notification and returns a controller for manual disposal.
-  InAppNotificationController show(BuildContext context) {
-    if (_isShown || _isDisposed) {
-      throw StateError(
-          'InAppNotification already shown or disposed. Create a new instance.');
-    }
-    _isShown = true;
+class _InAppNotificationState extends State<InAppNotification> {
+  /// Reference to [InAppNotificationManager] instance.
+  ///
+  /// For state internal use only!
+  final InAppNotificationManager _manager = InAppNotificationManager.instance;
 
-    _overlayEntry = OverlayEntry(builder: (context) => _build(context));
-    Overlay.of(context).insert(_overlayEntry!);
-    _delayedDismiss();
+  Size? _screenSize;
+  double get _screenHeight => _screenSize?.height ?? 0;
+  double get _screenWidth => _screenSize?.width ?? 0;
 
-    return InAppNotificationController._(this);
+  ThemeData? _themeData;
+  Color get _resolvedForeground =>
+      widget.foregroundColor ??
+      _themeData?.colorScheme.onPrimary ??
+      Colors.white;
+  Color get _resolvedBackground =>
+      widget.backgroundColor ?? _themeData?.colorScheme.primary ?? Colors.black;
+
+  /// Whether user is holding the widget to dismiss it
+  final ValueNotifier<bool> _isHolding = ValueNotifier(false);
+
+  /// Offset of visible Widget
+  ///
+  /// Is updated on user drag and reset to [Offset.zero] of not disposed.
+  final ValueNotifier<Offset> _widgetOffsetNotifier =
+      ValueNotifier(Offset.zero);
+
+  /// Size of Visible Widget
+  ///
+  /// Size of mounted visible widget.
+  /// Used to calculate widget offset and show proper animations and
+  /// transitions.
+  Size? _visibleWidgetSize;
+  final GlobalKey _visibleWidgetKey = GlobalKey();
+
+  /// Dismiss Timer
+  ///
+  /// Manages disposal based on [widget.dismissDuration]
+  Timer? _dismissTimer;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _initDismissTimer();
   }
 
-  Future<void> _delayedDismiss() async {
-    if (_isDismissible) {
-      await Future.delayed(dismissDuration!).then((final _) {
-        if (!_isHolding && !_isDisposed) {
-          dispose();
+  @override
+  void dispose() {
+    debugPrint('''
+---InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
+---Trying to Dispose
+''');
+    final index = _manager._activeNotifications.value.indexOf(widget);
+    if (index != -1) {
+      debugPrint('''
+---InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
+---Removing at index $index
+''');
+      _manager
+        .._activeNotifications.value.removeAt(index)
+        .._activeNotifications.notifyListeners()
+        .._processQueue(context);
+      _dismissTimer?.cancel();
+      _dismissTimer = null;
+      _isHolding.dispose();
+      _widgetOffsetNotifier.dispose();
+
+      super.dispose();
+    } else {
+      debugPrint('''
+---InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
+---Skipping removal at index $index
+''');
+    }
+  }
+
+  @override
+  void setState(final VoidCallback fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _themeData = mounted ? Theme.of(context) : null;
+    _screenSize = mounted ? MediaQuery.of(context).size : null;
+    if (mounted) {
+      SchedulerBinding.instance.addPostFrameCallback(
+        (final _) {
+          setState(() {
+            _visibleWidgetSize = (_visibleWidgetKey.currentContext
+                    ?.findRenderObject() as RenderBox?)
+                ?.size;
+          });
+        },
+      );
+    }
+  }
+
+  void _initDismissTimer() {
+    if (widget.isDismissible) {
+      _dismissTimer = Timer(widget.dismissDuration!, () {
+        if (!_isHolding.value) {
+          if (mounted) {
+            dispose();
+          }
         }
       });
     }
   }
 
-  void dispose() {
-    if (_isDisposed) return;
-    _isDisposed = true;
+  @override
+  Widget build(final BuildContext context) => ValueListenableBuilder(
+        valueListenable: _widgetOffsetNotifier,
+        builder: (final context, final widgetOffset, final child) {
+          final touchInputOffset =
+              _widgetOffsetToTouchInputOffset(widgetOffset);
+          final passedVerticalThreshold =
+              touchInputOffset.dy < _dismissalThreshold ||
+                  touchInputOffset.dy > _screenHeight - _dismissalThreshold;
+          final passedHorizontalThreshold =
+              touchInputOffset.dx < _dismissalThreshold ||
+                  touchInputOffset.dx > _screenWidth - _dismissalThreshold;
 
-    _overlayEntry?.remove();
-    _overlayEntry?.dispose();
-    _overlayEntry = null;
+          final passedThreshold =
+              passedVerticalThreshold || passedHorizontalThreshold;
 
-    _verticalAlignmentNotifier?.dispose();
-    _verticalAlignmentNotifier = null;
-  }
+          debugPrint(
+            'OnRebuild:::touchInputOffset: $touchInputOffset, passedThreshold: $passedThreshold',
+          );
+          debugPrint('OnRebuild:::Widget Offset: $widgetOffset');
 
-  Widget _build(final BuildContext context) {
-    final themeData = Theme.of(context);
-    _verticalAlignmentNotifier = ValueNotifier<double>(_initialAlignment);
+          return GestureDetector(
+            onLongPressDown: (final _) => _holdDismiss(),
+            onLongPressCancel: () => _resumeDismiss(),
+            onLongPressMoveUpdate: (final details) {
+              final updatedWidgetOffset =
+                  _touchInputOffsetToWidgetOffset(details.globalPosition);
+              debugPrint(
+                  'OnLongPressMoveUpdate:::updatedWidgetOffset: $updatedWidgetOffset');
+              debugPrint(
+                  'OnLongPressMoveUpdate:::GlobalPosition: ${details.globalPosition}');
 
-    final screenSize = MediaQuery.of(context).size;
-
-    return GestureDetector(
-      onVerticalDragEnd: !_isDismissible
-          ? null
-          : (final _) {
-              if (_verticalAlignmentNotifier!.value > _dismissThreshold &&
-                  _verticalAlignmentNotifier!.value < _initialAlignment) {
-                _verticalAlignmentNotifier!.value = _initialAlignment;
-              } else {
-                dispose();
+              _widgetOffsetNotifier.value = updatedWidgetOffset;
+            },
+            onLongPressEnd: (final details) {
+              if (passedThreshold) {
+                if (widget.isDismissible) {
+                  dispose();
+                  return;
+                }
               }
+              _widgetOffsetNotifier.value = Offset.zero;
+              _resumeDismiss();
             },
-      onVerticalDragUpdate: !_isDismissible
-          ? null
-          : (final details) {
-              final updatedAlignment = -1 +
-                  (details.globalPosition.dy / (screenSize.height / 2)) -
-                  .11;
-              _verticalAlignmentNotifier!.value =
-                  (updatedAlignment > _initialAlignment)
-                      ? _initialAlignment
-                      : updatedAlignment;
-            },
-      onLongPressDown: (final _) => _isHolding = true,
-      onLongPressEnd: (final _) {
-        _isHolding = false;
-        _delayedDismiss();
-      },
-      child: ValueListenableBuilder(
-        valueListenable: _verticalAlignmentNotifier!,
-        builder: (final context, final verticalAlignmentValue, final _) =>
-            Container(
-          alignment: Alignment(0, verticalAlignmentValue),
-          margin: Utils.horizontalPadding(
-            context,
-            largerPaddings: true,
-          ).add(const EdgeInsets.symmetric(vertical: 8, horizontal: 48)),
-          child: Material(
-            borderRadius: borderRadius,
-            color: (backgroundColor ?? themeData.colorScheme.surface)
-                .withValues(alpha: _opacity),
-            elevation: _elevation,
-            child: InkWell(
-              borderRadius: borderRadius,
-              onTap: action != null &&
-                      action!.type == InAppNotificationActionType.onTap
-                  ? () {
-                      action!.onPressed();
-                      dispose();
-                    }
-                  : null,
-              child: Stack(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ).add(padding ?? EdgeInsets.zero),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 100),
+              curve: Curves.easeOut,
+              opacity: widget.isDismissible && passedThreshold ? 0.0 : 1.0,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 100),
+                curve: Curves.easeOut,
+                margin: Utils.horizontalPadding(
+                  context,
+                  largerPaddings: true,
+                ).add(
+                  const EdgeInsetsGeometry.symmetric(
+                    vertical: 4,
+                    horizontal: 48,
+                  ),
+                ),
+                transform: Transform.translate(
+                  offset: widgetOffset,
+                ).transform,
+                child: Material(
+                  key: _visibleWidgetKey,
+                  borderRadius: widget.borderRadius,
+                  color: _resolvedBackground.withValues(alpha: _opacity),
+                  elevation: _elevation,
+                  child: InkWell(
+                    borderRadius: widget.borderRadius,
+                    onTap: _hasOnTapAction
+                        ? () {
+                            widget.action!.onPressed();
+                            dispose();
+                          }
+                        : null,
+                    child: Stack(
                       children: [
-                        _getTitle(themeData),
-                        _getContent(themeData),
-                        if (action != null &&
-                            action!.type == InAppNotificationActionType.button)
-                          Align(
-                            alignment: AlignmentDirectional.centerEnd,
-                            child: TextButton(
-                              child: Text(
-                                action!.label!,
-                                style: themeData.textTheme.labelMedium
-                                    ?.copyWith(color: foregroundColor),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 16,
+                          ).add(widget.padding ?? EdgeInsets.zero),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _getTitle,
+                              _getContent,
+                              if (_hasButtonAction) _getActionButton,
+                            ],
+                          ),
+                        ),
+                        _timerIndicator,
+                        if (_shouldShowCloseButton)
+                          PositionedDirectional(
+                            top: 4,
+                            end: 8,
+                            child: SizedBox.square(
+                              dimension: 16,
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                visualDensity: VisualDensity.compact,
+                                onPressed: dispose,
+                                icon: Icon(
+                                  Icons.close,
+                                  color: _resolvedForeground,
+                                  size: 16,
+                                ),
                               ),
-                              onPressed: () {
-                                action!.onPressed();
-                                dispose();
-                              },
                             ),
                           ),
                       ],
                     ),
                   ),
-                  if (_isDismissible && ((showCloseIcon ?? false) || kIsWeb))
-                    PositionedDirectional(
-                      top: 4,
-                      end: 8,
-                      child: SizedBox.square(
-                        dimension: 16,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                          onPressed: dispose,
-                          icon: Icon(
-                            Icons.close,
-                            color: foregroundColor,
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
+          );
+        },
+      );
+
+  /// Pixels form screen edge left to dismiss notification on Drag
+  int get _dismissalThreshold => 5;
+
+  Offset _widgetOffsetToTouchInputOffset(final Offset widgetOffset) => Offset(
+        widgetOffset.dx +
+            ((_visibleWidgetSize?.width ?? 0) /
+                _widgetSizeToOffsetCorrectionFactor),
+        widgetOffset.dy +
+            ((_visibleWidgetSize?.height ?? 0) /
+                _widgetSizeToOffsetCorrectionFactor),
+      );
+
+  double get _widgetSizeToOffsetCorrectionFactor => 1.5;
+
+  Offset _touchInputOffsetToWidgetOffset(final Offset touchInputPosition) =>
+      Offset(
+        touchInputPosition.dx -
+            ((_visibleWidgetSize?.width ?? 0) /
+                _widgetSizeToOffsetCorrectionFactor),
+        touchInputPosition.dy -
+            ((_visibleWidgetSize?.height ?? 0) /
+                _widgetSizeToOffsetCorrectionFactor),
+      );
+
+  Widget get _timerIndicator => ValueListenableBuilder(
+        valueListenable: _isHolding,
+        builder: (final context, final isHolding, final child) {
+          if (widget.isDismissible && !isHolding) {
+            return PositionedDirectional(
+              start: 0,
+              end: 0,
+              bottom: 0,
+              child: TweenAnimationBuilder(
+                duration: widget.dismissDuration ?? Duration.zero,
+                tween: Tween<double>(begin: 0.0, end: 1.0),
+                curve: Curves.easeInOut,
+                builder: (final context, final value, final child) => Padding(
+                  padding: EdgeInsetsGeometry.only(
+                    right: (widget.borderRadius?.bottomRight.x ?? 0.0) / 2,
+                    left: (widget.borderRadius?.bottomLeft.x ?? 0.0) / 2,
+                  ),
+                  child: LinearProgressIndicator(
+                    minHeight: 2,
+                    valueColor: ColorTween(
+                      begin: _resolvedForeground.withValues(
+                        alpha: 0.3,
+                      ),
+                      end: _resolvedForeground.withValues(
+                        alpha: _opacity,
+                      ),
+                    ).animate(
+                      CurvedAnimation(
+                        parent: AlwaysStoppedAnimation(value),
+                        curve: Curves.easeInOut,
+                      ),
+                    ),
+                    backgroundColor: _resolvedBackground,
+                    value: value,
+                  ),
+                ),
+              ),
+            );
+          } else {
+            return const SizedBox.shrink();
+          }
+        },
+      );
+
+  void _resumeDismiss() {
+    _isHolding.value = false;
+    _initDismissTimer();
   }
 
-  Widget _getTitle(final ThemeData themeData) => _hasTitle
-      ? Directionality(
-          textDirection: Utils.estimateDirectionOfText(title!),
-          child: Text(
-            title!,
-            style: themeData.textTheme.titleMedium?.copyWith(
-              color: foregroundColor ?? themeData.colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
+  void _holdDismiss() {
+    _isHolding.value = true;
+    _dismissTimer?.cancel();
+  }
+
+  Widget get _getTitle => _hasTitle
+      ? ValueListenableBuilder(
+          valueListenable: _isHolding,
+          builder: (final context, final isHolding, final child) =>
+              Directionality(
+            textDirection: Utils.estimateDirectionOfText(widget.title!),
+            child: Text(
+              widget.title!,
+              style: _themeData?.textTheme.titleMedium?.copyWith(
+                color: _resolvedForeground,
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: isHolding ? 5 : null,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         )
       : const SizedBox.shrink();
 
-  Directionality _getContent(final ThemeData themeData) => Directionality(
-        textDirection: Utils.estimateDirectionOfText(message),
-        child: LayoutBuilder(
-          builder: (final _, final constraints) => Row(
-            spacing: 4,
-            children: [
-              if (_hasIcon)
-                Container(
-                  constraints:
-                      BoxConstraints(maxWidth: constraints.maxWidth / 8),
-                  padding: const EdgeInsetsDirectional.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  child: icon,
-                ),
+  Widget get _getContent => Directionality(
+        textDirection: Utils.estimateDirectionOfText(widget.message),
+        child: Row(
+          spacing: 4,
+          children: [
+            if (_hasIcon)
               Container(
-                constraints: BoxConstraints(
-                  maxWidth: _hasIcon
-                      ? constraints.maxWidth / 1.15
-                      : constraints.maxWidth,
+                padding: const EdgeInsetsDirectional.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
                 ),
-                child: Text(
-                  message,
-                  style: themeData.textTheme.bodyMedium?.copyWith(
-                    color: foregroundColor ?? themeData.colorScheme.onSurface,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: widget.icon,
               ),
-            ],
-          ),
+            Expanded(
+              child: mounted
+                  ? ValueListenableBuilder(
+                      valueListenable: _isHolding,
+                      builder: (final context, final isHolding, final child) =>
+                          Text(
+                        widget.message,
+                        style: _themeData?.textTheme.bodyMedium?.copyWith(
+                          color: _resolvedForeground,
+                        ),
+                        maxLines: isHolding ? 10 : null,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ),
       );
 
-  bool get _hasTitle => title != null;
+  Widget get _getActionButton => Align(
+        alignment: AlignmentDirectional.centerEnd,
+        child: TextButton(
+          child: Text(
+            widget.action!.label!,
+            style: _themeData?.textTheme.labelMedium
+                ?.copyWith(color: _resolvedForeground),
+          ),
+          onPressed: () {
+            widget.action!.onPressed();
+            dispose();
+          },
+        ),
+      );
 
-  bool get _hasIcon => icon != null;
+  bool get _hasTitle => widget.title != null;
+
+  bool get _hasIcon => widget.icon != null;
+
+  bool get _hasOnTapAction =>
+      widget.action != null &&
+      widget.action!.type == InAppNotificationActionType.onTap;
+
+  bool get _hasButtonAction =>
+      widget.action != null &&
+      widget.action!.type == InAppNotificationActionType.button;
+
+  bool get _shouldShowCloseButton =>
+      widget.isDismissible && ((widget.showCloseIcon ?? false) || kIsWeb);
 }
-
-class InAppNotificationController {
-  InAppNotificationController._(this._notification);
-
-  final InAppNotification _notification;
-
-  void dismiss() => _notification.dispose();
-}
-
-// class InAppNotificationEntry extends OverlayEntry {
-//   InAppNotificationEntry({
-//     required super.builder,
-//     super.opaque,
-//     super.maintainState,
-//   });
-//
-//   @override
-//   void dispose() {
-//     // Custom cleanup here (e.g., dispose notifiers)
-//     super.dispose(); // Calls base disposal
-//   }
-// }
