@@ -203,34 +203,27 @@ class _InAppNotificationState extends State<InAppNotification> {
   /// For state internal use only!
   final InAppNotificationManager _manager = InAppNotificationManager.instance;
 
-  Size? _screenSize;
-  double get _screenHeight => _screenSize?.height ?? 0;
-  double get _screenWidth => _screenSize?.width ?? 0;
+  Size get _screenSize => MediaQuery.of(context).size;
+  double get _screenHeight => _screenSize.height;
+  double get _screenWidth => _screenSize.width;
 
-  ThemeData? _themeData;
+  ThemeData get _themeData => Theme.of(context);
   Color get _resolvedForeground =>
-      widget.foregroundColor ??
-      _themeData?.colorScheme.onPrimary ??
-      Colors.white;
+      widget.foregroundColor ?? _themeData.colorScheme.onPrimary;
   Color get _resolvedBackground =>
-      widget.backgroundColor ?? _themeData?.colorScheme.primary ?? Colors.black;
+      widget.backgroundColor ?? _themeData.colorScheme.primary;
 
   /// Whether user is holding the widget to dismiss it
   final ValueNotifier<bool> _isHolding = ValueNotifier(false);
 
-  /// Offset of visible Widget
+  /// An [OffsetPair] to indicate drag input updated
   ///
-  /// Is updated on user drag and reset to [Offset.zero] of not disposed.
-  final ValueNotifier<Offset> _widgetOffsetNotifier =
-      ValueNotifier(Offset.zero);
-
-  /// Size of Visible Widget
-  ///
-  /// Size of mounted visible widget.
-  /// Used to calculate widget offset and show proper animations and
-  /// transitions.
-  Size? _visibleWidgetSize;
-  final GlobalKey _visibleWidgetKey = GlobalKey();
+  /// [OffsetPair.local] is set to drag input of widget,
+  /// and [OffsetPair.global] is set to drag input offset in relation
+  /// to the screen.
+  /// On drag input end, is set to null.
+  final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
+      ValueNotifier(null);
 
   /// Dismiss Timer
   ///
@@ -263,7 +256,7 @@ class _InAppNotificationState extends State<InAppNotification> {
       _dismissTimer?.cancel();
       _dismissTimer = null;
       _isHolding.dispose();
-      _widgetOffsetNotifier.dispose();
+      _dragOffsetPairNotifier.dispose();
 
       super.dispose();
     } else {
@@ -281,24 +274,6 @@ class _InAppNotificationState extends State<InAppNotification> {
     }
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _themeData = mounted ? Theme.of(context) : null;
-    _screenSize = mounted ? MediaQuery.of(context).size : null;
-    if (mounted) {
-      SchedulerBinding.instance.addPostFrameCallback(
-        (final _) {
-          setState(() {
-            _visibleWidgetSize = (_visibleWidgetKey.currentContext
-                    ?.findRenderObject() as RenderBox?)
-                ?.size;
-          });
-        },
-      );
-    }
-  }
-
   void _initDismissTimer() {
     if (widget.isDismissible) {
       _dismissTimer = Timer(widget.dismissDuration!, () {
@@ -313,37 +288,32 @@ class _InAppNotificationState extends State<InAppNotification> {
 
   @override
   Widget build(final BuildContext context) => ValueListenableBuilder(
-        valueListenable: _widgetOffsetNotifier,
-        builder: (final context, final widgetOffset, final child) {
-          final touchInputOffset =
-              _widgetOffsetToTouchInputOffset(widgetOffset);
-          final passedVerticalThreshold =
-              touchInputOffset.dy < _dismissalThreshold ||
-                  touchInputOffset.dy > _screenHeight - _dismissalThreshold;
-          final passedHorizontalThreshold =
-              touchInputOffset.dx < _dismissalThreshold ||
-                  touchInputOffset.dx > _screenWidth - _dismissalThreshold;
+        valueListenable: _dragOffsetPairNotifier,
+        builder: (final context, final longPressDragOffset, final child) {
+          final passedVerticalThreshold = longPressDragOffset != null &&
+              (longPressDragOffset.global.dy < _dismissalThreshold ||
+                  longPressDragOffset.global.dy >
+                      _screenHeight - _dismissalThreshold);
+          final passedHorizontalThreshold = longPressDragOffset != null &&
+              (longPressDragOffset.global.dx < _dismissalThreshold ||
+                  longPressDragOffset.global.dx >
+                      _screenWidth - _dismissalThreshold);
 
           final passedThreshold =
               passedVerticalThreshold || passedHorizontalThreshold;
 
-          debugPrint(
-            'OnRebuild:::touchInputOffset: $touchInputOffset, passedThreshold: $passedThreshold',
-          );
-          debugPrint('OnRebuild:::Widget Offset: $widgetOffset');
+          debugPrint('OnRebuild:::screenSize: $_screenSize');
+          debugPrint('OnRebuild:::LongPressDragOffset: $longPressDragOffset');
+          debugPrint('OnRebuild:::PassedThreshold: $passedThreshold');
 
           return GestureDetector(
             onLongPressDown: (final _) => _holdDismiss(),
             onLongPressCancel: () => _resumeDismiss(),
             onLongPressMoveUpdate: (final details) {
-              final updatedWidgetOffset =
-                  _touchInputOffsetToWidgetOffset(details.globalPosition);
-              debugPrint(
-                  'OnLongPressMoveUpdate:::updatedWidgetOffset: $updatedWidgetOffset');
-              debugPrint(
-                  'OnLongPressMoveUpdate:::GlobalPosition: ${details.globalPosition}');
-
-              _widgetOffsetNotifier.value = updatedWidgetOffset;
+              _dragOffsetPairNotifier.value = OffsetPair(
+                local: details.offsetFromOrigin,
+                global: details.globalPosition,
+              );
             },
             onLongPressEnd: (final details) {
               if (passedThreshold) {
@@ -352,7 +322,7 @@ class _InAppNotificationState extends State<InAppNotification> {
                   return;
                 }
               }
-              _widgetOffsetNotifier.value = Offset.zero;
+              _dragOffsetPairNotifier.value = null;
               _resumeDismiss();
             },
             child: AnimatedOpacity(
@@ -362,6 +332,11 @@ class _InAppNotificationState extends State<InAppNotification> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 100),
                 curve: Curves.easeOut,
+                transform: longPressDragOffset == null
+                    ? null
+                    : Transform.translate(
+                        offset: longPressDragOffset.local,
+                      ).transform,
                 margin: Utils.horizontalPadding(
                   context,
                   largerPaddings: true,
@@ -371,11 +346,7 @@ class _InAppNotificationState extends State<InAppNotification> {
                     horizontal: 48,
                   ),
                 ),
-                transform: Transform.translate(
-                  offset: widgetOffset,
-                ).transform,
                 child: Material(
-                  key: _visibleWidgetKey,
                   borderRadius: widget.borderRadius,
                   color: _resolvedBackground.withValues(alpha: _opacity),
                   elevation: _elevation,
@@ -406,10 +377,10 @@ class _InAppNotificationState extends State<InAppNotification> {
                           ),
                         ),
                         _timerIndicator,
-                        if (_shouldShowCloseButton)
+                        if (_hasCloseButton)
                           PositionedDirectional(
-                            top: 4,
-                            end: 8,
+                            top: 8,
+                            end: 4,
                             child: SizedBox.square(
                               dimension: 16,
                               child: IconButton(
@@ -424,6 +395,22 @@ class _InAppNotificationState extends State<InAppNotification> {
                               ),
                             ),
                           ),
+                        if (_hasPinedIcon)
+                          PositionedDirectional(
+                            top: 8,
+                            end: 4,
+                            child: SizedBox.square(
+                              dimension: 16,
+                              child: Icon(
+                                const IconData(
+                                  0xe4f4,
+                                  fontFamily: 'MaterialIcons',
+                                ),
+                                color: _resolvedForeground,
+                                size: 16,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -435,28 +422,7 @@ class _InAppNotificationState extends State<InAppNotification> {
       );
 
   /// Pixels form screen edge left to dismiss notification on Drag
-  int get _dismissalThreshold => 5;
-
-  Offset _widgetOffsetToTouchInputOffset(final Offset widgetOffset) => Offset(
-        widgetOffset.dx +
-            ((_visibleWidgetSize?.width ?? 0) /
-                _widgetSizeToOffsetCorrectionFactor),
-        widgetOffset.dy +
-            ((_visibleWidgetSize?.height ?? 0) /
-                _widgetSizeToOffsetCorrectionFactor),
-      );
-
-  double get _widgetSizeToOffsetCorrectionFactor => 1.5;
-
-  Offset _touchInputOffsetToWidgetOffset(final Offset touchInputPosition) =>
-      Offset(
-        touchInputPosition.dx -
-            ((_visibleWidgetSize?.width ?? 0) /
-                _widgetSizeToOffsetCorrectionFactor),
-        touchInputPosition.dy -
-            ((_visibleWidgetSize?.height ?? 0) /
-                _widgetSizeToOffsetCorrectionFactor),
-      );
+  int get _dismissalThreshold => 10;
 
   Widget get _timerIndicator => ValueListenableBuilder(
         valueListenable: _isHolding,
@@ -520,7 +486,7 @@ class _InAppNotificationState extends State<InAppNotification> {
             textDirection: Utils.estimateDirectionOfText(widget.title!),
             child: Text(
               widget.title!,
-              style: _themeData?.textTheme.titleMedium?.copyWith(
+              style: _themeData.textTheme.titleMedium?.copyWith(
                 color: _resolvedForeground,
                 fontWeight: FontWeight.bold,
               ),
@@ -551,7 +517,7 @@ class _InAppNotificationState extends State<InAppNotification> {
                       builder: (final context, final isHolding, final child) =>
                           Text(
                         widget.message,
-                        style: _themeData?.textTheme.bodyMedium?.copyWith(
+                        style: _themeData.textTheme.bodyMedium?.copyWith(
                           color: _resolvedForeground,
                         ),
                         maxLines: isHolding ? 10 : null,
@@ -569,7 +535,7 @@ class _InAppNotificationState extends State<InAppNotification> {
         child: TextButton(
           child: Text(
             widget.action!.label!,
-            style: _themeData?.textTheme.labelMedium
+            style: _themeData.textTheme.labelMedium
                 ?.copyWith(color: _resolvedForeground),
           ),
           onPressed: () {
@@ -591,6 +557,7 @@ class _InAppNotificationState extends State<InAppNotification> {
       widget.action != null &&
       widget.action!.type == InAppNotificationActionType.button;
 
-  bool get _shouldShowCloseButton =>
+  bool get _hasCloseButton =>
       widget.isDismissible && ((widget.showCloseIcon ?? false) || kIsWeb);
+  bool get _hasPinedIcon => !widget.isDismissible;
 }
