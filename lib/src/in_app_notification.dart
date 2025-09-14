@@ -377,40 +377,8 @@ class _InAppNotificationState extends State<InAppNotification> {
                           ),
                         ),
                         _timerIndicator,
-                        if (_hasCloseButton)
-                          PositionedDirectional(
-                            top: 8,
-                            end: 4,
-                            child: SizedBox.square(
-                              dimension: 16,
-                              child: IconButton(
-                                padding: EdgeInsets.zero,
-                                visualDensity: VisualDensity.compact,
-                                onPressed: dispose,
-                                icon: Icon(
-                                  Icons.close,
-                                  color: _resolvedForeground,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (_hasPinedIcon)
-                          PositionedDirectional(
-                            top: 8,
-                            end: 4,
-                            child: SizedBox.square(
-                              dimension: 16,
-                              child: Icon(
-                                const IconData(
-                                  0xe4f4,
-                                  fontFamily: 'MaterialIcons',
-                                ),
-                                color: _resolvedForeground,
-                                size: 16,
-                              ),
-                            ),
-                          ),
+                        if (_hasCloseButton) _getCloseButton(),
+                        if (_hasPinnedIcon) _getPinnedIcon,
                       ],
                     ),
                   ),
@@ -422,6 +390,7 @@ class _InAppNotificationState extends State<InAppNotification> {
       );
 
   /// Pixels form screen edge left to dismiss notification on Drag
+
   int get _dismissalThreshold => 10;
 
   Widget get _timerIndicator => ValueListenableBuilder(
@@ -467,7 +436,6 @@ class _InAppNotificationState extends State<InAppNotification> {
           }
         },
       );
-
   void _resumeDismiss() {
     _isHolding.value = false;
     _initDismissTimer();
@@ -545,6 +513,50 @@ class _InAppNotificationState extends State<InAppNotification> {
         ),
       );
 
+  Widget _getCloseButton() => Directionality(
+        textDirection: Utils.estimateDirectionOfText(
+          widget.title ?? widget.message,
+        ),
+        child: PositionedDirectional(
+          top: 8,
+          end: 4,
+          child: SizedBox.square(
+            dimension: 16,
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              visualDensity: VisualDensity.compact,
+              onPressed: dispose,
+              icon: Icon(
+                Icons.close,
+                color: _resolvedForeground,
+                size: 16,
+              ),
+            ),
+          ),
+        ),
+      );
+
+  Widget get _getPinnedIcon => Directionality(
+        textDirection: Utils.estimateDirectionOfText(
+          widget.title ?? widget.message,
+        ),
+        child: PositionedDirectional(
+          top: 8,
+          end: 4,
+          child: SizedBox.square(
+            dimension: 16,
+            child: Icon(
+              const IconData(
+                0xe4f4,
+                fontFamily: 'MaterialIcons',
+              ),
+              color: _resolvedForeground,
+              size: 16,
+            ),
+          ),
+        ),
+      );
+
   bool get _hasTitle => widget.title != null;
 
   bool get _hasIcon => widget.icon != null;
@@ -559,5 +571,5 @@ class _InAppNotificationState extends State<InAppNotification> {
 
   bool get _hasCloseButton =>
       widget.isDismissible && ((widget.showCloseIcon ?? false) || kIsWeb);
-  bool get _hasPinedIcon => !widget.isDismissible;
+  bool get _hasPinnedIcon => !widget.isDismissible;
 }
