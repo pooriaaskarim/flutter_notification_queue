@@ -213,7 +213,7 @@ class _InAppNotificationState extends State<InAppNotification> {
   Color get _resolvedBackground =>
       widget.backgroundColor ?? _themeData.colorScheme.primary;
 
-  /// Whether user is holding the widget to dismiss it
+  /// Whether user is holding the widget
   final ValueNotifier<bool> _isHolding = ValueNotifier(false);
 
   /// An [OffsetPair] to indicate drag input updated
@@ -224,6 +224,9 @@ class _InAppNotificationState extends State<InAppNotification> {
   /// On drag input end, is set to null.
   final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
       ValueNotifier(null);
+
+  /// Store the starting position for horizontal drag to calculate offset from origin
+  Offset? _panDragStartPosition;
 
   /// Dismiss Timer
   ///
@@ -277,13 +280,21 @@ class _InAppNotificationState extends State<InAppNotification> {
   void _initDismissTimer() {
     if (widget.isDismissible) {
       _dismissTimer = Timer(widget.dismissDuration!, () {
-        if (!_isHolding.value) {
-          if (mounted) {
-            dispose();
-          }
+        if (mounted && !_isHolding.value) {
+          dispose();
         }
       });
     }
+  }
+
+  void _resumeDismiss() {
+    _isHolding.value = false;
+    _initDismissTimer();
+  }
+
+  void _holdDismiss() {
+    _isHolding.value = true;
+    _dismissTimer?.cancel();
   }
 
   @override
@@ -302,29 +313,67 @@ class _InAppNotificationState extends State<InAppNotification> {
           final passedThreshold =
               passedVerticalThreshold || passedHorizontalThreshold;
 
-          debugPrint('OnRebuild:::screenSize: $_screenSize');
-          debugPrint('OnRebuild:::LongPressDragOffset: $longPressDragOffset');
-          debugPrint('OnRebuild:::PassedThreshold: $passedThreshold');
-
           return GestureDetector(
-            onLongPressDown: (final _) => _holdDismiss(),
-            onLongPressCancel: () => _resumeDismiss(),
-            onLongPressMoveUpdate: (final details) {
-              _dragOffsetPairNotifier.value = OffsetPair(
-                local: details.offsetFromOrigin,
-                global: details.globalPosition,
-              );
+            onPanStart: (final details) {
+              _panDragStartPosition = details.globalPosition;
+              _holdDismiss();
             },
-            onLongPressEnd: (final details) {
-              if (passedThreshold) {
-                if (widget.isDismissible) {
+
+            onPanUpdate: (final details) {
+              if (_panDragStartPosition != null) {
+                final offsetFromOrigin =
+                    details.globalPosition - _panDragStartPosition!;
+                _dragOffsetPairNotifier.value = OffsetPair(
+                  local: offsetFromOrigin,
+                  global: details.globalPosition,
+                );
+              }
+            },
+            onPanEnd: (final details) {
+              final currentOffset = _dragOffsetPairNotifier.value;
+              if (currentOffset != null) {
+                final passedVerticalThreshold =
+                    currentOffset.global.dy < _dismissalThreshold ||
+                        currentOffset.global.dy >
+                            _screenHeight - _dismissalThreshold;
+                final passedHorizontalThreshold =
+                    currentOffset.global.dx < _dismissalThreshold ||
+                        currentOffset.global.dx >
+                            _screenWidth - _dismissalThreshold;
+
+                final passedThreshold =
+                    passedVerticalThreshold || passedHorizontalThreshold;
+
+                if (passedThreshold && widget.isDismissible) {
                   dispose();
                   return;
                 }
+                _resumeDismiss();
               }
+
               _dragOffsetPairNotifier.value = null;
+              _panDragStartPosition = null;
               _resumeDismiss();
             },
+            // onLongPressDown: (final _) => _holdDismiss(),
+            // onLongPressCancel: () => _resumeDismiss(),
+            // onLongPressMoveUpdate: (final details) {
+            //   _dragOffsetPairNotifier.value = OffsetPair(
+            //     local: details.offsetFromOrigin,
+            //     global: details.globalPosition,
+            //   );
+            // },
+            // onLongPressEnd: (final details) {
+            //   if (passedThreshold) {
+            //     if (widget.isDismissible) {
+            //       dispose();
+            //       return;
+            //     }
+            //   }
+            //   _dragOffsetPairNotifier.value = null;
+            //   _resumeDismiss();
+            // },
+
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 100),
               curve: Curves.easeOut,
@@ -436,15 +485,6 @@ class _InAppNotificationState extends State<InAppNotification> {
           }
         },
       );
-  void _resumeDismiss() {
-    _isHolding.value = false;
-    _initDismissTimer();
-  }
-
-  void _holdDismiss() {
-    _isHolding.value = true;
-    _dismissTimer?.cancel();
-  }
 
   Widget get _getTitle => _hasTitle
       ? ValueListenableBuilder(
