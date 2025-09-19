@@ -3,7 +3,7 @@ description: 'Example of in_app_notification usage'
 publish_to:  none
 
 environment:
-  sdk: '>=2.18.0 <=3.9.0'
+  sdk: '>=2.18.0 <4.0.0'
   flutter: ">=3.0.0"
 
 dependencies:
@@ -16,13 +16,6 @@ dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_native_splash: ^2.4.6
-
-flutter_native_splash:
-  image: assets/img/logo.png
-  color: "#FCFCFB"
-  android: true
-  web: true
-
 
 flutter:
   uses-material-design: true
