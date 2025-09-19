@@ -1,3 +1,5 @@
+import '../in_app_notifications.dart';
+
 /// Creates an action for [InAppNotification].
 ///
 /// [InAppNotification] **will be dismissed**
@@ -55,8 +57,9 @@ class InAppNotificationAction {
 
 /// Type of action for [InAppNotification].
 ///
-/// [button] creates a **button** in the *content of the notification*.
-/// [onTap] executes [onPressed] callback *on notification tap*.
+/// [button] creates a **button** bellow the [InAppNotification.message].
+/// [onTap] executes [InAppNotificationAction.onPressed] callback
+/// *on notification tap*.
 enum InAppNotificationActionType {
   button,
   onTap;

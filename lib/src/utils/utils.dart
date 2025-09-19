@@ -24,48 +24,37 @@ class Utils {
   static const String tablet = 'tablet';
   static const String desktop = 'desktop';
 
-  static const Breakpoint phoneBreakPoint = Breakpoint(
+  static const _Breakpoint _phoneBreakPoint = _Breakpoint(
     start: 0,
     end: 600,
     name: phone,
   );
-  static const Breakpoint tabletBreakPoint = Breakpoint(
+  static const _Breakpoint _tabletBreakPoint = _Breakpoint(
     start: 601,
     end: 900,
     name: tablet,
   );
-  static const Breakpoint desktopBreakPoint = Breakpoint(
+  static const _Breakpoint _desktopBreakPoint = _Breakpoint(
     start: 901,
     end: 1920,
     name: desktop,
   );
 
-  static EdgeInsets horizontalPadding(
-    final BuildContext context, {
-    final bool largerPaddings = false,
-  }) {
+  static BoxConstraints horizontalConstraints(final BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    return EdgeInsets.symmetric(
-      horizontal: (width < phoneBreakPoint.end)
-          ? 0
-          : (width >= phoneBreakPoint.end && width < tabletBreakPoint.start)
-              ? width / 123
-              : (width >= tabletBreakPoint.end &&
-                      width < desktopBreakPoint.start)
-                  ? width / (largerPaddings ? 5 : 8)
-                  : width / (largerPaddings ? 5 : 8),
+    return BoxConstraints(
+      maxWidth: (width <= _phoneBreakPoint.end)
+          ? width / 1.3
+          : (width <= _tabletBreakPoint.end)
+              ? width / 2
+              : 500,
     );
-  }
-
-  static EdgeInsets verticalPadding(final BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-    return EdgeInsets.symmetric(vertical: (height < 1200) ? 0 : height / 10);
   }
 }
 
 @immutable
-class Breakpoint {
-  const Breakpoint({
+class _Breakpoint {
+  const _Breakpoint({
     required this.start,
     required this.end,
     this.name,
@@ -76,13 +65,13 @@ class Breakpoint {
   final String? name;
   final dynamic data;
 
-  Breakpoint copyWith({
+  _Breakpoint copyWith({
     final double? start,
     final double? end,
     final String? name,
     final dynamic data,
   }) =>
-      Breakpoint(
+      _Breakpoint(
         start: start ?? this.start,
         end: end ?? this.end,
         name: name ?? this.name,
@@ -95,7 +84,7 @@ class Breakpoint {
   @override
   bool operator ==(final Object other) =>
       identical(this, other) ||
-      other is Breakpoint &&
+      other is _Breakpoint &&
           runtimeType == other.runtimeType &&
           start == other.start &&
           end == other.end &&
