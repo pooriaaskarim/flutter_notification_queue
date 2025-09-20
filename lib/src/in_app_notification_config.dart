@@ -67,8 +67,11 @@ class InAppNotificationConfig {
   final InAppNotificationPosition position;
 
   /// Custom builder for the notification stack indicator.
-  final Widget Function(BuildContext context, int queueLength,
-      InAppNotificationConfig config)? stackIndicatorBuilder;
+  final Widget Function(
+    BuildContext context,
+    int queueLength,
+    InAppNotificationConfig config,
+  )? stackIndicatorBuilder;
 
   /// Copy with overrides for easy partial updates.
   InAppNotificationConfig copyWith({
