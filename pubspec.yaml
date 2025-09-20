@@ -5,6 +5,7 @@ homepage: https://github.com/pooriaaskarim/in_app_notifications
 repository: https://github.com/pooriaaskarim/in_app_notifications
 publish_to: https://pub.dev/pooriaaskarim/in_app_notification
 topics: [flutter, notification, overlay, toast, popup]
+license: MIT
 
 environment:
   sdk: '>=2.18.0 <4.0.0'

@@ -126,22 +126,22 @@ InAppNotificationProvider(
 
 ### Config Options Table
 
-| Option                  | Type                                      | Default Value                  | Description |
-|-------------------------|-------------------------------------------|--------------------------------|-------------|
-| `infoColor`            | `Color`                                   | `#51B4FA`                      | Info background color |
-| `warningColor`         | `Color`                                   | `#C97726`                      | Warning background color |
-| `errorColor`           | `Color`                                   | `#D03333`                      | Error background color |
-| `successColor`         | `Color`                                   | `#2D7513`                      | Success background color |
-| `foregroundColor`      | `Color?`                                  | `Colors.white`                 | Text/icon color (falls back to theme) |
-| `backgroundColor`      | `Color?`                                  | null (theme primary)           | Global background fallback |
-| `defaultDismissDuration` | `Duration`                              | `3 seconds`                    | Auto-dismiss time |
-| `position`             | `InAppNotificationPosition`               | `bottomCenter`                 | Stack placement |
-| `opacity`              | `double`                                  | `0.8`                          | Background transparency |
-| `elevation`            | `double`                                  | `6.0`                          | Card shadow depth |
-| `maxStackSize`         | `int`                                     | `2`                            | Max visible at once |
-| `dismissalThreshold`   | `double`                                  | `10.0`                         | Drag dismiss pixels |
-| `defaultShowCloseButton` | `bool`                                  | `false`                        | Always show close |
-| `stackIndicatorBuilder` | `Widget Function(BuildContext, int, InAppNotificationConfig)?` | null (default badge) | Custom "+ N more" UI |
+| Option                   | Type                                                           | Default Value        | Description                           |
+|--------------------------|----------------------------------------------------------------|----------------------|---------------------------------------|
+| `infoColor`              | `Color`                                                        | `#51B4FA`            | Info background color                 |
+| `warningColor`           | `Color`                                                        | `#C97726`            | Warning background color              |
+| `errorColor`             | `Color`                                                        | `#D03333`            | Error background color                |
+| `successColor`           | `Color`                                                        | `#2D7513`            | Success background color              |
+| `foregroundColor`        | `Color?`                                                       | `Colors.white`       | Text/icon color (falls back to theme) |
+| `backgroundColor`        | `Color?`                                                       | null (theme primary) | Global background fallback            |
+| `defaultDismissDuration` | `Duration`                                                     | `3 seconds`          | Auto-dismiss time                     |
+| `position`               | `InAppNotificationPosition`                                    | `bottomCenter`       | Stack placement                       |
+| `opacity`                | `double`                                                       | `0.8`                | Background transparency               |
+| `elevation`              | `double`                                                       | `6.0`                | Card shadow depth                     |
+| `maxStackSize`           | `int`                                                          | `2`                  | Max visible at once                   |
+| `dismissalThreshold`     | `double`                                                       | `10.0`               | Drag dismiss pixels                   |
+| `defaultShowCloseButton` | `bool`                                                         | `false`              | Always show close                     |
+| `stackIndicatorBuilder`  | `Widget Function(BuildContext, int, InAppNotificationConfig)?` | null (default badge) | Custom "+ N more" UI                  |
 
 ## Advanced Usage
 
@@ -196,10 +196,13 @@ Contributions welcome! Fork the repo, create a branch, add tests, and PR. Follow
 - Report issues: [GitHub Issues](https://github.com/pooriaaskarim/in_app_notifications/issues)
 - Feature requests: Label as "enhancement"
 
+By contributing, you agree to the MIT License terms.
+
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+This package is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
 
 Made with ❤️ by [Pooria Askari Moqaddam](https://github.com/pooriaaskarim). Star the repo if useful!
+
