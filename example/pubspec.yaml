@@ -1,5 +1,5 @@
 name: in_app_notification_example
-description: 'Example of in_app_notification usage'
+description: 'Example of in_app_notifications usage'
 publish_to:  none
 
 environment:
