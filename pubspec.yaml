@@ -3,7 +3,6 @@ description: "An overlay based In App Notification"
 version: 0.2.0
 homepage: https://github.com/pooriaaskarim/in_app_notifications
 repository: https://github.com/pooriaaskarim/in_app_notifications
-publish_to: https://pub.dev/pooriaaskarim/in_app_notification
 topics: [flutter, notification, overlay, toast, popup]
 license: MIT
 
