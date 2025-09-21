@@ -41,73 +41,117 @@ class InAppNotificationManager {
   }
 
   void _processQueue(final BuildContext context) {
+    debugPrint('''
+---InAppNotificationManager: _processQueue Called---''');
     while (
         _queue.isNotEmpty && _activeNotifications.value.length < maxStackSize) {
+      debugPrint('''
+---Processing Queue InProgress------
+---Queue: ${_queue.length}
+---Active Notifications: ${_activeNotifications.value.length}''');
       final latestNotification = _queue.removeFirst();
 
       _activeNotifications.value = [
         ..._activeNotifications.value,
         latestNotification,
       ];
-      _activeNotifications.notifyListeners();
 
       if (_overlayEntry == null) {
+        debugPrint('''
+------Inserting OverlayEntry
+''');
         _overlayEntry =
-            OverlayEntry(builder: (final context) => _buildQueue(context));
+            OverlayEntry(builder: (final innerContext) => _buildQueue(context));
         Overlay.of(context).insert(_overlayEntry!);
-      }
-
-      if (_queue.isEmpty && _activeNotifications.value.isEmpty) {
-        _overlayEntry?.remove();
-        _overlayEntry?.dispose();
-        _overlayEntry = null;
+      } else {
+        debugPrint('''
+------Updating OverlayEntry
+''');
+        _activeNotifications.notifyListeners();
       }
     }
+    _disposeOverlay();
   }
 
-  Widget _buildQueue(final BuildContext context) => ValueListenableBuilder(
-        valueListenable: _configNotifier,
-        builder: (final context, final config, final child) =>
-            ValueListenableBuilder<List<InAppNotification>>(
+  Widget _buildQueue(final BuildContext context) {
+    debugPrint('''
+---InAppNotificationManager: _buildQueue Called---''');
+
+    return ValueListenableBuilder(
+      valueListenable: _configNotifier,
+      builder: (final context, final config, final child) {
+        debugPrint('''
+---InAppNotificationManager: _buildQueue:::Config Updated---
+---Config: $config
+''');
+        return ValueListenableBuilder<List<InAppNotification>>(
           valueListenable: _activeNotifications,
-          builder: (final context, final activeNotifications, final _) =>
-              SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              crossAxisAlignment: config.position.crossAxisAlignment,
-              verticalDirection: config.position.verticalDirection,
-              children: [
-                if (_queue.isNotEmpty)
-                  config.stackIndicatorBuilder
-                          ?.call(context, _queue.length, config) ??
-                      Align(
-                        alignment: config.position.alignment,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '+ ${_queue.length} more',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
+          builder: (final context, final activeNotifications, final _) {
+            debugPrint('''
+---InAppNotificationManager: _buildQueue:::Active Notifications Updated---
+---Queue: ${_queue.length}
+---Active Notifications: ${_activeNotifications.value.length}''');
+
+            return SafeArea(
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: config.position.crossAxisAlignment,
+                verticalDirection: config.position.verticalDirection,
+                children: [
+                  if (_queue.isNotEmpty)
+                    config.stackIndicatorBuilder
+                            ?.call(context, _queue.length, config) ??
+                        Align(
+                          alignment: config.position.alignment,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '+ ${_queue.length} more',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                ...activeNotifications
-                    .map((final inAppNotification) => inAppNotification),
-              ],
-            ),
-          ),
-        ),
-      );
+                  ...activeNotifications
+                      .map((final inAppNotification) => inAppNotification),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _disposeOverlay() {
+    debugPrint('''
+---InAppNotificationManager: _disposeOverlay Called---
+---Queue: ${_queue.length}
+---Active Notifications: ${_activeNotifications.value.length}''');
+
+    if (_queue.isEmpty && _activeNotifications.value.isEmpty) {
+      debugPrint('''
+------Disposed OverlayEntry
+''');
+      _overlayEntry?.remove();
+      _overlayEntry?.dispose();
+      _overlayEntry = null;
+    } else {
+      debugPrint('''
+------Skipped Disposing OverlayEntry
+''');
+    }
+  }
 }

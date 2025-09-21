@@ -38,7 +38,7 @@ class InAppNotification extends StatefulWidget {
         dismissDuration: dismissDuration,
         permanent: permanent,
         showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.check_circle, color: _config.foregroundColor),
+        icon: Icons.check_circle,
         key: key,
       );
 
@@ -64,7 +64,7 @@ class InAppNotification extends StatefulWidget {
         dismissDuration: dismissDuration,
         permanent: permanent,
         showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.error, color: _config.foregroundColor),
+        icon: Icons.error,
         key: key,
       );
 
@@ -90,7 +90,7 @@ class InAppNotification extends StatefulWidget {
         dismissDuration: dismissDuration,
         permanent: permanent,
         showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.warning, color: _config.foregroundColor),
+        icon: Icons.warning,
         key: key,
       );
 
@@ -116,7 +116,7 @@ class InAppNotification extends StatefulWidget {
         dismissDuration: dismissDuration,
         permanent: permanent,
         showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.info_outline, color: _config.foregroundColor),
+        icon: Icons.info,
         key: key,
       );
 
@@ -134,10 +134,10 @@ class InAppNotification extends StatefulWidget {
   /// [InAppNotification.dismissDuration] is set to null or  [Duration.zero]).
   final InAppNotificationAction? action;
 
-  /// Notification icon widget
+  /// Notification [Icon] widget
   ///
-  /// A [Widget] shown besides the [message].
-  final Widget? icon;
+  /// An optional [Icon] widget shown besides the [message].
+  final IconData? icon;
 
   /// Notification background color
   ///
@@ -174,7 +174,8 @@ class _InAppNotificationState extends State<InAppNotification> {
   double get _screenHeight => _screenSize.height;
   double get _screenWidth => _screenSize.width;
 
-  ThemeData get _themeData => Theme.of(context);
+  late ThemeData _themeData;
+
   Color get _resolvedForeground =>
       widget.foregroundColor ??
       _config.foregroundColor ??
@@ -234,44 +235,42 @@ class _InAppNotificationState extends State<InAppNotification> {
   @override
   void initState() {
     super.initState();
-
+    debugPrint('''
+---InAppNotification---${widget.key}: initState called---''');
     _initDismissTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    debugPrint('''
+---InAppNotification---${widget.key}: didChangeDependencies called---''');
+
+    _themeData = Theme.of(context);
+    super.didChangeDependencies();
   }
 
   @override
   void dispose() {
     debugPrint('''
----InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
----Trying to Dispose
-''');
+---InAppNotification---${widget.key}: dispose called---''');
     final index = _instance._activeNotifications.value.indexOf(widget);
     if (index != -1) {
       debugPrint('''
----InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
----Removing at index $index
+------${widget.key}: Removed at index $index
 ''');
       _instance
         .._activeNotifications.value.removeAt(index)
         .._activeNotifications.notifyListeners()
         .._processQueue(context);
-      _dismissTimer?.cancel();
-      _dismissTimer = null;
+      _disposeDismissTimer();
       _isExpanded.dispose();
       _dragOffsetPairNotifier.dispose();
 
       super.dispose();
     } else {
       debugPrint('''
----InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
----Skipping removal at index $index
+------${widget.key}: Skipped removal at index $index
 ''');
-    }
-  }
-
-  @override
-  void setState(final VoidCallback fn) {
-    if (mounted) {
-      super.setState(fn);
     }
   }
 
@@ -432,7 +431,11 @@ class _InAppNotificationState extends State<InAppNotification> {
         child: Row(
           spacing: 4,
           children: [
-            if (_hasIcon) widget.icon!,
+            if (_hasIcon)
+              Icon(
+                widget.icon,
+                color: _resolvedForeground,
+              ),
             Expanded(
               child: Text(
                 widget.message,

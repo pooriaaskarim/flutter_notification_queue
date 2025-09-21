@@ -5,6 +5,7 @@ import '../in_app_notifications.dart';
 /// Configuration for [InAppNotification] and [InAppNotificationManager].
 ///
 /// Customize colors, timings, and behaviors globally or per-instance.
+@immutable
 class InAppNotificationConfig {
   const InAppNotificationConfig({
     this.infoColor = const Color(0xFF51B4FA),
@@ -110,6 +111,41 @@ class InAppNotificationConfig {
             defaultShowCloseButton ?? this.defaultShowCloseButton,
         stackIndicatorBuilder:
             stackIndicatorBuilder ?? this.stackIndicatorBuilder,
+      );
+
+  @override
+  bool operator ==(final Object other) =>
+      other is InAppNotificationConfig &&
+      other.infoColor == infoColor &&
+      other.warningColor == warningColor &&
+      other.errorColor == errorColor &&
+      other.successColor == successColor &&
+      other.foregroundColor == foregroundColor &&
+      other.backgroundColor == backgroundColor &&
+      other.defaultDismissDuration == defaultDismissDuration &&
+      other.position == position &&
+      other.opacity == opacity &&
+      other.elevation == elevation &&
+      other.maxStackSize == maxStackSize &&
+      other.dismissalThreshold == dismissalThreshold &&
+      other.defaultShowCloseButton == defaultShowCloseButton &&
+      other.stackIndicatorBuilder == stackIndicatorBuilder;
+  @override
+  int get hashCode => Object.hash(
+        infoColor,
+        warningColor,
+        errorColor,
+        successColor,
+        foregroundColor,
+        backgroundColor,
+        defaultDismissDuration,
+        position,
+        opacity,
+        elevation,
+        maxStackSize,
+        dismissalThreshold,
+        defaultShowCloseButton,
+        stackIndicatorBuilder,
       );
 }
 
