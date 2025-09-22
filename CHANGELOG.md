@@ -2,7 +2,7 @@
 
 ### 🚀 New Features
 
-* **Configuration System**: Introduced `InAppNotificationConfig` for global customization
+* **Configuration System**: Introduced `flutter_notification_queueConfig` for global customization
     - Global theme configuration for notification appearance
     - Configurable notification positioning (top/bottom, start/center/end)
     - Customizable default colors for success, error, warning, and info states
@@ -10,7 +10,7 @@
     - Configurable maximum stack size for concurrent notifications
     - Custom stack indicator builder support
 * **Enhanced Manager Capabilities**:
-    - Configuration management through `InAppNotificationManager.instance.config`
+    - Configuration management through `flutter_notification_queueManager.instance.config`
     - Dynamic configuration updates at runtime
     - Queue management with configurable stack limits
 
@@ -26,7 +26,7 @@
 ### 📚 Documentation
 
 * Updated README with configuration examples
-* Added comprehensive API documentation for `InAppNotificationConfig`
+* Added comprehensive API documentation for `flutter_notification_queueConfig`
 * Configuration usage examples in demo app
 
 ### 🔧 Technical Improvements
@@ -43,7 +43,7 @@
 
 ### ✨ Core Features
 
-* **InAppNotification Widget**: Beautiful, customizable overlay notifications
+* **flutter_notification_queue Widget**: Beautiful, customizable overlay notifications
     - Custom message and optional title support
     - Icon support with flexible widget system
     - Customizable background and foreground colors
@@ -51,13 +51,13 @@
     - Permanent notifications with manual dismiss
     - Optional close button functionality
 * **Predefined Notification Types**: Ready-to-use styled notifications
-    - `InAppNotification.success()` - Success messages with green theme and check icon
-    - `InAppNotification.error()` - Error messages with red theme and error icon
-    - `InAppNotification.warning()` - Warning messages with orange theme and warning icon
-    - `InAppNotification.info()` - Info messages with blue theme and info icon
+    - `flutter_notification_queue.success()` - Success messages with green theme and check icon
+    - `flutter_notification_queue.error()` - Error messages with red theme and error icon
+    - `flutter_notification_queue.warning()` - Warning messages with orange theme and warning icon
+    - `flutter_notification_queue.info()` - Info messages with blue theme and info icon
 * **Interactive Actions**: Multiple action types for user interaction
-    - `InAppNotificationAction.button()` - Dedicated action button in notification
-    - `InAppNotificationAction.onTap()` - Tap-to-action functionality on entire notification
+    - `flutter_notification_queueAction.button()` - Dedicated action button in notification
+    - `flutter_notification_queueAction.onTap()` - Tap-to-action functionality on entire notification
     - Automatic notification dismissal after action execution
 * **Advanced User Interactions**:
     - **Drag-to-Dismiss**: Swipe notifications away in any direction
@@ -65,7 +65,7 @@
     - **Auto-pause on Expand**: Dismiss timer pauses when notification is expanded
     - **Timer Indicator**: Visual progress bar showing remaining dismiss time
 * **Queue Management System**:
-    - `InAppNotificationManager` singleton for centralized control
+    - `flutter_notification_queueManager` singleton for centralized control
     - Automatic queue processing with stack size management
     - FIFO (First In, First Out) queue system
     - Stack overflow indicator ("+ N more" counter)
@@ -117,7 +117,7 @@
 ### 🎯 Developer Experience
 
 * **Simple API**: Intuitive, Flutter-idiomatic API design
-    - Context extension for easy access: `context.showInAppNotification()`
+    - Context extension for easy access: `context.showflutter_notification_queue()`
     - Builder pattern for complex notifications
     - Sensible defaults for rapid development
 * **Type Safety**: Full Dart type safety with comprehensive enums
@@ -129,11 +129,11 @@
 
 ### 📦 Package Structure
 
-* **Core Library**: `lib/in_app_notifications.dart` - Main package entry point
+* **Core Library**: `lib/flutter_notification_queue.dart` - Main package entry point
 * **Widget System**: Modular component architecture
-    - `InAppNotification` - Main notification widget
-    - `InAppNotificationManager` - Queue and lifecycle management
-    - `InAppNotificationAction` - Action system
+    - `flutter_notification_queue` - Main notification widget
+    - `flutter_notification_queueManager` - Queue and lifecycle management
+    - `flutter_notification_queueAction` - Action system
 * **Utilities**: Helper classes for text direction, responsive design
 * **Extensions**: Convenient context extensions for developer productivity
 

@@ -1,211 +1,74 @@
-part of 'in_app_notification_manager.dart';
+import 'dart:async';
 
-InAppNotificationConfig get _config => _instance.config;
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
 
-class InAppNotification extends StatefulWidget {
-  const InAppNotification({
-    required this.message,
-    this.icon,
-    this.title,
-    this.action,
-    this.backgroundColor,
-    this.foregroundColor,
-    this.dismissDuration,
-    this.permanent = false,
-    this.showCloseIcon,
-    super.key,
+import '../../flutter_notification_queue.dart';
+import '../utils/utils.dart';
+
+part 'notification_action.dart';
+part 'notification_configuration.dart';
+part 'type_defts.dart';
+
+class NotificationWidget extends StatefulWidget {
+  const NotificationWidget({
+    required UniqueKey super.key,
+    required this.configuration,
+    this.notificationChannel = 'default',
   });
+  final String notificationChannel;
 
-  /// Bootstraps [InAppNotification] with success configuration
-  ///
-  /// [backgroundColor] is set to [InAppNotificationConfig.successColor],
-  /// [foregroundColor] is set to [InAppNotificationConfig.foregroundColor].
-  factory InAppNotification.success({
-    required final String message,
-    final String? title,
-    final InAppNotificationAction? action,
-    final Duration? dismissDuration,
-    final bool permanent = false,
-    final Key? key,
-    final bool? showCloseIcon,
-  }) =>
-      InAppNotification(
-        backgroundColor: _config.successColor,
-        foregroundColor: _config.foregroundColor,
-        title: title,
-        action: action,
-        message: message,
-        dismissDuration: dismissDuration,
-        permanent: permanent,
-        showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.check_circle, color: _config.foregroundColor),
-        key: key,
-      );
-
-  /// Bootstraps [InAppNotification] with error configuration
-  ///
-  /// [backgroundColor] is set to [InAppNotificationConfig.errorColor].
-  /// [foregroundColor] is set to [InAppNotificationConfig.foregroundColor].
-  factory InAppNotification.error({
-    required final String message,
-    final String? title,
-    final InAppNotificationAction? action,
-    final Duration? dismissDuration,
-    final bool permanent = false,
-    final bool? showCloseIcon,
-    final Key? key,
-  }) =>
-      InAppNotification(
-        backgroundColor: _config.errorColor,
-        foregroundColor: _config.foregroundColor,
-        title: title,
-        action: action,
-        message: message,
-        dismissDuration: dismissDuration,
-        permanent: permanent,
-        showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.error, color: _config.foregroundColor),
-        key: key,
-      );
-
-  /// Bootstrap [InAppNotification] with warning configuration
-  ///
-  /// [backgroundColor] is set to [InAppNotificationConfig.warningColor].
-  /// [foregroundColor] is set to [InAppNotificationConfig.foregroundColor].
-  factory InAppNotification.warning({
-    required final String message,
-    final String? title,
-    final InAppNotificationAction? action,
-    final Duration? dismissDuration,
-    final bool permanent = false,
-    final bool? showCloseIcon,
-    final Key? key,
-  }) =>
-      InAppNotification(
-        backgroundColor: _config.warningColor,
-        foregroundColor: _config.foregroundColor,
-        title: title,
-        action: action,
-        message: message,
-        dismissDuration: dismissDuration,
-        permanent: permanent,
-        showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.warning, color: _config.foregroundColor),
-        key: key,
-      );
-
-  /// Bootstrap [InAppNotification] with info configuration
-  ///
-  /// [backgroundColor] is set to [InAppNotificationConfig.infoColor].
-  /// [foregroundColor] is set to [InAppNotificationConfig.foregroundColor].
-  factory InAppNotification.info({
-    required final String message,
-    final String? title,
-    final InAppNotificationAction? action,
-    final Duration? dismissDuration,
-    final bool permanent = false,
-    final bool? showCloseIcon,
-    final Key? key,
-  }) =>
-      InAppNotification(
-        backgroundColor: _config.infoColor,
-        foregroundColor: _config.foregroundColor,
-        title: title,
-        action: action,
-        message: message,
-        dismissDuration: dismissDuration,
-        permanent: permanent,
-        showCloseIcon: showCloseIcon,
-        icon: Icon(Icons.info_outline, color: _config.foregroundColor),
-        key: key,
-      );
-
-  /// Notification title
-  final String? title;
-
-  /// Notification message Text
-  final String message;
-
-  /// Notification action callback of type [InAppNotificationAction]
-  ///
-  /// A [InAppNotificationAction] can be create by
-  /// [InAppNotificationAction.button] or [InAppNotificationAction.onTap].
-  /// An action is mandatory for a permanent [InAppNotification] (if
-  /// [InAppNotification.dismissDuration] is set to null or  [Duration.zero]).
-  final InAppNotificationAction? action;
-
-  /// Notification icon widget
-  ///
-  /// A [Widget] shown besides the [message].
-  final Widget? icon;
-
-  /// Notification background color
-  ///
-  /// Colors notification body.
-  /// Defaults to [InAppNotificationConfig.backgroundColor].
-  final Color? backgroundColor;
-
-  /// Notification foreground color.
-  ///
-  /// Colors notification texts and icons.
-  /// Defaults to [InAppNotificationConfig.foregroundColor].
-  final Color? foregroundColor;
-
-  /// Whether the Close Button should be shown.
-  final bool? showCloseIcon;
-
-  /// Notification dismiss duration
-  ///
-  /// Defaults to [InAppNotificationConfig.defaultDismissDuration].
-  final Duration? dismissDuration;
-
-  /// Whether the notification is *Permanent*
-  ///
-  /// Skips [InAppNotificationConfig.defaultDismissDuration]
-  /// and [dismissDuration] if true.
-  final bool permanent;
+  final NotificationConfiguration configuration;
 
   @override
-  State<InAppNotification> createState() => _InAppNotificationState();
+  State<StatefulWidget> createState() => _NotificationWidgetState();
 }
 
-class _InAppNotificationState extends State<InAppNotification> {
+class _NotificationWidgetState extends State<NotificationWidget> {
+  NotificationConfiguration get _notificationConfig => widget.configuration;
+  NotificationChannel get _channel =>
+      NotificationManager.instance.getNotificationChannel(widget);
+  NotificationQueue get _queue => NotificationManager.instance.getQueue(widget);
+
   Size get _screenSize => MediaQuery.of(context).size;
   double get _screenHeight => _screenSize.height;
   double get _screenWidth => _screenSize.width;
 
-  ThemeData get _themeData => Theme.of(context);
+  late ThemeData _themeData;
+
   Color get _resolvedForeground =>
-      widget.foregroundColor ??
-      _config.foregroundColor ??
+      _notificationConfig.foregroundColor ??
+      _channel.defaultForegroundColor ??
       _themeData.colorScheme.onPrimary;
   Color get _resolvedBackground =>
-      widget.backgroundColor ??
-      _config.backgroundColor ??
+      _notificationConfig.backgroundColor ??
+      _channel.defaultBackgroundColor ??
       _themeData.colorScheme.primary;
 
-  double get _opacity => _config.opacity;
-  double get _elevation => _config.elevation;
+  // double get _opacity => _channelConfig.opacity;
+  double get _opacity => 0.8;
+  // double get _elevation => _channelConfig.elevation;
+  double get _elevation => 3;
 
   BorderRadius get _borderRadius =>
       const BorderRadius.all(Radius.circular(4.0));
 
-  Duration get _resolvedDismissDuration =>
-      widget.dismissDuration ?? _config.defaultDismissDuration;
+  Duration? get _resolvedDismissDuration =>
+      _notificationConfig.dismissDuration ?? _channel.defaultDismissDuration;
 
-  double get _dismissalThreshold => _config.dismissalThreshold;
+  double get _dismissalThreshold => _queue.dismissalThreshold;
 
-  bool get _hasTitle => widget.title != null;
+  bool get _hasTitle => _notificationConfig.title != null;
 
-  bool get _hasIcon => widget.icon != null;
+  bool get _hasIcon => _notificationConfig.icon != null;
 
   bool get _hasOnTapAction =>
-      widget.action != null &&
-      widget.action!.type == InAppNotificationActionType.onTap;
+      _notificationConfig.action != null &&
+      _notificationConfig.action!.type == NotificationActionType.onTap;
 
   bool get _hasButtonAction =>
-      widget.action != null &&
-      widget.action!.type == InAppNotificationActionType.button;
+      _notificationConfig.action != null &&
+      _notificationConfig.action!.type == NotificationActionType.button;
 
   /// Whether user expanded the notification.
   ///
@@ -227,57 +90,54 @@ class _InAppNotificationState extends State<InAppNotification> {
 
   /// Dismiss Timer
   ///
-  /// Manages disposal based on [InAppNotification.dismissDuration]
-  /// and [InAppNotification.permanent].
+  /// Manages disposal based on [NotificationConfiguration.dismissDuration]
   Timer? _dismissTimer;
 
   @override
   void initState() {
     super.initState();
-
+    debugPrint('''
+---Notification---${widget.key}: initState called---''');
     _initDismissTimer();
   }
 
   @override
-  void dispose() {
+  void didChangeDependencies() {
     debugPrint('''
----InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
----Trying to Dispose
-''');
-    final index = _instance._activeNotifications.value.indexOf(widget);
-    if (index != -1) {
-      debugPrint('''
----InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
----Removing at index $index
-''');
-      _instance
-        .._activeNotifications.value.removeAt(index)
-        .._activeNotifications.notifyListeners()
-        .._processQueue(context);
-      _dismissTimer?.cancel();
-      _dismissTimer = null;
-      _isExpanded.dispose();
-      _dragOffsetPairNotifier.dispose();
+---Notification---${widget.key}: didChangeDependencies called---''');
 
-      super.dispose();
-    } else {
-      debugPrint('''
----InAppNotification---Key:${widget.key}---HashCode:${widget.hashCode}---
----Skipping removal at index $index
-''');
-    }
+    _themeData = Theme.of(context);
+    super.didChangeDependencies();
   }
 
   @override
-  void setState(final VoidCallback fn) {
-    if (mounted) {
-      super.setState(fn);
-    }
+  void dispose() {
+//     debugPrint('''
+// ---Notification---${widget.key}: dispose called---''');
+//     final index = _instance._activeNotifications.value.indexOf(widget);
+//     if (index != -1) {
+//       debugPrint('''
+// ------${widget.key}: Removed at index $index
+// ''');
+//       _instance
+//         .._activeNotifications.value.removeAt(index)
+//         .._activeNotifications.notifyListeners()
+//         .._processQueue(context);
+//       _disposeDismissTimer();
+//       _isExpanded.dispose();
+//       _dragOffsetPairNotifier.dispose();
+//
+//       super.dispose();
+//     } else {
+//       debugPrint('''
+// ------${widget.key}: Skipped removal at index $index
+// ''');
+//     }
   }
 
   void _initDismissTimer() {
-    if (!widget.permanent) {
-      _dismissTimer = Timer(_resolvedDismissDuration, () {
+    if (_resolvedDismissDuration != null) {
+      _dismissTimer = Timer(_resolvedDismissDuration!, () {
         if (mounted && !_isExpanded.value) {
           dispose();
         }
@@ -373,7 +233,7 @@ class _InAppNotificationState extends State<InAppNotification> {
                       borderRadius: _borderRadius,
                       onTap: _hasOnTapAction
                           ? () {
-                              widget.action!.onPressed();
+                              _notificationConfig.action!.onPressed();
                               dispose();
                             }
                           : null,
@@ -414,9 +274,10 @@ class _InAppNotificationState extends State<InAppNotification> {
 
   Widget _getTitle({required final bool isExpanded}) => _hasTitle
       ? Directionality(
-          textDirection: Utils.estimateDirectionOfText(widget.title ?? ''),
+          textDirection:
+              Utils.estimateDirectionOfText(_notificationConfig.title ?? ''),
           child: Text(
-            widget.title ?? '',
+            _notificationConfig.title ?? '',
             style: _themeData.textTheme.titleMedium?.copyWith(
               color: _resolvedForeground,
               fontWeight: FontWeight.bold,
@@ -428,14 +289,15 @@ class _InAppNotificationState extends State<InAppNotification> {
       : const SizedBox.shrink();
 
   Widget _getContent({required final bool isExpanded}) => Directionality(
-        textDirection: Utils.estimateDirectionOfText(widget.message),
+        textDirection:
+            Utils.estimateDirectionOfText(_notificationConfig.message),
         child: Row(
           spacing: 4,
           children: [
-            if (_hasIcon) widget.icon!,
+            if (_hasIcon) _notificationConfig.icon!,
             Expanded(
               child: Text(
-                widget.message,
+                _notificationConfig.message,
                 style: _themeData.textTheme.bodyMedium?.copyWith(
                   color: _resolvedForeground,
                 ),
@@ -450,18 +312,18 @@ class _InAppNotificationState extends State<InAppNotification> {
   Widget _getActionButton() => _hasButtonAction
       ? Directionality(
           textDirection: Utils.estimateDirectionOfText(
-            widget.message,
+            _notificationConfig.message,
           ),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               child: Text(
-                widget.action!.label!,
+                _notificationConfig.action!.label!,
                 style: _themeData.textTheme.labelMedium
                     ?.copyWith(color: _resolvedForeground),
               ),
               onPressed: () {
-                widget.action!.onPressed();
+                _notificationConfig.action!.onPressed();
                 dispose();
               },
             ),
@@ -470,13 +332,13 @@ class _InAppNotificationState extends State<InAppNotification> {
       : const SizedBox.shrink();
 
   Widget _timerIndicator({required final bool isExpanded}) =>
-      !widget.permanent && _dismissTimer != null && !isExpanded
+      _dismissTimer != null && !isExpanded
           ? PositionedDirectional(
               start: 0,
               end: 0,
               bottom: 0,
               child: TweenAnimationBuilder(
-                duration: _resolvedDismissDuration,
+                duration: _resolvedDismissDuration!,
                 tween: Tween<double>(begin: 0.0, end: 1.0),
                 curve: Curves.easeInOut,
                 builder: (final context, final value, final child) => Padding(
@@ -509,7 +371,7 @@ class _InAppNotificationState extends State<InAppNotification> {
 
   Widget _getExpandButton({required final bool isExpanded}) => Directionality(
         textDirection: Utils.estimateDirectionOfText(
-          widget.title ?? widget.message,
+          _notificationConfig.title ?? _notificationConfig.message,
         ),
         child: AnimatedPositionedDirectional(
           duration: const Duration(milliseconds: 380),
@@ -540,13 +402,12 @@ class _InAppNotificationState extends State<InAppNotification> {
         ),
       );
 
-  bool get _hasCloseButton =>
-      (widget.showCloseIcon ?? false) || _config.defaultShowCloseButton;
+  bool get _hasCloseButton => _queue.showCloseButton;
 
   Widget _getCloseButton() => _hasCloseButton
       ? Directionality(
           textDirection: Utils.estimateDirectionOfText(
-            widget.title ?? widget.message,
+            _notificationConfig.title ?? _notificationConfig.message,
           ),
           child: PositionedDirectional(
             top: 8,
@@ -568,12 +429,12 @@ class _InAppNotificationState extends State<InAppNotification> {
         )
       : const SizedBox.shrink();
 
-  bool get _hasPinnedIcon => widget.permanent;
+  bool get _hasPinnedIcon => _notificationConfig.dismissDuration == null;
 
   Widget _getPinnedIcon() => _hasPinnedIcon
       ? Directionality(
           textDirection: Utils.estimateDirectionOfText(
-            widget.title ?? widget.message,
+            _notificationConfig.title ?? _notificationConfig.message,
           ),
           child: PositionedDirectional(
             top: 8,

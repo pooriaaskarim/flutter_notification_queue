@@ -1,4 +1,4 @@
-# in_app_notification_example
+# flutter_notification_queue_example
 
 A new Flutter project.
 
