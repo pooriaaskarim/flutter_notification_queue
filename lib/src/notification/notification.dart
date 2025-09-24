@@ -181,6 +181,8 @@ class _NotificationWidgetState extends State<NotificationWidget>
     debugPrint('''
 ---------------Notification${widget.key}: initState called---------------''');
     super.initState();
+    _showCloseButton.value =
+        widget.queue.style.showCloseButton == QueueCloseButton.always;
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -188,9 +190,9 @@ class _NotificationWidgetState extends State<NotificationWidget>
       reverseDuration: const Duration(milliseconds: 240),
     )..forward();
 
-    // widget.channel =
-    //     NotificationManager.instance.getChannel(widget);
-    // widget.queue = NotificationManager.instance.getQueue(_resolvedPosition);
+    debugPrint('''
+elevation is $_elevation
+showCloseButton is ${widget.queue.style.showCloseButton}''');
     _initDismissTimer();
   }
 
@@ -241,134 +243,144 @@ class _NotificationWidgetState extends State<NotificationWidget>
 
   @override
   Widget build(final BuildContext context) => SlideTransition(
-      position: Tween<Offset>(
-        begin: Offset(
-            0,
-            widget.queue.position.verticalDirection == VerticalDirection.down
-                ? -1.0
-                : 1.0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-          parent: _animationController, curve: Curves.easeInOut)),
-      child: FadeTransition(
-        opacity: _animationController,
-        child: ValueListenableBuilder(
-          valueListenable: _dragOffsetPairNotifier,
-          builder: (final context, final dragOffsetPair, final child) {
-            final passedVerticalThreshold = dragOffsetPair != null &&
-                (dragOffsetPair.global.dy < _dismissalThreshold ||
-                    dragOffsetPair.global.dy >
-                        _screenHeight - _dismissalThreshold);
-            final passedHorizontalThreshold = dragOffsetPair != null &&
-                (dragOffsetPair.global.dx < _dismissalThreshold ||
-                    dragOffsetPair.global.dx >
-                        _screenWidth - _dismissalThreshold);
+        position: Tween<Offset>(
+          begin: widget.queue.position.slideTransitionOffset,
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOut,
+          ),
+        ),
+        child: FadeTransition(
+          opacity: _animationController,
+          child: ValueListenableBuilder(
+            valueListenable: _dragOffsetPairNotifier,
+            builder: (final context, final dragOffsetPair, final child) {
+              final passedVerticalThreshold = dragOffsetPair != null &&
+                  (dragOffsetPair.global.dy < _dismissalThreshold ||
+                      dragOffsetPair.global.dy >
+                          _screenHeight - _dismissalThreshold);
+              final passedHorizontalThreshold = dragOffsetPair != null &&
+                  (dragOffsetPair.global.dx < _dismissalThreshold ||
+                      dragOffsetPair.global.dx >
+                          _screenWidth - _dismissalThreshold);
 
-            final passedThreshold =
-                passedVerticalThreshold || passedHorizontalThreshold;
+              final passedThreshold =
+                  passedVerticalThreshold || passedHorizontalThreshold;
 
-            return GestureDetector(
-              onPanStart: (final details) {
-                _panDragStartPosition = details.globalPosition;
-                _disposeDismissTimer();
-              },
-              onPanUpdate: (final details) {
-                if (_panDragStartPosition != null) {
-                  final offsetFromOrigin =
-                      details.globalPosition - _panDragStartPosition!;
-                  _dragOffsetPairNotifier.value = OffsetPair(
-                    local: offsetFromOrigin,
-                    global: details.globalPosition,
-                  );
-                }
-              },
-              onPanEnd: (final details) {
-                final currentGlobalOffset = dragOffsetPair?.global;
-                if (currentGlobalOffset != null) {
-                  final passedVerticalThreshold =
-                      currentGlobalOffset.dy < _dismissalThreshold ||
-                          currentGlobalOffset.dy >
-                              _screenHeight - _dismissalThreshold;
-                  final passedHorizontalThreshold =
-                      currentGlobalOffset.dx < _dismissalThreshold ||
-                          currentGlobalOffset.dx >
-                              _screenWidth - _dismissalThreshold;
-
-                  final passedThreshold =
-                      passedVerticalThreshold || passedHorizontalThreshold;
-
-                  if (passedThreshold) {
-                    dismiss();
-                    return;
+              return GestureDetector(
+                onPanStart: (final details) {
+                  _panDragStartPosition = details.globalPosition;
+                  _disposeDismissTimer();
+                },
+                onPanUpdate: (final details) {
+                  if (_panDragStartPosition != null) {
+                    final offsetFromOrigin =
+                        details.globalPosition - _panDragStartPosition!;
+                    _dragOffsetPairNotifier.value = OffsetPair(
+                      local: offsetFromOrigin,
+                      global: details.globalPosition,
+                    );
                   }
-                }
+                },
+                onPanEnd: (final details) {
+                  final currentGlobalOffset = dragOffsetPair?.global;
+                  if (currentGlobalOffset != null) {
+                    final passedVerticalThreshold =
+                        currentGlobalOffset.dy < _dismissalThreshold ||
+                            currentGlobalOffset.dy >
+                                _screenHeight - _dismissalThreshold;
+                    final passedHorizontalThreshold =
+                        currentGlobalOffset.dx < _dismissalThreshold ||
+                            currentGlobalOffset.dx >
+                                _screenWidth - _dismissalThreshold;
 
-                _dragOffsetPairNotifier.value = null;
-                _panDragStartPosition = null;
-                _initDismissTimer();
-              },
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 480),
-                curve: Curves.easeOut,
-                opacity: passedThreshold ? 0.0 : 1.0,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
+                    final passedThreshold =
+                        passedVerticalThreshold || passedHorizontalThreshold;
+
+                    if (passedThreshold) {
+                      dismiss();
+                      return;
+                    }
+                  }
+
+                  _dragOffsetPairNotifier.value = null;
+                  _panDragStartPosition = null;
+                  _initDismissTimer();
+                },
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 480),
                   curve: Curves.easeOut,
-                  transform: dragOffsetPair == null
-                      ? null
-                      : Transform.translate(
-                          offset: dragOffsetPair.local,
-                        ).transform,
-                  constraints: Utils.horizontalConstraints(context),
-                  child: ValueListenableBuilder(
-                    valueListenable: _isExpanded,
-                    builder: (final context, final isExpanded, final child) =>
-                        Material(
-                      borderRadius: _borderRadius,
-                      color: _resolvedBackground.withValues(alpha: _opacity),
-                      elevation: _elevation,
-                      child: InkWell(
+                  opacity: passedThreshold ? 0.2 : 1.0,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    curve: Curves.easeOut,
+                    transform: dragOffsetPair == null
+                        ? null
+                        : Transform.translate(
+                            offset: dragOffsetPair.local,
+                          ).transform,
+                    constraints: Utils.horizontalConstraints(context),
+                    child: ValueListenableBuilder(
+                      valueListenable: _isExpanded,
+                      builder: (final context, final isExpanded, final child) =>
+                          Material(
                         borderRadius: _borderRadius,
-                        onTap: _hasOnTapAction
-                            ? () {
-                                widget.action!.onPressed();
-                                dismiss();
-                              }
-                            : null,
-                        child: Stack(
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOut,
-                              padding: EdgeInsets.symmetric(
-                                vertical: isExpanded ? 16 : 8,
-                                horizontal: 36,
+                        elevation: _elevation,
+                        shadowColor: _themeData.shadowColor,
+                        type: MaterialType.canvas,
+                        color: _resolvedBackground.withValues(alpha: _opacity),
+                        child: InkWell(
+                          borderRadius: _borderRadius,
+                          onHover: widget.queue.style.showCloseButton ==
+                                  QueueCloseButton.onHover
+                              ? (final isHovering) {
+                                  _showCloseButton.value = isHovering;
+                                }
+                              : null,
+                          onTap: () {
+                            if (_hasOnTapAction) {
+                              widget.action!.onPressed();
+                              dismiss();
+                            }
+                          },
+                          child: Stack(
+                            children: [
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 220),
+                                curve: Curves.easeOut,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: isExpanded ? 16 : 8,
+                                  horizontal: 36,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    _getTitle(isExpanded: isExpanded),
+                                    _getContent(isExpanded: isExpanded),
+                                    _getActionButton(),
+                                  ],
+                                ),
                               ),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _getTitle(isExpanded: isExpanded),
-                                  _getContent(isExpanded: isExpanded),
-                                  _getActionButton(),
-                                ],
-                              ),
-                            ),
-                            _timerIndicator(isExpanded: isExpanded),
-                            _getExpandButton(isExpanded: isExpanded),
-                            _getCloseButton(),
-                          ],
+                              _timerIndicator(isExpanded: isExpanded),
+                              _getExpandButton(isExpanded: isExpanded),
+                              _getCloseButton(),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-      ));
+      );
 
   Widget _getTitle({required final bool isExpanded}) => _hasTitle
       ? Directionality(
@@ -498,30 +510,33 @@ class _NotificationWidgetState extends State<NotificationWidget>
         ),
       );
 
-  bool get _hasCloseButton => widget.queue.showCloseButton;
+  final _showCloseButton = ValueNotifier(false);
 
-  Widget _getCloseButton() => _hasCloseButton
-      ? Directionality(
-          textDirection: Utils.estimateDirectionOfText(
-            widget.title ?? widget.message,
-          ),
-          child: PositionedDirectional(
-            top: 8,
-            end: 4,
-            child: SizedBox.square(
-              dimension: 16,
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-                onPressed: dismiss,
-                icon: Icon(
-                  Icons.close,
-                  color: _resolvedForeground,
-                  size: 16,
+  Widget _getCloseButton() => ValueListenableBuilder(
+        valueListenable: _showCloseButton,
+        builder: (final context, showCloseButton, child) => showCloseButton
+            ? Directionality(
+                textDirection: Utils.estimateDirectionOfText(
+                  widget.title ?? widget.message,
                 ),
-              ),
-            ),
-          ),
-        )
-      : const SizedBox.shrink();
+                child: PositionedDirectional(
+                  top: 8,
+                  end: 4,
+                  child: SizedBox.square(
+                    dimension: 16,
+                    child: IconButton(
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      onPressed: dismiss,
+                      icon: Icon(
+                        Icons.close,
+                        color: _resolvedForeground,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : const SizedBox.shrink(),
+      );
 }

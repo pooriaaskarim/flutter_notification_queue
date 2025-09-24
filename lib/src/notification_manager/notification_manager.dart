@@ -23,9 +23,7 @@ class NotificationManager {
     final int maxStackSize = 3,
     final double dismissalThreshold = 50.0,
     final PendingIndicatorBuilder? queueIndicatorBuilder,
-    final double opacity = 0.8,
-    final double elevation = 3.0,
-    final bool showCloseButton = true,
+    final QueueStyle queueStyle = const FlatQueueStyle(),
     final bool vibrate = false,
     final Color? foregroundColor,
     final Color? backgroundColor,
@@ -50,14 +48,11 @@ class NotificationManager {
 
     _channels.addAll({defaultChannel, ...?channels});
     final defaultQueue = position.generateQueue(
-      margin: margin,
+      style: queueStyle,
       spacing: spacing,
       maxStackSize: maxStackSize,
       dismissalThreshold: dismissalThreshold,
       queueIndicatorBuilder: queueIndicatorBuilder,
-      opacity: opacity,
-      elevation: elevation,
-      showCloseButton: showCloseButton,
     );
     _queues.addAll({defaultQueue, ...?queues});
     NotificationManager._initialized = true;
@@ -118,7 +113,11 @@ class NotificationManager {
       },
       orElse: () {
         final defaultQueue = _queues.first;
-        return position.generateQueueFrom(defaultQueue);
+
+        final generateQueueFromDefault =
+            position.generateQueueFrom(defaultQueue);
+        _queues.add(generateQueueFromDefault);
+        return generateQueueFromDefault;
       },
     );
 

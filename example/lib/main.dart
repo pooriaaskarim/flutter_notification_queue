@@ -12,7 +12,6 @@ void main() {
 
   NotificationManager.initialize(
     position: QueuePosition.topCenter,
-    showCloseButton: false,
     margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48.0),
     maxStackSize: 3,
     dismissDuration: const Duration(seconds: 3),
@@ -22,17 +21,19 @@ void main() {
           padding: const EdgeInsetsGeometry.all(8),
           alignment: AlignmentGeometry.bottomLeft,
           color: Colors.blueAccent,
-          child: Text('$pendingNotificationsCount'),
+          width: 32,
+          child: FittedBox(child: Text('$pendingNotificationsCount')),
         );
       }
       return null;
     },
     queues: {
       BottomCenterQueue(
-        maxStackSize: 1,
-        margin: null,
-        showCloseButton: true,
-      ),
+          maxStackSize: 1,
+          style: const FilledQueueStyle(
+            docked: true,
+            showCloseButton: QueueCloseButton.onHover,
+          )),
     },
     channels: {
       const NotificationChannel(
@@ -45,7 +46,7 @@ void main() {
       ),
       const NotificationChannel(
         name: 'success',
-        position: QueuePosition.topCenter,
+        // position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 3),
         defaultBackgroundColor: Colors.green,
         defaultForegroundColor: Colors.white,
@@ -53,7 +54,7 @@ void main() {
       ),
       const NotificationChannel(
         name: 'error',
-        position: QueuePosition.topCenter,
+        // position: QueuePosition.topCenter,
         defaultDismissDuration: null,
         defaultBackgroundColor: Colors.red,
         defaultForegroundColor: Colors.white,
@@ -61,7 +62,7 @@ void main() {
       ),
       const NotificationChannel(
         name: 'info',
-        position: QueuePosition.topCenter,
+        // position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 3),
         defaultBackgroundColor: Colors.blue,
         defaultForegroundColor: Colors.white,
@@ -69,7 +70,7 @@ void main() {
       ),
       const NotificationChannel(
         name: 'warning',
-        position: QueuePosition.topCenter,
+        // position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 5),
         defaultBackgroundColor: Colors.orange,
         defaultForegroundColor: Colors.white,
@@ -131,14 +132,13 @@ class DemoPage extends StatelessWidget {
           title: 'Success Message',
           icon: Icons.check_circle,
           color: Colors.green,
-          onPressed: (final context) => NotificationManager.instance.show(
+          onPressed: (final context) {
             NotificationWidget(
               message: 'Operation completed successfully!',
               title: 'Success',
               channelName: 'success',
-            ),
-            context,
-          ),
+            ).show(context);
+          },
         ),
 
         NotificationExample(
