@@ -1,6 +1,15 @@
-part of 'queue_manager.dart';
+import 'dart:collection';
 
-///  of [QueueManager]s, based on [AlignmentDirectional].
+import 'package:flutter/material.dart';
+
+import '../../flutter_notification_queue.dart';
+import '../utils/utils.dart';
+
+part 'type_defs.dart';
+part 'queue_manager.dart';
+part 'extensions.dart';
+
+///  [NotificationQueue]s based on [QueuePosition].
 ///
 /// - [TopStartQueue]
 /// - [TopCenterQueue]
@@ -18,12 +27,12 @@ part of 'queue_manager.dart';
 /// ```
 /// to configure Queue layouts.
 ///
-/// If no [NotificationQueue] is provided for a [AlignmentDirectional],
+/// If no [NotificationQueue] is provided for a [QueuePosition],
 /// defaults to a that positions constructor defaults.
-@immutable
+
 sealed class NotificationQueue {
-  const NotificationQueue({
-    required this.alignment,
+  NotificationQueue({
+    required this.position,
     required this.maxStackSize,
     required this.dismissalThreshold,
     required this.margin,
@@ -33,8 +42,8 @@ sealed class NotificationQueue {
     required this.showCloseButton,
     required this.queueIndicatorBuilder,
   });
-
-  final AlignmentDirectional alignment;
+//todo(Pooriaaskarim): Docstrings
+  final QueuePosition position;
   final EdgeInsets? margin;
   final double spacing;
   final int maxStackSize;
@@ -43,142 +52,179 @@ sealed class NotificationQueue {
   final double dismissalThreshold;
 
   /// Custom builder for the notification stack indicator.
-  final QueueIndicatorBuilder? queueIndicatorBuilder;
+  final PendingIndicatorBuilder? queueIndicatorBuilder;
 
   /// Default opacity for notification background.
-  final double? opacity;
+  final double opacity;
 
   /// Default elevation for notification cards.
-  final double? elevation;
+  final double elevation;
 
   /// Whether to show close button.
   final bool showCloseButton;
 
+  QueueManager? _queueManager;
+
+  QueueManager get manager => _queueManager ??= QueueManager(this);
+
+//   void queue(
+//     final NotificationWidget notification,
+//     final BuildContext context,
+//   ) {
+//     debugPrint('''
+// ------$this:::queue------
+// ---notification: $notification
+// ---context: $context
+// ---${_queueManager == null ? 'QueueManager Not Initialized. Initializing.' : 'QueueManager available.'}
+// ''');
+//
+//     _queueManager ??= QueueManager(this);
+//     _queueManager!.add(notification, context);
+//   }
+
+  // void dismiss(
+  //   final NotificationWidget notification,
+  //   final BuildContext context,
+  // ) {
+  //   if (_queueManager == null) {
+  //     return;
+  //   }
+  //   _queueManager!.dismiss(notification, context);
+  //   final shouldDispose = _queueManager!.needsDisposal();
+  //   if (shouldDispose) {
+  //     _queueManager!.dispose();
+  //     _queueManager = null;
+  //   }
+  //   return;
+  // }
+
+  @override
+  String toString() => '$runtimeType';
   @override
   bool operator ==(final Object other) {
     if (identical(this, other)) {
       return true;
     }
-    return other is NotificationQueue && other.alignment == alignment;
+    return other is NotificationQueue && other.position == position;
   }
 
   @override
-  int get hashCode => alignment.hashCode;
+  int get hashCode => position.hashCode;
 }
 
 final class TopStartQueue extends NotificationQueue {
-  const TopStartQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  TopStartQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.topStart);
+  }) : super(position: QueuePosition.topStart);
 }
 
 final class TopCenterQueue extends NotificationQueue {
-  const TopCenterQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  TopCenterQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.topCenter);
+  }) : super(position: QueuePosition.topCenter);
 }
 
 final class TopEndQueue extends NotificationQueue {
-  const TopEndQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  TopEndQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.topEnd);
+  }) : super(position: QueuePosition.topEnd);
 }
 
 final class CenterStartQueue extends NotificationQueue {
-  const CenterStartQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  CenterStartQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.centerStart);
+  }) : super(position: QueuePosition.centerStart);
 }
 
 final class CenterQueue extends NotificationQueue {
-  const CenterQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  CenterQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.center);
+  }) : super(position: QueuePosition.center);
 }
 
 final class CenterEndQueue extends NotificationQueue {
-  const CenterEndQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  CenterEndQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.centerEnd);
+  }) : super(position: QueuePosition.centerEnd);
 }
 
 final class BottomStartQueue extends NotificationQueue {
-  const BottomStartQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  BottomStartQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.bottomStart);
+  }) : super(position: QueuePosition.bottomStart);
 }
 
 final class BottomCenterQueue extends NotificationQueue {
-  const BottomCenterQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  BottomCenterQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.bottomCenter);
+  }) : super(position: QueuePosition.bottomCenter);
 }
 
 final class BottomEndQueue extends NotificationQueue {
-  const BottomEndQueue({
-    super.margin = const EdgeInsets.all(8.0),
+  BottomEndQueue({
+    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-    super.opacity,
-    super.elevation,
+    super.opacity = 0.8,
+    super.elevation = 3,
     super.showCloseButton = true,
-  }) : super(alignment: AlignmentDirectional.bottomEnd);
+  }) : super(position: QueuePosition.bottomEnd);
 }

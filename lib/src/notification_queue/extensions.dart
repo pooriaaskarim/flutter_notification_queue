@@ -1,52 +1,198 @@
-part of 'queue_manager.dart';
+part of 'notification_queue.dart';
 
-extension AlignmentDirectionalExtension on NotificationQueue {
+enum QueuePosition {
+  topStart,
+  topCenter,
+  topEnd,
+  centerStart,
+  center,
+  centerEnd,
+  bottomStart,
+  bottomCenter,
+  bottomEnd;
+
+  NotificationQueue queue({
+    required final double spacing,
+    required final int maxStackSize,
+    required final double dismissalThreshold,
+    required final bool showCloseButton,
+    final PendingIndicatorBuilder? queueIndicatorBuilder,
+    final double opacity = 0.8,
+    final double elevation = 3,
+    final EdgeInsets? margin,
+  }) {
+    switch (this) {
+      case topStart:
+        return TopStartQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case topCenter:
+        return TopCenterQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case topEnd:
+        return TopEndQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case centerStart:
+        return CenterStartQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case center:
+        return CenterQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case centerEnd:
+        return CenterEndQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case bottomStart:
+        return BottomStartQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case bottomCenter:
+        return BottomCenterQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+      case bottomEnd:
+        return BottomEndQueue(
+          margin: margin,
+          spacing: spacing,
+          maxStackSize: maxStackSize,
+          dismissalThreshold: dismissalThreshold,
+          queueIndicatorBuilder: queueIndicatorBuilder,
+          opacity: opacity,
+          elevation: elevation,
+          showCloseButton: showCloseButton,
+        );
+    }
+  }
+
+  AlignmentDirectional get alignment {
+    switch (this) {
+      case topCenter:
+        return AlignmentDirectional.topCenter;
+      case topStart:
+        return AlignmentDirectional.topStart;
+      case topEnd:
+        return AlignmentDirectional.topEnd;
+      case center:
+        return AlignmentDirectional.center;
+      case centerStart:
+        return AlignmentDirectional.centerStart;
+      case centerEnd:
+        return AlignmentDirectional.centerEnd;
+      case bottomCenter:
+        return AlignmentDirectional.bottomCenter;
+      case bottomStart:
+        return AlignmentDirectional.bottomStart;
+      case bottomEnd:
+        return AlignmentDirectional.bottomCenter;
+    }
+  }
+
   MainAxisAlignment get mainAxisAlignment {
     switch (this) {
-      case TopCenterQueue():
-      case TopStartQueue():
-      case TopEndQueue():
+      case topCenter:
+      case topStart:
+      case topEnd:
         return MainAxisAlignment.start;
-      case CenterQueue():
-      case CenterStartQueue():
-      case CenterEndQueue():
+      case center:
+      case centerStart:
+      case centerEnd:
         return MainAxisAlignment.center;
-      case BottomCenterQueue():
-      case BottomStartQueue():
-      case BottomEndQueue():
+      case bottomCenter:
+      case bottomStart:
+      case bottomEnd:
         return MainAxisAlignment.end;
     }
   }
 
   CrossAxisAlignment get crossAxisAlignment {
     switch (this) {
-      case TopCenterQueue():
-      case BottomCenterQueue():
-      case CenterQueue():
+      case topCenter:
+      case bottomCenter:
+      case center:
         return CrossAxisAlignment.center;
-      case TopStartQueue():
-      case BottomStartQueue():
-      case CenterStartQueue():
+      case topStart:
+      case bottomStart:
+      case centerStart:
         return CrossAxisAlignment.start;
-      case TopEndQueue():
-      case BottomEndQueue():
-      case CenterEndQueue():
+      case topEnd:
+      case bottomEnd:
+      case centerEnd:
         return CrossAxisAlignment.end;
     }
   }
 
   VerticalDirection get verticalDirection {
     switch (this) {
-      case TopCenterQueue():
-      case TopStartQueue():
-      case TopEndQueue():
-      case CenterQueue():
-      case CenterStartQueue():
-      case CenterEndQueue():
+      case topCenter:
+      case topStart:
+      case topEnd:
+      case center:
+      case centerStart:
+      case centerEnd:
         return VerticalDirection.down;
-      case BottomCenterQueue():
-      case BottomStartQueue():
-      case BottomEndQueue():
+      case bottomCenter:
+      case bottomStart:
+      case bottomEnd:
         return VerticalDirection.up;
     }
   }

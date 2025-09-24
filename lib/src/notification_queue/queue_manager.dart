@@ -1,134 +1,181 @@
-import 'dart:collection';
+part of 'notification_queue.dart';
 
-import 'package:flutter/material.dart';
+class QueueManager {
+  QueueManager(
+    this.notificationQueue,
+  );
 
-import '../../flutter_notification_queue.dart';
-import '../notification/notification.dart';
+  final NotificationQueue notificationQueue;
 
-part 'notification_queue.dart';
-part 'type_defs.dart';
-part 'extensions.dart';
+  final pendingNotifications = Queue<NotificationWidget>();
 
-class QueueManager extends StatefulWidget {
-  const QueueManager({
-    required this.config,
-    super.key,
-  });
-
-  final NotificationQueue config;
-
-  @override
-  State<QueueManager> createState() => _QueueManagerState();
-}
-
-class _QueueManagerState extends State<QueueManager> {
-  final _queue = Queue<NotificationWidget>();
-
-  final _activeNotifications = ValueNotifier(<NotificationWidget>[]);
+  final activeNotifications = ValueNotifier(<NotificationWidget>[]);
 
   OverlayEntry? _overlayEntry;
 
-  void show(
-    final NotificationWidget quetification,
+  Future<void> add(
+    final NotificationWidget notification,
     final BuildContext context,
-  ) {
-    _queue.add(quetification);
+  ) async {
+    debugPrint('''
+---------$notificationQueue:::QueueManager:::add---------
+------------Added Notification: $notification
+------------From Context: $context
+''');
+
+    pendingNotifications.add(notification);
     _processQueue(context);
-  }
-
-  @override
-  void dispose() {
-    _overlayEntry?.remove();
-    _overlayEntry?.dispose();
-    _overlayEntry = null;
-
-    super.dispose();
   }
 
   void _processQueue(final BuildContext context) {
     debugPrint('''
----NotificationQueue at ${widget.config.alignment}: _processQueue Called---''');
-    while (_queue.isNotEmpty &&
-        _activeNotifications.value.length < widget.config.maxStackSize) {
+---------$notificationQueue:::QueueManager:::_processQueue---------''');
+    while (pendingNotifications.isNotEmpty &&
+        activeNotifications.value.length < notificationQueue.maxStackSize) {
       debugPrint('''
----Processing Queue InProgress------
----Queue: ${_queue.length}
----Active Notifications: ${_activeNotifications.value.length}''');
-      final latestNotification = _queue.removeFirst();
+------------Processing Queue InProgress------------
+------------Queue: ${pendingNotifications.length}
+------------Active Notifications: ${activeNotifications.value.length}''');
+      final latestNotification = pendingNotifications.removeFirst();
 
-      _activeNotifications.value = [
-        ..._activeNotifications.value,
+      activeNotifications.value = [
+        ...activeNotifications.value,
         latestNotification,
       ];
 
       if (_overlayEntry == null) {
         debugPrint('''
-------Inserting OverlayEntry
+------------Inserting OverlayEntry
 ''');
         _overlayEntry = OverlayEntry(
-          builder: (final innerContext) => Align(
-            alignment: widget.config.alignment,
-            child: build(context),
-          ),
+          builder: (final innerContext) => _buildQueue(context),
         );
         Overlay.of(context).insert(_overlayEntry!);
       } else {
         debugPrint('''
-------Updating OverlayEntry
+------------Updating OverlayEntry
 ''');
-        _activeNotifications.notifyListeners();
+        activeNotifications.notifyListeners();
       }
     }
-    _checkDisposal();
   }
 
-  void _checkDisposal() {
-    debugPrint('''
----NotificationQueue at ${widget.config.alignment}: _checkDisposal Called---
----Queue: ${_queue.length}
----Active Notifications: ${_activeNotifications.value.length}''');
+  void dismiss(
+    final NotificationWidget notification,
+    final BuildContext context,
+  ) {
+//     debugPrint('''
+// ---------$notificationQueue:::QueueManager:::dismiss---------
+// ------------Removing Notification: $notification
+// ------------From Context: $context
+// ''');
+//     final index = activeNotifications.value.indexOf(notification);
+//     if (index == -1) {
+//       debugPrint('''
+// ------------Notification Not Found. Already Dismissed????
+// ''');
+//       return;
+//     } else {
+//       activeNotifications
+//         ..value.removeAt(index)
+//         ..notifyListeners();
+//       _processQueue(context);
+//
+//       debugPrint('''
+// ------------Notification Removed at Index: $index.
+// ''');
+//     }
 
-    if (_queue.isEmpty && _activeNotifications.value.isEmpty) {
+    debugPrint('''
+---------$notificationQueue:::QueueManager:::dismiss---------
+------------Removing Notification: $notification
+------------From Context: $context''');
+    final removed = activeNotifications.value.remove(notification);
+    if (removed) {
       debugPrint('''
-------Disposed OverlayEntry
+------------Notification Removed.
 ''');
-      dispose();
+      activeNotifications.notifyListeners();
     } else {
       debugPrint('''
-------Skipped Disposing OverlayEntry
+------------Notification Not Found. Already Dismissed????
 ''');
+    }
+
+    final disposed = safeDispose();
+    if (!disposed) {
+      _processQueue(context);
     }
   }
 
-  @override
-  Widget build(final BuildContext context) {
+  bool safeDispose() {
     debugPrint('''
----NotificationQueue at ${widget.config.alignment}: build Called---''');
+---------$notificationQueue:::QueueManager:::safeDispose---------
+------------Queue: ${pendingNotifications.length}
+------------Active Notifications: ${activeNotifications.value.length}''');
+    if (pendingNotifications.isEmpty && activeNotifications.value.isEmpty) {
+      debugPrint('''
+------------No Pending Notifications And No Active Notifications.
+------------Disposing... .
+''');
+      dispose();
+      return true;
+    } else {
+      debugPrint('''
+------------Has Pending/Active Notifications.
+------------Not Disposing.
+''');
+      return false;
+    }
+  }
 
+  void dispose() {
+    debugPrint('''
+---------$notificationQueue:::QueueManager:::dispose---------
+------------Queue: ${pendingNotifications.length}
+------------Active Notifications: ${activeNotifications.value.length}
+------------Disposing OverlayEntry.
+------------Disposing QueueManager.
+------------Done.
+''');
+    activeNotifications.dispose();
+    _overlayEntry?.remove();
+    _overlayEntry?.dispose();
+    _overlayEntry = null;
+
+    notificationQueue._queueManager = null;
+  }
+
+  Widget _buildQueue(final BuildContext context) {
+    debugPrint('''
+---------$notificationQueue:::QueueManager:::_buildQueue---------''');
     return ValueListenableBuilder<List<NotificationWidget>>(
-      valueListenable: _activeNotifications,
+      valueListenable: activeNotifications,
       builder: (final context, final activeNotifications, final _) {
+        final pendingNotificationsCount = pendingNotifications.length;
         debugPrint('''
----NotificationQueue at ${widget.config.alignment}: _build:::Active Notifications Updated---
----Queue: ${_queue.length}
----Active Notifications: ${_activeNotifications.value.length}''');
+---------$notificationQueue:::QueueManager:::_buildQueue:::InnerBuilder---------
+------------Queue: $pendingNotificationsCount
+------------Active Notifications: ${activeNotifications.length}''');
 
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: widget.config.crossAxisAlignment,
-            verticalDirection: widget.config.verticalDirection,
-            children: [
-              if (widget.config.queueIndicatorBuilder != null &&
-                  _queue.isNotEmpty)
-                widget.config.queueIndicatorBuilder!.call(
-                  context,
-                  _queue.length,
-                  _activeNotifications.value.length,
-                ),
-              ...activeNotifications
-                  .map((final quetification) => quetification),
-            ],
+          child: Container(
+            alignment: notificationQueue.position.alignment,
+            margin: notificationQueue.margin,
+            child: Column(
+              spacing: notificationQueue.spacing,
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: notificationQueue.position.mainAxisAlignment,
+              crossAxisAlignment: notificationQueue.position.crossAxisAlignment,
+              verticalDirection: notificationQueue.position.verticalDirection,
+              children: [
+                notificationQueue.queueIndicatorBuilder?.call(
+                      pendingNotificationsCount,
+                    ) ??
+                    const SizedBox.shrink(),
+                ...activeNotifications
+              ],
+            ),
           ),
         );
       },

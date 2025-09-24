@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -7,68 +8,151 @@ import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
 part 'notification_action.dart';
-part 'notification_configuration.dart';
 part 'type_defts.dart';
 
 class NotificationWidget extends StatefulWidget {
-  const NotificationWidget({
-    required UniqueKey super.key,
-    required this.configuration,
-    this.notificationChannel = 'default',
-  });
-  final String notificationChannel;
+  NotificationWidget({
+    required this.message,
+    this.id,
+    this.channelName = 'default',
+    this.title,
+    this.action,
+    this.icon,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.dismissDuration,
+    this.position,
+    this.builder,
+  }) : super(key: ValueKey('$channelName.${id ?? UniqueKey()}'));
 
-  final NotificationConfiguration configuration;
+  /// Optional Notification ID
+  ///
+  /// A unique [Key] will be provided for [NotificationWidget] if [id] or not,
+  /// but to have more control over this specific [NotificationWidget], you can
+  /// set the [id] and use it.
+  //todo: handle Update On Duplicate Key
+  final String? id;
 
+  /// Name of the notification channel.
+  ///
+  /// Defaults to [NotificationManager]'s default [NotificationChannel] if
+  /// [channelName] is not registered in [NotificationManager].
+  ///
+  final String channelName;
+
+  /// Notification title
+  final String? title;
+
+  /// Notification message Text
+  final String message;
+
+  /// Optional [NotificationAction] provides notification with
+  /// an action callback
+  ///
+  /// A [NotificationAction] can be create by
+  /// [NotificationAction.button] or [NotificationAction.onTap].
+  final NotificationAction? action;
+
+  /// Notification [Icon] widget
+  ///
+  /// An optional [Icon] widget shown besides the [message].
+  final Widget? icon;
+
+  /// Notification background color
+  ///
+  /// Colors notification body.
+  /// If null, defaults to Notification's
+  /// [NotificationChannel.defaultBackgroundColor] and if that's not provided
+  /// (null value or Unregistered [NotificationChannel]),
+  /// [Theme.of(Context).colorScheme.primary].
+  final Color? backgroundColor;
+
+  /// Notification foreground color.
+  ///
+  /// Colors notification texts, icons, progressIndicator, etc.
+  /// If null, defaults to Notification Channels default
+  /// [NotificationChannel.defaultForegroundColor] and if that's null
+  /// [Theme.of(Context).colorScheme.onPrimary].
+  final Color? foregroundColor;
+
+  /// Notification dismiss duration
+  ///
+  /// If null, [NotificationWidget] will be permanent.
+  /// Defaults to [NotificationChannel.defaultDismissDuration] if null.
+  //todo: what if user wants this specific notification to be permanent.
+  final Duration? dismissDuration;
+
+  /// [NotificationWidget] position on the Screen.
+  final QueuePosition? position;
+
+  /// Custom builder for the notification stack indicator.
+  final NotificationBuilder? builder;
+
+  //todo: How about these?
+  void show(final BuildContext context) =>
+      NotificationManager.instance.show(this, context);
+  void dismiss(final BuildContext context) =>
+      NotificationManager.instance.dismiss(this, context);
   @override
   State<StatefulWidget> createState() => _NotificationWidgetState();
+  @override
+  String toString({final DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
+      'NotificationWidget('
+      'key: $key,'
+      ' channel: $channelName,'
+      ' title: $title,'
+      ' message: $message,'
+      ' action: $action,'
+      ' icon: $icon,'
+      ' backgroundColor: $backgroundColor,'
+      ' foregroundColor: $foregroundColor,'
+      ' dismissDuration: $dismissDuration,'
+      ' position: $position,'
+      ' builder: $builder)';
 }
 
-class _NotificationWidgetState extends State<NotificationWidget> {
-  NotificationConfiguration get _notificationConfig => widget.configuration;
-  NotificationChannel get _channel =>
-      NotificationManager.instance.getNotificationChannel(widget);
-  NotificationQueue get _queue => NotificationManager.instance.getQueue(widget);
+class _NotificationWidgetState extends State<NotificationWidget>
+    with SingleTickerProviderStateMixin {
+  late final NotificationChannel _channel;
+  late final NotificationQueue _queue;
+  late ThemeData _themeData;
 
   Size get _screenSize => MediaQuery.of(context).size;
   double get _screenHeight => _screenSize.height;
   double get _screenWidth => _screenSize.width;
 
-  late ThemeData _themeData;
-
+  QueuePosition? get _resolvedPosition => widget.position ?? _channel.position;
   Color get _resolvedForeground =>
-      _notificationConfig.foregroundColor ??
+      widget.foregroundColor ??
       _channel.defaultForegroundColor ??
       _themeData.colorScheme.onPrimary;
   Color get _resolvedBackground =>
-      _notificationConfig.backgroundColor ??
+      widget.backgroundColor ??
       _channel.defaultBackgroundColor ??
       _themeData.colorScheme.primary;
 
-  // double get _opacity => _channelConfig.opacity;
-  double get _opacity => 0.8;
-  // double get _elevation => _channelConfig.elevation;
-  double get _elevation => 3;
+  double get _opacity => _queue.opacity;
+  double get _elevation => _queue.elevation;
 
   BorderRadius get _borderRadius =>
       const BorderRadius.all(Radius.circular(4.0));
 
   Duration? get _resolvedDismissDuration =>
-      _notificationConfig.dismissDuration ?? _channel.defaultDismissDuration;
+      widget.dismissDuration ?? _channel.defaultDismissDuration;
 
   double get _dismissalThreshold => _queue.dismissalThreshold;
 
-  bool get _hasTitle => _notificationConfig.title != null;
+  bool get _hasTitle => widget.title != null;
 
-  bool get _hasIcon => _notificationConfig.icon != null;
+  bool get _hasIcon => widget.icon != null;
 
   bool get _hasOnTapAction =>
-      _notificationConfig.action != null &&
-      _notificationConfig.action!.type == NotificationActionType.onTap;
+      widget.action != null &&
+      widget.action!.type == NotificationActionType.onTap;
 
   bool get _hasButtonAction =>
-      _notificationConfig.action != null &&
-      _notificationConfig.action!.type == NotificationActionType.button;
+      widget.action != null &&
+      widget.action!.type == NotificationActionType.button;
 
   /// Whether user expanded the notification.
   ///
@@ -88,58 +172,62 @@ class _NotificationWidgetState extends State<NotificationWidget> {
   /// offset from origin.
   Offset? _panDragStartPosition;
 
-  /// Dismiss Timer
-  ///
-  /// Manages disposal based on [NotificationConfiguration.dismissDuration]
   Timer? _dismissTimer;
+
+  late final AnimationController _animationController;
 
   @override
   void initState() {
-    super.initState();
     debugPrint('''
----Notification---${widget.key}: initState called---''');
+---------------Notification${widget.key}: initState called---------------''');
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 380),
+      animationBehavior: AnimationBehavior.preserve,
+      reverseDuration: const Duration(milliseconds: 240),
+    )..forward();
+
+    _channel = NotificationManager.instance.getChannel(widget.channelName);
+    _queue = NotificationManager.instance.getQueue(_resolvedPosition);
     _initDismissTimer();
   }
 
   @override
   void didChangeDependencies() {
     debugPrint('''
----Notification---${widget.key}: didChangeDependencies called---''');
+---------------Notification${widget.key}: didChangeDependencies called---------------''');
 
     _themeData = Theme.of(context);
     super.didChangeDependencies();
   }
 
+  Future<void> dismiss() async {
+    await _animationController.reverse();
+    NotificationManager.instance.dismiss(widget, context);
+    debugPrint('''
+---------------Notification${widget.key}::::dismiss---------------
+------------------Dismissed.''');
+  }
+
   @override
   void dispose() {
-//     debugPrint('''
-// ---Notification---${widget.key}: dispose called---''');
-//     final index = _instance._activeNotifications.value.indexOf(widget);
-//     if (index != -1) {
-//       debugPrint('''
-// ------${widget.key}: Removed at index $index
-// ''');
-//       _instance
-//         .._activeNotifications.value.removeAt(index)
-//         .._activeNotifications.notifyListeners()
-//         .._processQueue(context);
-//       _disposeDismissTimer();
-//       _isExpanded.dispose();
-//       _dragOffsetPairNotifier.dispose();
-//
-//       super.dispose();
-//     } else {
-//       debugPrint('''
-// ------${widget.key}: Skipped removal at index $index
-// ''');
-//     }
+    super.dispose();
+    _animationController.dispose();
+    _disposeDismissTimer();
+    _isExpanded.dispose();
+    _dragOffsetPairNotifier.dispose();
+    debugPrint('''
+---------------Notification${widget.key}:::dispose---------------
+------------------Disposed.
+''');
   }
 
   void _initDismissTimer() {
     if (_resolvedDismissDuration != null) {
       _dismissTimer = Timer(_resolvedDismissDuration!, () {
         if (mounted && !_isExpanded.value) {
-          dispose();
+          dismiss();
         }
       });
     }
@@ -151,133 +239,141 @@ class _NotificationWidgetState extends State<NotificationWidget> {
   }
 
   @override
-  Widget build(final BuildContext context) => ValueListenableBuilder(
-        valueListenable: _dragOffsetPairNotifier,
-        builder: (final context, final dragOffsetPair, final child) {
-          final passedVerticalThreshold = dragOffsetPair != null &&
-              (dragOffsetPair.global.dy < _dismissalThreshold ||
-                  dragOffsetPair.global.dy >
-                      _screenHeight - _dismissalThreshold);
-          final passedHorizontalThreshold = dragOffsetPair != null &&
-              (dragOffsetPair.global.dx < _dismissalThreshold ||
-                  dragOffsetPair.global.dx >
-                      _screenWidth - _dismissalThreshold);
+  Widget build(final BuildContext context) => SlideTransition(
+      position: Tween<Offset>(
+        begin: Offset(
+            0,
+            _queue.position.verticalDirection == VerticalDirection.down
+                ? -1.0
+                : 1.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+          parent: _animationController, curve: Curves.easeInOut)),
+      child: FadeTransition(
+        opacity: _animationController,
+        child: ValueListenableBuilder(
+          valueListenable: _dragOffsetPairNotifier,
+          builder: (final context, final dragOffsetPair, final child) {
+            final passedVerticalThreshold = dragOffsetPair != null &&
+                (dragOffsetPair.global.dy < _dismissalThreshold ||
+                    dragOffsetPair.global.dy >
+                        _screenHeight - _dismissalThreshold);
+            final passedHorizontalThreshold = dragOffsetPair != null &&
+                (dragOffsetPair.global.dx < _dismissalThreshold ||
+                    dragOffsetPair.global.dx >
+                        _screenWidth - _dismissalThreshold);
 
-          final passedThreshold =
-              passedVerticalThreshold || passedHorizontalThreshold;
+            final passedThreshold =
+                passedVerticalThreshold || passedHorizontalThreshold;
 
-          return GestureDetector(
-            onPanStart: (final details) {
-              _panDragStartPosition = details.globalPosition;
-              _disposeDismissTimer();
-            },
-            onPanUpdate: (final details) {
-              if (_panDragStartPosition != null) {
-                final offsetFromOrigin =
-                    details.globalPosition - _panDragStartPosition!;
-                _dragOffsetPairNotifier.value = OffsetPair(
-                  local: offsetFromOrigin,
-                  global: details.globalPosition,
-                );
-              }
-            },
-            onPanEnd: (final details) {
-              final currentGlobalOffset = dragOffsetPair?.global;
-              if (currentGlobalOffset != null) {
-                final passedVerticalThreshold =
-                    currentGlobalOffset.dy < _dismissalThreshold ||
-                        currentGlobalOffset.dy >
-                            _screenHeight - _dismissalThreshold;
-                final passedHorizontalThreshold = currentGlobalOffset.dx <
-                        _dismissalThreshold ||
-                    currentGlobalOffset.dx > _screenWidth - _dismissalThreshold;
-
-                final passedThreshold =
-                    passedVerticalThreshold || passedHorizontalThreshold;
-
-                if (passedThreshold) {
-                  dispose();
-                  return;
+            return GestureDetector(
+              onPanStart: (final details) {
+                _panDragStartPosition = details.globalPosition;
+                _disposeDismissTimer();
+              },
+              onPanUpdate: (final details) {
+                if (_panDragStartPosition != null) {
+                  final offsetFromOrigin =
+                      details.globalPosition - _panDragStartPosition!;
+                  _dragOffsetPairNotifier.value = OffsetPair(
+                    local: offsetFromOrigin,
+                    global: details.globalPosition,
+                  );
                 }
-              }
+              },
+              onPanEnd: (final details) {
+                final currentGlobalOffset = dragOffsetPair?.global;
+                if (currentGlobalOffset != null) {
+                  final passedVerticalThreshold =
+                      currentGlobalOffset.dy < _dismissalThreshold ||
+                          currentGlobalOffset.dy >
+                              _screenHeight - _dismissalThreshold;
+                  final passedHorizontalThreshold =
+                      currentGlobalOffset.dx < _dismissalThreshold ||
+                          currentGlobalOffset.dx >
+                              _screenWidth - _dismissalThreshold;
 
-              _dragOffsetPairNotifier.value = null;
-              _panDragStartPosition = null;
-              _initDismissTimer();
-            },
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 480),
-              curve: Curves.easeOut,
-              opacity: passedThreshold ? 0.0 : 1.0,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
+                  final passedThreshold =
+                      passedVerticalThreshold || passedHorizontalThreshold;
+
+                  if (passedThreshold) {
+                    dismiss();
+                    return;
+                  }
+                }
+
+                _dragOffsetPairNotifier.value = null;
+                _panDragStartPosition = null;
+                _initDismissTimer();
+              },
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 480),
                 curve: Curves.easeOut,
-                transform: dragOffsetPair == null
-                    ? null
-                    : Transform.translate(
-                        offset: dragOffsetPair.local,
-                      ).transform,
-                margin: const EdgeInsetsGeometry.symmetric(
-                  vertical: 8,
-                  horizontal: 48,
-                ),
-                constraints: Utils.horizontalConstraints(context),
-                child: ValueListenableBuilder(
-                  valueListenable: _isExpanded,
-                  builder: (final context, final isExpanded, final child) =>
-                      Material(
-                    borderRadius: _borderRadius,
-                    color: _resolvedBackground.withValues(alpha: _opacity),
-                    elevation: _elevation,
-                    child: InkWell(
+                opacity: passedThreshold ? 0.0 : 1.0,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 120),
+                  curve: Curves.easeOut,
+                  transform: dragOffsetPair == null
+                      ? null
+                      : Transform.translate(
+                          offset: dragOffsetPair.local,
+                        ).transform,
+                  constraints: Utils.horizontalConstraints(context),
+                  child: ValueListenableBuilder(
+                    valueListenable: _isExpanded,
+                    builder: (final context, final isExpanded, final child) =>
+                        Material(
                       borderRadius: _borderRadius,
-                      onTap: _hasOnTapAction
-                          ? () {
-                              _notificationConfig.action!.onPressed();
-                              dispose();
-                            }
-                          : null,
-                      child: Stack(
-                        children: [
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            curve: Curves.easeOut,
-                            padding: EdgeInsets.symmetric(
-                              vertical: isExpanded ? 16 : 8,
-                              horizontal: 36,
+                      color: _resolvedBackground.withValues(alpha: _opacity),
+                      elevation: _elevation,
+                      child: InkWell(
+                        borderRadius: _borderRadius,
+                        onTap: _hasOnTapAction
+                            ? () {
+                                widget.action!.onPressed();
+                                dismiss();
+                              }
+                            : null,
+                        child: Stack(
+                          children: [
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOut,
+                              padding: EdgeInsets.symmetric(
+                                vertical: isExpanded ? 16 : 8,
+                                horizontal: 36,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _getTitle(isExpanded: isExpanded),
+                                  _getContent(isExpanded: isExpanded),
+                                  _getActionButton(),
+                                ],
+                              ),
                             ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                _getTitle(isExpanded: isExpanded),
-                                _getContent(isExpanded: isExpanded),
-                                _getActionButton(),
-                              ],
-                            ),
-                          ),
-                          _timerIndicator(isExpanded: isExpanded),
-                          _getExpandButton(isExpanded: isExpanded),
-                          _getCloseButton(),
-                          if (!isExpanded) _getPinnedIcon(),
-                        ],
+                            _timerIndicator(isExpanded: isExpanded),
+                            _getExpandButton(isExpanded: isExpanded),
+                            _getCloseButton(),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      );
+            );
+          },
+        ),
+      ));
 
   Widget _getTitle({required final bool isExpanded}) => _hasTitle
       ? Directionality(
-          textDirection:
-              Utils.estimateDirectionOfText(_notificationConfig.title ?? ''),
+          textDirection: Utils.estimateDirectionOfText(widget.title ?? ''),
           child: Text(
-            _notificationConfig.title ?? '',
+            widget.title ?? '',
             style: _themeData.textTheme.titleMedium?.copyWith(
               color: _resolvedForeground,
               fontWeight: FontWeight.bold,
@@ -289,15 +385,14 @@ class _NotificationWidgetState extends State<NotificationWidget> {
       : const SizedBox.shrink();
 
   Widget _getContent({required final bool isExpanded}) => Directionality(
-        textDirection:
-            Utils.estimateDirectionOfText(_notificationConfig.message),
+        textDirection: Utils.estimateDirectionOfText(widget.message),
         child: Row(
           spacing: 4,
           children: [
-            if (_hasIcon) _notificationConfig.icon!,
+            if (_hasIcon) widget.icon!,
             Expanded(
               child: Text(
-                _notificationConfig.message,
+                widget.message,
                 style: _themeData.textTheme.bodyMedium?.copyWith(
                   color: _resolvedForeground,
                 ),
@@ -312,19 +407,19 @@ class _NotificationWidgetState extends State<NotificationWidget> {
   Widget _getActionButton() => _hasButtonAction
       ? Directionality(
           textDirection: Utils.estimateDirectionOfText(
-            _notificationConfig.message,
+            widget.message,
           ),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               child: Text(
-                _notificationConfig.action!.label!,
+                widget.action!.label!,
                 style: _themeData.textTheme.labelMedium
                     ?.copyWith(color: _resolvedForeground),
               ),
               onPressed: () {
-                _notificationConfig.action!.onPressed();
-                dispose();
+                widget.action!.onPressed();
+                dismiss();
               },
             ),
           ),
@@ -371,7 +466,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
 
   Widget _getExpandButton({required final bool isExpanded}) => Directionality(
         textDirection: Utils.estimateDirectionOfText(
-          _notificationConfig.title ?? _notificationConfig.message,
+          widget.title ?? widget.message,
         ),
         child: AnimatedPositionedDirectional(
           duration: const Duration(milliseconds: 380),
@@ -407,7 +502,7 @@ class _NotificationWidgetState extends State<NotificationWidget> {
   Widget _getCloseButton() => _hasCloseButton
       ? Directionality(
           textDirection: Utils.estimateDirectionOfText(
-            _notificationConfig.title ?? _notificationConfig.message,
+            widget.title ?? widget.message,
           ),
           child: PositionedDirectional(
             top: 8,
@@ -417,37 +512,12 @@ class _NotificationWidgetState extends State<NotificationWidget> {
               child: IconButton(
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
-                onPressed: dispose,
+                onPressed: dismiss,
                 icon: Icon(
                   Icons.close,
                   color: _resolvedForeground,
                   size: 16,
                 ),
-              ),
-            ),
-          ),
-        )
-      : const SizedBox.shrink();
-
-  bool get _hasPinnedIcon => _notificationConfig.dismissDuration == null;
-
-  Widget _getPinnedIcon() => _hasPinnedIcon
-      ? Directionality(
-          textDirection: Utils.estimateDirectionOfText(
-            _notificationConfig.title ?? _notificationConfig.message,
-          ),
-          child: PositionedDirectional(
-            top: 8,
-            start: 4,
-            child: SizedBox.square(
-              dimension: 16,
-              child: Icon(
-                const IconData(
-                  0xe4f4,
-                  fontFamily: 'MaterialIcons',
-                ),
-                color: _resolvedForeground,
-                size: 16,
               ),
             ),
           ),

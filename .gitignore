@@ -33,3 +33,5 @@ migrate_working_dir/
 
 # Temprarily ignoring tests
 test/
+
+scripts/
