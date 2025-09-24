@@ -10,22 +10,71 @@ void main() {
 
   FlutterNativeSplash.remove();
 
-  // Configure the notification manager
-  NotificationManager.instance.initialize(
-    position: QueuePosition.bottomStart,
+  NotificationManager.initialize(
+    position: QueuePosition.topCenter,
     showCloseButton: false,
     margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48.0),
     maxStackSize: 3,
-    defaultDismissDuration: const Duration(seconds: 3),
+    dismissDuration: const Duration(seconds: 3),
     queueIndicatorBuilder: (final pendingNotificationsCount) {
       if (pendingNotificationsCount > 0) {
         return Container(
-            padding: const EdgeInsetsGeometry.all(8),
-            alignment: AlignmentGeometry.bottomLeft,
-            color: Colors.blueAccent,
-            child: Text('$pendingNotificationsCount'));
+          padding: const EdgeInsetsGeometry.all(8),
+          alignment: AlignmentGeometry.bottomLeft,
+          color: Colors.blueAccent,
+          child: Text('$pendingNotificationsCount'),
+        );
       }
       return null;
+    },
+    queues: {
+      BottomCenterQueue(
+        maxStackSize: 1,
+        margin: null,
+        showCloseButton: true,
+      ),
+    },
+    channels: {
+      const NotificationChannel(
+        name: 'scaffold',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: null,
+        defaultBackgroundColor: Colors.black,
+        defaultForegroundColor: Colors.white,
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'success',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: Duration(seconds: 3),
+        defaultBackgroundColor: Colors.green,
+        defaultForegroundColor: Colors.white,
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'error',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: null,
+        defaultBackgroundColor: Colors.red,
+        defaultForegroundColor: Colors.white,
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'info',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: Duration(seconds: 3),
+        defaultBackgroundColor: Colors.blue,
+        defaultForegroundColor: Colors.white,
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'warning',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.orange,
+        defaultForegroundColor: Colors.white,
+        enabled: false,
+      ),
     },
   );
   runApp(const MyApp());
@@ -48,83 +97,30 @@ class MyApp extends StatelessWidget {
 class DemoPage extends StatelessWidget {
   const DemoPage({super.key});
 
-  @override
-  Widget build(final BuildContext context) {
-    final themeData = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('NotificationQueue Demo'),
-        backgroundColor: themeData.colorScheme.primaryContainer,
-        foregroundColor: themeData.colorScheme.onPrimaryContainer,
-        elevation: 2,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _buildAdaptiveGrid(),
-      ),
-    );
-  }
-
-  Widget _buildAdaptiveGrid() => LayoutBuilder(
-        builder: (final context, final constraints) {
-          final screenWidth = constraints.maxWidth;
-          const tabletBreakPoint = 900;
-          const phoneBreakPoint = 600;
-
-          final columnCount = screenWidth < phoneBreakPoint
-              ? 1
-              : screenWidth < tabletBreakPoint
-                  ? 2
-                  : 3;
-
-          final padding = EdgeInsets.symmetric(
-            horizontal: screenWidth < phoneBreakPoint
-                ? 0
-                : screenWidth < tabletBreakPoint
-                    ? screenWidth / 8
-                    : screenWidth / 5,
-          );
-
-          return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columnCount,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: screenWidth < phoneBreakPoint ? 3.5 : 2.5,
-            ),
-            padding: padding,
-            itemCount: _notificationExamples.length,
-            itemBuilder: (final context, final index) {
-              final example = _notificationExamples[index];
-              return example.buildNotificationButton(context, example);
-            },
-          );
-        },
-      );
-
   List<NotificationExample> get _notificationExamples => [
         // Basic notification
         NotificationExample(
-          title: 'Basic Notification',
-          icon: Icons.info_outline,
-          color: Colors.blueGrey,
+          title: 'Scaffold Notification',
+          icon: Icons.android,
+          color: Colors.black,
           onPressed: (final context) => NotificationManager.instance.show(
             NotificationWidget(
               id: '1',
-              message: 'This is a basic notification with custom styling.',
+              channelName: 'scaffold',
+              message: 'Scaffold Message!.',
             ),
             context,
           ),
         ), // Basic notification
         NotificationExample(
-          title: 'Basic Notification\nUpdated Message',
-          icon: Icons.info_outline,
-          color: Colors.blueGrey,
+          title: 'Scaffold Notification\nUpdated Message',
+          icon: Icons.android,
+          color: Colors.black,
           onPressed: (final context) => NotificationManager.instance.show(
             NotificationWidget(
               id: '1',
-              message: 'This is the basic notification with updated message.',
+              channelName: 'scaffold',
+              message: 'Updated Scaffold Message!.',
             ),
             context,
           ),
@@ -139,6 +135,7 @@ class DemoPage extends StatelessWidget {
             NotificationWidget(
               message: 'Operation completed successfully!',
               title: 'Success',
+              channelName: 'success',
             ),
             context,
           ),
@@ -150,6 +147,7 @@ class DemoPage extends StatelessWidget {
           color: Colors.red,
           onPressed: (final context) => NotificationManager.instance.show(
             NotificationWidget(
+              channelName: 'error',
               message: 'Network connection failed. Please try again.',
               title: 'Connection Error',
               action: NotificationAction.button(
@@ -167,6 +165,7 @@ class DemoPage extends StatelessWidget {
           color: Colors.orange,
           onPressed: (final context) => NotificationManager.instance.show(
             NotificationWidget(
+              channelName: 'warning',
               message: 'Low storage space detected. Tap to manage.',
               title: 'Storage Warning',
               action: NotificationAction.onTap(
@@ -178,14 +177,34 @@ class DemoPage extends StatelessWidget {
         ),
 
         NotificationExample(
-          title: 'Permanent Info',
+          title: 'Info Message',
           icon: Icons.info,
           color: Colors.blue,
           onPressed: (final context) => NotificationManager.instance.show(
             NotificationWidget(
+              channelName: 'info',
               title: 'New Feature Available',
               message: 'Check out our new dark mode feature!'
                   ' This notification stays until you interact with it.',
+              action: NotificationAction.button(
+                label: 'Explore',
+                onPressed: () => debugPrint('Opening new features...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Scaffold Info',
+          icon: Icons.info,
+          color: Colors.blue,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'info',
+              title: 'New Feature Available',
+              message: 'Check out our new dark mode feature!'
+                  ' This notification stays until you interact with it.',
+              position: QueuePosition.bottomCenter,
               action: NotificationAction.button(
                 label: 'Explore',
                 onPressed: () => debugPrint('Opening new features...'),
@@ -581,6 +600,61 @@ class DemoPage extends StatelessWidget {
           },
         ),
       ];
+
+  @override
+  Widget build(final BuildContext context) {
+    final themeData = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('NotificationQueue Demo'),
+        backgroundColor: themeData.colorScheme.primaryContainer,
+        foregroundColor: themeData.colorScheme.onPrimaryContainer,
+        elevation: 2,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _buildAdaptiveGrid(),
+      ),
+    );
+  }
+
+  Widget _buildAdaptiveGrid() => LayoutBuilder(
+        builder: (final context, final constraints) {
+          final screenWidth = constraints.maxWidth;
+          const tabletBreakPoint = 900;
+          const phoneBreakPoint = 600;
+
+          final columnCount = screenWidth < phoneBreakPoint
+              ? 1
+              : screenWidth < tabletBreakPoint
+                  ? 2
+                  : 3;
+
+          final padding = EdgeInsets.symmetric(
+            horizontal: screenWidth < phoneBreakPoint
+                ? 0
+                : screenWidth < tabletBreakPoint
+                    ? screenWidth / 8
+                    : screenWidth / 5,
+          );
+
+          return GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columnCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: screenWidth < phoneBreakPoint ? 3.5 : 2.5,
+            ),
+            padding: padding,
+            itemCount: _notificationExamples.length,
+            itemBuilder: (final context, final index) {
+              final example = _notificationExamples[index];
+              return example.buildNotificationButton(context, example);
+            },
+          );
+        },
+      );
 }
 
 class NotificationExample {

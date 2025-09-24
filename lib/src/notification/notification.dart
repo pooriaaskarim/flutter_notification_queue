@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -93,6 +92,10 @@ class NotificationWidget extends StatefulWidget {
       NotificationManager.instance.show(this, context);
   void dismiss(final BuildContext context) =>
       NotificationManager.instance.dismiss(this, context);
+
+  late final NotificationQueue queue;
+  late final NotificationChannel channel;
+
   @override
   State<StatefulWidget> createState() => _NotificationWidgetState();
   @override
@@ -113,34 +116,31 @@ class NotificationWidget extends StatefulWidget {
 
 class _NotificationWidgetState extends State<NotificationWidget>
     with SingleTickerProviderStateMixin {
-  late final NotificationChannel _channel;
-  late final NotificationQueue _queue;
   late ThemeData _themeData;
 
   Size get _screenSize => MediaQuery.of(context).size;
   double get _screenHeight => _screenSize.height;
   double get _screenWidth => _screenSize.width;
 
-  QueuePosition? get _resolvedPosition => widget.position ?? _channel.position;
   Color get _resolvedForeground =>
       widget.foregroundColor ??
-      _channel.defaultForegroundColor ??
+      widget.channel.defaultForegroundColor ??
       _themeData.colorScheme.onPrimary;
   Color get _resolvedBackground =>
       widget.backgroundColor ??
-      _channel.defaultBackgroundColor ??
+      widget.channel.defaultBackgroundColor ??
       _themeData.colorScheme.primary;
 
-  double get _opacity => _queue.opacity;
-  double get _elevation => _queue.elevation;
+  double get _opacity => widget.queue.opacity;
+  double get _elevation => widget.queue.elevation;
 
   BorderRadius get _borderRadius =>
       const BorderRadius.all(Radius.circular(4.0));
 
   Duration? get _resolvedDismissDuration =>
-      widget.dismissDuration ?? _channel.defaultDismissDuration;
+      widget.dismissDuration ?? widget.channel.defaultDismissDuration;
 
-  double get _dismissalThreshold => _queue.dismissalThreshold;
+  double get _dismissalThreshold => widget.queue.dismissalThreshold;
 
   bool get _hasTitle => widget.title != null;
 
@@ -188,8 +188,9 @@ class _NotificationWidgetState extends State<NotificationWidget>
       reverseDuration: const Duration(milliseconds: 240),
     )..forward();
 
-    _channel = NotificationManager.instance.getChannel(widget.channelName);
-    _queue = NotificationManager.instance.getQueue(_resolvedPosition);
+    // widget.channel =
+    //     NotificationManager.instance.getChannel(widget);
+    // widget.queue = NotificationManager.instance.getQueue(_resolvedPosition);
     _initDismissTimer();
   }
 
@@ -243,7 +244,7 @@ class _NotificationWidgetState extends State<NotificationWidget>
       position: Tween<Offset>(
         begin: Offset(
             0,
-            _queue.position.verticalDirection == VerticalDirection.down
+            widget.queue.position.verticalDirection == VerticalDirection.down
                 ? -1.0
                 : 1.0),
         end: Offset.zero,
@@ -497,7 +498,7 @@ class _NotificationWidgetState extends State<NotificationWidget>
         ),
       );
 
-  bool get _hasCloseButton => _queue.showCloseButton;
+  bool get _hasCloseButton => widget.queue.showCloseButton;
 
   Widget _getCloseButton() => _hasCloseButton
       ? Directionality(

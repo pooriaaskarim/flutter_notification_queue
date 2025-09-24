@@ -5,20 +5,17 @@ import 'package:flutter/material.dart';
 import '../../flutter_notification_queue.dart';
 
 class NotificationManager {
-  NotificationManager._();
+  NotificationManager._()
+      : assert(
+          _initialized != null,
+          'NotificationManager must be initialized before use.'
+          ' Please call NotificationManager.initialize() first.',
+        );
   static final NotificationManager instance = NotificationManager._();
 
-  /// Default [NotificationChannel]
-  ///
-  /// Any [NotificationWidget] with and unregistered
-  /// [NotificationWidget.channelName] will default to this channel.
-  NotificationChannel _defaultChannel = const NotificationChannel(
-    name: 'default',
-  );
+  static bool? _initialized;
 
-  /// Configures the default [NotificationChannel]
-  /// and default [NotificationQueue] of the [NotificationManager].
-  void initialize({
+  static void initialize({
     final QueuePosition position = QueuePosition.topCenter,
     final EdgeInsets? margin =
         const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
@@ -30,24 +27,29 @@ class NotificationManager {
     final double elevation = 3.0,
     final bool showCloseButton = true,
     final bool vibrate = false,
-    final Color? defaultForegroundColor,
-    final Color? defaultBackgroundColor,
-    final Duration? defaultDismissDuration,
+    final Color? foregroundColor,
+    final Color? backgroundColor,
+    final Duration? dismissDuration,
+    final Set<NotificationChannel>? channels,
+    final Set<NotificationQueue>? queues,
   }) {
+    assert(NotificationManager._initialized != true, 'Already initialized.');
     assert(
       maxStackSize > 0,
       'maxStackSize must be greater than 0',
     );
-    _defaultChannel = NotificationChannel(
+    final defaultChannel = NotificationChannel(
       name: 'default',
       enabled: true,
       position: position,
       vibrate: vibrate,
-      defaultForegroundColor: defaultForegroundColor,
-      defaultBackgroundColor: defaultBackgroundColor,
-      defaultDismissDuration: defaultDismissDuration,
+      defaultForegroundColor: foregroundColor,
+      defaultBackgroundColor: backgroundColor,
+      defaultDismissDuration: dismissDuration,
     );
-    _defaultQueue = position.queue(
+
+    _channels.addAll({defaultChannel, ...?channels});
+    final defaultQueue = position.generateQueue(
       margin: margin,
       spacing: spacing,
       maxStackSize: maxStackSize,
@@ -57,26 +59,18 @@ class NotificationManager {
       elevation: elevation,
       showCloseButton: showCloseButton,
     );
+    _queues.addAll({defaultQueue, ...?queues});
+    NotificationManager._initialized = true;
   }
 
-  final Set<NotificationChannel> _channels = HashSet();
-  Set<NotificationChannel> get channels => {..._channels, _defaultChannel};
+  static final LinkedHashSet<NotificationChannel> _channels = LinkedHashSet();
+  static final LinkedHashSet<NotificationQueue> _queues = LinkedHashSet();
 
-  /// Configures [NotificationChannel]s
-  void registerChannels({
-    final Set<NotificationChannel>? channels,
-  }) {
-    _channels.addAll({...?channels});
-  }
-
-  /// Default [NotificationQueue]
-  ///
-  /// Any unconfigured [QueuePosition] will default to this queue.
-  NotificationChannel getChannel(
+  NotificationChannel _getChannel(
     final String channelName,
   ) {
     bool registered = false;
-    final notificationChannel = channels.firstWhere(
+    final notificationChannel = _channels.firstWhere(
       (final channel) {
         final found = channel.name == channelName;
         if (found) {
@@ -84,45 +78,37 @@ class NotificationManager {
         }
         return found;
       },
-      orElse: () => _defaultChannel,
+      orElse: () => _channels.first,
     );
 
     debugPrint('''
 ---NotificationManager:::getChannel---
 ------channel: $channelName
+------channels: $_channels
 ------${registered ? 'Registered Channel.' : 'Unregistered Channel. Defaulting to NotificationManager default channel.'} 
 ------notificationChannel: $notificationChannel
 ''');
     return notificationChannel;
   }
 
-  NotificationQueue _defaultQueue = TopCenterQueue();
-
-  /// Configures [NotificationQueue]s for different [QueuePosition]s.
-  void configureQueues({
-    final Set<NotificationQueue>? queues,
-  }) {
-    _queues.addAll({...?queues});
-  }
-
-  final Set<NotificationQueue> _queues = HashSet();
-  Set<NotificationQueue> get queues => {..._queues, _defaultQueue};
-
-  NotificationQueue getQueue(
+  NotificationQueue _getQueue(
     final QueuePosition? position,
   ) {
     debugPrint('''
 ---NotificationManager:::getQueue---
-------position: $position''');
+------position: $position
+------queues: $_queues''');
     if (position == null) {
+      final defaultQueue = _queues.first;
       debugPrint('''
 ------No Position provided,
-------Returning default queue: $_defaultQueue
+------Returning default queue: $defaultQueue
 ''');
-      return _defaultQueue;
+
+      return defaultQueue;
     }
     bool configuredQueue = false;
-    final NotificationQueue queue = queues.firstWhere(
+    final NotificationQueue queue = _queues.firstWhere(
       (final queue) {
         final found = queue.position == position;
         if (found) {
@@ -130,7 +116,10 @@ class NotificationManager {
         }
         return found;
       },
-      orElse: () => _defaultQueue,
+      orElse: () {
+        final defaultQueue = _queues.first;
+        return position.generateQueueFrom(defaultQueue);
+      },
     );
 
     debugPrint('''
@@ -149,7 +138,11 @@ class NotificationManager {
 ------notification: $notification
 ------context: $context
 ''');
-    getQueue(notification.position).manager.queue(notification, context);
+    notification
+      ..channel = _getChannel(notification.channelName)
+      ..queue =
+          _getQueue(notification.position ?? notification.channel.position)
+      ..queue.manager.queue(notification, context);
   }
 
   /// Dismiss [NotificationWidget] from it's [NotificationQueue]
@@ -162,6 +155,6 @@ class NotificationManager {
 ------notification: $notification
 ------context: $context
 ''');
-    getQueue(notification.position).manager.dismiss(notification, context);
+    notification.queue.manager.dismiss(notification, context);
   }
 }

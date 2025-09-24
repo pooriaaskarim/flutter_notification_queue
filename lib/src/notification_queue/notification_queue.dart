@@ -67,37 +67,6 @@ sealed class NotificationQueue {
 
   QueueManager get manager => _queueManager ??= QueueManager(this);
 
-//   void queue(
-//     final NotificationWidget notification,
-//     final BuildContext context,
-//   ) {
-//     debugPrint('''
-// ------$this:::queue------
-// ---notification: $notification
-// ---context: $context
-// ---${_queueManager == null ? 'QueueManager Not Initialized. Initializing.' : 'QueueManager available.'}
-// ''');
-//
-//     _queueManager ??= QueueManager(this);
-//     _queueManager!.add(notification, context);
-//   }
-
-  // void dismiss(
-  //   final NotificationWidget notification,
-  //   final BuildContext context,
-  // ) {
-  //   if (_queueManager == null) {
-  //     return;
-  //   }
-  //   _queueManager!.dismiss(notification, context);
-  //   final shouldDispose = _queueManager!.needsDisposal();
-  //   if (shouldDispose) {
-  //     _queueManager!.dispose();
-  //     _queueManager = null;
-  //   }
-  //   return;
-  // }
-
   @override
   String toString() => '$runtimeType';
   @override

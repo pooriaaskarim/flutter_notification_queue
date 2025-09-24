@@ -143,8 +143,7 @@ class QueueManager {
 
   bool safeDispose() {
     debugPrint('''
----------$notificationQueue:::QueueManager:::safeDispose---------
-''');
+---------$notificationQueue:::QueueManager:::safeDispose---------''');
     if (pendingNotifications.isEmpty && activeNotifications.value.isEmpty) {
       debugPrint('''
 ------------No Pending Notifications And No Active Notifications.

@@ -11,7 +11,19 @@ enum QueuePosition {
   bottomCenter,
   bottomEnd;
 
-  NotificationQueue queue({
+  NotificationQueue generateQueueFrom(final NotificationQueue anotherQueue) =>
+      generateQueue(
+        spacing: anotherQueue.spacing,
+        maxStackSize: anotherQueue.maxStackSize,
+        dismissalThreshold: anotherQueue.dismissalThreshold,
+        showCloseButton: anotherQueue.showCloseButton,
+        queueIndicatorBuilder: anotherQueue.queueIndicatorBuilder,
+        opacity: anotherQueue.opacity,
+        elevation: anotherQueue.elevation,
+        margin: anotherQueue.margin,
+      );
+
+  NotificationQueue generateQueue({
     required final double spacing,
     required final int maxStackSize,
     required final double dismissalThreshold,

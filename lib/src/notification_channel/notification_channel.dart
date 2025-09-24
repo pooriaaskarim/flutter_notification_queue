@@ -24,9 +24,11 @@ class NotificationChannel {
   final String? description;
 
   /// Whether [NotificationWidget]s from this channel should  be shown.
+  //Todo: UnderDevelop
   final bool enabled;
 
   /// Whether [NotificationWidget]s from this channel should vibrate.
+  //Todo: UnderDevelop
   final bool vibrate;
 
   /// [NotificationChannel]'s default [NotificationQueue].
