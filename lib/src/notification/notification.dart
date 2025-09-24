@@ -118,7 +118,7 @@ class _NotificationWidgetState extends State<NotificationWidget>
     with SingleTickerProviderStateMixin {
   late ThemeData _themeData;
 
-  Size get _screenSize => MediaQuery.of(context).size;
+  late Size _screenSize;
   double get _screenHeight => _screenSize.height;
   double get _screenWidth => _screenSize.width;
 
@@ -161,16 +161,33 @@ class _NotificationWidgetState extends State<NotificationWidget>
 
   /// An [OffsetPair] to indicate drag input updated
   ///
-  /// [OffsetPair.local] is set to drag input of widget,
+  /// [OffsetPair.local] is set to cumulative drag input of widget,
   /// and [OffsetPair.global] is set to drag input offset in relation
   /// to the screen.
   /// On drag input end, is set to null.
   final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
       ValueNotifier(null);
+  bool get _passedThreshold {
+    final offsetPair = _dragOffsetPairNotifier.value;
+    final passedVerticalThreshold = offsetPair != null &&
+        (offsetPair.global.dy < _dismissalThreshold ||
+            offsetPair.global.dy > _screenHeight - _dismissalThreshold);
+    final passedHorizontalThreshold = offsetPair != null &&
+        (offsetPair.global.dx < _dismissalThreshold ||
+            offsetPair.global.dx > _screenWidth - _dismissalThreshold);
 
-  /// Store the starting position for horizontal drag to calculate
-  /// offset from origin.
-  Offset? _panDragStartPosition;
+    final passedThreshold =
+        passedVerticalThreshold || passedHorizontalThreshold;
+
+    debugPrint('''
+---------------Cumulative Drag Offset: ${offsetPair?.local}
+---------------Global Drag Offset: ${offsetPair?.global}
+---------------Passed Vertical Threshold: $passedVerticalThreshold
+---------------Passed Horizontal Threshold: $passedHorizontalThreshold
+---------------PassedThreshold: $passedThreshold''');
+
+    return passedThreshold;
+  }
 
   Timer? _dismissTimer;
 
@@ -200,7 +217,7 @@ showCloseButton is ${widget.queue.style.showCloseButton}''');
   void didChangeDependencies() {
     debugPrint('''
 ---------------Notification${widget.key}: didChangeDependencies called---------------''');
-
+    _screenSize = MediaQuery.of(context).size;
     _themeData = Theme.of(context);
     super.didChangeDependencies();
   }
@@ -254,130 +271,122 @@ showCloseButton is ${widget.queue.style.showCloseButton}''');
         ),
         child: FadeTransition(
           opacity: _animationController,
-          child: ValueListenableBuilder(
-            valueListenable: _dragOffsetPairNotifier,
-            builder: (final context, final dragOffsetPair, final child) {
-              final passedVerticalThreshold = dragOffsetPair != null &&
-                  (dragOffsetPair.global.dy < _dismissalThreshold ||
-                      dragOffsetPair.global.dy >
-                          _screenHeight - _dismissalThreshold);
-              final passedHorizontalThreshold = dragOffsetPair != null &&
-                  (dragOffsetPair.global.dx < _dismissalThreshold ||
-                      dragOffsetPair.global.dx >
-                          _screenWidth - _dismissalThreshold);
-
-              final passedThreshold =
-                  passedVerticalThreshold || passedHorizontalThreshold;
-
-              return GestureDetector(
-                onPanStart: (final details) {
-                  _panDragStartPosition = details.globalPosition;
-                  _disposeDismissTimer();
-                },
-                onPanUpdate: (final details) {
-                  if (_panDragStartPosition != null) {
-                    final offsetFromOrigin =
-                        details.globalPosition - _panDragStartPosition!;
-                    _dragOffsetPairNotifier.value = OffsetPair(
-                      local: offsetFromOrigin,
-                      global: details.globalPosition,
-                    );
-                  }
-                },
-                onPanEnd: (final details) {
-                  final currentGlobalOffset = dragOffsetPair?.global;
-                  if (currentGlobalOffset != null) {
-                    final passedVerticalThreshold =
-                        currentGlobalOffset.dy < _dismissalThreshold ||
-                            currentGlobalOffset.dy >
-                                _screenHeight - _dismissalThreshold;
-                    final passedHorizontalThreshold =
-                        currentGlobalOffset.dx < _dismissalThreshold ||
-                            currentGlobalOffset.dx >
-                                _screenWidth - _dismissalThreshold;
-
-                    final passedThreshold =
-                        passedVerticalThreshold || passedHorizontalThreshold;
-
-                    if (passedThreshold) {
-                      dismiss();
-                      return;
-                    }
-                  }
-
-                  _dragOffsetPairNotifier.value = null;
-                  _panDragStartPosition = null;
-                  _initDismissTimer();
-                },
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 480),
-                  curve: Curves.easeOut,
-                  opacity: passedThreshold ? 0.2 : 1.0,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    curve: Curves.easeOut,
-                    transform: dragOffsetPair == null
-                        ? null
-                        : Transform.translate(
-                            offset: dragOffsetPair.local,
-                          ).transform,
-                    constraints: Utils.horizontalConstraints(context),
-                    child: ValueListenableBuilder(
-                      valueListenable: _isExpanded,
-                      builder: (final context, final isExpanded, final child) =>
-                          Material(
-                        borderRadius: _borderRadius,
-                        elevation: _elevation,
-                        shadowColor: _themeData.shadowColor,
-                        type: MaterialType.canvas,
-                        color: _resolvedBackground.withValues(alpha: _opacity),
-                        child: InkWell(
-                          borderRadius: _borderRadius,
-                          onHover: widget.queue.style.showCloseButton ==
-                                  QueueCloseButton.onHover
-                              ? (final isHovering) {
-                                  _showCloseButton.value = isHovering;
-                                }
-                              : null,
-                          onTap: () {
-                            if (_hasOnTapAction) {
-                              widget.action!.onPressed();
-                              dismiss();
-                            }
-                          },
-                          child: Stack(
-                            children: [
-                              AnimatedContainer(
-                                duration: const Duration(milliseconds: 220),
-                                curve: Curves.easeOut,
-                                padding: EdgeInsets.symmetric(
-                                  vertical: isExpanded ? 16 : 8,
-                                  horizontal: 36,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _getTitle(isExpanded: isExpanded),
-                                    _getContent(isExpanded: isExpanded),
-                                    _getActionButton(),
-                                  ],
-                                ),
-                              ),
-                              _timerIndicator(isExpanded: isExpanded),
-                              _getExpandButton(isExpanded: isExpanded),
-                              _getCloseButton(),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+          child: LongPressDraggable(
+            delay: const Duration(milliseconds: 200),
+            axis: null,
+            feedback: _buildTransitionNotification(),
+            maxSimultaneousDrags: 1,
+            childWhenDragging: const SizedBox.shrink(),
+            onDragStarted: () {
+              _disposeDismissTimer();
+            },
+            onDragUpdate: (final details) {
+              _dragOffsetPairNotifier.value = OffsetPair(
+                local: details.delta,
+                global: details.globalPosition,
               );
             },
+            onDragEnd: (final details) {
+              if (_passedThreshold) {
+                dismiss();
+              } else {
+                _dragOffsetPairNotifier.value = null;
+                _initDismissTimer();
+              }
+            },
+            child: Draggable(
+              axis: Axis.horizontal,
+              maxSimultaneousDrags: 1,
+              onDragStarted: () {
+                _disposeDismissTimer();
+              },
+              onDragUpdate: (final details) {
+                debugPrint('Kind: ${details.kind}');
+                _dragOffsetPairNotifier.value = OffsetPair(
+                  local: Offset(details.delta.dx, 0),
+                  global: details.globalPosition,
+                );
+              },
+              onDragEnd: (final details) {
+                if (_passedThreshold) {
+                  dismiss();
+                } else {
+                  _dragOffsetPairNotifier.value = null;
+                  _initDismissTimer();
+                }
+              },
+              feedback: _buildTransitionNotification(),
+              childWhenDragging: const SizedBox.shrink(),
+              child: _buildNotification(),
+            ),
+          ),
+        ),
+      );
+
+  Widget _buildTransitionNotification() => ValueListenableBuilder(
+        valueListenable: _dragOffsetPairNotifier,
+        builder: (final context, final offsetPair, final child) =>
+            Transform.translate(
+          offset: offsetPair?.local ?? Offset.zero,
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 480),
+            curve: Curves.easeOut,
+            opacity: _passedThreshold ? 0.2 : 1.0,
+            child: _buildNotification(),
+          ),
+        ),
+      );
+
+  Widget _buildNotification() => ConstrainedBox(
+        constraints: Utils.horizontalConstraints(context),
+        child: ValueListenableBuilder(
+          valueListenable: _isExpanded,
+          builder: (final context, final isExpanded, final child) => Material(
+            borderRadius: _borderRadius,
+            elevation: _elevation,
+            shadowColor: _themeData.shadowColor,
+            type: MaterialType.canvas,
+            color: _resolvedBackground.withValues(alpha: _opacity),
+            child: InkWell(
+              borderRadius: _borderRadius,
+              onHover:
+                  widget.queue.style.showCloseButton == QueueCloseButton.onHover
+                      ? (final isHovering) {
+                          _showCloseButton.value = isHovering;
+                        }
+                      : null,
+              onTap: () {
+                if (_hasOnTapAction) {
+                  widget.action!.onPressed();
+                  dismiss();
+                }
+              },
+              child: Stack(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                    padding: EdgeInsets.symmetric(
+                      vertical: isExpanded ? 16 : 8,
+                      horizontal: 36,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _getTitle(isExpanded: isExpanded),
+                        _getContent(isExpanded: isExpanded),
+                        _getActionButton(),
+                      ],
+                    ),
+                  ),
+                  _timerIndicator(isExpanded: isExpanded),
+                  _getExpandButton(isExpanded: isExpanded),
+                  _getCloseButton(),
+                ],
+              ),
+            ),
           ),
         ),
       );
@@ -514,29 +523,30 @@ showCloseButton is ${widget.queue.style.showCloseButton}''');
 
   Widget _getCloseButton() => ValueListenableBuilder(
         valueListenable: _showCloseButton,
-        builder: (final context, showCloseButton, child) => showCloseButton
-            ? Directionality(
-                textDirection: Utils.estimateDirectionOfText(
-                  widget.title ?? widget.message,
-                ),
-                child: PositionedDirectional(
-                  top: 8,
-                  end: 4,
-                  child: SizedBox.square(
-                    dimension: 16,
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                      onPressed: dismiss,
-                      icon: Icon(
-                        Icons.close,
-                        color: _resolvedForeground,
-                        size: 16,
+        builder: (final context, final showCloseButton, final child) =>
+            showCloseButton
+                ? Directionality(
+                    textDirection: Utils.estimateDirectionOfText(
+                      widget.title ?? widget.message,
+                    ),
+                    child: PositionedDirectional(
+                      top: 8,
+                      end: 4,
+                      child: SizedBox.square(
+                        dimension: 16,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                          onPressed: dismiss,
+                          icon: Icon(
+                            Icons.close,
+                            color: _resolvedForeground,
+                            size: 16,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              )
-            : const SizedBox.shrink(),
+                  )
+                : const SizedBox.shrink(),
       );
 }
