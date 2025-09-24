@@ -13,16 +13,50 @@ class QueueManager {
 
   OverlayEntry? _overlayEntry;
 
-  Future<void> add(
+  Future<void> queue(
     final NotificationWidget notification,
     final BuildContext context,
   ) async {
     debugPrint('''
----------$notificationQueue:::QueueManager:::add---------
-------------Added Notification: $notification
-------------From Context: $context
+---------$notificationQueue:::QueueManager:::queue---------
+------------Notification: $notification
+------------From Context: $context''');
+    if (notification.id != null) {
+      debugPrint('''
+------------Notification ID: ${notification.id}
+------------Checking Active Notifications... .''');
+      final activeIndex = activeNotifications.value
+          .indexWhere((final n) => n.id == notification.id);
+      if (activeIndex != -1) {
+        debugPrint('''
+------------Notification Already Active at Index: $activeIndex.
+------------Updating Notification.
 ''');
-
+        activeNotifications.value[activeIndex] =
+            notification; // Replace (Flutter rebuilds)
+        activeNotifications.notifyListeners();
+        return;
+      }
+      debugPrint('''
+------------No Active Notification Found.
+------------Checking Pending Notifications... .''');
+      final pendingIndex = pendingNotifications
+          .toList()
+          .indexWhere((final n) => n.id == notification.id);
+      if (pendingIndex != -1) {
+        debugPrint('''
+------------Notification Already Pending at Index: $pendingIndex.
+------------Updating Notification.
+''');
+        pendingNotifications.toList()[pendingIndex] = notification;
+        return;
+      }
+      debugPrint('''
+------------No Pending Notification Found.''');
+    }
+    debugPrint('''
+------------Adding Notification to Pending Queue.
+''');
     pendingNotifications.add(notification);
     _processQueue(context);
   }
@@ -34,8 +68,7 @@ class QueueManager {
         activeNotifications.value.length < notificationQueue.maxStackSize) {
       debugPrint('''
 ------------Processing Queue InProgress------------
-------------Queue: ${pendingNotifications.length}
-------------Active Notifications: ${activeNotifications.value.length}''');
+''');
       final latestNotification = pendingNotifications.removeFirst();
 
       activeNotifications.value = [
@@ -111,8 +144,7 @@ class QueueManager {
   bool safeDispose() {
     debugPrint('''
 ---------$notificationQueue:::QueueManager:::safeDispose---------
-------------Queue: ${pendingNotifications.length}
-------------Active Notifications: ${activeNotifications.value.length}''');
+''');
     if (pendingNotifications.isEmpty && activeNotifications.value.isEmpty) {
       debugPrint('''
 ------------No Pending Notifications And No Active Notifications.
@@ -132,8 +164,6 @@ class QueueManager {
   void dispose() {
     debugPrint('''
 ---------$notificationQueue:::QueueManager:::dispose---------
-------------Queue: ${pendingNotifications.length}
-------------Active Notifications: ${activeNotifications.value.length}
 ------------Disposing OverlayEntry.
 ------------Disposing QueueManager.
 ------------Done.
@@ -155,8 +185,7 @@ class QueueManager {
         final pendingNotificationsCount = pendingNotifications.length;
         debugPrint('''
 ---------$notificationQueue:::QueueManager:::_buildQueue:::InnerBuilder---------
-------------Queue: $pendingNotificationsCount
-------------Active Notifications: ${activeNotifications.length}''');
+''');
 
         return SafeArea(
           child: Container(

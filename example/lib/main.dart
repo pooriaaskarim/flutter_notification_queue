@@ -116,6 +116,18 @@ class DemoPage extends StatelessWidget {
             ),
             context,
           ),
+        ), // Basic notification
+        NotificationExample(
+          title: 'Basic Notification\nUpdated Message',
+          icon: Icons.info_outline,
+          color: Colors.blueGrey,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              id: '1',
+              message: 'This is the basic notification with updated message.',
+            ),
+            context,
+          ),
         ),
 
         // Predefined types

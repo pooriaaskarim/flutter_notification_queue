@@ -149,7 +149,7 @@ class NotificationManager {
 ------notification: $notification
 ------context: $context
 ''');
-    getQueue(notification.position).manager.add(notification, context);
+    getQueue(notification.position).manager.queue(notification, context);
   }
 
   /// Dismiss [NotificationWidget] from it's [NotificationQueue]
