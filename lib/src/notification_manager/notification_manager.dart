@@ -78,10 +78,10 @@ class NotificationManager {
 
     debugPrint('''
 ---NotificationManager:::getChannel---
-------channel: $channelName
-------channels: $_channels
-------${registered ? 'Registered Channel.' : 'Unregistered Channel. Defaulting to NotificationManager default channel.'} 
-------notificationChannel: $notificationChannel
+----|channel: $channelName
+----|channels: $_channels
+----| ${registered ? 'Registered Channel' : 'Unregistered Channel. Defaulting to NotificationManager default channel'}. 
+----|notificationChannel: $notificationChannel
 ''');
     return notificationChannel;
   }
@@ -90,14 +90,14 @@ class NotificationManager {
     final QueuePosition? position,
   ) {
     debugPrint('''
----NotificationManager:::getQueue---
-------position: $position
-------queues: $_queues''');
+--NotificationManager:::getQueue--
+----|position: $position
+----|queues: $_queues''');
     if (position == null) {
       final defaultQueue = _queues.first;
       debugPrint('''
-------No Position provided,
-------Returning default queue: $defaultQueue
+----|No Position provided,
+----|Returning default queue: $defaultQueue
 ''');
 
       return defaultQueue;
@@ -122,8 +122,8 @@ class NotificationManager {
     );
 
     debugPrint('''
-------${configuredQueue ? 'Configured Queue.' : 'Unconfigured Queue. Defaulting to NotificationManager default queue.'} 
-------queue: $queue
+----|${configuredQueue ? 'Configured Queue.' : 'Unconfigured Queue. Defaulting to default queue at new position.'} 
+----|queue: $queue
 ''');
     return queue;
   }
@@ -133,9 +133,9 @@ class NotificationManager {
     final BuildContext context,
   ) {
     debugPrint('''
----NotificationManager:::show---
-------notification: $notification
-------context: $context
+--NotificationManager:::show--
+----|notification: $notification
+----|context: $context
 ''');
     notification
       ..channel = _getChannel(notification.channelName)
@@ -150,9 +150,9 @@ class NotificationManager {
     final BuildContext context,
   ) {
     debugPrint('''
----NotificationManager:::dismiss---
-------notification: $notification
-------context: $context
+--NotificationManager:::dismiss--
+----|notification: $notification
+----|context: $context
 ''');
     notification.queue.manager.dismiss(notification, context);
   }

@@ -12,14 +12,14 @@ part 'extensions.dart';
 
 ///  [NotificationQueue]s based on [QueuePosition].
 ///
-/// - [TopStartQueue]
+/// - [TopLeftQueue]
 /// - [TopCenterQueue]
-/// - [TopEndQueue]
-/// - [CenterStartQueue]
-/// - [CenterEndQueue]
-/// - [BottomStartQueue]
+/// - [TopRightQueue]
+/// - [CenterLeftQueue]
+/// - [CenterRightQueue]
+/// - [BottomLeftQueue]
 /// - [BottomCenterQueue]
-/// - [BottomEndQueue].
+/// - [BottomRightQueue].
 ///
 /// Used Only inside
 /// ```dart
@@ -72,14 +72,14 @@ sealed class NotificationQueue {
   int get hashCode => position.hashCode;
 }
 
-final class TopStartQueue extends NotificationQueue {
-  TopStartQueue({
+final class TopLeftQueue extends NotificationQueue {
+  TopLeftQueue({
     super.style = const FlatQueueStyle(),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-  }) : super(position: QueuePosition.topStart);
+  }) : super(position: QueuePosition.topLeft);
 }
 
 final class TopCenterQueue extends NotificationQueue {
@@ -92,24 +92,24 @@ final class TopCenterQueue extends NotificationQueue {
   }) : super(position: QueuePosition.topCenter);
 }
 
-final class TopEndQueue extends NotificationQueue {
-  TopEndQueue({
+final class TopRightQueue extends NotificationQueue {
+  TopRightQueue({
     super.style = const FlatQueueStyle(),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-  }) : super(position: QueuePosition.topEnd);
+  }) : super(position: QueuePosition.topRight);
 }
 
-final class CenterStartQueue extends NotificationQueue {
-  CenterStartQueue({
+final class CenterLeftQueue extends NotificationQueue {
+  CenterLeftQueue({
     super.style = const FlatQueueStyle(),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-  }) : super(position: QueuePosition.centerStart);
+  }) : super(position: QueuePosition.centerLeft);
 }
 
 // final class CenterQueue extends NotificationQueue {
@@ -123,24 +123,24 @@ final class CenterStartQueue extends NotificationQueue {
 //   }) : super(position: QueuePosition.center);
 // }
 
-final class CenterEndQueue extends NotificationQueue {
-  CenterEndQueue({
+final class CenterRightQueue extends NotificationQueue {
+  CenterRightQueue({
     super.style = const FlatQueueStyle(),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-  }) : super(position: QueuePosition.centerEnd);
+  }) : super(position: QueuePosition.centerRight);
 }
 
-final class BottomStartQueue extends NotificationQueue {
-  BottomStartQueue({
+final class BottomLeftQueue extends NotificationQueue {
+  BottomLeftQueue({
     super.style = const FlatQueueStyle(),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-  }) : super(position: QueuePosition.bottomStart);
+  }) : super(position: QueuePosition.bottomLeft);
 }
 
 final class BottomCenterQueue extends NotificationQueue {
@@ -153,12 +153,12 @@ final class BottomCenterQueue extends NotificationQueue {
   }) : super(position: QueuePosition.bottomCenter);
 }
 
-final class BottomEndQueue extends NotificationQueue {
-  BottomEndQueue({
+final class BottomRightQueue extends NotificationQueue {
+  BottomRightQueue({
     super.style = const FlatQueueStyle(),
     super.spacing = 4.0,
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
     super.dismissalThreshold = 50.0,
-  }) : super(position: QueuePosition.bottomEnd);
+  }) : super(position: QueuePosition.bottomRight);
 }

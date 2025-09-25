@@ -2,10 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
+part 'draggable/draggable_transitions.dart';
+part 'draggable/relocation_targets.dart';
 part 'notification_action.dart';
 part 'type_defts.dart';
 
@@ -112,15 +115,32 @@ class NotificationWidget extends StatefulWidget {
       ' dismissDuration: $dismissDuration,'
       ' position: $position,'
       ' builder: $builder)';
+
+  NotificationWidget copyWith(
+    final QueuePosition newPosition,
+  ) =>
+      NotificationWidget(
+        message: message,
+        position: newPosition,
+        channelName: channelName,
+        id: id,
+        title: title,
+        action: action,
+        icon: icon,
+        backgroundColor: backgroundColor,
+        dismissDuration: dismissDuration,
+        builder: builder,
+        foregroundColor: foregroundColor,
+      );
 }
 
 class _NotificationWidgetState extends State<NotificationWidget>
     with SingleTickerProviderStateMixin {
   late ThemeData _themeData;
-
-  late Size _screenSize;
-  double get _screenHeight => _screenSize.height;
-  double get _screenWidth => _screenSize.width;
+  //
+  // late Size _screenSize;
+  // double get _screenHeight => _screenSize.height;
+  // double get _screenWidth => _screenSize.width;
 
   Color get _resolvedForeground =>
       widget.foregroundColor ??
@@ -159,36 +179,6 @@ class _NotificationWidgetState extends State<NotificationWidget>
   /// An expanded notification will not be dismissed using [_dismissTimer].
   final ValueNotifier<bool> _isExpanded = ValueNotifier(false);
 
-  /// An [OffsetPair] to indicate drag input updated
-  ///
-  /// [OffsetPair.local] is set to cumulative drag input of widget,
-  /// and [OffsetPair.global] is set to drag input offset in relation
-  /// to the screen.
-  /// On drag input end, is set to null.
-  final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
-      ValueNotifier(null);
-  bool get _passedThreshold {
-    final offsetPair = _dragOffsetPairNotifier.value;
-    final passedVerticalThreshold = offsetPair != null &&
-        (offsetPair.global.dy < _dismissalThreshold ||
-            offsetPair.global.dy > _screenHeight - _dismissalThreshold);
-    final passedHorizontalThreshold = offsetPair != null &&
-        (offsetPair.global.dx < _dismissalThreshold ||
-            offsetPair.global.dx > _screenWidth - _dismissalThreshold);
-
-    final passedThreshold =
-        passedVerticalThreshold || passedHorizontalThreshold;
-
-    debugPrint('''
----------------Cumulative Drag Offset: ${offsetPair?.local}
----------------Global Drag Offset: ${offsetPair?.global}
----------------Passed Vertical Threshold: $passedVerticalThreshold
----------------Passed Horizontal Threshold: $passedHorizontalThreshold
----------------PassedThreshold: $passedThreshold''');
-
-    return passedThreshold;
-  }
-
   Timer? _dismissTimer;
 
   late final AnimationController _animationController;
@@ -196,7 +186,7 @@ class _NotificationWidgetState extends State<NotificationWidget>
   @override
   void initState() {
     debugPrint('''
----------------Notification${widget.key}: initState called---------------''');
+----------Notification${widget.key}: initState called----------''');
     super.initState();
     _showCloseButton.value =
         widget.queue.style.showCloseButton == QueueCloseButton.always;
@@ -207,17 +197,14 @@ class _NotificationWidgetState extends State<NotificationWidget>
       reverseDuration: const Duration(milliseconds: 240),
     )..forward();
 
-    debugPrint('''
-elevation is $_elevation
-showCloseButton is ${widget.queue.style.showCloseButton}''');
-    _initDismissTimer();
+    initDismissTimer();
   }
 
   @override
   void didChangeDependencies() {
     debugPrint('''
----------------Notification${widget.key}: didChangeDependencies called---------------''');
-    _screenSize = MediaQuery.of(context).size;
+----------Notification${widget.key}: didChangeDependencies called----------''');
+    // _screenSize = MediaQuery.of(context).size;
     _themeData = Theme.of(context);
     super.didChangeDependencies();
   }
@@ -226,24 +213,23 @@ showCloseButton is ${widget.queue.style.showCloseButton}''');
     await _animationController.reverse();
     NotificationManager.instance.dismiss(widget, context);
     debugPrint('''
----------------Notification${widget.key}::::dismiss---------------
-------------------Dismissed.''');
+----------Notification${widget.key}::::dismiss----------
+------------|Dismissed.''');
   }
 
   @override
   void dispose() {
     super.dispose();
     _animationController.dispose();
-    _disposeDismissTimer();
+    ditchDismissTimer();
     _isExpanded.dispose();
-    _dragOffsetPairNotifier.dispose();
     debugPrint('''
----------------Notification${widget.key}:::dispose---------------
-------------------Disposed.
+----------Notification${widget.key}:::dispose----------
+------------|Disposed.
 ''');
   }
 
-  void _initDismissTimer() {
+  void initDismissTimer() {
     if (_resolvedDismissDuration != null) {
       _dismissTimer = Timer(_resolvedDismissDuration!, () {
         if (mounted && !_isExpanded.value) {
@@ -253,86 +239,30 @@ showCloseButton is ${widget.queue.style.showCloseButton}''');
     }
   }
 
-  void _disposeDismissTimer() {
+  void ditchDismissTimer() {
     _dismissTimer?.cancel();
     _dismissTimer = null;
   }
 
   @override
-  Widget build(final BuildContext context) => SlideTransition(
-        position: Tween<Offset>(
-          begin: widget.queue.position.slideTransitionOffset,
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: _animationController,
-            curve: Curves.easeInOut,
-          ),
-        ),
-        child: FadeTransition(
-          opacity: _animationController,
-          child: LongPressDraggable(
-            delay: const Duration(milliseconds: 200),
-            axis: null,
-            feedback: _buildTransitionNotification(),
-            maxSimultaneousDrags: 1,
-            childWhenDragging: const SizedBox.shrink(),
-            onDragStarted: () {
-              _disposeDismissTimer();
-            },
-            onDragUpdate: (final details) {
-              _dragOffsetPairNotifier.value = OffsetPair(
-                local: details.delta,
-                global: details.globalPosition,
-              );
-            },
-            onDragEnd: (final details) {
-              if (_passedThreshold) {
-                dismiss();
-              } else {
-                _dragOffsetPairNotifier.value = null;
-                _initDismissTimer();
-              }
-            },
-            child: Draggable(
-              axis: Axis.horizontal,
-              maxSimultaneousDrags: 1,
-              onDragStarted: () {
-                _disposeDismissTimer();
-              },
-              onDragUpdate: (final details) {
-                debugPrint('Kind: ${details.kind}');
-                _dragOffsetPairNotifier.value = OffsetPair(
-                  local: Offset(details.delta.dx, 0),
-                  global: details.globalPosition,
-                );
-              },
-              onDragEnd: (final details) {
-                if (_passedThreshold) {
-                  dismiss();
-                } else {
-                  _dragOffsetPairNotifier.value = null;
-                  _initDismissTimer();
-                }
-              },
-              feedback: _buildTransitionNotification(),
-              childWhenDragging: const SizedBox.shrink(),
-              child: _buildNotification(),
+  Widget build(final BuildContext context) => _InheritedNotificationWidget(
+        state: this,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: widget.queue.position.slideTransitionOffset,
+            end: Offset.zero,
+          ).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeInOut,
             ),
           ),
-        ),
-      );
-
-  Widget _buildTransitionNotification() => ValueListenableBuilder(
-        valueListenable: _dragOffsetPairNotifier,
-        builder: (final context, final offsetPair, final child) =>
-            Transform.translate(
-          offset: offsetPair?.local ?? Offset.zero,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 480),
-            curve: Curves.easeOut,
-            opacity: _passedThreshold ? 0.2 : 1.0,
-            child: _buildNotification(),
+          child: FadeTransition(
+            opacity: _animationController,
+            child: _DraggableTransitions(
+              parent: this,
+              content: _buildNotification(),
+            ),
           ),
         ),
       );
@@ -508,9 +438,9 @@ showCloseButton is ${widget.queue.style.showCloseButton}''');
               padding: const EdgeInsets.all(4.0),
               onPressed: () {
                 if (isExpanded) {
-                  _initDismissTimer();
+                  initDismissTimer();
                 } else {
-                  _disposeDismissTimer();
+                  ditchDismissTimer();
                 }
                 _isExpanded.value = !isExpanded;
               },
@@ -549,4 +479,22 @@ showCloseButton is ${widget.queue.style.showCloseButton}''');
                   )
                 : const SizedBox.shrink(),
       );
+}
+
+class _InheritedNotificationWidget extends InheritedWidget {
+  const _InheritedNotificationWidget(
+      {required this.state, required super.child});
+
+  static _InheritedNotificationWidget? of(final BuildContext context) => context
+      .dependOnInheritedWidgetOfExactType<_InheritedNotificationWidget>();
+
+  NotificationWidget get widget => state.widget;
+  NotificationQueue get queue => state.widget.queue;
+  NotificationChannel get channel => state.widget.channel;
+  final _NotificationWidgetState state;
+
+  @override
+  bool updateShouldNotify(
+          covariant final _InheritedNotificationWidget oldWidget) =>
+      oldWidget.state != state;
 }

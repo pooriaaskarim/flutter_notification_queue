@@ -3,15 +3,18 @@ part of 'notification_queue.dart';
 extension NotificationQueueExtensions on NotificationQueue {
   EdgeInsetsGeometry? get margin {
     switch (this) {
-      case TopStartQueue():
-      case CenterStartQueue():
-      case BottomStartQueue():
-      case TopEndQueue():
-      case CenterEndQueue():
-      case BottomEndQueue():
+      case TopLeftQueue():
+      case CenterLeftQueue():
+      case BottomLeftQueue():
+      case TopRightQueue():
+      case CenterRightQueue():
+      case BottomRightQueue():
         {
-          return style._defaultMargin.subtract(EdgeInsetsGeometry.symmetric(
-              horizontal: style._defaultMargin.horizontal));
+          if (style.docked) {
+            return EdgeInsetsGeometry.symmetric(
+                vertical: style._defaultMargin.top);
+          }
+          return style._defaultMargin;
         }
       case TopCenterQueue():
       case BottomCenterQueue():

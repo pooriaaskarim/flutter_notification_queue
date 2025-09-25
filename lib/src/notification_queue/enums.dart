@@ -1,15 +1,14 @@
 part of 'notification_queue.dart';
 
 enum QueuePosition {
-  topStart,
+  topLeft,
   topCenter,
-  topEnd,
-  centerStart,
-  // center,
-  centerEnd,
-  bottomStart,
+  topRight,
+  centerLeft,
+  centerRight,
+  bottomLeft,
   bottomCenter,
-  bottomEnd;
+  bottomRight;
 
   NotificationQueue generateQueueFrom(final NotificationQueue anotherQueue) =>
       generateQueue(
@@ -27,8 +26,8 @@ enum QueuePosition {
     final PendingIndicatorBuilder? queueIndicatorBuilder,
   }) {
     switch (this) {
-      case topStart:
-        return TopStartQueue(
+      case topLeft:
+        return TopLeftQueue(
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
@@ -43,40 +42,32 @@ enum QueuePosition {
           dismissalThreshold: dismissalThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
-      case topEnd:
-        return TopEndQueue(
+      case topRight:
+        return TopRightQueue(
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
           dismissalThreshold: dismissalThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
-      case centerStart:
-        return CenterStartQueue(
+      case centerLeft:
+        return CenterLeftQueue(
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
           dismissalThreshold: dismissalThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
-      // case center:
-      //   return CenterQueue(
-      //     style: style,
-      //     spacing: spacing,
-      //     maxStackSize: maxStackSize,
-      //     dismissalThreshold: dismissalThreshold,
-      //     queueIndicatorBuilder: queueIndicatorBuilder,
-      //   );
-      case centerEnd:
-        return CenterEndQueue(
+      case centerRight:
+        return CenterRightQueue(
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
           dismissalThreshold: dismissalThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
-      case bottomStart:
-        return BottomStartQueue(
+      case bottomLeft:
+        return BottomLeftQueue(
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
@@ -91,8 +82,8 @@ enum QueuePosition {
           dismissalThreshold: dismissalThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
-      case bottomEnd:
-        return BottomEndQueue(
+      case bottomRight:
+        return BottomRightQueue(
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
@@ -102,42 +93,40 @@ enum QueuePosition {
     }
   }
 
-  AlignmentDirectional get alignment {
+  AlignmentGeometry get alignment {
     switch (this) {
+      case topLeft:
+        return Alignment.topLeft;
       case topCenter:
-        return AlignmentDirectional.topCenter;
-      case topStart:
-        return AlignmentDirectional.topStart;
-      case topEnd:
-        return AlignmentDirectional.topEnd;
-      // case center:
-      //   return AlignmentDirectional.center;
-      case centerStart:
-        return AlignmentDirectional.centerStart;
-      case centerEnd:
-        return AlignmentDirectional.centerEnd;
+        return Alignment.topCenter;
+      case topRight:
+        return Alignment.topRight;
+      case centerLeft:
+        return Alignment.centerLeft;
+      case centerRight:
+        return Alignment.centerRight;
+
+      case bottomLeft:
+        return Alignment.bottomLeft;
       case bottomCenter:
-        return AlignmentDirectional.bottomCenter;
-      case bottomStart:
-        return AlignmentDirectional.bottomStart;
-      case bottomEnd:
-        return AlignmentDirectional.bottomCenter;
+        return Alignment.bottomCenter;
+      case bottomRight:
+        return Alignment.bottomRight;
     }
   }
 
   MainAxisAlignment get mainAxisAlignment {
     switch (this) {
       case topCenter:
-      case topStart:
-      case topEnd:
+      case topLeft:
+      case topRight:
         return MainAxisAlignment.start;
-      // case center:
-      case centerStart:
-      case centerEnd:
+      case centerLeft:
+      case centerRight:
         return MainAxisAlignment.center;
       case bottomCenter:
-      case bottomStart:
-      case bottomEnd:
+      case bottomLeft:
+      case bottomRight:
         return MainAxisAlignment.end;
     }
   }
@@ -146,15 +135,14 @@ enum QueuePosition {
     switch (this) {
       case topCenter:
       case bottomCenter:
-        // case center:
         return CrossAxisAlignment.center;
-      case topStart:
-      case bottomStart:
-      case centerStart:
+      case topLeft:
+      case bottomLeft:
+      case centerLeft:
         return CrossAxisAlignment.start;
-      case topEnd:
-      case bottomEnd:
-      case centerEnd:
+      case topRight:
+      case bottomRight:
+      case centerRight:
         return CrossAxisAlignment.end;
     }
   }
@@ -162,34 +150,32 @@ enum QueuePosition {
   VerticalDirection get verticalDirection {
     switch (this) {
       case topCenter:
-      case topStart:
-      case topEnd:
-      // case center:
-      case centerStart:
-      case centerEnd:
+      case topLeft:
+      case topRight:
+      case centerLeft:
+      case centerRight:
         return VerticalDirection.down;
       case bottomCenter:
-      case bottomStart:
-      case bottomEnd:
+      case bottomLeft:
+      case bottomRight:
         return VerticalDirection.up;
     }
   }
 
   Offset get slideTransitionOffset {
     switch (this) {
-      case topStart:
-      case centerStart:
-      case bottomStart:
+      case topLeft:
+      case centerLeft:
+      case bottomLeft:
         return const Offset(-1, 0);
       case topCenter:
         return const Offset(0, -1);
-      // case center:
-      //   return Offset.zero;
+
       case bottomCenter:
         return const Offset(0, 1);
-      case topEnd:
-      case centerEnd:
-      case bottomEnd:
+      case topRight:
+      case centerRight:
+      case bottomRight:
         return const Offset(1, 0);
     }
   }
