@@ -21,7 +21,7 @@ class NotificationManager {
         const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     final double spacing = 8.0,
     final int maxStackSize = 3,
-    final double dismissalThreshold = 50.0,
+    final int? dismissThreshold = 50,
     final PendingIndicatorBuilder? queueIndicatorBuilder,
     final QueueStyle queueStyle = const FlatQueueStyle(),
     final bool vibrate = false,
@@ -41,7 +41,7 @@ class NotificationManager {
       enabled: true,
       position: position,
       vibrate: vibrate,
-      defaultForegroundColor: foregroundColor,
+      defaultColor: foregroundColor,
       defaultBackgroundColor: backgroundColor,
       defaultDismissDuration: dismissDuration,
     );
@@ -51,7 +51,7 @@ class NotificationManager {
       style: queueStyle,
       spacing: spacing,
       maxStackSize: maxStackSize,
-      dismissalThreshold: dismissalThreshold,
+      dismissThreshold: dismissThreshold,
       queueIndicatorBuilder: queueIndicatorBuilder,
     );
     _queues.addAll({defaultQueue, ...?queues});
@@ -61,38 +61,35 @@ class NotificationManager {
   static final LinkedHashSet<NotificationChannel> _channels = LinkedHashSet();
   static final LinkedHashSet<NotificationQueue> _queues = LinkedHashSet();
 
-  NotificationChannel _getChannel(
+  NotificationChannel getChannel(
     final String channelName,
   ) {
-    bool registered = false;
+    bool registeredChannel = false;
     final notificationChannel = _channels.firstWhere(
       (final channel) {
-        final found = channel.name == channelName;
-        if (found) {
-          registered = true;
-        }
-        return found;
+        registeredChannel = channel.name == channelName;
+        return registeredChannel;
       },
       orElse: () => _channels.first,
     );
 
     debugPrint('''
 ---NotificationManager:::getChannel---
-----|channel: $channelName
-----|channels: $_channels
-----| ${registered ? 'Registered Channel' : 'Unregistered Channel. Defaulting to NotificationManager default channel'}. 
-----|notificationChannel: $notificationChannel
+----|Channel: $channelName
+----|Channels: $_channels
+----|${registeredChannel ? 'Registered Channel' : 'Unregistered Channel. Defaulting to NotificationManager default channel'}. 
+----|NotificationChannel: $notificationChannel
 ''');
     return notificationChannel;
   }
 
-  NotificationQueue _getQueue(
+  NotificationQueue getQueue(
     final QueuePosition? position,
   ) {
     debugPrint('''
 --NotificationManager:::getQueue--
-----|position: $position
-----|queues: $_queues''');
+----|Position: $position
+----|Queues: $_queues''');
     if (position == null) {
       final defaultQueue = _queues.first;
       debugPrint('''
@@ -105,11 +102,9 @@ class NotificationManager {
     bool configuredQueue = false;
     final NotificationQueue queue = _queues.firstWhere(
       (final queue) {
-        final found = queue.position == position;
-        if (found) {
-          configuredQueue = true;
-        }
-        return found;
+        configuredQueue = queue.position == position;
+
+        return configuredQueue;
       },
       orElse: () {
         final defaultQueue = _queues.first;
@@ -123,7 +118,7 @@ class NotificationManager {
 
     debugPrint('''
 ----|${configuredQueue ? 'Configured Queue.' : 'Unconfigured Queue. Defaulting to default queue at new position.'} 
-----|queue: $queue
+----|Queue: $queue
 ''');
     return queue;
   }
@@ -134,14 +129,37 @@ class NotificationManager {
   ) {
     debugPrint('''
 --NotificationManager:::show--
-----|notification: $notification
-----|context: $context
+----|Notification: $notification
+----|Context: $context
 ''');
-    notification
-      ..channel = _getChannel(notification.channelName)
-      ..queue =
-          _getQueue(notification.position ?? notification.channel.position)
-      ..queue.manager.queue(notification, context);
+    notification.queue.manager.queue(notification, context);
+  }
+
+  ///Relocate [NotificationWidget] to a new [QueuePosition]
+  void relocate(
+    final NotificationWidget notification,
+    final QueuePosition newPosition,
+    final BuildContext context,
+  ) {
+    debugPrint('''
+--NotificationManager:::relocate--
+----|Notification: $notification
+----|Context: $context
+----|CurrentPosition: ${notification.position}
+----|NewPosition: $newPosition
+----|-----> ${notification.queue.position == newPosition ? 'Same Position, Skipping relocation.' : 'Relocating... .'}
+''');
+    final relocatingNotification = notification.copyWith(newPosition);
+    final oldQueue = notification.queue;
+    final newQueue = relocatingNotification.queue;
+    if (newQueue == oldQueue) {
+      return;
+    }
+    // notification
+    //   ..position = newPosition
+    //   ..queue = newQueue;
+    oldQueue.manager.dismiss(notification, context);
+    newQueue.manager.queue(relocatingNotification, context);
   }
 
   /// Dismiss [NotificationWidget] from it's [NotificationQueue]
@@ -151,8 +169,8 @@ class NotificationManager {
   ) {
     debugPrint('''
 --NotificationManager:::dismiss--
-----|notification: $notification
-----|context: $context
+----|Notification: $notification
+----|Context: $context
 ''');
     notification.queue.manager.dismiss(notification, context);
   }
