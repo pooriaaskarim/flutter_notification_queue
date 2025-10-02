@@ -12,8 +12,10 @@ class NotificationChannel {
     this.position,
     this.enabled = true,
     this.vibrate = true,
-    this.defaultBackgroundColor,
+    this.defaultColor,
     this.defaultForegroundColor,
+    this.defaultBackgroundColor,
+    this.defaultIcon,
     this.defaultDismissDuration,
   });
 
@@ -47,41 +49,38 @@ class NotificationChannel {
   /// If set to null, channel [NotificationWidget]s will be permanent.
   final Duration? defaultDismissDuration;
 
-  /// Default background color of [NotificationChannel]'s
-  /// [NotificationWidget]s.
-  final Color? defaultBackgroundColor;
+  /// Default notification color of the channel.
+  ///
+  /// Colors icon, borders and filled [QueueStyle]s' background color.
+  /// [NotificationWidget]s can override with [NotificationWidget.color].
+  /// Filled [QueueStyle]s will color notification body and foreground
+  /// according to this.
+  final Color? defaultColor;
 
-  /// Default foreground color of [NotificationChannel]'s
-  /// [NotificationWidget]s.
-
+  /// Default foreground color of channel notifications.
+  ///
+  /// Colors text, close, expand and action buttons and progressIndicator.
+  /// [NotificationWidget]s can override with
+  /// [NotificationWidget.foregroundColor].
+  /// Filled [QueueStyle]s will ignore foreground color and color notification
+  /// foreground using a high-contrast color to [defaultColor].
   final Color? defaultForegroundColor;
 
-  NotificationChannel copyWith({
-    final String? name,
-    final String? description,
-    final bool? enabled,
-    final bool? vibrate,
-    final QueuePosition? Function()? position,
-    final Duration? Function()? defaultDismissDuration,
-    final Color? Function()? defaultBackgroundColor,
-    final Color? Function()? defaultForegroundColor,
-  }) =>
-      NotificationChannel(
-        name: name ?? this.name,
-        description: description ?? this.description,
-        enabled: enabled ?? this.enabled,
-        vibrate: vibrate ?? this.vibrate,
-        position: position?.call() ?? this.position,
-        defaultDismissDuration:
-            defaultDismissDuration?.call() ?? this.defaultDismissDuration,
-        defaultBackgroundColor:
-            defaultBackgroundColor?.call() ?? this.defaultBackgroundColor,
-        defaultForegroundColor:
-            defaultForegroundColor?.call() ?? this.defaultForegroundColor,
-      );
+  /// Default background color of [NotificationChannel]'s
+  /// [NotificationWidget]s.
+  ///
+  /// Colors notification body.
+  /// [NotificationWidget]s can override with
+  /// [NotificationWidget.backgroundColor].
+  /// Filled [QueueStyle]s will ignore background color and color notification
+  /// body with [defaultColor].
+  final Color? defaultBackgroundColor;
+
+  /// Default channel Icon
+  final Widget? defaultIcon;
 
   @override
-  String toString() => '"$name" NotificationChannel';
+  String toString() => ' NotificationChannel("$name")';
   @override
   bool operator ==(final Object other) {
     if (identical(this, other)) {
