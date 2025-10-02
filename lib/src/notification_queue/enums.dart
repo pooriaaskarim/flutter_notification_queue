@@ -15,14 +15,14 @@ enum QueuePosition {
         style: anotherQueue.style,
         spacing: anotherQueue.spacing,
         maxStackSize: anotherQueue.maxStackSize,
-        dismissalThreshold: anotherQueue.dismissalThreshold,
+        dismissThreshold: anotherQueue.dismissThreshold,
       );
 
   NotificationQueue generateQueue({
     required final QueueStyle style,
     required final double spacing,
     required final int maxStackSize,
-    required final double dismissalThreshold,
+    required final int? dismissThreshold,
     final PendingIndicatorBuilder? queueIndicatorBuilder,
   }) {
     switch (this) {
@@ -31,7 +31,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case topCenter:
@@ -39,7 +39,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case topRight:
@@ -47,7 +47,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case centerLeft:
@@ -55,7 +55,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case centerRight:
@@ -63,7 +63,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomLeft:
@@ -71,7 +71,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomCenter:
@@ -79,7 +79,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomRight:
@@ -87,7 +87,7 @@ enum QueuePosition {
           style: style,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissalThreshold: dismissalThreshold,
+          dismissThreshold: dismissThreshold,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
     }
@@ -114,116 +114,28 @@ enum QueuePosition {
         return Alignment.bottomRight;
     }
   }
-
-  MainAxisAlignment get mainAxisAlignment {
-    switch (this) {
-      case topCenter:
-      case topLeft:
-      case topRight:
-        return MainAxisAlignment.start;
-      case centerLeft:
-      case centerRight:
-        return MainAxisAlignment.center;
-      case bottomCenter:
-      case bottomLeft:
-      case bottomRight:
-        return MainAxisAlignment.end;
-    }
-  }
-
-  CrossAxisAlignment get crossAxisAlignment {
-    switch (this) {
-      case topCenter:
-      case bottomCenter:
-        return CrossAxisAlignment.center;
-      case topLeft:
-      case bottomLeft:
-      case centerLeft:
-        return CrossAxisAlignment.start;
-      case topRight:
-      case bottomRight:
-      case centerRight:
-        return CrossAxisAlignment.end;
-    }
-  }
-
-  VerticalDirection get verticalDirection {
-    switch (this) {
-      case topCenter:
-      case topLeft:
-      case topRight:
-      case centerLeft:
-      case centerRight:
-        return VerticalDirection.down;
-      case bottomCenter:
-      case bottomLeft:
-      case bottomRight:
-        return VerticalDirection.up;
-    }
-  }
-
-  Offset get slideTransitionOffset {
-    switch (this) {
-      case topLeft:
-      case centerLeft:
-      case bottomLeft:
-        return const Offset(-1, 0);
-      case topCenter:
-        return const Offset(0, -1);
-
-      case bottomCenter:
-        return const Offset(0, 1);
-      case topRight:
-      case centerRight:
-      case bottomRight:
-        return const Offset(1, 0);
-    }
-  }
 }
 
-enum QueueCloseButton {
+enum QueueCloseButtonBehaviour {
   always,
   onHover,
   never;
 }
 
-sealed class QueueStyle {
-  const QueueStyle({
-    required this.elevation,
-    required this.showCloseButton,
-    required this.docked,
-  });
-  final bool docked;
+enum QueueRelocationBehaviour {
+  /// LongPress drag relocates any notification to all possible positions.
+  ///
+  /// Undefined [QueuePosition]s will generate their [NotificationQueue] from
+  /// the [NotificationManager]'s default [NotificationQueue] automatically.
+  /// *CAUTION!!!* This can cause overlapping of notifications on
+  /// smaller screens.
+  allowAll,
 
-  final double elevation;
-  final QueueCloseButton showCloseButton;
-  double get _defaultOpacity => 0.8;
-  EdgeInsets get _defaultMargin =>
-      const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0);
-  BorderRadius get _defaultBorderRadius =>
-      const BorderRadius.all(Radius.circular(4));
-}
+  /// LongPress drag relocates any notification to any of the define positions
+  allowDefined,
 
-final class FlatQueueStyle extends QueueStyle {
-  const FlatQueueStyle({
-    super.docked = false,
-    super.showCloseButton = QueueCloseButton.never,
-    super.elevation = 3,
-  });
-}
-
-final class FilledQueueStyle extends QueueStyle {
-  const FilledQueueStyle({
-    super.docked = false,
-    super.showCloseButton = QueueCloseButton.never,
-    super.elevation = 3,
-  });
-}
-
-final class OutlinedQueueStyle extends QueueStyle {
-  const OutlinedQueueStyle({
-    super.docked = false,
-    super.showCloseButton = QueueCloseButton.never,
-    super.elevation = 3,
-  });
+  /// Disable LongPress relocations.
+  ///
+  /// This is the default behavior.
+  none;
 }

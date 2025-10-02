@@ -9,7 +9,7 @@ class QueueManager {
 
   final pendingNotifications = Queue<NotificationWidget>();
 
-  final activeNotifications = ValueNotifier(<NotificationWidget>[]);
+  final _activeNotifications = ValueNotifier(<NotificationWidget>[]);
 
   OverlayEntry? _overlayEntry;
 
@@ -25,16 +25,16 @@ class QueueManager {
       debugPrint('''
 --------|Notification ID: ${notification.id}
 --------|Checking Active Notifications... .''');
-      final activeIndex = activeNotifications.value
+      final activeIndex = _activeNotifications.value
           .indexWhere((final n) => n.id == notification.id);
       if (activeIndex != -1) {
         debugPrint('''
 --------|Notification Already Active at Index: $activeIndex.
 --------|Updating Notification.
 ''');
-        activeNotifications.value[activeIndex] =
+        _activeNotifications.value[activeIndex] =
             notification; // Replace (Flutter rebuilds)
-        activeNotifications.notifyListeners();
+        _activeNotifications.notifyListeners();
         return;
       }
       debugPrint('''
@@ -58,20 +58,20 @@ class QueueManager {
 --------|Adding Notification to Pending Queue.
 ''');
     pendingNotifications.add(notification);
-    _processQueue(context);
+    processQueue(context);
   }
 
-  void _processQueue(final BuildContext context) {
+  void processQueue(final BuildContext context) {
     debugPrint('''
 ------$notificationQueue:::QueueManager:::_processQueue------''');
     while (pendingNotifications.isNotEmpty &&
-        activeNotifications.value.length < notificationQueue.maxStackSize) {
+        _activeNotifications.value.length < notificationQueue.maxStackSize) {
       debugPrint('''
 --------Processing Queue InProgress--------''');
       final latestNotification = pendingNotifications.removeFirst();
 
-      activeNotifications.value = [
-        ...activeNotifications.value,
+      _activeNotifications.value = [
+        ..._activeNotifications.value,
         latestNotification,
       ];
 
@@ -87,7 +87,7 @@ class QueueManager {
         debugPrint('''
 --------|Updating OverlayEntry
 ''');
-        activeNotifications.notifyListeners();
+        _activeNotifications.notifyListeners();
       }
     }
   }
@@ -100,12 +100,12 @@ class QueueManager {
 ------$notificationQueue:::QueueManager:::dismiss------
 --------|Removing Notification: $notification
 --------|From Context: $context''');
-    final removed = activeNotifications.value.remove(notification);
+    final removed = _activeNotifications.value.remove(notification);
     if (removed) {
       debugPrint('''
 --------|Notification Removed.
 ''');
-      activeNotifications.notifyListeners();
+      _activeNotifications.notifyListeners();
     } else {
       debugPrint('''
 --------|Notification Not Found. Already Dismissed????
@@ -114,14 +114,45 @@ class QueueManager {
 
     final disposed = safeDispose();
     if (!disposed) {
-      _processQueue(context);
+      processQueue(context);
+    }
+  }
+
+  void relocate(
+    final NotificationWidget notification,
+    final NotificationQueue newQueue,
+    final BuildContext context,
+  ) {
+    debugPrint('''
+------$notificationQueue:::QueueManager:::relocate------
+--------|Notification: $notification
+--------|RelocatingTo: $newQueue
+--------|Context: $context
+''');
+
+    final removed = _activeNotifications.value.remove(notification);
+    if (removed) {
+      debugPrint('''
+--------|Notification Removed.
+''');
+      newQueue.manager.queue(notification, context);
+      _activeNotifications.notifyListeners();
+    } else {
+      debugPrint('''
+--------|Notification Not Found.
+''');
+    }
+
+    final disposed = safeDispose();
+    if (!disposed) {
+      processQueue(context);
     }
   }
 
   bool safeDispose() {
     debugPrint('''
 ------$notificationQueue:::QueueManager:::safeDispose------''');
-    if (pendingNotifications.isEmpty && activeNotifications.value.isEmpty) {
+    if (pendingNotifications.isEmpty && _activeNotifications.value.isEmpty) {
       debugPrint('''
 --------|No Pending Notifications And No Active Notifications.
 --------|Disposing... .
@@ -138,7 +169,7 @@ class QueueManager {
   }
 
   void dispose() {
-    activeNotifications.dispose();
+    _activeNotifications.dispose();
     _overlayEntry?.remove();
     _overlayEntry?.dispose();
     _overlayEntry = null;
@@ -155,13 +186,12 @@ class QueueManager {
     debugPrint('''
 ------$notificationQueue:::QueueManager:::_buildQueue------''');
     return ValueListenableBuilder<List<NotificationWidget>>(
-      valueListenable: activeNotifications,
+      valueListenable: _activeNotifications,
       builder: (final context, final activeNotifications, final _) {
         final pendingNotificationsCount = pendingNotifications.length;
         debugPrint('''
 --------$notificationQueue:::QueueManager:::_buildQueue:::InnerBuilder--------
 ''');
-
         return SafeArea(
           child: Container(
             alignment: notificationQueue.position.alignment,
@@ -169,15 +199,22 @@ class QueueManager {
             child: Column(
               spacing: notificationQueue.spacing,
               mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: notificationQueue.position.mainAxisAlignment,
-              crossAxisAlignment: notificationQueue.position.crossAxisAlignment,
-              verticalDirection: notificationQueue.position.verticalDirection,
+              mainAxisAlignment: notificationQueue.mainAxisAlignment,
+              crossAxisAlignment: notificationQueue.crossAxisAlignment,
+              verticalDirection: notificationQueue.verticalDirection,
               children: [
                 notificationQueue.queueIndicatorBuilder?.call(
                       pendingNotificationsCount,
                     ) ??
                     const SizedBox.shrink(),
                 ...activeNotifications
+                    .map((final notification) => DraggableTransitions(
+                          notification: notification,
+                          enableDismiss: true,
+                          enableRelocation: true,
+                          hapticFeedbackOnStart: true,
+                          thresholdInPixels: 50,
+                        )),
               ],
             ),
           ),
