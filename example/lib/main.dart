@@ -12,6 +12,7 @@ void main() {
 
   NotificationManager.initialize(
     position: QueuePosition.topCenter,
+    queueStyle: const OutlinedQueueStyle(),
     margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48.0),
     maxStackSize: 3,
     dismissDuration: const Duration(seconds: 3),
@@ -29,51 +30,110 @@ void main() {
     },
     queues: {
       BottomCenterQueue(
-          maxStackSize: 1,
-          style: const FilledQueueStyle(
-            docked: true,
-            showCloseButton: QueueCloseButton.onHover,
-          )),
+        maxStackSize: 1,
+        margin: EdgeInsets.zero,
+        style: const FlatQueueStyle(),
+        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+      ),
+      CenterLeftQueue(
+        maxStackSize: 3,
+        margin: EdgeInsets.zero,
+        style: const FilledQueueStyle(),
+        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+      ),
     },
     channels: {
       const NotificationChannel(
         name: 'scaffold',
         position: QueuePosition.bottomCenter,
-        defaultDismissDuration: null,
+        defaultDismissDuration: Duration(seconds: 5),
         defaultBackgroundColor: Colors.black,
         defaultForegroundColor: Colors.white,
+        defaultColor: Colors.black,
         enabled: false,
       ),
       const NotificationChannel(
         name: 'success',
-        // position: QueuePosition.topCenter,
+        position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 3),
-        defaultBackgroundColor: Colors.green,
+        defaultColor: Colors.green,
+        defaultIcon: Icon(
+          Icons.check_circle,
+        ),
+      ),
+      const NotificationChannel(
+        name: 'scaffold.success',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
         defaultForegroundColor: Colors.white,
+        defaultColor: Colors.green,
+        defaultIcon: Icon(
+          Icons.check_circle,
+        ),
         enabled: false,
       ),
       const NotificationChannel(
         name: 'error',
-        // position: QueuePosition.topCenter,
+        position: QueuePosition.topCenter,
         defaultDismissDuration: null,
-        defaultBackgroundColor: Colors.red,
+        defaultColor: Colors.red,
+        defaultIcon: Icon(
+          Icons.error,
+        ),
+      ),
+      const NotificationChannel(
+        name: 'scaffold.error',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
         defaultForegroundColor: Colors.white,
+        defaultColor: Colors.red,
+        defaultIcon: Icon(
+          Icons.error,
+        ),
         enabled: false,
       ),
       const NotificationChannel(
         name: 'info',
-        // position: QueuePosition.topCenter,
+        position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 3),
-        defaultBackgroundColor: Colors.blue,
+        defaultColor: Colors.blue,
+        defaultIcon: Icon(
+          Icons.info,
+        ),
+      ),
+      const NotificationChannel(
+        name: 'scaffold.info',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
         defaultForegroundColor: Colors.white,
+        defaultColor: Colors.blue,
+        defaultIcon: Icon(
+          Icons.info,
+        ),
         enabled: false,
       ),
       const NotificationChannel(
         name: 'warning',
-        // position: QueuePosition.topCenter,
+        position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.orange,
+        defaultColor: Colors.orange,
+        defaultIcon: Icon(
+          Icons.warning,
+        ),
+      ),
+      const NotificationChannel(
+        name: 'scaffold.warning',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
         defaultForegroundColor: Colors.white,
+        defaultColor: Colors.orange,
+        defaultIcon: Icon(
+          Icons.warning,
+        ),
         enabled: false,
       ),
     },
@@ -99,35 +159,6 @@ class DemoPage extends StatelessWidget {
   const DemoPage({super.key});
 
   List<NotificationExample> get _notificationExamples => [
-        // Basic notification
-        NotificationExample(
-          title: 'Scaffold Notification',
-          icon: Icons.android,
-          color: Colors.black,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              id: '1',
-              channelName: 'scaffold',
-              message: 'Scaffold Message!.',
-            ),
-            context,
-          ),
-        ), // Basic notification
-        NotificationExample(
-          title: 'Scaffold Notification\nUpdated Message',
-          icon: Icons.android,
-          color: Colors.black,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              id: '1',
-              channelName: 'scaffold',
-              message: 'Updated Scaffold Message!.',
-            ),
-            context,
-          ),
-        ),
-
-        // Predefined types
         NotificationExample(
           title: 'Success Message',
           icon: Icons.check_circle,
@@ -140,7 +171,6 @@ class DemoPage extends StatelessWidget {
             ).show(context);
           },
         ),
-
         NotificationExample(
           title: 'Error with Retry',
           icon: Icons.error,
@@ -158,7 +188,6 @@ class DemoPage extends StatelessWidget {
             context,
           ),
         ),
-
         NotificationExample(
           title: 'Warning with Tap',
           icon: Icons.warning,
@@ -175,7 +204,6 @@ class DemoPage extends StatelessWidget {
             context,
           ),
         ),
-
         NotificationExample(
           title: 'Info Message',
           icon: Icons.info,
@@ -195,12 +223,90 @@ class DemoPage extends StatelessWidget {
           ),
         ),
         NotificationExample(
+          title: 'Scaffold Notification',
+          icon: Icons.android,
+          color: Colors.black,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              id: '1',
+              channelName: 'scaffold',
+              title: 'Scaffold Notification',
+              icon: const Icon(Icons.lightbulb),
+              message: 'Scaffold Message!',
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Scaffold Notification\nUpdated Message',
+          icon: Icons.android,
+          color: Colors.black,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              id: '1',
+              channelName: 'scaffold',
+              icon: const Icon(Icons.tips_and_updates),
+              title: 'Updated on Scaffold Notification',
+              message: 'Updated Scaffold Message! Same ID caused update '
+                  'to this notification.',
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Scaffold Success Message',
+          icon: Icons.android,
+          color: Colors.green,
+          onPressed: (final context) {
+            NotificationWidget(
+              channelName: 'scaffold.success',
+              message: 'Operation completed successfully!',
+              title: 'Success',
+            ).show(context);
+          },
+        ),
+        NotificationExample(
+          title: 'Scaffold Error with Retry',
+          icon: Icons.android,
+          color: Colors.red,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'scaffold.error',
+              message: 'Network connection failed. Please try again.',
+              title: 'Connection Error',
+              action: NotificationAction.button(
+                label: 'Retry',
+                onPressed: () => debugPrint('Retrying connection...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Scaffold Warning with Tap',
+          icon: Icons.android,
+          color: Colors.orange,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'scaffold.warning',
+              message: 'Low storage space detected. Tap to manage.',
+              title: 'Storage Warning',
+              action: NotificationAction.onTap(
+                onPressed: () => debugPrint('Opening storage settings...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
           title: 'Scaffold Info',
-          icon: Icons.info,
+          icon: Icons.android,
           color: Colors.blue,
           onPressed: (final context) => NotificationManager.instance.show(
             NotificationWidget(
-              channelName: 'info',
+              channelName: 'scaffold.info',
               title: 'New Feature Available',
               message: 'Check out our new dark mode feature!'
                   ' This notification stays until you interact with it.',
@@ -221,12 +327,13 @@ class DemoPage extends StatelessWidget {
           color: Colors.purple,
           onPressed: (final context) => NotificationManager.instance.show(
             NotificationWidget(
-              title: 'اطلاعیه موفقیت',
+              title: 'اطلاعیه',
               message: 'عملیات با موفقیت انجام شد! سیستم آماده استفاده است.',
               action: NotificationAction.button(
                 label: 'تأیید',
                 onPressed: () => debugPrint('Persian action pressed'),
               ),
+              icon: const Icon(Icons.notifications),
             ),
             context,
           ),
@@ -398,7 +505,7 @@ class DemoPage extends StatelessWidget {
               message:
                   'This is a custom styled notification with beautiful colors!',
               backgroundColor: Colors.purple[700],
-              foregroundColor: Colors.white,
+              color: Colors.white,
               icon: const Icon(Icons.palette),
               dismissDuration: const Duration(seconds: 5),
             ),
@@ -416,7 +523,7 @@ class DemoPage extends StatelessWidget {
               message:
                   'Congratulations! You have completed 100 notifications demo!',
               backgroundColor: Colors.amber[700],
-              foregroundColor: Colors.black,
+              color: Colors.black,
               icon: const Icon(Icons.emoji_events),
               action: NotificationAction.button(
                 label: 'Collect Reward',
@@ -436,7 +543,7 @@ class DemoPage extends StatelessWidget {
               title: '💖 Sarah liked your photo',
               message: 'Your sunset photo from yesterday received a new like!',
               backgroundColor: Colors.pink[50],
-              foregroundColor: Colors.pink[800],
+              color: Colors.pink[800],
               action: NotificationAction.onTap(
                 onPressed: () => debugPrint('Opening photo'),
               ),
@@ -454,7 +561,7 @@ class DemoPage extends StatelessWidget {
               title: '🌙 Dark Mode Activated',
               message: 'Your eyes will thank you! Dark mode is now enabled.',
               backgroundColor: Colors.grey[900],
-              foregroundColor: Colors.white,
+              color: Colors.white,
               icon: const Icon(Icons.dark_mode),
             ),
             context,
@@ -471,7 +578,7 @@ class DemoPage extends StatelessWidget {
               message: '"Bohemian Rhapsody" by Queen'
                   ' is now playing in the background.',
               backgroundColor: Colors.green[600],
-              foregroundColor: Colors.white,
+              color: Colors.white,
               icon: const Icon(Icons.music_note),
               dismissDuration: const Duration(seconds: 4),
               action: NotificationAction.button(
@@ -493,7 +600,7 @@ class DemoPage extends StatelessWidget {
               message: '50% OFF on all electronics!'
                   ' Limited time offer ending in 2 hours.',
               backgroundColor: Colors.red[600],
-              foregroundColor: Colors.white,
+              color: Colors.white,
               icon: const Icon(Icons.local_fire_department),
               dismissDuration: const Duration(seconds: 6),
               action: NotificationAction.button(
@@ -515,7 +622,7 @@ class DemoPage extends StatelessWidget {
               message: 'Sunny weather expected today with a high of 75°F.'
                   ' Perfect for outdoor activities!',
               backgroundColor: Colors.orange[400],
-              foregroundColor: Colors.white,
+              color: Colors.white,
               dismissDuration: const Duration(seconds: 4),
             ),
             context,
@@ -532,7 +639,7 @@ class DemoPage extends StatelessWidget {
               message: '🚀 Your app has reached 1000 downloads!'
                   ' 🎯✨ Amazing work! 👏💪 Keep it up! 🔥⭐',
               backgroundColor: Colors.yellow[600],
-              foregroundColor: Colors.black,
+              color: Colors.black,
               icon: const Icon(Icons.celebration),
               action: NotificationAction.button(
                 label: '🎉 Celebrate',
