@@ -1,39 +1,51 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
 part 'draggable/draggable_transitions.dart';
 part 'draggable/relocation_targets.dart';
+part 'draggable/dismission_targets.dart';
+part 'theme/notification_theme.dart';
 part 'notification_action.dart';
 part 'type_defts.dart';
 
 class NotificationWidget extends StatefulWidget {
   NotificationWidget({
     required this.message,
-    this.id,
+    final String? id,
     this.channelName = 'default',
     this.title,
+    final QueuePosition? position,
     this.action,
     this.icon,
+    this.color,
     this.foregroundColor,
     this.backgroundColor,
     this.dismissDuration,
-    this.position,
     this.builder,
-  }) : super(key: ValueKey('$channelName.${id ?? UniqueKey()}'));
+  }) {
+    this.id = id ?? DateTime.now().toString();
+    channel = NotificationManager.instance.getChannel(channelName);
+    queue = NotificationManager.instance.getQueue(position ?? channel.position);
+    this.position = queue.position;
+  }
+
+  @override
+  GlobalObjectKey get key => GlobalObjectKey(id);
 
   /// Optional Notification ID
   ///
-  /// A unique [Key] will be provided for [NotificationWidget] if [id] or not,
-  /// but to have more control over this specific [NotificationWidget], you can
+  /// A unique [GlobalObjectKey] will be provided for [NotificationWidget]
+  /// if [id] is provided or not,
+  /// but to have more control over [NotificationWidget], you can
   /// set the [id] and use it.
-  //todo: handle Update On Duplicate Key
-  final String? id;
+  //todo: implement id based handlers in notification manager
+  late final String id;
 
   /// Name of the notification channel.
   ///
@@ -60,47 +72,60 @@ class NotificationWidget extends StatefulWidget {
   /// An optional [Icon] widget shown besides the [message].
   final Widget? icon;
 
+  /// Notification color.
+  ///
+  /// Colors notification icon, border, and body filled [QueueStyle]s.
+  /// If null, defaults to Notification Channels
+  /// [NotificationChannel.defaultColor] and if that's null
+  /// [Theme.of(Context).colorScheme.primary].
+  final Color? color;
+
+  /// Notification foreground color.
+  ///
+  /// Colors notification texts, close, expand and action buttons
+  /// and the progressIndicator.
+  /// If null, defaults to Notification Channels
+  /// [NotificationChannel.defaultForegroundColor] and if that's null
+  /// [Theme.of(Context).colorScheme.onSurface].
+  final Color? foregroundColor;
+
   /// Notification background color
   ///
   /// Colors notification body.
   /// If null, defaults to Notification's
   /// [NotificationChannel.defaultBackgroundColor] and if that's not provided
   /// (null value or Unregistered [NotificationChannel]),
-  /// [Theme.of(Context).colorScheme.primary].
+  /// [Theme.of(Context).colorScheme.surface].
   final Color? backgroundColor;
-
-  /// Notification foreground color.
-  ///
-  /// Colors notification texts, icons, progressIndicator, etc.
-  /// If null, defaults to Notification Channels default
-  /// [NotificationChannel.defaultForegroundColor] and if that's null
-  /// [Theme.of(Context).colorScheme.onPrimary].
-  final Color? foregroundColor;
 
   /// Notification dismiss duration
   ///
   /// If null, [NotificationWidget] will be permanent.
   /// Defaults to [NotificationChannel.defaultDismissDuration] if null.
-  //todo: what if user wants this specific notification to be permanent.
+  //todo: what if a channel is set with a specific Duration but
+  //todo:  user wants a specific descendant notification to be permanent?
+  //todo: (bool) permanent field for notification or the channel?
   final Duration? dismissDuration;
 
-  /// [NotificationWidget] position on the Screen.
-  final QueuePosition? position;
+  late final QueuePosition position;
+  late final NotificationQueue queue;
+
+  NotificationWidgetState? state;
+
+  late final NotificationChannel channel;
 
   /// Custom builder for the notification stack indicator.
   final NotificationBuilder? builder;
 
-  //todo: How about these?
   void show(final BuildContext context) =>
       NotificationManager.instance.show(this, context);
   void dismiss(final BuildContext context) =>
       NotificationManager.instance.dismiss(this, context);
-
-  late final NotificationQueue queue;
-  late final NotificationChannel channel;
+  void relocateTo(final QueuePosition position, final BuildContext context) =>
+      NotificationManager.instance.relocate(this, position, context);
 
   @override
-  State<StatefulWidget> createState() => _NotificationWidgetState();
+  State<StatefulWidget> createState() => NotificationWidgetState();
   @override
   String toString({final DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
       'NotificationWidget('
@@ -111,7 +136,7 @@ class NotificationWidget extends StatefulWidget {
       ' action: $action,'
       ' icon: $icon,'
       ' backgroundColor: $backgroundColor,'
-      ' foregroundColor: $foregroundColor,'
+      ' color: $color,'
       ' dismissDuration: $dismissDuration,'
       ' position: $position,'
       ' builder: $builder)';
@@ -130,58 +155,36 @@ class NotificationWidget extends StatefulWidget {
         backgroundColor: backgroundColor,
         dismissDuration: dismissDuration,
         builder: builder,
-        foregroundColor: foregroundColor,
+        color: color,
       );
 }
 
-class _NotificationWidgetState extends State<NotificationWidget>
+class NotificationWidgetState extends State<NotificationWidget>
     with SingleTickerProviderStateMixin {
-  late ThemeData _themeData;
-  //
-  // late Size _screenSize;
-  // double get _screenHeight => _screenSize.height;
-  // double get _screenWidth => _screenSize.width;
-
-  Color get _resolvedForeground =>
-      widget.foregroundColor ??
-      widget.channel.defaultForegroundColor ??
-      _themeData.colorScheme.onPrimary;
-  Color get _resolvedBackground =>
-      widget.backgroundColor ??
-      widget.channel.defaultBackgroundColor ??
-      _themeData.colorScheme.primary;
-
-  double get _opacity => widget.queue.opacity;
-  double get _elevation => widget.queue.elevation;
-
-  BorderRadius get _borderRadius =>
-      const BorderRadius.all(Radius.circular(4.0));
-
-  Duration? get _resolvedDismissDuration =>
+  late NotificationTheme theme;
+  Duration? get resolvedDismissDuration =>
       widget.dismissDuration ?? widget.channel.defaultDismissDuration;
 
-  double get _dismissalThreshold => widget.queue.dismissalThreshold;
+  int? get dismissalThreshold => widget.queue.dismissThreshold;
 
-  bool get _hasTitle => widget.title != null;
+  bool get hasTitle => widget.title != null;
 
-  bool get _hasIcon => widget.icon != null;
-
-  bool get _hasOnTapAction =>
+  bool get hasOnTapAction =>
       widget.action != null &&
       widget.action!.type == NotificationActionType.onTap;
 
-  bool get _hasButtonAction =>
+  bool get hasButtonAction =>
       widget.action != null &&
       widget.action!.type == NotificationActionType.button;
 
   /// Whether user expanded the notification.
   ///
-  /// An expanded notification will not be dismissed using [_dismissTimer].
-  final ValueNotifier<bool> _isExpanded = ValueNotifier(false);
+  /// An expanded notification will not be dismissed using [dismissTimer].
+  final ValueNotifier<bool> isExpanded = ValueNotifier(false);
 
-  Timer? _dismissTimer;
+  Timer? dismissTimer;
 
-  late final AnimationController _animationController;
+  late final AnimationController animationController;
 
   @override
   void initState() {
@@ -189,8 +192,8 @@ class _NotificationWidgetState extends State<NotificationWidget>
 ----------Notification${widget.key}: initState called----------''');
     super.initState();
     _showCloseButton.value =
-        widget.queue.style.showCloseButton == QueueCloseButton.always;
-    _animationController = AnimationController(
+        widget.queue.closeButtonBehaviour == QueueCloseButtonBehaviour.always;
+    animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
       animationBehavior: AnimationBehavior.preserve,
@@ -204,13 +207,26 @@ class _NotificationWidgetState extends State<NotificationWidget>
   void didChangeDependencies() {
     debugPrint('''
 ----------Notification${widget.key}: didChangeDependencies called----------''');
-    // _screenSize = MediaQuery.of(context).size;
-    _themeData = Theme.of(context);
+
+    widget.state = this;
+    theme = NotificationTheme.resolveWith(context, widget.queue.style, widget);
+    debugPrint('''
+------------|NotificationState: $this
+
+''');
+
     super.didChangeDependencies();
   }
 
+  @override
+  void didUpdateWidget(final NotificationWidget oldWidget) {
+    debugPrint('''
+----------Notification${widget.key}: didUpdateWidget called----------''');
+    super.didUpdateWidget(oldWidget);
+  }
+
   Future<void> dismiss() async {
-    await _animationController.reverse();
+    await animationController.reverse();
     NotificationManager.instance.dismiss(widget, context);
     debugPrint('''
 ----------Notification${widget.key}::::dismiss----------
@@ -220,9 +236,9 @@ class _NotificationWidgetState extends State<NotificationWidget>
   @override
   void dispose() {
     super.dispose();
-    _animationController.dispose();
+    animationController.dispose();
     ditchDismissTimer();
-    _isExpanded.dispose();
+    isExpanded.dispose();
     debugPrint('''
 ----------Notification${widget.key}:::dispose----------
 ------------|Disposed.
@@ -230,9 +246,9 @@ class _NotificationWidgetState extends State<NotificationWidget>
   }
 
   void initDismissTimer() {
-    if (_resolvedDismissDuration != null) {
-      _dismissTimer = Timer(_resolvedDismissDuration!, () {
-        if (mounted && !_isExpanded.value) {
+    if (resolvedDismissDuration != null) {
+      dismissTimer = Timer(resolvedDismissDuration!, () {
+        if (mounted && !isExpanded.value) {
           dismiss();
         }
       });
@@ -240,94 +256,134 @@ class _NotificationWidgetState extends State<NotificationWidget>
   }
 
   void ditchDismissTimer() {
-    _dismissTimer?.cancel();
-    _dismissTimer = null;
+    dismissTimer?.cancel();
+    dismissTimer = null;
   }
 
   @override
-  Widget build(final BuildContext context) => _InheritedNotificationWidget(
-        state: this,
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: widget.queue.position.slideTransitionOffset,
-            end: Offset.zero,
-          ).animate(
-            CurvedAnimation(
-              parent: _animationController,
-              curve: Curves.easeInOut,
-            ),
+  Widget build(final BuildContext context) => SlideTransition(
+        position: Tween<Offset>(
+          begin: widget.queue.slideTransitionOffset,
+          end: Offset.zero,
+        ).animate(
+          CurvedAnimation(
+            parent: animationController,
+            curve: Curves.easeInOut,
           ),
-          child: FadeTransition(
-            opacity: _animationController,
-            child: _DraggableTransitions(
-              parent: this,
-              content: _buildNotification(),
-            ),
-          ),
+        ),
+        child: FadeTransition(
+          opacity: animationController,
+          child: _buildNotification(),
         ),
       );
 
-  Widget _buildNotification() => ConstrainedBox(
-        constraints: Utils.horizontalConstraints(context),
+  Widget _buildNotification() => Directionality(
+        textDirection: Utils.estimateDirectionOfText(
+          widget.title ?? widget.message,
+        ),
         child: ValueListenableBuilder(
-          valueListenable: _isExpanded,
-          builder: (final context, final isExpanded, final child) => Material(
-            borderRadius: _borderRadius,
-            elevation: _elevation,
-            shadowColor: _themeData.shadowColor,
-            type: MaterialType.canvas,
-            color: _resolvedBackground.withValues(alpha: _opacity),
-            child: InkWell(
-              borderRadius: _borderRadius,
-              onHover:
-                  widget.queue.style.showCloseButton == QueueCloseButton.onHover
+          valueListenable: isExpanded,
+          builder: (final context, final isExpanded, final child) => ClipRRect(
+            borderRadius: theme.borderRadius,
+            child: BackdropFilter(
+              enabled: theme.opacity < 1.0,
+              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+              child: Material(
+                shape: theme.shape,
+                borderOnForeground: true,
+                type: MaterialType.canvas,
+                color: theme.backgroundColor.withValues(alpha: theme.opacity),
+                child: InkWell(
+                  onHover: widget.queue.closeButtonBehaviour ==
+                          QueueCloseButtonBehaviour.onHover
                       ? (final isHovering) {
                           _showCloseButton.value = isHovering;
                         }
                       : null,
-              onTap: () {
-                if (_hasOnTapAction) {
-                  widget.action!.onPressed();
-                  dismiss();
-                }
-              },
-              child: Stack(
-                children: [
-                  AnimatedContainer(
+                  onTap: hasOnTapAction ||
+                          widget.queue.closeButtonBehaviour ==
+                              QueueCloseButtonBehaviour.onHover
+                      ? () {
+                          if (hasOnTapAction) {
+                            widget.action?.onPressed();
+                            dismiss();
+                          }
+                        }
+                      : null,
+                  child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
+                    constraints: Utils.horizontalConstraints(context),
                     curve: Curves.easeOut,
-                    padding: EdgeInsets.symmetric(
-                      vertical: isExpanded ? 16 : 8,
-                      horizontal: 36,
+                    decoration: BoxDecoration(
+                      border: theme.border,
                     ),
+                    padding: EdgeInsetsDirectional.symmetric(
+                      vertical: isExpanded ? 8 : 4,
+                      horizontal: 4,
+                    ),
+                    // padding: EdgeInsets.all(8),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisSize: MainAxisSize.min,
+                      spacing: 4,
                       children: [
-                        _getTitle(isExpanded: isExpanded),
-                        _getContent(isExpanded: isExpanded),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 4,
+                          children: [
+                            _getExpandButton(isExpanded: isExpanded),
+                            Expanded(child: _getTitle(isExpanded: isExpanded)),
+                            _getCloseButton(isExpanded: true),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsetsGeometry.symmetric(
+                            horizontal: 12,
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            spacing: 8,
+                            children: [
+                              IconTheme(
+                                data: IconThemeData(
+                                  color: theme.color,
+                                  size: 24,
+                                ),
+                                child: widget.icon ??
+                                    widget.channel.defaultIcon ??
+                                    const SizedBox.shrink(),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  widget.message,
+                                  style: theme.themeData.textTheme.bodyMedium
+                                      ?.copyWith(
+                                    color: theme.foregroundColor,
+                                  ),
+                                  maxLines: isExpanded ? 10 : 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         _getActionButton(),
+                        _timerIndicator(isExpanded: isExpanded),
                       ],
                     ),
                   ),
-                  _timerIndicator(isExpanded: isExpanded),
-                  _getExpandButton(isExpanded: isExpanded),
-                  _getCloseButton(),
-                ],
+                ),
               ),
             ),
           ),
         ),
       );
 
-  Widget _getTitle({required final bool isExpanded}) => _hasTitle
+  Widget _getTitle({required final bool isExpanded}) => hasTitle
       ? Directionality(
           textDirection: Utils.estimateDirectionOfText(widget.title ?? ''),
           child: Text(
             widget.title ?? '',
-            style: _themeData.textTheme.titleMedium?.copyWith(
-              color: _resolvedForeground,
+            style: theme.themeData.textTheme.titleMedium?.copyWith(
+              color: theme.foregroundColor,
               fontWeight: FontWeight.bold,
             ),
             maxLines: isExpanded ? 5 : null,
@@ -336,165 +392,150 @@ class _NotificationWidgetState extends State<NotificationWidget>
         )
       : const SizedBox.shrink();
 
-  Widget _getContent({required final bool isExpanded}) => Directionality(
-        textDirection: Utils.estimateDirectionOfText(widget.message),
-        child: Row(
-          spacing: 4,
-          children: [
-            if (_hasIcon) widget.icon!,
-            Expanded(
-              child: Text(
-                widget.message,
-                style: _themeData.textTheme.bodyMedium?.copyWith(
-                  color: _resolvedForeground,
+  Widget _getActionButton() => hasButtonAction
+      ? Container(
+          alignment: AlignmentDirectional.centerEnd,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: TextButton(
+            style: ButtonStyle(
+              padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+              visualDensity: VisualDensity.compact,
+              shape: WidgetStatePropertyAll(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadiusGeometry.circular(4),
                 ),
-                maxLines: isExpanded ? 10 : 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ],
-        ),
-      );
-
-  Widget _getActionButton() => _hasButtonAction
-      ? Directionality(
-          textDirection: Utils.estimateDirectionOfText(
-            widget.message,
-          ),
-          child: Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: TextButton(
-              child: Text(
-                widget.action!.label!,
-                style: _themeData.textTheme.labelMedium
-                    ?.copyWith(color: _resolvedForeground),
-              ),
-              onPressed: () {
-                widget.action!.onPressed();
-                dismiss();
-              },
+            child: Text(
+              widget.action!.label!,
+              style: theme.themeData.textTheme.labelMedium
+                  ?.copyWith(color: theme.foregroundColor),
             ),
+            onPressed: () {
+              widget.action!.onPressed();
+              dismiss();
+            },
           ),
         )
       : const SizedBox.shrink();
 
   Widget _timerIndicator({required final bool isExpanded}) =>
-      _dismissTimer != null && !isExpanded
-          ? PositionedDirectional(
-              start: 0,
-              end: 0,
-              bottom: 0,
-              child: TweenAnimationBuilder(
-                duration: _resolvedDismissDuration!,
-                tween: Tween<double>(begin: 0.0, end: 1.0),
-                curve: Curves.easeInOut,
-                builder: (final context, final value, final child) => Padding(
-                  padding: const EdgeInsetsGeometry.only(
-                    right: 4,
-                    left: 4,
-                  ),
-                  child: LinearProgressIndicator(
-                    minHeight: 2,
-                    valueColor: ColorTween(
-                      begin: _resolvedForeground.withValues(
-                        alpha: 0.3,
-                      ),
-                      end: _resolvedForeground.withValues(
-                        alpha: _opacity,
-                      ),
-                    ).animate(
-                      CurvedAnimation(
-                        parent: AlwaysStoppedAnimation(value),
-                        curve: Curves.easeInOut,
-                      ),
+      dismissTimer != null && !isExpanded
+          ? TweenAnimationBuilder(
+              duration: resolvedDismissDuration!,
+              tween: Tween<double>(begin: 0.0, end: 1.0),
+              curve: Curves.easeInOut,
+              builder: (final context, final animation, final child) => Padding(
+                padding: const EdgeInsetsGeometry.only(
+                  right: 4,
+                  left: 4,
+                ),
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  valueColor: ColorTween(
+                    begin: theme.foregroundColor.withValues(
+                      alpha: 0.5,
                     ),
-                    backgroundColor: _resolvedBackground,
-                    value: value,
+                    end: theme.foregroundColor.withValues(
+                      alpha: 0.5,
+                    ),
+                  ).animate(
+                    CurvedAnimation(
+                      parent: AlwaysStoppedAnimation(animation),
+                      curve: Curves.easeInOut,
+                    ),
                   ),
+                  backgroundColor: theme.backgroundColor,
+                  value: animation,
                 ),
               ),
             )
           : const SizedBox.shrink();
 
-  Widget _getExpandButton({required final bool isExpanded}) => Directionality(
-        textDirection: Utils.estimateDirectionOfText(
-          widget.title ?? widget.message,
-        ),
-        child: AnimatedPositionedDirectional(
-          duration: const Duration(milliseconds: 380),
-          curve: Curves.easeInOut,
-          top: isExpanded ? 8 : 0,
-          bottom: isExpanded ? null : 0,
-          start: 0,
-          child: Center(
-            child: IconButton(
-              icon: Icon(
-                isExpanded
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-                color: _resolvedForeground,
-              ),
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.all(4.0),
-              onPressed: () {
-                if (isExpanded) {
-                  initDismissTimer();
-                } else {
-                  ditchDismissTimer();
-                }
-                _isExpanded.value = !isExpanded;
-              },
-            ),
+  Widget _getExpandButton({required final bool isExpanded}) {
+    final expandMoreIcon = (widget.queue is BottomLeftQueue ||
+            widget.queue is BottomCenterQueue ||
+            widget.queue is BottomRightQueue)
+        ? Icons.expand_less
+        : Icons.expand_more;
+    final expandLessIcon = (widget.queue is BottomLeftQueue ||
+            widget.queue is BottomCenterQueue ||
+            widget.queue is BottomRightQueue)
+        ? Icons.expand_more
+        : Icons.expand_less;
+    return SizedBox.square(
+      dimension: 32,
+      child: Center(
+        child: IconButton(
+          alignment: AlignmentGeometry.center,
+          padding: EdgeInsets.zero,
+          icon: Icon(
+            isExpanded ? expandLessIcon : expandMoreIcon,
+            color: theme.foregroundColor,
           ),
+          visualDensity: VisualDensity.compact,
+          onPressed: () {
+            if (isExpanded) {
+              initDismissTimer();
+            } else {
+              ditchDismissTimer();
+            }
+            this.isExpanded.value = !isExpanded;
+          },
         ),
-      );
+      ),
+    );
+  }
 
   final _showCloseButton = ValueNotifier(false);
 
-  Widget _getCloseButton() => ValueListenableBuilder(
-        valueListenable: _showCloseButton,
-        builder: (final context, final showCloseButton, final child) =>
-            showCloseButton
-                ? Directionality(
-                    textDirection: Utils.estimateDirectionOfText(
-                      widget.title ?? widget.message,
-                    ),
-                    child: PositionedDirectional(
-                      top: 8,
-                      end: 4,
-                      child: SizedBox.square(
-                        dimension: 16,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          visualDensity: VisualDensity.compact,
-                          onPressed: dismiss,
-                          icon: Icon(
-                            Icons.close,
-                            color: _resolvedForeground,
-                            size: 16,
-                          ),
-                        ),
+  Widget _getCloseButton({required final bool isExpanded}) => SizedBox.square(
+        dimension: 24,
+        child: ValueListenableBuilder(
+          valueListenable: _showCloseButton,
+          builder: (final context, final showCloseButton, final child) {
+            final shouldShow =
+                showCloseButton || widget.queue.dismissThreshold == null;
+            return AnimatedOpacity(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              opacity: shouldShow ? 1 : 0,
+              child: shouldShow
+                  ? IconButton(
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      onPressed: dismiss,
+                      iconSize: 18,
+                      icon: Icon(
+                        Icons.close,
+                        color: theme.foregroundColor,
                       ),
-                    ),
-                  )
-                : const SizedBox.shrink(),
+                    )
+                  : const SizedBox.shrink(),
+            );
+          },
+        ),
       );
 }
 
-class _InheritedNotificationWidget extends InheritedWidget {
-  const _InheritedNotificationWidget(
-      {required this.state, required super.child});
-
-  static _InheritedNotificationWidget? of(final BuildContext context) => context
-      .dependOnInheritedWidgetOfExactType<_InheritedNotificationWidget>();
-
-  NotificationWidget get widget => state.widget;
-  NotificationQueue get queue => state.widget.queue;
-  NotificationChannel get channel => state.widget.channel;
-  final _NotificationWidgetState state;
-
-  @override
-  bool updateShouldNotify(
-          covariant final _InheritedNotificationWidget oldWidget) =>
-      oldWidget.state != state;
-}
+// class InheritedNotificationWidget extends InheritedWidget {
+//   const InheritedNotificationWidget({
+//     required this.state,
+//     required super.child,
+//     super.key,
+//   });
+//
+//   static InheritedNotificationWidget? of(final BuildContext context) =>
+//       context.dependOnInheritedWidgetOfExactType<InheritedNotificationWidget>();
+//
+//   NotificationWidget get widget => state.widget;
+//   NotificationQueue get queue => state.widget.queue;
+//   NotificationChannel get channel => state.widget.channel;
+//   final NotificationWidgetState state;
+//
+//   @override
+//   bool updateShouldNotify(
+//     covariant final InheritedNotificationWidget oldWidget,
+//   ) =>
+//       oldWidget.state != state;
+// }
