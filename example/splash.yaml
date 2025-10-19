@@ -23,15 +23,14 @@ flutter_native_splash:
 
   # The image parameter allows you to specify an image used in the splash screen.  It must be a
   # png file and should be sized for 4x pixel density.
-  image: assets/img/Q.png
-  image_android: assets/img/Q.png
-  image_dark: assets/img/Q.png
-  image_dark_android: assets/img/Q.png
+  image: assets/img/Q.Splash.png
+  image_dark: assets/img/Q.Splash.png
 
   # The branding property allows you to specify an image used as branding in the splash screen.
   # It must be a png file. It is supported for Android, iOS and the Web.  For Android 12,
   # see the Android 12 section below.
-#  branding: assets/img/Q.png
+  branding: assets/img/Branding.png
+  branding_dark: assets/img/Branding_dark.png
 
   # To position the branding image at the bottom of the screen you can use bottom, bottomRight,
   # and bottomLeft. The default values is bottom if not specified or specified something else.
@@ -39,7 +38,7 @@ flutter_native_splash:
   
   # Set the branding padding from the bottom of the screen.  The default value is 0
   # (Not supported on web yet)
-  branding_bottom_padding: 24
+  branding_bottom_padding: 32
 
   # The color_dark, background_image_dark, image_dark, branding_dark are parameters that set the background
   # and image when the device is in dark mode. If they are not specified, the app will use the
@@ -64,16 +63,21 @@ flutter_native_splash:
     # 768 pixels in diameter.  To fit a 1152x1152 image within a circle with a 768 diameter, simply 
     # ensure that the most important design elements of your image are placed within a circular area
     # with a 768 diameter at the center of the 1152x1152 canvas.
-    image: assets/img/Q.png
+    image: assets/img/Q.Splash.Android12.png
+    image_dark: assets/img/Q.Splash.Android12.png
+
+    # The color parameter sets the background color of the splash screen.
 
     # Splash screen background color.
     color: "#FCFCFB"
+    color_dark: "#042a49"
 
     # App icon background color.
     #icon_background_color: "#111111"
 
     # The branding property allows you to specify an image used as branding in the splash screen.
-#    branding: assets/img/Q.png
+    branding: assets/img/Branding.Android12.png
+    branding_dark: assets/img/Branding_dark.Android12.png
 
     # The image_dark, color_dark, icon_background_color_dark, and branding_dark set values that
     # apply when the device is in dark mode. If they are not specified, the app will use the

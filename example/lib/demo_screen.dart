@@ -1,0 +1,694 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+
+import 'toggle_theme.dart';
+
+class NotificationExample {
+  const NotificationExample({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  final String title;
+  final IconData icon;
+  final Color color;
+  final void Function(BuildContext context) onPressed;
+
+  Widget buildNotificationButton(
+    final BuildContext context,
+    final NotificationExample example,
+  ) =>
+      Card(
+        elevation: 3,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => example.onPressed(context),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  example.color.withValues(alpha: 0.1),
+                  example.color.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  example.icon,
+                  size: 24,
+                  color: example.color,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  example.title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: example.color,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+class DemoScreen extends StatelessWidget {
+  const DemoScreen({super.key});
+
+  List<NotificationExample> get _notificationExamples => [
+        NotificationExample(
+          title: 'Success Message',
+          icon: Icons.check_circle,
+          color: Colors.green,
+          onPressed: (final context) {
+            NotificationWidget(
+              message: 'Operation completed successfully!',
+              title: 'Success',
+              channelName: 'success',
+            ).show(context);
+          },
+        ),
+        NotificationExample(
+          title: 'Error with Retry',
+          icon: Icons.error,
+          color: Colors.red,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'error',
+              message: 'Network connection failed. Please try again.',
+              title: 'Connection Error',
+              action: NotificationAction.button(
+                label: 'Retry',
+                onPressed: () => debugPrint('Retrying connection...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Warning with Tap',
+          icon: Icons.warning,
+          color: Colors.orange,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'warning',
+              message: 'Low storage space detected. Tap to manage.',
+              title: 'Storage Warning',
+              action: NotificationAction.onTap(
+                onPressed: () => debugPrint('Opening storage settings...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Info Message',
+          icon: Icons.info,
+          color: Colors.blue,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'info',
+              title: 'New Feature Available',
+              message: 'Check out our new dark mode feature!'
+                  ' This notification stays until you interact with it.',
+              action: NotificationAction.button(
+                label: 'Explore',
+                onPressed: () => debugPrint('Opening new features...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Scaffold Notification',
+          icon: Icons.android,
+          color: Colors.black,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              id: '1',
+              channelName: 'scaffold',
+              title: 'Scaffold Notification',
+              icon: const Icon(Icons.lightbulb),
+              message: 'Scaffold Message!',
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Scaffold Notification\nUpdated Message',
+          icon: Icons.android,
+          color: Colors.black,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              id: '1',
+              channelName: 'scaffold',
+              icon: const Icon(Icons.tips_and_updates),
+              title: 'Updated on Scaffold Notification',
+              message: 'Updated Scaffold Message! Same ID caused update '
+                  'to this notification.',
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Scaffold Success Message',
+          icon: Icons.android,
+          color: Colors.green,
+          onPressed: (final context) {
+            NotificationWidget(
+              channelName: 'scaffold.success',
+              message: 'Operation completed successfully!',
+              title: 'Success',
+            ).show(context);
+          },
+        ),
+        NotificationExample(
+          title: 'Scaffold Error with Retry',
+          icon: Icons.android,
+          color: Colors.red,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'scaffold.error',
+              message: 'Network connection failed. Please try again.',
+              title: 'Connection Error',
+              dismissDuration: null,
+              action: NotificationAction.button(
+                label: 'Retry',
+                onPressed: () => debugPrint('Retrying connection...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+        NotificationExample(
+          title: 'Scaffold Warning with Tap',
+          icon: Icons.android,
+          color: Colors.orange,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'scaffold.warning',
+              message: 'Low storage space detected. Tap to manage.',
+              title: 'Storage Warning',
+              action: NotificationAction.onTap(
+                onPressed: () => debugPrint('Opening storage settings...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Scaffold Info',
+          icon: Icons.android,
+          color: Colors.blue,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              channelName: 'scaffold.info',
+              title: 'New Feature Available',
+              message: 'Check out our new dark mode feature!'
+                  ' This notification stays until you interact with it.',
+              position: QueuePosition.bottomCenter,
+              action: NotificationAction.button(
+                label: 'Explore',
+                onPressed: () => debugPrint('Opening new features...'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        // RTL Languages
+        NotificationExample(
+          title: 'اطلاعیه فارسی',
+          icon: Icons.language,
+          color: Colors.purple,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: 'اطلاعیه',
+              message: 'عملیات با موفقیت انجام شد! سیستم آماده استفاده است.',
+              action: NotificationAction.button(
+                label: 'تأیید',
+                onPressed: () => debugPrint('Persian action pressed'),
+              ),
+              icon: const Icon(Icons.notifications),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'إشعار عربي',
+          icon: Icons.language,
+          color: Colors.teal,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: 'إشعار هام',
+              message: 'تم تحديث التطبيق بنجاح. يرجى إعادة تشغيل التطبيق'
+                  ' للحصول على أفضل تجربة.',
+              action: NotificationAction.button(
+                label: 'إعادة التشغيل',
+                onPressed: () => debugPrint('Arabic restart action'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'התראה בעברית',
+          icon: Icons.language,
+          color: Colors.indigo,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: 'אזהרת מערכת',
+              message: 'שטח האחסון עומד להתמלא. אנא פנה מקום נוסף.',
+              action: NotificationAction.onTap(
+                onPressed: () => debugPrint('Hebrew storage action'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        // Other Languages
+        NotificationExample(
+          title: 'Notificación Española',
+          icon: Icons.language,
+          color: Colors.deepOrange,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '¡Éxito!',
+              message: '¡La operación se completó exitosamente!'
+                  ' Tu archivo ha sido guardado.',
+              action: NotificationAction.button(
+                label: 'Aceptar',
+                onPressed: () => debugPrint('Spanish accept action'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: '日本語通知',
+          icon: Icons.language,
+          color: Colors.pink,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '新しいメッセージ',
+              message: 'アップデートが利用可能です。最新の機能を体験するために今すぐアップデートしてください。',
+              action: NotificationAction.button(
+                label: '更新する',
+                onPressed: () => debugPrint('Japanese update action'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Notification Française',
+          icon: Icons.language,
+          color: Colors.blue[800]!,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: 'Attention',
+              message: 'Votre session expirera dans 5 minutes.'
+                  ' Veuillez sauvegarder votre travail.',
+              action: NotificationAction.button(
+                label: 'Prolonger',
+                onPressed: () => debugPrint('French extend session'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Deutsche Benachrichtigung',
+          icon: Icons.language,
+          color: Colors.brown,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: 'Fehler',
+              message:
+                  'Die Verbindung zum Server konnte nicht hergestellt werden.',
+              action: NotificationAction.button(
+                label: 'Wiederholen',
+                onPressed: () => debugPrint('German retry action'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        // Long Text Examples
+        NotificationExample(
+          title: 'Long Text Example',
+          icon: Icons.article,
+          color: Colors.cyan,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: 'Terms of Service Update',
+              message:
+                  'We have updated our Terms of Service and Privacy Policy. '
+                  'The changes include new data processing guidelines,'
+                  ' enhanced security measures, improved user rights,'
+                  ' and updated third-party integrations. Please review'
+                  ' the changes carefully as they will take'
+                  ' effect in 30 days. Your continued use of our'
+                  ' service constitutes acceptance of these terms.',
+              dismissDuration: const Duration(seconds: 8),
+              action: NotificationAction.button(
+                label: 'Review Terms',
+                onPressed: () => debugPrint('Opening terms review'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'متن طولانی فارسی',
+          icon: Icons.article,
+          color: Colors.deepPurple,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: 'اطلاعیه مهم سیستم',
+              message: 'سیستم در حال انجام بروزرسانی اساسی است. '
+                  'این فرآیند ممکن است چند دقیقه طول بکشد و در طول این مدت '
+                  'برخی از قابلیت‌ها موقتاً در دسترس نخواهند بود. '
+                  'لطفاً کارهای خود را ذخیره کرده و تا اتمام فرآیند صبر کنید. '
+                  'پس از اتمام بروزرسانی، سیستم با عملکرد بهتر و امکانات جدید '
+                  'در اختیار شما خواهد بود.',
+              dismissDuration: const Duration(seconds: 10),
+              action: NotificationAction.button(
+                label: 'متوجه شدم',
+                onPressed: () => debugPrint('Persian acknowledgment'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        // Creative Custom Examples
+        NotificationExample(
+          title: 'Custom Purple Style',
+          icon: Icons.palette,
+          color: Colors.purple,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🎨 Creative Notification',
+              message:
+                  'This is a custom styled notification with beautiful colors!',
+              backgroundColor: Colors.purple[700],
+              color: Colors.white,
+              icon: const Icon(Icons.palette),
+              dismissDuration: const Duration(seconds: 5),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Gaming Achievement',
+          icon: Icons.emoji_events,
+          color: Colors.amber,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🏆 Achievement Unlocked!',
+              message:
+                  'Congratulations! You have completed 100 notifications demo!',
+              backgroundColor: Colors.amber[700],
+              color: Colors.black,
+              icon: const Icon(Icons.emoji_events),
+              action: NotificationAction.button(
+                label: 'Collect Reward',
+                onPressed: () => debugPrint('Collecting achievement reward'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Social Notification',
+          icon: Icons.favorite,
+          color: Colors.pink,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '💖 Sarah liked your photo',
+              message: 'Your sunset photo from yesterday received a new like!',
+              backgroundColor: Colors.pink[50],
+              color: Colors.pink[800],
+              action: NotificationAction.onTap(
+                onPressed: () => debugPrint('Opening photo'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Dark Theme Toggle',
+          icon: Icons.dark_mode,
+          color: Colors.grey[800]!,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🌙 Dark Mode Activated',
+              message: 'Your eyes will thank you! Dark mode is now enabled.',
+              backgroundColor: Colors.grey[900],
+              color: Colors.white,
+              icon: const Icon(Icons.dark_mode),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Music Player',
+          icon: Icons.music_note,
+          color: Colors.green,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🎵 Now Playing',
+              message: '"Bohemian Rhapsody" by Queen'
+                  ' is now playing in the background.',
+              backgroundColor: Colors.green[600],
+              color: Colors.white,
+              icon: const Icon(Icons.music_note),
+              dismissDuration: const Duration(seconds: 4),
+              action: NotificationAction.button(
+                label: 'Open Player',
+                onPressed: () => debugPrint('Opening music player'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Flash Sale Alert',
+          icon: Icons.local_fire_department,
+          color: Colors.red,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🔥 Flash Sale Alert!',
+              message: '50% OFF on all electronics!'
+                  ' Limited time offer ending in 2 hours.',
+              backgroundColor: Colors.red[600],
+              color: Colors.white,
+              icon: const Icon(Icons.local_fire_department),
+              dismissDuration: const Duration(seconds: 6),
+              action: NotificationAction.button(
+                label: 'Shop Now',
+                onPressed: () => debugPrint('Opening shop'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Weather Update',
+          icon: Icons.wb_sunny,
+          color: Colors.orange,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🌤️ Weather Update',
+              message: 'Sunny weather expected today with a high of 75°F.'
+                  ' Perfect for outdoor activities!',
+              backgroundColor: Colors.orange[400],
+              color: Colors.white,
+              dismissDuration: const Duration(seconds: 4),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'Celebration',
+          icon: Icons.celebration,
+          color: Colors.yellow[700]!,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🎉🎊 Celebration Time! 🎊🎉',
+              message: '🚀 Your app has reached 1000 downloads!'
+                  ' 🎯✨ Amazing work! 👏💪 Keep it up! 🔥⭐',
+              backgroundColor: Colors.yellow[600],
+              color: Colors.black,
+              icon: const Icon(Icons.celebration),
+              action: NotificationAction.button(
+                label: '🎉 Celebrate',
+                onPressed: () => debugPrint('Celebration time!'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        // System-like notifications
+        NotificationExample(
+          title: 'Battery Warning',
+          icon: Icons.battery_alert,
+          color: Colors.red[700]!,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '🔋 Battery Low',
+              message:
+                  'Device battery is at 15%. Consider connecting to power.',
+              action: NotificationAction.button(
+                label: 'Power Settings',
+                onPressed: () => debugPrint('Opening power settings'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        NotificationExample(
+          title: 'App Update',
+          icon: Icons.system_update,
+          color: Colors.blue[600]!,
+          onPressed: (final context) => NotificationManager.instance.show(
+            NotificationWidget(
+              title: '📱 App Update Available',
+              message:
+                  'Version 2.1.0 is available with bug fixes and new features.',
+              action: NotificationAction.button(
+                label: 'Update Now',
+                onPressed: () => debugPrint('Starting app update'),
+              ),
+            ),
+            context,
+          ),
+        ),
+
+        // Queue stress test
+        NotificationExample(
+          title: 'Queue Test (5x)',
+          icon: Icons.queue,
+          color: Colors.deepPurple,
+          onPressed: (final context) {
+            for (int i = 0; i < 5; i++) {
+              NotificationManager.instance.show(
+                NotificationWidget(
+                  title: 'Queue Test #${i + 1}',
+                  message:
+                      'This is notification ${i + 1} of 5 in the queue test.',
+                  dismissDuration: Duration(seconds: 3 + i),
+                ),
+                context,
+              );
+            }
+          },
+        ),
+      ];
+
+  @override
+  Widget build(final BuildContext context) {
+    final themeData = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          children: [
+            Image.asset(
+              'assets/img/Q.Splash.png',
+              fit: BoxFit.fitHeight,
+              width: 64,
+              height: 64,
+            ),
+            const Expanded(child: Text('Demo')),
+          ],
+        ),
+        backgroundColor: themeData.colorScheme.primaryContainer,
+        foregroundColor: themeData.colorScheme.onPrimaryContainer,
+        elevation: 2,
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(kToolbarHeight),
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: AppThemeToggleButton(),
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: _buildAdaptiveGrid(),
+      ),
+    );
+  }
+
+  Widget _buildAdaptiveGrid() => LayoutBuilder(
+        builder: (final context, final constraints) {
+          final screenWidth = constraints.maxWidth;
+          const tabletBreakPoint = 900;
+          const phoneBreakPoint = 600;
+
+          final columnCount = screenWidth < phoneBreakPoint
+              ? 1
+              : screenWidth < tabletBreakPoint
+                  ? 2
+                  : 3;
+
+          final padding = EdgeInsets.symmetric(
+            horizontal: screenWidth < phoneBreakPoint
+                ? 0
+                : screenWidth < tabletBreakPoint
+                    ? screenWidth / 8
+                    : screenWidth / 5,
+          );
+
+          return GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columnCount,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: screenWidth < phoneBreakPoint ? 3.5 : 2.5,
+            ),
+            padding: padding,
+            itemCount: _notificationExamples.length,
+            itemBuilder: (final context, final index) {
+              final example = _notificationExamples[index];
+              return example.buildNotificationButton(context, example);
+            },
+          );
+        },
+      );
+}

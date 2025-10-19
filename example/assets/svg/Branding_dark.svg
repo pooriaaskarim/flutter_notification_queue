@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_7" data-name="Layer 7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1152 1152">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #91a9af;
+      }
+
+      .cls-2 {
+        fill: #818f99;
+      }
+
+      .cls-3 {
+        font-family: Roboto-ExtraBoldItalic, Roboto;
+        font-size: 100px;
+        font-style: italic;
+        font-weight: 700;
+      }
+
+      .cls-4 {
+        fill: #c5e3ed;
+      }
+    </style>
+  </defs>
+  <text class="cls-3" transform="translate(298.08 485.22) scale(1.05 1)"><tspan class="cls-4"><tspan x="0" y="0">Flutter</tspan></tspan><tspan class="cls-1"><tspan x="0" y="120">Notification</tspan></tspan><tspan class="cls-2"><tspan x="0" y="240">Queue</tspan></tspan></text>
+</svg>
