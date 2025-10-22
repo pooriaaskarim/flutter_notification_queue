@@ -1,4 +1,4 @@
-package com.example.in_app_notification_example
+package com.example.flutter_notification_queue_example
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,13 +1,13 @@
-name: in_app_notification_example
-description: 'Example of in_app_notifications usage'
+name: flutter_notification_queue_example
+description: 'Example of flutter_notification_queue usage'
 publish_to:  none
 
 environment:
-  sdk: '>=2.18.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
   flutter: ">=3.0.0"
 
 dependencies:
-  in_app_notifications:
+  flutter_notification_queue:
     path: ../
   flutter:
     sdk: flutter
@@ -22,3 +22,4 @@ flutter:
 
   assets:
     - ./assets/img/
+    - ./assets/svg/

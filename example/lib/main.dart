@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:in_app_notifications/in_app_notifications.dart';
+import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+
+import 'demo_screen.dart';
 
 void main() {
   final WidgetsBinding widgetsBinding =
@@ -10,651 +12,229 @@ void main() {
 
   FlutterNativeSplash.remove();
 
-  // Configure the notification manager
-  InAppNotificationManager.instance.config = const InAppNotificationConfig(
-    position: InAppNotificationPosition.bottomCenter,
-    defaultDismissDuration: Duration(seconds: 5),
-  );
-
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(final BuildContext context) => MaterialApp(
-        title: 'InAppNotification Demo',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          useMaterial3: true,
+  NotificationManager.initialize(
+    position: QueuePosition.topCenter,
+    queueStyle: const OutlinedQueueStyle(),
+    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48.0),
+    maxStackSize: 3,
+    dismissDuration: const Duration(seconds: 3),
+    queueIndicatorBuilder: (final pendingNotificationsCount) {
+      if (pendingNotificationsCount > 0) {
+        return Container(
+          padding: const EdgeInsetsGeometry.all(8),
+          alignment: AlignmentGeometry.bottomLeft,
+          color: Colors.blueAccent,
+          width: 32,
+          child: FittedBox(child: Text('$pendingNotificationsCount')),
+        );
+      }
+      return null;
+    },
+    closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+    relocationBehaviour:
+        const LongPressRelocationBehaviour({QueuePosition.centerRight}),
+    queues: {
+      BottomCenterQueue(
+        maxStackSize: 1,
+        margin: EdgeInsets.zero,
+        style: const FlatQueueStyle(),
+        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+      ),
+      CenterLeftQueue(
+        maxStackSize: 3,
+        margin: EdgeInsets.zero,
+        style: const FilledQueueStyle(),
+        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+        relocationBehaviour: const LongPressRelocationBehaviour({
+          QueuePosition.centerRight,
+        }),
+      ),
+    },
+    channels: {
+      const NotificationChannel(
+        name: 'scaffold',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
+        defaultForegroundColor: Colors.white,
+        defaultColor: Colors.black,
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'success',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: Duration(seconds: 3),
+        defaultColor: Colors.green,
+        defaultIcon: Icon(
+          Icons.check_circle,
         ),
-        home: const DemoPage(),
-      );
+      ),
+      const NotificationChannel(
+        name: 'scaffold.success',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
+        defaultForegroundColor: Colors.white,
+        defaultColor: Colors.green,
+        defaultIcon: Icon(
+          Icons.check_circle,
+        ),
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'error',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: null,
+        defaultColor: Colors.red,
+        defaultIcon: Icon(
+          Icons.error,
+        ),
+      ),
+      const NotificationChannel(
+        name: 'scaffold.error',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
+        defaultForegroundColor: Colors.white,
+        defaultColor: Colors.red,
+        defaultIcon: Icon(
+          Icons.error,
+        ),
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'info',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: Duration(seconds: 3),
+        defaultColor: Colors.blue,
+        defaultIcon: Icon(
+          Icons.info,
+        ),
+      ),
+      const NotificationChannel(
+        name: 'scaffold.info',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
+        defaultForegroundColor: Colors.white,
+        defaultColor: Colors.blue,
+        defaultIcon: Icon(
+          Icons.info,
+        ),
+        enabled: false,
+      ),
+      const NotificationChannel(
+        name: 'warning',
+        position: QueuePosition.topCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultColor: Colors.orange,
+        defaultIcon: Icon(
+          Icons.warning,
+        ),
+      ),
+      const NotificationChannel(
+        name: 'scaffold.warning',
+        position: QueuePosition.bottomCenter,
+        defaultDismissDuration: Duration(seconds: 5),
+        defaultBackgroundColor: Colors.black,
+        defaultForegroundColor: Colors.white,
+        defaultColor: Colors.orange,
+        defaultIcon: Icon(
+          Icons.warning,
+        ),
+        enabled: false,
+      ),
+    },
+  );
+  runApp(const NotificationQueueExample());
 }
 
-class DemoPage extends StatelessWidget {
-  const DemoPage({super.key});
-
+class NotificationQueueExample extends StatefulWidget {
+  const NotificationQueueExample({super.key});
+  static NotificationQueueExampleState? of(final BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<
+              InheritedNotificationQueueExample>()
+          ?.state;
   @override
-  Widget build(final BuildContext context) {
-    final themeData = Theme.of(context);
+  State<NotificationQueueExample> createState() =>
+      NotificationQueueExampleState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('InAppNotification Demo'),
-        backgroundColor: themeData.colorScheme.primaryContainer,
-        foregroundColor: themeData.colorScheme.onPrimaryContainer,
-        elevation: 2,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: _buildAdaptiveGrid(),
-      ),
-    );
+class NotificationQueueExampleState extends State<NotificationQueueExample> {
+  var themeMode = ThemeMode.light;
+
+  void toggleTheme() {
+    void rebuild(final Element el) {
+      el
+        ..markNeedsBuild()
+        ..visitChildren(rebuild);
+    }
+
+    themeMode = themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+
+    (context as Element).visitChildren(rebuild);
+
+    setState(() {});
   }
 
-  Widget _buildAdaptiveGrid() => LayoutBuilder(
-        builder: (final context, final constraints) {
-          final screenWidth = constraints.maxWidth;
-          const tabletBreakPoint = 900;
-          const phoneBreakPoint = 600;
+  MaterialColor _getMaterialColor(final Color color) {
+    final int red = color.r.round() & 0xff;
+    final int green = color.g.round() & 0xff;
+    final int blue = color.b.round() & 0xff;
 
-          final columnCount = screenWidth < phoneBreakPoint
-              ? 1
-              : screenWidth < tabletBreakPoint
-                  ? 2
-                  : 3;
+    final Map<int, Color> shades = {
+      50: Color.fromRGBO(red, green, blue, .1),
+      100: Color.fromRGBO(red, green, blue, .2),
+      200: Color.fromRGBO(red, green, blue, .3),
+      300: Color.fromRGBO(red, green, blue, .4),
+      400: Color.fromRGBO(red, green, blue, .5),
+      500: Color.fromRGBO(red, green, blue, .6),
+      600: Color.fromRGBO(red, green, blue, .7),
+      700: Color.fromRGBO(red, green, blue, .8),
+      800: Color.fromRGBO(red, green, blue, .9),
+      900: Color.fromRGBO(red, green, blue, 1),
+    };
 
-          final padding = EdgeInsets.symmetric(
-            horizontal: screenWidth < phoneBreakPoint
-                ? 0
-                : screenWidth < tabletBreakPoint
-                    ? screenWidth / 8
-                    : screenWidth / 5,
-          );
+    return MaterialColor(color.value, shades);
+  }
 
-          return GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columnCount,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: screenWidth < phoneBreakPoint ? 3.5 : 2.5,
+  @override
+  Widget build(final BuildContext context) => InheritedNotificationQueueExample(
+        state: this,
+        child: MaterialApp(
+          title: 'NotificationQueue Example',
+          theme: ThemeData.from(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.light,
             ),
-            padding: padding,
-            itemCount: _notificationExamples.length,
-            itemBuilder: (final context, final index) {
-              final example = _notificationExamples[index];
-              return example.buildNotificationButton(context, example);
-            },
-          );
-        },
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData.from(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          themeMode: themeMode,
+          home: const DemoScreen(),
+        ),
       );
-
-  List<NotificationExample> get _notificationExamples => [
-        // Basic notification
-        NotificationExample(
-          title: 'Basic Notification',
-          icon: Icons.info_outline,
-          color: Colors.blueGrey,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key(
-                'Basic notification ${DateTime.now().millisecondsSinceEpoch}',
-              ),
-              message: 'This is a basic notification with custom styling.',
-            ),
-            context,
-          ),
-        ),
-
-        // Predefined types
-        NotificationExample(
-          title: 'Success Message',
-          icon: Icons.check_circle,
-          color: Colors.green,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.success(
-              key: Key('Success ${DateTime.now().millisecondsSinceEpoch}'),
-              message: 'Operation completed successfully!',
-              title: 'Success',
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Error with Retry',
-          icon: Icons.error,
-          color: Colors.red,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.error(
-              key: Key('Error ${DateTime.now().millisecondsSinceEpoch}'),
-              message: 'Network connection failed. Please try again.',
-              title: 'Connection Error',
-              action: InAppNotificationAction.button(
-                label: 'Retry',
-                onPressed: () => debugPrint('Retrying connection...'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Warning with Tap',
-          icon: Icons.warning,
-          color: Colors.orange,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.warning(
-              key: Key('Warning ${DateTime.now().millisecondsSinceEpoch}'),
-              message: 'Low storage space detected. Tap to manage.',
-              title: 'Storage Warning',
-              action: InAppNotificationAction.onTap(
-                onPressed: () => debugPrint('Opening storage settings...'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Permanent Info',
-          icon: Icons.info,
-          color: Colors.blue,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.info(
-              key: Key(
-                'Info permanent ${DateTime.now().millisecondsSinceEpoch}',
-              ),
-              title: 'New Feature Available',
-              message: 'Check out our new dark mode feature!'
-                  ' This notification stays until you interact with it.',
-              permanent: true,
-              showCloseIcon: true,
-              action: InAppNotificationAction.button(
-                label: 'Explore',
-                onPressed: () => debugPrint('Opening new features...'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        // RTL Languages
-        NotificationExample(
-          title: 'اطلاعیه فارسی',
-          icon: Icons.language,
-          color: Colors.purple,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.success(
-              key: Key('Persian ${DateTime.now().millisecondsSinceEpoch}'),
-              title: 'اطلاعیه موفقیت',
-              message: 'عملیات با موفقیت انجام شد! سیستم آماده استفاده است.',
-              action: InAppNotificationAction.button(
-                label: 'تأیید',
-                onPressed: () => debugPrint('Persian action pressed'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'إشعار عربي',
-          icon: Icons.language,
-          color: Colors.teal,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.info(
-              key: Key('Arabic ${DateTime.now().millisecondsSinceEpoch}'),
-              title: 'إشعار هام',
-              message: 'تم تحديث التطبيق بنجاح. يرجى إعادة تشغيل التطبيق'
-                  ' للحصول على أفضل تجربة.',
-              action: InAppNotificationAction.button(
-                label: 'إعادة التشغيل',
-                onPressed: () => debugPrint('Arabic restart action'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'התראה בעברית',
-          icon: Icons.language,
-          color: Colors.indigo,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.warning(
-              key: Key('Hebrew ${DateTime.now().millisecondsSinceEpoch}'),
-              title: 'אזהרת מערכת',
-              message: 'שטח האחסון עומד להתמלא. אנא פנה מקום נוסף.',
-              action: InAppNotificationAction.onTap(
-                onPressed: () => debugPrint('Hebrew storage action'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        // Other Languages
-        NotificationExample(
-          title: 'Notificación Española',
-          icon: Icons.language,
-          color: Colors.deepOrange,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.success(
-              key: Key('Spanish ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '¡Éxito!',
-              message: '¡La operación se completó exitosamente!'
-                  ' Tu archivo ha sido guardado.',
-              action: InAppNotificationAction.button(
-                label: 'Aceptar',
-                onPressed: () => debugPrint('Spanish accept action'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: '日本語通知',
-          icon: Icons.language,
-          color: Colors.pink,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.info(
-              key: Key('Japanese ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '新しいメッセージ',
-              message: 'アップデートが利用可能です。最新の機能を体験するために今すぐアップデートしてください。',
-              action: InAppNotificationAction.button(
-                label: '更新する',
-                onPressed: () => debugPrint('Japanese update action'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Notification Française',
-          icon: Icons.language,
-          color: Colors.blue[800]!,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.warning(
-              key: Key('French ${DateTime.now().millisecondsSinceEpoch}'),
-              title: 'Attention',
-              message: 'Votre session expirera dans 5 minutes.'
-                  ' Veuillez sauvegarder votre travail.',
-              action: InAppNotificationAction.button(
-                label: 'Prolonger',
-                onPressed: () => debugPrint('French extend session'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Deutsche Benachrichtigung',
-          icon: Icons.language,
-          color: Colors.brown,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.error(
-              key: Key('German ${DateTime.now().millisecondsSinceEpoch}'),
-              title: 'Fehler',
-              message:
-                  'Die Verbindung zum Server konnte nicht hergestellt werden.',
-              action: InAppNotificationAction.button(
-                label: 'Wiederholen',
-                onPressed: () => debugPrint('German retry action'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        // Long Text Examples
-        NotificationExample(
-          title: 'Long Text Example',
-          icon: Icons.article,
-          color: Colors.cyan,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.info(
-              key: Key('Long message ${DateTime.now().millisecondsSinceEpoch}'),
-              title: 'Terms of Service Update',
-              message:
-                  'We have updated our Terms of Service and Privacy Policy. '
-                  'The changes include new data processing guidelines,'
-                  ' enhanced security measures, improved user rights,'
-                  ' and updated third-party integrations. Please review'
-                  ' the changes carefully as they will take'
-                  ' effect in 30 days. Your continued use of our'
-                  ' service constitutes acceptance of these terms.',
-              dismissDuration: const Duration(seconds: 8),
-              action: InAppNotificationAction.button(
-                label: 'Review Terms',
-                onPressed: () => debugPrint('Opening terms review'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'متن طولانی فارسی',
-          icon: Icons.article,
-          color: Colors.deepPurple,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.warning(
-              key: Key('Long Persian ${DateTime.now().millisecondsSinceEpoch}'),
-              title: 'اطلاعیه مهم سیستم',
-              message: 'سیستم در حال انجام بروزرسانی اساسی است. '
-                  'این فرآیند ممکن است چند دقیقه طول بکشد و در طول این مدت '
-                  'برخی از قابلیت‌ها موقتاً در دسترس نخواهند بود. '
-                  'لطفاً کارهای خود را ذخیره کرده و تا اتمام فرآیند صبر کنید. '
-                  'پس از اتمام بروزرسانی، سیستم با عملکرد بهتر و امکانات جدید '
-                  'در اختیار شما خواهد بود.',
-              dismissDuration: const Duration(seconds: 10),
-              action: InAppNotificationAction.button(
-                label: 'متوجه شدم',
-                onPressed: () => debugPrint('Persian acknowledgment'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        // Creative Custom Examples
-        NotificationExample(
-          title: 'Custom Purple Style',
-          icon: Icons.palette,
-          color: Colors.purple,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key:
-                  Key('Purple custom ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🎨 Creative Notification',
-              message:
-                  'This is a custom styled notification with beautiful colors!',
-              backgroundColor: Colors.purple[700],
-              foregroundColor: Colors.white,
-              icon: Icons.palette,
-              showCloseIcon: true,
-              dismissDuration: const Duration(seconds: 5),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Gaming Achievement',
-          icon: Icons.emoji_events,
-          color: Colors.amber,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key('Achievement ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🏆 Achievement Unlocked!',
-              message:
-                  'Congratulations! You have completed 100 notifications demo!',
-              backgroundColor: Colors.amber[700],
-              foregroundColor: Colors.black,
-              icon: Icons.emoji_events,
-              action: InAppNotificationAction.button(
-                label: 'Collect Reward',
-                onPressed: () => debugPrint('Collecting achievement reward'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Social Notification',
-          icon: Icons.favorite,
-          color: Colors.pink,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key('Social ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '💖 Sarah liked your photo',
-              message: 'Your sunset photo from yesterday received a new like!',
-              backgroundColor: Colors.pink[50],
-              foregroundColor: Colors.pink[800],
-              action: InAppNotificationAction.onTap(
-                onPressed: () => debugPrint('Opening photo'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Dark Theme Toggle',
-          icon: Icons.dark_mode,
-          color: Colors.grey[800]!,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key('Dark theme ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🌙 Dark Mode Activated',
-              message: 'Your eyes will thank you! Dark mode is now enabled.',
-              backgroundColor: Colors.grey[900],
-              foregroundColor: Colors.white,
-              icon: Icons.dark_mode,
-              showCloseIcon: true,
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Music Player',
-          icon: Icons.music_note,
-          color: Colors.green,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key('Music ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🎵 Now Playing',
-              message: '"Bohemian Rhapsody" by Queen'
-                  ' is now playing in the background.',
-              backgroundColor: Colors.green[600],
-              foregroundColor: Colors.white,
-              icon: Icons.music_note,
-              dismissDuration: const Duration(seconds: 4),
-              action: InAppNotificationAction.button(
-                label: 'Open Player',
-                onPressed: () => debugPrint('Opening music player'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Flash Sale Alert',
-          icon: Icons.local_fire_department,
-          color: Colors.red,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key('Sale ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🔥 Flash Sale Alert!',
-              message: '50% OFF on all electronics!'
-                  ' Limited time offer ending in 2 hours.',
-              backgroundColor: Colors.red[600],
-              foregroundColor: Colors.white,
-              icon: Icons.local_fire_department,
-              dismissDuration: const Duration(seconds: 6),
-              action: InAppNotificationAction.button(
-                label: 'Shop Now',
-                onPressed: () => debugPrint('Opening shop'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Weather Update',
-          icon: Icons.wb_sunny,
-          color: Colors.orange,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key('Weather ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🌤️ Weather Update',
-              message: 'Sunny weather expected today with a high of 75°F.'
-                  ' Perfect for outdoor activities!',
-              backgroundColor: Colors.orange[400],
-              foregroundColor: Colors.white,
-              dismissDuration: const Duration(seconds: 4),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'Celebration',
-          icon: Icons.celebration,
-          color: Colors.yellow[700]!,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification(
-              key: Key('Celebration ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🎉🎊 Celebration Time! 🎊🎉',
-              message: '🚀 Your app has reached 1000 downloads!'
-                  ' 🎯✨ Amazing work! 👏💪 Keep it up! 🔥⭐',
-              backgroundColor: Colors.yellow[600],
-              foregroundColor: Colors.black,
-              icon: Icons.celebration,
-              action: InAppNotificationAction.button(
-                label: '🎉 Celebrate',
-                onPressed: () => debugPrint('Celebration time!'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        // System-like notifications
-        NotificationExample(
-          title: 'Battery Warning',
-          icon: Icons.battery_alert,
-          color: Colors.red[700]!,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.warning(
-              key: Key('Battery ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '🔋 Battery Low',
-              message:
-                  'Device battery is at 15%. Consider connecting to power.',
-              action: InAppNotificationAction.button(
-                label: 'Power Settings',
-                onPressed: () => debugPrint('Opening power settings'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        NotificationExample(
-          title: 'App Update',
-          icon: Icons.system_update,
-          color: Colors.blue[600]!,
-          onPressed: (final context) => InAppNotificationManager.instance.show(
-            InAppNotification.info(
-              key: Key('Update ${DateTime.now().millisecondsSinceEpoch}'),
-              title: '📱 App Update Available',
-              message:
-                  'Version 2.1.0 is available with bug fixes and new features.',
-              permanent: true,
-              showCloseIcon: true,
-              action: InAppNotificationAction.button(
-                label: 'Update Now',
-                onPressed: () => debugPrint('Starting app update'),
-              ),
-            ),
-            context,
-          ),
-        ),
-
-        // Queue stress test
-        NotificationExample(
-          title: 'Queue Test (5x)',
-          icon: Icons.queue,
-          color: Colors.deepPurple,
-          onPressed: (final context) {
-            for (int i = 0; i < 5; i++) {
-              InAppNotificationManager.instance.show(
-                InAppNotification.info(
-                  key: Key(
-                    'Queue test $i ${DateTime.now().millisecondsSinceEpoch}',
-                  ),
-                  title: 'Queue Test #${i + 1}',
-                  message:
-                      'This is notification ${i + 1} of 5 in the queue test.',
-                  dismissDuration: Duration(seconds: 3 + i),
-                ),
-                context,
-              );
-            }
-          },
-        ),
-      ];
 }
 
-class NotificationExample {
-  const NotificationExample({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
+class InheritedNotificationQueueExample extends InheritedWidget {
+  const InheritedNotificationQueueExample({
+    required super.child,
+    required this.state,
+    super.key,
   });
 
-  final String title;
-  final IconData icon;
-  final Color color;
-  final void Function(BuildContext context) onPressed;
-
-  Widget buildNotificationButton(
-    final BuildContext context,
-    final NotificationExample example,
+  final NotificationQueueExampleState state;
+  @override
+  bool updateShouldNotify(
+    covariant final InheritedNotificationQueueExample oldWidget,
   ) =>
-      Card(
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () => example.onPressed(context),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                colors: [
-                  example.color.withValues(alpha: 0.1),
-                  example.color.withValues(alpha: 0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  example.icon,
-                  size: 24,
-                  color: example.color,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  example.title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: example.color,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      oldWidget.state != state;
 }
