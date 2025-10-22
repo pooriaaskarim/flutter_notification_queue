@@ -17,17 +17,22 @@ class NotificationManager {
 
   static void initialize({
     final QueuePosition position = QueuePosition.topCenter,
-    final EdgeInsets? margin =
+    final EdgeInsets margin =
         const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     final double spacing = 8.0,
     final int maxStackSize = 3,
     final int? dismissThreshold = 50,
-    final PendingIndicatorBuilder? queueIndicatorBuilder,
+    final QueueIndicatorBuilder? queueIndicatorBuilder,
     final QueueStyle queueStyle = const FlatQueueStyle(),
     final bool vibrate = false,
     final Color? foregroundColor,
     final Color? backgroundColor,
     final Duration? dismissDuration,
+    final QueueRelocationBehaviour relocationBehaviour =
+        const DisabledRelocationBehaviour(),
+    final QueueDismissBehaviour dismissBehaviour = const DragDismissBehaviour(),
+    final QueueCloseButtonBehaviour closeButtonBehaviour =
+        QueueCloseButtonBehaviour.always,
     final Set<NotificationChannel>? channels,
     final Set<NotificationQueue>? queues,
   }) {
@@ -48,11 +53,14 @@ class NotificationManager {
 
     _channels.addAll({defaultChannel, ...?channels});
     final defaultQueue = position.generateQueue(
-      style: queueStyle,
-      spacing: spacing,
+      closeButtonBehaviour: closeButtonBehaviour,
+      dismissBehaviour: dismissBehaviour,
+      margin: margin,
       maxStackSize: maxStackSize,
-      dismissThreshold: dismissThreshold,
       queueIndicatorBuilder: queueIndicatorBuilder,
+      relocationBehaviour: relocationBehaviour,
+      spacing: spacing,
+      style: queueStyle,
     );
     _queues.addAll({defaultQueue, ...?queues});
     NotificationManager._initialized = true;
@@ -60,6 +68,9 @@ class NotificationManager {
 
   static final LinkedHashSet<NotificationChannel> _channels = LinkedHashSet();
   static final LinkedHashSet<NotificationQueue> _queues = LinkedHashSet();
+
+  static bool isEmptyPosition(final QueuePosition position) =>
+      _queues.where((final queue) => queue.position == position).isEmpty;
 
   NotificationChannel getChannel(
     final String channelName,
