@@ -13,81 +13,112 @@ enum QueuePosition {
   NotificationQueue generateQueueFrom(final NotificationQueue anotherQueue) =>
       generateQueue(
         style: anotherQueue.style,
+        margin: anotherQueue.margin,
         spacing: anotherQueue.spacing,
         maxStackSize: anotherQueue.maxStackSize,
-        dismissThreshold: anotherQueue.dismissThreshold,
+        relocationBehaviour: anotherQueue.relocationBehaviour,
+        dismissBehaviour: anotherQueue.dismissBehaviour,
+        closeButtonBehaviour: anotherQueue.closeButtonBehaviour,
+        queueIndicatorBuilder: anotherQueue.queueIndicatorBuilder,
       );
 
   NotificationQueue generateQueue({
     required final QueueStyle style,
     required final double spacing,
+    required final EdgeInsetsGeometry margin,
     required final int maxStackSize,
-    required final int? dismissThreshold,
-    final PendingIndicatorBuilder? queueIndicatorBuilder,
+    required final QueueDismissBehaviour dismissBehaviour,
+    required final QueueRelocationBehaviour relocationBehaviour,
+    required final QueueCloseButtonBehaviour closeButtonBehaviour,
+    required final QueueIndicatorBuilder? queueIndicatorBuilder,
   }) {
     switch (this) {
       case topLeft:
         return TopLeftQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case topCenter:
         return TopCenterQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case topRight:
         return TopRightQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case centerLeft:
         return CenterLeftQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case centerRight:
         return CenterRightQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomLeft:
         return BottomLeftQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomCenter:
         return BottomCenterQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomRight:
         return BottomRightQueue(
           style: style,
+          margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dismissThreshold: dismissThreshold,
+          relocationBehaviour: relocationBehaviour,
+          dismissBehaviour: dismissBehaviour,
+          closeButtonBehaviour: closeButtonBehaviour,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
     }
@@ -122,20 +153,88 @@ enum QueueCloseButtonBehaviour {
   never;
 }
 
-enum QueueRelocationBehaviour {
-  /// LongPress drag relocates any notification to all possible positions.
-  ///
-  /// Undefined [QueuePosition]s will generate their [NotificationQueue] from
-  /// the [NotificationManager]'s default [NotificationQueue] automatically.
-  /// *CAUTION!!!* This can cause overlapping of notifications on
-  /// smaller screens.
-  allowAll,
+/// How [NotificationWidget]s inside the [NotificationQueue] will relocate on
+/// the screen.
+///
+/// As this moment, [NotificationWidget]s will follow [NotificationQueue]
+/// styles; if they are already define, the pre-configured style will be
+/// replaced. And if not, current [NotificationQueue] style will be used.
+sealed class QueueRelocationBehaviour {
+  const QueueRelocationBehaviour(
+    this.positions, {
+    required this.thresholdInPixels,
+    required this.adaptive,
+  });
 
-  /// LongPress drag relocates any notification to any of the define positions
-  allowDefined,
-
-  /// Disable LongPress relocations.
+  /// Positions to relocate [NotificationWidget]s to.
   ///
-  /// This is the default behavior.
-  none;
+  /// Not supposed to be empty.
+  /// Not supposed to contain the same position as the [NotificationQueue].
+  /// Recommended to limit positions to the same height
+  /// as the [NotificationQueue].
+  final Set<QueuePosition> positions;
+
+  /// Pixels left from screen edge to trigger relocation.
+  final int thresholdInPixels;
+
+  /// Whether to prevent relocation on smaller width screens.
+  ///
+  /// This will prevent relocation of [NotificationWidget]s will overlap
+  /// inside *Same Height* [NotificationQueue]s.
+  /// Recommended to be enabled.
+  final bool adaptive;
+}
+
+final class LongPressRelocationBehaviour extends QueueRelocationBehaviour {
+  const LongPressRelocationBehaviour(
+    super.positions, {
+    super.thresholdInPixels = 50,
+    super.adaptive = true,
+  });
+}
+
+final class DragRelocationBehaviour extends QueueRelocationBehaviour {
+  const DragRelocationBehaviour(
+    super.positions, {
+    super.thresholdInPixels = 50,
+    super.adaptive = true,
+  });
+}
+
+final class DisabledRelocationBehaviour extends QueueRelocationBehaviour {
+  const DisabledRelocationBehaviour()
+      : super(
+          const {},
+          thresholdInPixels: 50,
+          adaptive: true,
+        );
+}
+
+/// How [NotificationWidget]s inside the [NotificationQueue] will be dismissed.
+sealed class QueueDismissBehaviour {
+  const QueueDismissBehaviour({required this.thresholdInPixels});
+
+  /// Pixels left from screen edge to trigger relocation.
+  final int thresholdInPixels;
+}
+
+final class DragDismissBehaviour extends QueueDismissBehaviour {
+  const DragDismissBehaviour({
+    super.thresholdInPixels = 50,
+  });
+}
+
+// final class TapDismissBehaviour extends QueueDismissBehaviour {}
+
+final class LongPressDismissBehaviour extends QueueDismissBehaviour {
+  const LongPressDismissBehaviour({
+    super.thresholdInPixels = 50,
+  });
+}
+
+final class DisabledDismissBehaviour extends QueueDismissBehaviour {
+  const DisabledDismissBehaviour()
+      : super(
+          thresholdInPixels: 50,
+        );
 }

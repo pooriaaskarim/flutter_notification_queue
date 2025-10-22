@@ -213,7 +213,6 @@ class QueueManager {
                           enableDismiss: true,
                           enableRelocation: true,
                           hapticFeedbackOnStart: true,
-                          thresholdInPixels: 50,
                         )),
               ],
             ),
