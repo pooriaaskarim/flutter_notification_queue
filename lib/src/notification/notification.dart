@@ -7,9 +7,9 @@ import 'package:flutter/material.dart';
 import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
-part 'draggable/draggable_transitions.dart';
-part 'draggable/relocation_targets.dart';
-part 'draggable/dismission_targets.dart';
+part 'draggables/draggable_transitions.dart';
+part 'draggables/relocation_targets.dart';
+part 'draggables/dismission_targets.dart';
 part 'theme/notification_theme.dart';
 part 'notification_action.dart';
 part 'type_defts.dart';
@@ -139,7 +139,7 @@ class NotificationWidget extends StatefulWidget {
       ' color: $color,'
       ' dismissDuration: $dismissDuration,'
       ' position: $position,'
-      ' builder: $builder)';
+      ' builder: $builder,)';
 
   NotificationWidget copyWith(
     final QueuePosition newPosition,
@@ -164,8 +164,6 @@ class NotificationWidgetState extends State<NotificationWidget>
   late NotificationTheme theme;
   Duration? get resolvedDismissDuration =>
       widget.dismissDuration ?? widget.channel.defaultDismissDuration;
-
-  int? get dismissalThreshold => widget.queue.dismissThreshold;
 
   bool get hasTitle => widget.title != null;
 
@@ -326,7 +324,7 @@ class NotificationWidgetState extends State<NotificationWidget>
                       spacing: 4,
                       children: [
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           spacing: 4,
                           children: [
                             _getExpandButton(isExpanded: isExpanded),
@@ -494,13 +492,13 @@ class NotificationWidgetState extends State<NotificationWidget>
         child: ValueListenableBuilder(
           valueListenable: _showCloseButton,
           builder: (final context, final showCloseButton, final child) {
-            final shouldShow =
-                showCloseButton || widget.queue.dismissThreshold == null;
+            // final shouldShow =
+            //     showCloseButton || widget.queue.dismissThreshold == null;
             return AnimatedOpacity(
               duration: const Duration(milliseconds: 220),
               curve: Curves.easeInOut,
-              opacity: shouldShow ? 1 : 0,
-              child: shouldShow
+              opacity: showCloseButton ? 1 : 0,
+              child: showCloseButton
                   ? IconButton(
                       visualDensity: VisualDensity.compact,
                       padding: EdgeInsets.zero,

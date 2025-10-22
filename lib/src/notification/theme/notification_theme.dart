@@ -58,7 +58,7 @@ class NotificationTheme {
           borderRadius: borderRadius,
           side: BorderSide(
             color: color,
-            width: 2,
+            width: 1.0,
           ),
         );
         border = null;

@@ -1,5 +1,6 @@
 part of 'notification.dart';
 
+//TODO: Implement NotificationBuilder
 typedef NotificationBuilder = NotificationWidget Function({
   String? title,
   String message,
