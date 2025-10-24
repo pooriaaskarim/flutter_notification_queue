@@ -13,43 +13,6 @@ void main() {
   FlutterNativeSplash.remove();
 
   NotificationManager.initialize(
-    position: QueuePosition.topCenter,
-    queueStyle: const OutlinedQueueStyle(),
-    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48.0),
-    maxStackSize: 3,
-    dismissDuration: const Duration(seconds: 3),
-    queueIndicatorBuilder: (final pendingNotificationsCount) {
-      if (pendingNotificationsCount > 0) {
-        return Container(
-          padding: const EdgeInsetsGeometry.all(8),
-          alignment: AlignmentGeometry.bottomLeft,
-          color: Colors.blueAccent,
-          width: 32,
-          child: FittedBox(child: Text('$pendingNotificationsCount')),
-        );
-      }
-      return null;
-    },
-    closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
-    relocationBehaviour:
-        const LongPressRelocationBehaviour({QueuePosition.centerRight}),
-    queues: {
-      BottomCenterQueue(
-        maxStackSize: 1,
-        margin: EdgeInsets.zero,
-        style: const FlatQueueStyle(),
-        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
-      ),
-      CenterLeftQueue(
-        maxStackSize: 3,
-        margin: EdgeInsets.zero,
-        style: const FilledQueueStyle(),
-        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
-        relocationBehaviour: const LongPressRelocationBehaviour({
-          QueuePosition.centerRight,
-        }),
-      ),
-    },
     channels: {
       const NotificationChannel(
         name: 'scaffold',
@@ -144,8 +107,167 @@ void main() {
         ),
         enabled: false,
       ),
+      const NotificationChannel(
+        name: 'default',
+        defaultColor: Colors.pink,
+      ),
+    },
+    queues: {
+      TopCenterQueue(
+        margin: EdgeInsetsGeometry.zero,
+        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+        style: const FilledQueueStyle(),
+        dragBehaviour: const DisabledDragBehaviour(),
+        longPressDragBehaviour: RelocateLongPressDragBehaviour(
+          positions: {
+            QueuePosition.centerRight,
+            QueuePosition.centerLeft,
+          },
+        ),
+      ),
+      BottomCenterQueue(
+        style: const FlatQueueStyle(),
+        longPressDragBehaviour: RelocateLongPressDragBehaviour(
+          positions: {QueuePosition.topCenter},
+        ),
+      ),
     },
   );
+  // NotificationManager.initialize(
+  //   position: QueuePosition.topCenter,
+  //   queueStyle: const OutlinedQueueStyle(),
+  //   margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48.0),
+  //   maxStackSize: 3,
+  //   dismissDuration: const Duration(seconds: 3),
+  //   queueIndicatorBuilder: (final pendingNotificationsCount) {
+  //     if (pendingNotificationsCount > 0) {
+  //       return Container(
+  //         padding: const EdgeInsetsGeometry.all(8),
+  //         alignment: AlignmentGeometry.bottomLeft,
+  //         color: Colors.blueAccent,
+  //         width: 32,
+  //         child: FittedBox(child: Text('$pendingNotificationsCount')),
+  //       );
+  //     }
+  //     return null;
+  //   },
+  //   closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+  //   longPressDragBehaviour: RelocateLongPressDragBehaviour(
+  //     positions: {QueuePosition.centerRight},
+  //   ),
+  //   queues: {
+  //     BottomCenterQueue(
+  //       maxStackSize: 1,
+  //       margin: EdgeInsets.zero,
+  //       style: const FlatQueueStyle(),
+  //       closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+  //     ),
+  //     CenterLeftQueue(
+  //       maxStackSize: 3,
+  //       margin: EdgeInsets.zero,
+  //       style: const FilledQueueStyle(),
+  //       closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
+  //       longPressDragBehaviour: RelocateLongPressDragBehaviour(
+  //         positions: {},
+  //       ),
+  //     ),
+  //   },
+  //   channels: {
+  //     const NotificationChannel(
+  //       name: 'scaffold',
+  //       position: QueuePosition.bottomCenter,
+  //       defaultDismissDuration: Duration(seconds: 5),
+  //       defaultBackgroundColor: Colors.black,
+  //       defaultForegroundColor: Colors.white,
+  //       defaultColor: Colors.black,
+  //       enabled: false,
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'success',
+  //       position: QueuePosition.topCenter,
+  //       defaultDismissDuration: Duration(seconds: 3),
+  //       defaultColor: Colors.green,
+  //       defaultIcon: Icon(
+  //         Icons.check_circle,
+  //       ),
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'scaffold.success',
+  //       position: QueuePosition.bottomCenter,
+  //       defaultDismissDuration: Duration(seconds: 5),
+  //       defaultBackgroundColor: Colors.black,
+  //       defaultForegroundColor: Colors.white,
+  //       defaultColor: Colors.green,
+  //       defaultIcon: Icon(
+  //         Icons.check_circle,
+  //       ),
+  //       enabled: false,
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'error',
+  //       position: QueuePosition.topCenter,
+  //       defaultDismissDuration: null,
+  //       defaultColor: Colors.red,
+  //       defaultIcon: Icon(
+  //         Icons.error,
+  //       ),
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'scaffold.error',
+  //       position: QueuePosition.bottomCenter,
+  //       defaultDismissDuration: Duration(seconds: 5),
+  //       defaultBackgroundColor: Colors.black,
+  //       defaultForegroundColor: Colors.white,
+  //       defaultColor: Colors.red,
+  //       defaultIcon: Icon(
+  //         Icons.error,
+  //       ),
+  //       enabled: false,
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'info',
+  //       position: QueuePosition.topCenter,
+  //       defaultDismissDuration: Duration(seconds: 3),
+  //       defaultColor: Colors.blue,
+  //       defaultIcon: Icon(
+  //         Icons.info,
+  //       ),
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'scaffold.info',
+  //       position: QueuePosition.bottomCenter,
+  //       defaultDismissDuration: Duration(seconds: 5),
+  //       defaultBackgroundColor: Colors.black,
+  //       defaultForegroundColor: Colors.white,
+  //       defaultColor: Colors.blue,
+  //       defaultIcon: Icon(
+  //         Icons.info,
+  //       ),
+  //       enabled: false,
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'warning',
+  //       position: QueuePosition.topCenter,
+  //       defaultDismissDuration: Duration(seconds: 5),
+  //       defaultColor: Colors.orange,
+  //       defaultIcon: Icon(
+  //         Icons.warning,
+  //       ),
+  //     ),
+  //     const NotificationChannel(
+  //       name: 'scaffold.warning',
+  //       position: QueuePosition.bottomCenter,
+  //       defaultDismissDuration: Duration(seconds: 5),
+  //       defaultBackgroundColor: Colors.black,
+  //       defaultForegroundColor: Colors.white,
+  //       defaultColor: Colors.orange,
+  //       defaultIcon: Icon(
+  //         Icons.warning,
+  //       ),
+  //       enabled: false,
+  //     ),
+  //   },
+  // );
   runApp(const NotificationQueueExample());
 }
 
@@ -176,27 +298,6 @@ class NotificationQueueExampleState extends State<NotificationQueueExample> {
     (context as Element).visitChildren(rebuild);
 
     setState(() {});
-  }
-
-  MaterialColor _getMaterialColor(final Color color) {
-    final int red = color.r.round() & 0xff;
-    final int green = color.g.round() & 0xff;
-    final int blue = color.b.round() & 0xff;
-
-    final Map<int, Color> shades = {
-      50: Color.fromRGBO(red, green, blue, .1),
-      100: Color.fromRGBO(red, green, blue, .2),
-      200: Color.fromRGBO(red, green, blue, .3),
-      300: Color.fromRGBO(red, green, blue, .4),
-      400: Color.fromRGBO(red, green, blue, .5),
-      500: Color.fromRGBO(red, green, blue, .6),
-      600: Color.fromRGBO(red, green, blue, .7),
-      700: Color.fromRGBO(red, green, blue, .8),
-      800: Color.fromRGBO(red, green, blue, .9),
-      900: Color.fromRGBO(red, green, blue, 1),
-    };
-
-    return MaterialColor(color.value, shades);
   }
 
   @override

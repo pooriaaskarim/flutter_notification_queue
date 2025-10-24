@@ -626,16 +626,21 @@ class DemoScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/img/Q.Splash.png',
-              fit: BoxFit.fitHeight,
-              width: 64,
-              height: 64,
+        flexibleSpace: FlexibleSpaceBar(
+          title: SafeArea(
+            child: Row(
+              children: [
+                Image.asset(
+                  'assets/img/Q.Splash.png',
+                  fit: BoxFit.fitWidth,
+                  width: 128,
+                  height: 128,
+                ),
+                const Expanded(child: Text('Demo')),
+              ],
             ),
-            const Expanded(child: Text('Demo')),
-          ],
+          ),
+          centerTitle: true,
         ),
         backgroundColor: themeData.colorScheme.primaryContainer,
         foregroundColor: themeData.colorScheme.onPrimaryContainer,
