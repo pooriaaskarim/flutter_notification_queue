@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
 
-part 'enums.dart';
+import '../enums/enums.dart';
 part 'extensions.dart';
 part 'queue_manager.dart';
 part 'type_defs.dart';
