@@ -8,19 +8,28 @@ import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
 part 'draggables/draggable_transitions.dart';
+
 part 'draggables/relocation_targets.dart';
+
 part 'draggables/dismission_targets.dart';
+
 part 'theme/notification_theme.dart';
+
 part 'notification_action.dart';
+
 part 'type_defts.dart';
 
+@immutable
 class NotificationWidget extends StatefulWidget {
-  NotificationWidget({
+  const NotificationWidget._({
+    required GlobalObjectKey<NotificationWidgetState> key,
     required this.message,
-    final String? id,
-    this.channelName = 'default',
+    required this.id,
+    required this.position,
+    required this.queue,
+    required this.channelName,
+    required this.channel,
     this.title,
-    final QueuePosition? position,
     this.action,
     this.icon,
     this.color,
@@ -28,24 +37,60 @@ class NotificationWidget extends StatefulWidget {
     this.backgroundColor,
     this.dismissDuration,
     this.builder,
+  }) : _key = key;
+
+  factory NotificationWidget({
+    required final String message,
+    final String? id,
+    final String channelName = 'default',
+    final String? title,
+    final QueuePosition? position,
+    final NotificationAction? action,
+    final Widget? icon,
+    final Color? color,
+    final Color? foregroundColor,
+    final Color? backgroundColor,
+    final Duration? dismissDuration,
+    final NotificationBuilder? builder,
   }) {
-    this.id = id ?? DateTime.now().toString();
-    channel = NotificationManager.instance.getChannel(channelName);
-    queue = NotificationManager.instance.getQueue(position ?? channel.position);
-    this.position = queue.position;
+    final resolvedId = id ?? DateTime.now().toString();
+    final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
+    final resolveChannel = NotificationManager.instance.getChannel(channelName);
+    final resolvedQueue = NotificationManager.instance
+        .getQueue(position ?? resolveChannel.position);
+
+    return NotificationWidget._(
+      id: resolvedId,
+      key: resolvedKey,
+      message: message,
+      channelName: channelName,
+      channel: NotificationManager.instance.getChannel(channelName),
+      queue: resolvedQueue,
+      position: resolvedQueue.position,
+      title: title,
+      action: action,
+      icon: icon,
+      color: color,
+      foregroundColor: foregroundColor,
+      backgroundColor: backgroundColor,
+      dismissDuration: dismissDuration,
+      builder: builder,
+    );
   }
 
+  final GlobalKey<NotificationWidgetState> _key;
+
   @override
-  GlobalObjectKey get key => GlobalObjectKey(id);
+  GlobalKey<NotificationWidgetState> get key => _key;
 
   /// Optional Notification ID
   ///
-  /// A unique [GlobalObjectKey] will be provided for [NotificationWidget]
+  /// A unique [GlobalKey] will be provided for [NotificationWidget]
   /// if [id] is provided or not,
   /// but to have more control over [NotificationWidget], you can
   /// set the [id] and use it.
   //todo: implement id based handlers in notification manager
-  late final String id;
+  final String id;
 
   /// Name of the notification channel.
   ///
@@ -107,25 +152,28 @@ class NotificationWidget extends StatefulWidget {
   //todo: (bool) permanent field for notification or the channel?
   final Duration? dismissDuration;
 
-  late final QueuePosition position;
-  late final NotificationQueue queue;
+  final QueuePosition position;
+  final NotificationQueue queue;
 
-  NotificationWidgetState? state;
+  // NotificationWidgetState? state;
 
-  late final NotificationChannel channel;
+  final NotificationChannel channel;
 
   /// Custom builder for the notification stack indicator.
   final NotificationBuilder? builder;
 
   void show(final BuildContext context) =>
       NotificationManager.instance.show(this, context);
+
   void dismiss(final BuildContext context) =>
       NotificationManager.instance.dismiss(this, context);
+
   void relocateTo(final QueuePosition position, final BuildContext context) =>
       NotificationManager.instance.relocate(this, position, context);
 
   @override
   State<StatefulWidget> createState() => NotificationWidgetState();
+
   @override
   String toString({final DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
       'NotificationWidget('
@@ -162,6 +210,7 @@ class NotificationWidget extends StatefulWidget {
 class NotificationWidgetState extends State<NotificationWidget>
     with SingleTickerProviderStateMixin {
   late NotificationTheme theme;
+
   Duration? get resolvedDismissDuration =>
       widget.dismissDuration ?? widget.channel.defaultDismissDuration;
 
@@ -206,7 +255,7 @@ class NotificationWidgetState extends State<NotificationWidget>
     debugPrint('''
 ----------Notification${widget.key}: didChangeDependencies called----------''');
 
-    widget.state = this;
+    // widget.state = this;
     theme = NotificationTheme.resolveWith(context, widget.queue.style, widget);
     debugPrint('''
 ------------|NotificationState: $this
@@ -225,7 +274,10 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   Future<void> dismiss() async {
     await animationController.reverse();
-    NotificationManager.instance.dismiss(widget, context);
+    NotificationManager.instance.dismiss(
+      widget,
+      context,
+    );
     debugPrint('''
 ----------Notification${widget.key}::::dismiss----------
 ------------|Dismissed.''');
