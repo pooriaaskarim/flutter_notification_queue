@@ -20,7 +20,6 @@ class NotificationTheme {
     final NotificationWidget notification,
   ) {
     final themeData = Theme.of(context);
-    final brightness = themeData.brightness;
     final colorScheme = themeData.colorScheme;
 
     final Color color;
