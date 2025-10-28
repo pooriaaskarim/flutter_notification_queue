@@ -21,39 +21,37 @@ class QueueManager {
 ------$notificationQueue:::QueueManager:::queue------
 --------|Notification: $notification
 --------|From Context: $context''');
-    if (notification.id != null) {
-      debugPrint('''
+    debugPrint('''
 --------|Notification ID: ${notification.id}
 --------|Checking Active Notifications... .''');
-      final activeIndex = _activeNotifications.value
-          .indexWhere((final n) => n.id == notification.id);
-      if (activeIndex != -1) {
-        debugPrint('''
+    final activeIndex = _activeNotifications.value
+        .indexWhere((final n) => n.id == notification.id);
+    if (activeIndex != -1) {
+      debugPrint('''
 --------|Notification Already Active at Index: $activeIndex.
 --------|Updating Notification.
 ''');
-        _activeNotifications.value[activeIndex] =
-            notification; // Replace (Flutter rebuilds)
-        _activeNotifications.notifyListeners();
-        return;
-      }
-      debugPrint('''
+      _activeNotifications.value[activeIndex] =
+          notification; // Replace (Flutter rebuilds)
+      _activeNotifications.notifyListeners();
+      return;
+    }
+    debugPrint('''
 --------|No Active Notification Found.
 --------|Checking Pending Notifications... .''');
-      final pendingIndex = pendingNotifications
-          .toList()
-          .indexWhere((final n) => n.id == notification.id);
-      if (pendingIndex != -1) {
-        debugPrint('''
+    final pendingIndex = pendingNotifications
+        .toList()
+        .indexWhere((final n) => n.id == notification.id);
+    if (pendingIndex != -1) {
+      debugPrint('''
 --------|Notification Already Pending at Index: $pendingIndex.
 --------|Updating Notification.
 ''');
-        pendingNotifications.toList()[pendingIndex] = notification;
-        return;
-      }
-      debugPrint('''
---------|No Pending Notification Found.''');
+      pendingNotifications.toList()[pendingIndex] = notification;
+      return;
     }
+    debugPrint('''
+--------|No Pending Notification Found.''');
     debugPrint('''
 --------|Adding Notification to Pending Queue.
 ''');
