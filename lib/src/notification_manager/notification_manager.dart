@@ -15,105 +15,70 @@ class NotificationManager {
 
   static bool? _initialized;
 
-  // static void initialize({
-  //   final QueuePosition position = QueuePosition.topCenter,
-  //   final EdgeInsets margin =
-  //       const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-  //   final double spacing = 8.0,
-  //   final int maxStackSize = 3,
-  //   final int? dismissThreshold = 50,
-  //   final QueueIndicatorBuilder? queueIndicatorBuilder,
-  //   final QueueStyle queueStyle = const FlatQueueStyle(),
-  //   final bool vibrate = false,
-  //   final Color? foregroundColor,
-  //   final Color? backgroundColor,
-  //   final Duration? dismissDuration,
-  //   final LongPressDragBehaviour longPressDragBehaviour =
-  //       const DisabledLongPressDragBehaviour(),
-  //   final DragBehaviour dragBehaviour = const DismissDragBehaviour(),
-  //   final QueueCloseButtonBehaviour closeButtonBehaviour =
-  //       QueueCloseButtonBehaviour.always,
-  //   final Set<NotificationChannel>? channels,
-  //   final Set<NotificationQueue>? queues,
-  // }) {
-  //   assert(NotificationManager._initialized != true, 'Already initialized.');
-  //   assert(
-  //     maxStackSize > 0,
-  //     'maxStackSize must be greater than 0',
-  //   );
-  //   final defaultChannel = NotificationChannel(
-  //     name: 'default',
-  //     enabled: true,
-  //     position: position,
-  //     vibrate: vibrate,
-  //     defaultColor: foregroundColor,
-  //     defaultBackgroundColor: backgroundColor,
-  //     defaultDismissDuration: dismissDuration,
-  //   );
-  //
-  //   _channels.addAll({defaultChannel, ...?channels});
-  //   final defaultQueue = position.generateQueue(
-  //     closeButtonBehaviour: closeButtonBehaviour,
-  //     margin: margin,
-  //     maxStackSize: maxStackSize,
-  //     queueIndicatorBuilder: queueIndicatorBuilder,
-  //     dragBehaviour: dragBehaviour,
-  //     longPressDragBehaviour: longPressDragBehaviour,
-  //     spacing: spacing,
-  //     style: queueStyle,
-  //   );
-  //   _queues.addAll({defaultQueue, ...?queues});
-  //   NotificationManager._initialized = true;
-  // }
   static void initialize({
     final Set<NotificationChannel>? channels,
     final Set<NotificationQueue>? queues,
   }) {
     assert(NotificationManager._initialized != true, 'Already initialized.');
     NotificationManager._initialized = true;
-    if (queues?.any(
-          (final queue) => queue.position == QueuePosition.topCenter,
-        ) ??
-        false) {
-      _queues.clear();
+    if (queues != null && queues.isNotEmpty) {
+      for (final queue in queues) {
+        final otherQueues = {...queues}..remove(queue);
+        for (final target in queue.groupPosition) {
+          for (final anotherQueue in otherQueues) {
+            if (anotherQueue.groupPosition.contains(target)) {
+              throw ArgumentError(
+                  '$target is used in both $queue and inside $anotherQueue,'
+                  '\nRelocation is allowed only in the same Group.');
+            }
+          }
+        }
+      }
+
+      final resolvedQueue = <NotificationQueue>{
+        for (final queue in queues) ...{
+          queue,
+          ...queue.groupPosition.map(
+            (final p) => p.generateQueueFrom(queue),
+          ),
+        },
+      };
+      _queues.addAll(resolvedQueue);
+    } else {
+      _queues.add(
+        TopCenterQueue(
+          style: const FilledQueueStyle(),
+        ),
+      );
     }
-    _queues.addAll(queues ?? {});
-    if (channels?.any(
-          (final channel) => channel.name == 'default',
-        ) ??
-        false) {
-      _channels.clear();
+
+    if (channels != null && channels.isNotEmpty) {
+      _channels.addAll(channels);
+    } else {
+      _channels.add(
+        const NotificationChannel(
+          name: 'default',
+          position: QueuePosition.topCenter,
+          description: 'Default notification channel.',
+        ),
+      );
     }
-    _channels.addAll(channels ?? {});
   }
 
-  static final LinkedHashSet<NotificationChannel> _channels = LinkedHashSet(
+  static final _channels = LinkedHashSet<NotificationChannel>(
     equals: (
       final x,
       final y,
     ) =>
         x.name == y.name,
-  )..add(
-      const NotificationChannel(
-        name: 'default',
-        position: QueuePosition.topCenter,
-        description: 'Default notification channel.',
-      ),
-    );
-  static final LinkedHashSet<NotificationQueue> _queues = LinkedHashSet(
+  );
+  static final _queues = LinkedHashSet<NotificationQueue>(
     equals: (
       final x,
       final y,
     ) =>
         x.position == y.position,
-  )..add(
-      TopCenterQueue(
-        style: const FlatQueueStyle(),
-      ),
-    );
-
-  static bool isEmptyPosition(final QueuePosition position) =>
-      _queues.where((final queue) => queue.position == position).isEmpty;
+  );
 
   NotificationChannel getChannel(
     final String channelName,

@@ -190,7 +190,7 @@ class NotificationWidgetState extends State<NotificationWidget>
 ----------Notification${widget.key}: initState called----------''');
     super.initState();
     _showCloseButton.value =
-        widget.queue.closeButtonBehaviour == QueueCloseButtonBehaviour.always;
+        widget.queue.closeButtonBehavior == QueueCloseButtonBehavior.always;
     animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -292,15 +292,15 @@ class NotificationWidgetState extends State<NotificationWidget>
                 type: MaterialType.canvas,
                 color: theme.backgroundColor.withValues(alpha: theme.opacity),
                 child: InkWell(
-                  onHover: widget.queue.closeButtonBehaviour ==
-                          QueueCloseButtonBehaviour.onHover
+                  onHover: widget.queue.closeButtonBehavior ==
+                          QueueCloseButtonBehavior.onHover
                       ? (final isHovering) {
                           _showCloseButton.value = isHovering;
                         }
                       : null,
                   onTap: hasOnTapAction ||
-                          widget.queue.closeButtonBehaviour ==
-                              QueueCloseButtonBehaviour.onHover
+                          widget.queue.closeButtonBehavior ==
+                              QueueCloseButtonBehavior.onHover
                       ? () {
                           if (hasOnTapAction) {
                             widget.action?.onPressed();

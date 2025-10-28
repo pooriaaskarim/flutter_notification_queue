@@ -16,9 +16,9 @@ enum QueuePosition {
         margin: anotherQueue.margin,
         spacing: anotherQueue.spacing,
         maxStackSize: anotherQueue.maxStackSize,
-        longPressDragBehaviour: anotherQueue.longPressDragBehaviour,
-        dragBehaviour: anotherQueue.dragBehaviour,
-        closeButtonBehaviour: anotherQueue.closeButtonBehaviour,
+        longPressDragBehavior: anotherQueue.longPressDragBehavior,
+        dragBehavior: anotherQueue.dragBehavior,
+        closeButtonBehavior: anotherQueue.closeButtonBehavior,
         queueIndicatorBuilder: anotherQueue.queueIndicatorBuilder,
       );
 
@@ -27,9 +27,9 @@ enum QueuePosition {
     required final double spacing,
     required final EdgeInsetsGeometry margin,
     required final int maxStackSize,
-    required final DragBehaviour dragBehaviour,
-    required final LongPressDragBehaviour longPressDragBehaviour,
-    required final QueueCloseButtonBehaviour closeButtonBehaviour,
+    required final DragBehavior dragBehavior,
+    required final LongPressDragBehavior longPressDragBehavior,
+    required final QueueCloseButtonBehavior closeButtonBehavior,
     required final QueueIndicatorBuilder? queueIndicatorBuilder,
   }) {
     switch (this) {
@@ -39,9 +39,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case topCenter:
@@ -50,9 +50,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case topRight:
@@ -61,9 +61,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case centerLeft:
@@ -72,9 +72,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case centerRight:
@@ -83,9 +83,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomLeft:
@@ -94,9 +94,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomCenter:
@@ -105,9 +105,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
       case bottomRight:
@@ -116,9 +116,9 @@ enum QueuePosition {
           margin: margin,
           spacing: spacing,
           maxStackSize: maxStackSize,
-          dragBehaviour: dragBehaviour,
-          longPressDragBehaviour: longPressDragBehaviour,
-          closeButtonBehaviour: closeButtonBehaviour,
+          dragBehavior: dragBehavior,
+          longPressDragBehavior: longPressDragBehavior,
+          closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
         );
     }

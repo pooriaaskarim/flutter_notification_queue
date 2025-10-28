@@ -1,7 +1,7 @@
 part of 'enums.dart';
 
 
-enum QueueCloseButtonBehaviour {
+enum QueueCloseButtonBehavior {
   always,
   onHover,
   never;

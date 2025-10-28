@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
 
-import '../enums/enums.dart';
 part 'extensions.dart';
+
 part 'queue_manager.dart';
+
 part 'type_defs.dart';
+
 part 'styles.dart';
 
 ///  [NotificationQueue]s based on [QueuePosition].
@@ -34,135 +36,30 @@ sealed class NotificationQueue {
   NotificationQueue({
     required this.position,
     required this.maxStackSize,
-    required this.dragBehaviour,
-    required this.longPressDragBehaviour,
-    required this.closeButtonBehaviour,
+    required this.dragBehavior,
+    required this.longPressDragBehavior,
+    required this.closeButtonBehavior,
     required this.spacing,
     required this.margin,
     required this.style,
     required this.queueIndicatorBuilder,
   })  : assert(maxStackSize > 0, 'maxStackSize must be greater than 0'),
         assert(
-          !(longPressDragBehaviour is RelocateNotificationBehaviour &&
-              dragBehaviour is RelocateNotificationBehaviour),
-          'dragBehaviour and longPressDragBehaviour cannot be both of type'
-          ' RelocateNotificationBehaviour at the same time',
+          !(longPressDragBehavior is Relocate && dragBehavior is Relocate),
+          'dragBehavior and longPressDragBehavior cannot be both of type'
+          ' RelocateNotificationBehavior at the same time.',
         ) {
-    if (longPressDragBehaviour is RelocateLongPressDragBehaviour) {
-      (longPressDragBehaviour as RelocateLongPressDragBehaviour)
-          .positions
-          .add(position);
-    }
-    if (dragBehaviour is RelocateDragBehaviour) {
-      (dragBehaviour as RelocateDragBehaviour).positions.add(position);
+    for (final behavior in [longPressDragBehavior, dragBehavior]) {
+      if (behavior is Relocate) {
+        final relocationBehavior = behavior as Relocate;
+        relocationBehavior.positions.add(position);
+        _groupPositions.addAll(relocationBehavior.positions);
+      } else {
+        _groupPositions.add(position);
+      }
     }
   }
 
-  // factory NotificationQueue.fromPosition(
-  //   final QueuePosition position, {
-  //   required final int maxStackSize,
-  //   required final QueueDismissBehaviour dismissBehaviour,
-  //   required final QueueRelocationBehaviour relocationBehaviour,
-  //   required final QueueCloseButtonBehaviour closeButtonBehaviour,
-  //   required final double spacing,
-  //   required final EdgeInsetsGeometry margin,
-  //   required final QueueStyle style,
-  //   required final QueueIndicatorBuilder? queueIndicatorBuilder,
-  // }) =>
-  //     switch (position) {
-  //       QueuePosition.topLeft => TopLeftQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //       QueuePosition.topCenter => TopCenterQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //       QueuePosition.topRight => TopRightQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //       QueuePosition.centerLeft => CenterLeftQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //       QueuePosition.centerRight => CenterRightQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //       QueuePosition.bottomLeft => BottomLeftQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //       QueuePosition.bottomCenter => BottomCenterQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //       QueuePosition.bottomRight => BottomRightQueue(
-  //           relocationBehaviour: relocationBehaviour,
-  //           queueIndicatorBuilder: queueIndicatorBuilder,
-  //           closeButtonBehaviour: closeButtonBehaviour,
-  //           dismissBehaviour: dismissBehaviour,
-  //           margin: margin,
-  //           maxStackSize: maxStackSize,
-  //           spacing: spacing,
-  //           style: style,
-  //         ),
-  //     };
-
-  /// Position of the [NotificationQueue] on the screen.
-  ///
-  /// Can be any of
-  ///  + [QueuePosition.topLeft]
-  ///  + [QueuePosition.topCenter]
-  ///  + [QueuePosition.topRight]
-  ///  + [QueuePosition.centerLeft]
-  ///  + [QueuePosition.centerRight]
-  ///  + [QueuePosition.bottomLeft]
-  ///  + [QueuePosition.bottomCenter]
-  ///  + [QueuePosition.bottomRight]
   final QueuePosition position;
 
   /// Maximum number of notifications shown at a given time.
@@ -170,21 +67,25 @@ sealed class NotificationQueue {
   /// Must be greater than 0!
   final int maxStackSize;
 
-  /// Behaviour of notification on LongPress dragging.
+  /// Behavior of notification on LongPress dragging.
   ///
   /// Can be any of
-  ///  + [RelocateLongPressDragBehaviour]
-  ///  + [DismissLongPressDragBehaviour]
-  ///  + [DisabledLongPressDragBehaviour]
-  final LongPressDragBehaviour longPressDragBehaviour;
+  ///  + [Relocate]
+  ///  + [Dismiss]
+  ///  + [Disabled]
+  final LongPressDragBehavior longPressDragBehavior;
 
-  /// Behaviour of notification on Drag.
+  /// Behavior of notification on Drag.
   ///
   /// Can be any of
-  ///  + [RelocateDragBehaviour]
-  ///  + [DismissDragBehaviour]
-  ///  + [DisabledDragBehaviour]
-  final DragBehaviour dragBehaviour;
+  ///  + [Relocate]
+  ///  + [Dismiss]
+  ///  + [Disabled]
+  final DragBehavior dragBehavior;
+
+  Set<QueuePosition> get groupPosition => _groupPositions;
+
+  final Set<QueuePosition> _groupPositions = {};
 
   /// Spacing between queue notifications.
   final double spacing;
@@ -192,8 +93,8 @@ sealed class NotificationQueue {
   /// Margin around queue notifications.
   final EdgeInsetsGeometry margin;
 
-  /// Notification close button behaviour.
-  final QueueCloseButtonBehaviour closeButtonBehaviour;
+  /// Notification close button behavior.
+  final QueueCloseButtonBehavior closeButtonBehavior;
 
   /// Custom builder for the notification stack indicator.
   final QueueIndicatorBuilder? queueIndicatorBuilder;
@@ -281,9 +182,9 @@ final class TopLeftQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.topLeft);
 }
 
@@ -294,9 +195,9 @@ final class TopCenterQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.topCenter);
 }
 
@@ -307,9 +208,9 @@ final class TopRightQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.topRight);
 }
 
@@ -320,9 +221,9 @@ final class CenterLeftQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.centerLeft);
 }
 
@@ -333,9 +234,9 @@ final class CenterRightQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.centerRight);
 }
 
@@ -346,9 +247,9 @@ final class BottomLeftQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.bottomLeft);
 }
 
@@ -359,9 +260,9 @@ final class BottomCenterQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.bottomCenter);
 }
 
@@ -372,8 +273,8 @@ final class BottomRightQueue extends NotificationQueue {
     super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     super.maxStackSize = 3,
     super.queueIndicatorBuilder,
-    super.dragBehaviour = const DismissDragBehaviour(),
-    super.longPressDragBehaviour = const DisabledLongPressDragBehaviour(),
-    super.closeButtonBehaviour = QueueCloseButtonBehaviour.always,
+    super.dragBehavior = const Dismiss(),
+    super.longPressDragBehavior = const Disabled(),
+    super.closeButtonBehavior = QueueCloseButtonBehavior.always,
   }) : super(position: QueuePosition.bottomRight);
 }
