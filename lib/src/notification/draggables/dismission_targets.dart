@@ -5,7 +5,6 @@ class _DismissionTargets extends StatelessWidget {
     required this.onAccept,
     required this.screenSize,
     required this.passedThreshold,
-    super.key,
   });
 
   final void Function() onAccept;

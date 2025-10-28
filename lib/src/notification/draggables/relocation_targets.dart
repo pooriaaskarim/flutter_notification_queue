@@ -7,7 +7,6 @@ class _RelocationTargets extends StatelessWidget {
     required this.targets,
     required this.screenSize,
     required this.passedThreshold,
-    super.key,
   });
 
   final void Function(QueuePosition candidatePosition) onAccept;

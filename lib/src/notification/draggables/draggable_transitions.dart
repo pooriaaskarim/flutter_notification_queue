@@ -6,6 +6,7 @@ class DraggableTransitions extends StatefulWidget {
     this.hapticFeedbackOnStart = true,
     super.key,
   });
+
   final NotificationWidget notification;
 
   final bool hapticFeedbackOnStart;
@@ -16,7 +17,9 @@ class DraggableTransitions extends StatefulWidget {
 
 class DraggableTransitionsState extends State<DraggableTransitions> {
   late Size _screenSize;
+
   double get _screenHeight => _screenSize.height;
+
   double get _screenWidth => _screenSize.width;
 
   final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
@@ -75,6 +78,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
 
   final OverlayPortalController _overlayPortalController =
       OverlayPortalController();
+
   @override
   Widget build(final BuildContext context) => longPressWidget();
 
@@ -86,7 +90,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             onDragStarted: () {
               //         debugPrint('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
-              widget.notification.state?.ditchDismissTimer();
+              widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
                 _overlayPortalController.show();
@@ -103,7 +107,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             },
             onDragEnd: (final details) {
               _dragOffsetPairNotifier.value = null;
-              widget.notification.state?.initDismissTimer();
+              widget.notification.key.currentState?.initDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
                 _overlayPortalController.hide();
@@ -118,8 +122,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
               builder: (final context, final dragOffestPair, final child) {
                 final passedThreshold = _passedThreshold(
                   dragOffestPair?.global,
-                  (widget.notification.queue.longPressDragBehavior
-                          as Relocate)
+                  (widget.notification.queue.longPressDragBehavior as Relocate)
                       .thresholdInPixels,
                 );
 
@@ -155,14 +158,13 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             ),
             child: draggable(),
           ),
-        Dismiss() =>
-          LongPressDraggable<AlignmentGeometry>(
+        Dismiss() => LongPressDraggable<AlignmentGeometry>(
             data: widget.notification.queue.position.alignment,
             axis: null,
             onDragStarted: () {
               //         debugPrint('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
-              widget.notification.state?.ditchDismissTimer();
+              widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
                 _overlayPortalController.show();
@@ -179,7 +181,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             },
             onDragEnd: (final details) {
               _dragOffsetPairNotifier.value = null;
-              widget.notification.state?.initDismissTimer();
+              widget.notification.key.currentState?.initDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
                 _overlayPortalController.hide();
@@ -194,8 +196,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
               builder: (final context, final dragOffestPair, final child) {
                 final passedThreshold = _passedThreshold(
                   dragOffestPair?.global,
-                  (widget.notification.queue.longPressDragBehavior
-                          as Dismiss)
+                  (widget.notification.queue.longPressDragBehavior as Dismiss)
                       .thresholdInPixels,
                 );
 
@@ -207,7 +208,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                   ) =>
                       _DismissionTargets(
                     onAccept: () {
-                      widget.notification.state?.dismiss();
+                      widget.notification.key.currentState?.dismiss();
                     },
                     screenSize: layoutInfo.overlaySize,
                     passedThreshold: passedThreshold,
@@ -233,15 +234,13 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             onDragStarted: () {
               //         debugPrint('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
-              widget.notification.state?.ditchDismissTimer();
-              if (widget.notification.queue.dragBehavior
-                  is! Disabled) {
+              widget.notification.key.currentState?.ditchDismissTimer();
+              if (widget.notification.queue.dragBehavior is! Disabled) {
                 _overlayPortalController.show();
               }
             },
             onDragUpdate: (final details) {
-              if (widget.notification.queue.dragBehavior
-                  is! Disabled) {
+              if (widget.notification.queue.dragBehavior is! Disabled) {
                 _dragOffsetPairNotifier.value = OffsetPair(
                   local: details.delta,
                   global: details.globalPosition,
@@ -250,9 +249,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             },
             onDragEnd: (final details) {
               _dragOffsetPairNotifier.value = null;
-              widget.notification.state?.initDismissTimer();
-              if (widget.notification.queue.dragBehavior
-                  is! Disabled) {
+              widget.notification.key.currentState?.initDismissTimer();
+              if (widget.notification.queue.dragBehavior is! Disabled) {
                 _overlayPortalController.hide();
               }
             },
@@ -263,8 +261,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
               builder: (final context, final dragOffestPair, final child) {
                 final passedThreshold = _passedThreshold(
                   dragOffestPair?.global,
-                  (widget.notification.queue.dragBehavior
-                          as Relocate)
+                  (widget.notification.queue.dragBehavior as Relocate)
                       .thresholdInPixels,
                 );
 
@@ -275,9 +272,9 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                     final layoutInfo,
                   ) =>
                       _RelocationTargets(
-                    targets: (widget.notification.queue.dragBehavior
-                            as Relocate)
-                        .positions,
+                    targets:
+                        (widget.notification.queue.dragBehavior as Relocate)
+                            .positions,
                     currentPosition: widget.notification.queue.position,
                     onAccept: (final candidatePosition) {
                       NotificationManager.instance.relocate(
@@ -306,15 +303,13 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             onDragStarted: () {
               //         debugPrint('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
-              widget.notification.state?.ditchDismissTimer();
-              if (widget.notification.queue.dragBehavior
-                  is! Disabled) {
+              widget.notification.key.currentState?.ditchDismissTimer();
+              if (widget.notification.queue.dragBehavior is! Disabled) {
                 _overlayPortalController.show();
               }
             },
             onDragUpdate: (final details) {
-              if (widget.notification.queue.dragBehavior
-                  is! Disabled) {
+              if (widget.notification.queue.dragBehavior is! Disabled) {
                 _dragOffsetPairNotifier.value = OffsetPair(
                   local: details.delta,
                   global: details.globalPosition,
@@ -323,7 +318,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             },
             onDragEnd: (final details) {
               _dragOffsetPairNotifier.value = null;
-              widget.notification.state?.initDismissTimer();
+              widget.notification.key.currentState?.initDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
                 _overlayPortalController.hide();
@@ -336,8 +331,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
               builder: (final context, final dragOffestPair, final child) {
                 final passedThreshold = _passedThreshold(
                   dragOffestPair?.global,
-                  (widget.notification.queue.dragBehavior
-                          as Dismiss)
+                  (widget.notification.queue.dragBehavior as Dismiss)
                       .thresholdInPixels,
                 );
 
@@ -349,7 +343,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                   ) =>
                       _DismissionTargets(
                     onAccept: () {
-                      widget.notification.state?.dismiss();
+                      widget.notification.key.currentState?.dismiss();
                     },
                     screenSize: layoutInfo.overlaySize,
                     passedThreshold: passedThreshold,
