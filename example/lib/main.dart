@@ -13,43 +13,6 @@ void main() {
   FlutterNativeSplash.remove();
 
   NotificationManager.initialize(
-    position: QueuePosition.topCenter,
-    queueStyle: const OutlinedQueueStyle(),
-    margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 48.0),
-    maxStackSize: 3,
-    dismissDuration: const Duration(seconds: 3),
-    queueIndicatorBuilder: (final pendingNotificationsCount) {
-      if (pendingNotificationsCount > 0) {
-        return Container(
-          padding: const EdgeInsetsGeometry.all(8),
-          alignment: AlignmentGeometry.bottomLeft,
-          color: Colors.blueAccent,
-          width: 32,
-          child: FittedBox(child: Text('$pendingNotificationsCount')),
-        );
-      }
-      return null;
-    },
-    closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
-    relocationBehaviour:
-        const LongPressRelocationBehaviour({QueuePosition.centerRight}),
-    queues: {
-      BottomCenterQueue(
-        maxStackSize: 1,
-        margin: EdgeInsets.zero,
-        style: const FlatQueueStyle(),
-        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
-      ),
-      CenterLeftQueue(
-        maxStackSize: 3,
-        margin: EdgeInsets.zero,
-        style: const FilledQueueStyle(),
-        closeButtonBehaviour: QueueCloseButtonBehaviour.onHover,
-        relocationBehaviour: const LongPressRelocationBehaviour({
-          QueuePosition.centerRight,
-        }),
-      ),
-    },
     channels: {
       const NotificationChannel(
         name: 'scaffold',
@@ -144,6 +107,35 @@ void main() {
         ),
         enabled: false,
       ),
+      const NotificationChannel(
+        name: 'default',
+        defaultColor: Colors.pink,
+      ),
+    },
+    queues: {
+      TopCenterQueue(
+        margin: EdgeInsetsGeometry.zero,
+        closeButtonBehavior: QueueCloseButtonBehavior.onHover,
+        style: const FilledQueueStyle(),
+        dragBehavior: const Disabled(),
+        longPressDragBehavior: Relocate.to(
+          {
+            QueuePosition.centerRight,
+            QueuePosition.centerLeft,
+            QueuePosition.topCenter,
+          },
+        ),
+      ),
+      BottomCenterQueue(
+        maxStackSize: 1,
+        margin: EdgeInsetsGeometry.zero,
+        style: const FlatQueueStyle(),
+        longPressDragBehavior: Relocate.to(
+          {
+            QueuePosition.topLeft,
+          },
+        ),
+      ),
     },
   );
   runApp(const NotificationQueueExample());
@@ -151,11 +143,13 @@ void main() {
 
 class NotificationQueueExample extends StatefulWidget {
   const NotificationQueueExample({super.key});
+
   static NotificationQueueExampleState? of(final BuildContext context) =>
       context
           .dependOnInheritedWidgetOfExactType<
               InheritedNotificationQueueExample>()
           ?.state;
+
   @override
   State<NotificationQueueExample> createState() =>
       NotificationQueueExampleState();
@@ -176,27 +170,6 @@ class NotificationQueueExampleState extends State<NotificationQueueExample> {
     (context as Element).visitChildren(rebuild);
 
     setState(() {});
-  }
-
-  MaterialColor _getMaterialColor(final Color color) {
-    final int red = color.r.round() & 0xff;
-    final int green = color.g.round() & 0xff;
-    final int blue = color.b.round() & 0xff;
-
-    final Map<int, Color> shades = {
-      50: Color.fromRGBO(red, green, blue, .1),
-      100: Color.fromRGBO(red, green, blue, .2),
-      200: Color.fromRGBO(red, green, blue, .3),
-      300: Color.fromRGBO(red, green, blue, .4),
-      400: Color.fromRGBO(red, green, blue, .5),
-      500: Color.fromRGBO(red, green, blue, .6),
-      600: Color.fromRGBO(red, green, blue, .7),
-      700: Color.fromRGBO(red, green, blue, .8),
-      800: Color.fromRGBO(red, green, blue, .9),
-      900: Color.fromRGBO(red, green, blue, 1),
-    };
-
-    return MaterialColor(color.value, shades);
   }
 
   @override
@@ -232,6 +205,7 @@ class InheritedNotificationQueueExample extends InheritedWidget {
   });
 
   final NotificationQueueExampleState state;
+
   @override
   bool updateShouldNotify(
     covariant final InheritedNotificationQueueExample oldWidget,

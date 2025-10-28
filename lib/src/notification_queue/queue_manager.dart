@@ -207,13 +207,12 @@ class QueueManager {
                       pendingNotificationsCount,
                     ) ??
                     const SizedBox.shrink(),
-                ...activeNotifications
-                    .map((final notification) => DraggableTransitions(
-                          notification: notification,
-                          enableDismiss: true,
-                          enableRelocation: true,
-                          hapticFeedbackOnStart: true,
-                        )),
+                ...activeNotifications.map(
+                  (final notification) => DraggableTransitions(
+                    notification: notification,
+                    hapticFeedbackOnStart: true,
+                  ),
+                ),
               ],
             ),
           ),

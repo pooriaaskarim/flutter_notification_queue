@@ -4,14 +4,14 @@ class _RelocationTargets extends StatelessWidget {
   const _RelocationTargets({
     required this.onAccept,
     required this.currentPosition,
-    required this.relocationPositions,
+    required this.targets,
     required this.screenSize,
     required this.passedThreshold,
     super.key,
   });
 
   final void Function(QueuePosition candidatePosition) onAccept;
-  final Set<QueuePosition> relocationPositions;
+  final Set<QueuePosition> targets;
   final bool passedThreshold;
   final QueuePosition currentPosition;
   final Size screenSize;
@@ -27,7 +27,7 @@ class _RelocationTargets extends StatelessWidget {
     return Stack(
       fit: StackFit.passthrough,
       children: [
-        ...relocationPositions.map((final position) {
+        ...targets.map((final position) {
           if (position == currentPosition) {
             return const SizedBox.shrink();
           }

@@ -78,18 +78,4 @@ class NotificationChannel {
 
   /// Default channel Icon
   final Widget? defaultIcon;
-
-  @override
-  String toString() => ' NotificationChannel("$name")';
-  @override
-  bool operator ==(final Object other) {
-    if (identical(this, other)) {
-      return true;
-    }
-
-    return other is NotificationChannel && other.name == name;
-  }
-
-  @override
-  int get hashCode => name.hashCode;
 }
