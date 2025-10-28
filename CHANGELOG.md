@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-01-28
+
+### 🔧 Bug Fixes
+
+#### **State Management Improvements**
+
+- **State Access**: Replaced direct state access with proper `GlobalKey.currentState` access
+    - Updated all drag gesture handlers to use `widget.notification.key.currentState?.method()`
+    - Ensures timer management (`ditchDismissTimer`, `initDismissTimer`) works on current mounted
+      state
+    - Prevents stale state references during drag interactions
+- **Constructor Cleanup**: Removed unnecessary `super.key` from helper widget constructors
+- **Code Quality**: Removed unused variables and unnecessary null checks
+
+### 🏗️ Architecture Improvements
+
+#### **NotificationWidget Refactoring**
+
+- **Factory Constructor**: Converted to factory constructor pattern for better initialization
+- **Immutable Properties**: Changed `late final` properties to `final` for better immutability
+- **Stable Key Management**: `GlobalObjectKey` now created during factory construction
+- **State Safety**: Removed mutable `state` property to prevent stale references
+
+#### **Code Quality Enhancements**
+
+- **Dead Code Removal**: Eliminated unused `brightness` variable in theme resolution
+- **Null Check Optimization**: Removed unnecessary null check for notification ID
+- **Better Encapsulation**: Factory pattern provides cleaner initialization logic
+
+### 🎯 Performance Improvements
+
+- **Immutable Widgets**: More efficient widget rebuilds with immutable properties
+- **Proper State Access**: Eliminates potential memory leaks from stale state references
+- **Cleaner Initialization**: Factory constructor reduces object creation overhead
+
+### 🔍 Technical Details
+
+#### **Breaking Changes**
+
+- None - this is a patch release with backward compatibility maintained
+
+#### **Files Modified**
+
+- `lib/src/notification/notification.dart` - Major refactoring with factory constructor
+- `lib/src/notification/draggables/draggable_transitions.dart` - State access fixes
+- `lib/src/notification/draggables/relocation_targets.dart` - Constructor cleanup
+- `lib/src/notification/draggables/dismission_targets.dart` - Constructor cleanup
+- `lib/src/notification/theme/notification_theme.dart` - Unused variable removal
+- `lib/src/notification_queue/queue_manager.dart` - Null check optimization
+
+---
+
 ## [0.3.0] - 2025-01-27
 
 ### 🚀 Major Features

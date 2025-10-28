@@ -59,7 +59,7 @@ Add FlutterNotificationQueue to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_notification_queue: ^0.3.0
+  flutter_notification_queue: ^latest_version
 ```
 
 Then run:

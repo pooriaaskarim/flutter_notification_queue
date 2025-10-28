@@ -1,6 +1,6 @@
 name: flutter_notification_queue
 description: "An overlay based In App Notification"
-version: 0.3.0
+version: 0.3.1
 homepage: https://github.com/pooriaaskarim/flutter_notification_queue
 repository: https://github.com/pooriaaskarim/flutter_notification_queue
 topics: [ flutter, notification, overlay, toast, popup ]
