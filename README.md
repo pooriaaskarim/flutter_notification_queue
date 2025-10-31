@@ -7,14 +7,14 @@
 <p align="center">
 <img width="380" height="380" alt="Q Icon" src="https://github.com/user-attachments/assets/e1751f71-3dfd-417f-a01f-27336d1ecb7d" />
 </p>
-A Dart overlay-based notification service for Flutter applications. \textbf{Flutter Notification Queue} provides a comprehensive solution for displaying in-app notifications with advanced queuing, interactive gestures, multi-language support, and extensive customization options.
+A Dart overlay-based notification service for Flutter applications. **Flutter Notification Queue** provides a comprehensive solution for displaying in-app notifications with advanced queuing, interactive gestures, multi-language support, and extensive customization options.
 Currently available for Android and Web. 
 
 ## ✨ Key Features
 
 ### 🎯 **Advanced Notification System**
-- Intelligent Queueig with **NotificationQueue**s: Define screen positions and notification styles and behaviors in one place. 
-- Categorizing with **NotificationChannel**s: Define styling and thememing (e.g.: Success, Error, Warning, Info, Scaffold, etc.), Heptic Feedbacks, Enabled/Disabled categories all in one place.
+- Intelligent Queueing with **NotificationQueue**s: Define screen positions, notification styles, and behaviors in one place. 
+- Categorizing with **NotificationChannel**s: Define styling and theme (e.g., Success, Error, Warning, Info, Scaffold, etc.), Heptic Feedback, and Enabled/Disabled categories all in one place.
 - Various **Dismission** behaviors of Queues Notifications 
 - Advanced dynamic **Relocation** of Queues Notifications
 - **Customizabke Animations**
@@ -200,8 +200,7 @@ NotificationWidget(
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open
-an issue first to discuss what you would like to change.
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you'd like to change.
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
@@ -211,7 +210,7 @@ an issue first to discuss what you would like to change.
 
 ## 📄 License
 
-This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for
+This project is licensed under the BSD 3-Clause License - see the [LICENSE](https://github.com/pooriaaskarim/flutter_notification_queue/blob/master/LICENSE) file for
 details.
 
 ## 🙏 Acknowledgments
