@@ -7,6 +7,7 @@
 <p align="center">
 <img width="380" height="380" alt="Q Icon" src="https://github.com/user-attachments/assets/e1751f71-3dfd-417f-a01f-27336d1ecb7d" />
 </p>
+
 A Dart overlay-based notification service for Flutter applications. **Flutter Notification Queue** provides a comprehensive solution for displaying in-app notifications with advanced queuing, interactive gestures, multi-language support, and extensive customization options.
 Currently available for Android and Web. 
 
