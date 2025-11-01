@@ -78,4 +78,8 @@ class NotificationChannel {
 
   /// Default channel Icon
   final Widget? defaultIcon;
+
+  @override
+  String toString() => 'NotificationChannel{name: $name'
+      '${description != null ? ', description: $description,\n' : ''}}';
 }
