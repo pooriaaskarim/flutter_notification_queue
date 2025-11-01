@@ -16,12 +16,16 @@ class QueueWidget extends StatefulWidget {
 }
 
 class QueueWidgetState extends State<QueueWidget> {
-  final _pendingNotifications = ValueNotifier(LinkedHashSet<NotificationWidget>(
-    equals: (final n1, final n2) => n1.id == n2.id,
-  ));
-  final _activeNotifications = ValueNotifier(LinkedHashSet<NotificationWidget>(
-    equals: (final n1, final n2) => n1.id == n2.id,
-  ));
+  final _pendingNotifications = ValueNotifier(
+    LinkedHashSet<NotificationWidget>(
+      equals: (final n1, final n2) => n1.id == n2.id,
+    ),
+  );
+  final _activeNotifications = ValueNotifier(
+    LinkedHashSet<NotificationWidget>(
+      equals: (final n1, final n2) => n1.id == n2.id,
+    ),
+  );
   final _listKey = GlobalKey<AnimatedListState>();
 
   void queue(final NotificationWidget notification) {
@@ -119,8 +123,8 @@ class QueueWidgetState extends State<QueueWidget> {
 --------|Notification Removed.
 ''');
       final newQueue = NotificationManager.instance.getQueue(newPosition);
-      final relocatedNotification = notification.copyWith(newPosition);
-      newQueue.widget.key.currentState?.queue(relocatedNotification);
+      final newNotification = notification.copyWith(newPosition);
+      newQueue.widget.key.currentState?.queue(newNotification);
     } else {
       debugPrint('''
 --------|Notification Not Found.
@@ -150,10 +154,24 @@ class QueueWidgetState extends State<QueueWidget> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    OverlayManager.instance.show(
+      widget.parentQueue.toString(),
+      OverlayEntryData(
+        builder: (final context) => widget,
+        position: AlignedPosition(widget.parentQueue.position.alignment),
+      ),
+    );
+  }
+
+  @override
   void dispose() {
     widget.parentQueue._queueWidget = null;
     _activeNotifications.dispose();
     _pendingNotifications.dispose();
+
+    OverlayManager.instance.hide(widget.parentQueue.toString());
     super.dispose();
   }
 

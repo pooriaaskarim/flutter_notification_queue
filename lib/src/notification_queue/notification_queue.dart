@@ -3,10 +3,14 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
+import '../notification_wrapper/notification_manager/notification_manager.dart';
+import '../notification_wrapper/overlay_manager/overlay_manager.dart';
 
 part 'extensions.dart';
 
-part 'queue_manager.dart';
+part 'queue_widget.dart';
+
+// part 'queue_manager.dart';
 
 part 'type_defs.dart';
 
@@ -53,9 +57,9 @@ sealed class NotificationQueue {
       if (behavior is Relocate) {
         final relocationBehavior = behavior as Relocate;
         relocationBehavior.positions.add(position);
-        _groupPositions.addAll(relocationBehavior.positions);
+        groupPositions.addAll(relocationBehavior.positions);
       } else {
-        _groupPositions.add(position);
+        groupPositions.add(position);
       }
     }
   }
@@ -83,9 +87,7 @@ sealed class NotificationQueue {
   ///  + [Disabled]
   final DragBehavior dragBehavior;
 
-  Set<QueuePosition> get groupPosition => _groupPositions;
-
-  final Set<QueuePosition> _groupPositions = {};
+  final Set<QueuePosition> groupPositions = {};
 
   /// Spacing between queue notifications.
   final double spacing;
@@ -102,9 +104,16 @@ sealed class NotificationQueue {
   /// Looks and feels of [NotificationWidget]s inside the queue
   final QueueStyle style;
 
-  QueueManager? _queueManager;
+  QueueWidget? _queueWidget;
 
-  QueueManager get manager => _queueManager ??= QueueManager(this);
+  QueueWidget get widget => _queueWidget ??= QueueWidget._(
+        parentQueue: this,
+        key: GlobalKey<QueueWidgetState>(),
+      );
+
+  // QueueManager? _queueManager;
+  //
+  // QueueManager get manager => _queueManager ??= QueueManager(this);
 
   MainAxisAlignment get mainAxisAlignment {
     switch (this) {
