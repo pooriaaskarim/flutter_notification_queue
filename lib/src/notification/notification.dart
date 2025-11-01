@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
+import '../notification_wrapper/notification_manager/notification_manager.dart';
 import '../utils/utils.dart';
 
 part 'draggables/draggable_transitions.dart';
@@ -22,10 +23,9 @@ part 'type_defts.dart';
 @immutable
 class NotificationWidget extends StatefulWidget {
   const NotificationWidget._({
-    required GlobalObjectKey<NotificationWidgetState> key,
+    required final GlobalObjectKey<NotificationWidgetState> key,
     required this.message,
     required this.id,
-    required this.position,
     required this.queue,
     required this.channelName,
     required this.channel,
@@ -64,9 +64,8 @@ class NotificationWidget extends StatefulWidget {
       key: resolvedKey,
       message: message,
       channelName: channelName,
-      channel: NotificationManager.instance.getChannel(channelName),
+      channel: resolveChannel,
       queue: resolvedQueue,
-      position: resolvedQueue.position,
       title: title,
       action: action,
       icon: icon,
@@ -152,7 +151,6 @@ class NotificationWidget extends StatefulWidget {
   //todo: (bool) permanent field for notification or the channel?
   final Duration? dismissDuration;
 
-  final QueuePosition position;
   final NotificationQueue queue;
 
   // NotificationWidgetState? state;
@@ -162,14 +160,12 @@ class NotificationWidget extends StatefulWidget {
   /// Custom builder for the notification stack indicator.
   final NotificationBuilder? builder;
 
-  void show(final BuildContext context) =>
-      NotificationManager.instance.show(this, context);
+  void show() => queue.widget.key.currentState?.queue(this);
 
-  void dismiss(final BuildContext context) =>
-      NotificationManager.instance.dismiss(this, context);
+  void dismiss() => queue.widget.key.currentState?.dismiss(this);
 
-  void relocateTo(final QueuePosition position, final BuildContext context) =>
-      NotificationManager.instance.relocate(this, position, context);
+  void relocateTo(final QueuePosition position) =>
+      queue.widget.key.currentState?.relocate(this, position);
 
   @override
   State<StatefulWidget> createState() => NotificationWidgetState();
@@ -186,7 +182,6 @@ class NotificationWidget extends StatefulWidget {
       ' backgroundColor: $backgroundColor,'
       ' color: $color,'
       ' dismissDuration: $dismissDuration,'
-      ' position: $position,'
       ' builder: $builder,)';
 
   NotificationWidget copyWith(
@@ -274,10 +269,7 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   Future<void> dismiss() async {
     await animationController.reverse();
-    NotificationManager.instance.dismiss(
-      widget,
-      context,
-    );
+    widget.queue.widget.key.currentState?.dismiss(widget);
     debugPrint('''
 ----------Notification${widget.key}::::dismiss----------
 ------------|Dismissed.''');

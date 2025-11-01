@@ -138,11 +138,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                         .positions,
                     currentPosition: widget.notification.queue.position,
                     onAccept: (final candidatePosition) {
-                      NotificationManager.instance.relocate(
-                        widget.notification,
-                        candidatePosition,
-                        context,
-                      );
+                      widget.notification.queue.widget.key.currentState
+                          ?.relocate(widget.notification, candidatePosition);
                     },
                     screenSize: layoutInfo.overlaySize,
                     passedThreshold: passedThreshold,
@@ -277,11 +274,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                             .positions,
                     currentPosition: widget.notification.queue.position,
                     onAccept: (final candidatePosition) {
-                      NotificationManager.instance.relocate(
-                        widget.notification,
-                        candidatePosition,
-                        context,
-                      );
+                      widget.notification.queue.widget.key.currentState
+                          ?.relocate(widget.notification, candidatePosition);
                     },
                     screenSize: layoutInfo.overlaySize,
                     passedThreshold: passedThreshold,
