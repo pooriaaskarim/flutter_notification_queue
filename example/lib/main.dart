@@ -12,133 +12,129 @@ void main() {
 
   FlutterNativeSplash.remove();
 
-  NotificationManager.initialize(
-    channels: {
-      const NotificationChannel(
-        name: 'scaffold',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.black,
-        enabled: false,
+  runApp(NotificationQueueWrapper(channels: const {
+    NotificationChannel(
+      name: 'scaffold',
+      position: QueuePosition.bottomCenter,
+      defaultDismissDuration: Duration(seconds: 5),
+      defaultBackgroundColor: Colors.black,
+      defaultForegroundColor: Colors.white,
+      defaultColor: Colors.black,
+      enabled: false,
+    ),
+    NotificationChannel(
+      name: 'success',
+      position: QueuePosition.topCenter,
+      defaultDismissDuration: Duration(seconds: 3),
+      defaultColor: Colors.green,
+      defaultIcon: Icon(
+        Icons.check_circle,
       ),
-      const NotificationChannel(
-        name: 'success',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: Duration(seconds: 3),
-        defaultColor: Colors.green,
-        defaultIcon: Icon(
-          Icons.check_circle,
-        ),
+    ),
+    NotificationChannel(
+      name: 'scaffold.success',
+      position: QueuePosition.bottomCenter,
+      defaultDismissDuration: Duration(seconds: 5),
+      defaultBackgroundColor: Colors.black,
+      defaultForegroundColor: Colors.white,
+      defaultColor: Colors.green,
+      defaultIcon: Icon(
+        Icons.check_circle,
       ),
-      const NotificationChannel(
-        name: 'scaffold.success',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.green,
-        defaultIcon: Icon(
-          Icons.check_circle,
-        ),
-        enabled: false,
+      enabled: false,
+    ),
+    NotificationChannel(
+      name: 'error',
+      position: QueuePosition.topCenter,
+      defaultDismissDuration: null,
+      defaultColor: Colors.red,
+      defaultIcon: Icon(
+        Icons.error,
       ),
-      const NotificationChannel(
-        name: 'error',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: null,
-        defaultColor: Colors.red,
-        defaultIcon: Icon(
-          Icons.error,
-        ),
+    ),
+    NotificationChannel(
+      name: 'scaffold.error',
+      position: QueuePosition.bottomCenter,
+      defaultDismissDuration: Duration(seconds: 5),
+      defaultBackgroundColor: Colors.black,
+      defaultForegroundColor: Colors.white,
+      defaultColor: Colors.red,
+      defaultIcon: Icon(
+        Icons.error,
       ),
-      const NotificationChannel(
-        name: 'scaffold.error',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.red,
-        defaultIcon: Icon(
-          Icons.error,
-        ),
-        enabled: false,
+      enabled: false,
+    ),
+    NotificationChannel(
+      name: 'info',
+      position: QueuePosition.topCenter,
+      defaultDismissDuration: Duration(seconds: 3),
+      defaultColor: Colors.blue,
+      defaultIcon: Icon(
+        Icons.info,
       ),
-      const NotificationChannel(
-        name: 'info',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: Duration(seconds: 3),
-        defaultColor: Colors.blue,
-        defaultIcon: Icon(
-          Icons.info,
-        ),
+    ),
+    NotificationChannel(
+      name: 'scaffold.info',
+      position: QueuePosition.bottomCenter,
+      defaultDismissDuration: Duration(seconds: 5),
+      defaultBackgroundColor: Colors.black,
+      defaultForegroundColor: Colors.white,
+      defaultColor: Colors.blue,
+      defaultIcon: Icon(
+        Icons.info,
       ),
-      const NotificationChannel(
-        name: 'scaffold.info',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.blue,
-        defaultIcon: Icon(
-          Icons.info,
-        ),
-        enabled: false,
+      enabled: false,
+    ),
+    NotificationChannel(
+      name: 'warning',
+      position: QueuePosition.topCenter,
+      defaultDismissDuration: Duration(seconds: 5),
+      defaultColor: Colors.orange,
+      defaultIcon: Icon(
+        Icons.warning,
       ),
-      const NotificationChannel(
-        name: 'warning',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultColor: Colors.orange,
-        defaultIcon: Icon(
-          Icons.warning,
-        ),
+    ),
+    NotificationChannel(
+      name: 'scaffold.warning',
+      position: QueuePosition.bottomCenter,
+      defaultDismissDuration: Duration(seconds: 5),
+      defaultBackgroundColor: Colors.black,
+      defaultForegroundColor: Colors.white,
+      defaultColor: Colors.orange,
+      defaultIcon: Icon(
+        Icons.warning,
       ),
-      const NotificationChannel(
-        name: 'scaffold.warning',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.orange,
-        defaultIcon: Icon(
-          Icons.warning,
-        ),
-        enabled: false,
+      enabled: false,
+    ),
+    NotificationChannel(
+      name: 'default',
+      defaultColor: Colors.pink,
+    ),
+  }, queues: {
+    TopCenterQueue(
+      margin: EdgeInsetsGeometry.zero,
+      closeButtonBehavior: QueueCloseButtonBehavior.onHover,
+      style: const FilledQueueStyle(),
+      dragBehavior: const Disabled(),
+      longPressDragBehavior: Relocate.to(
+        {
+          QueuePosition.centerRight,
+          QueuePosition.centerLeft,
+          QueuePosition.topCenter,
+        },
       ),
-      const NotificationChannel(
-        name: 'default',
-        defaultColor: Colors.pink,
+    ),
+    BottomCenterQueue(
+      maxStackSize: 1,
+      margin: EdgeInsetsGeometry.zero,
+      style: const FlatQueueStyle(),
+      longPressDragBehavior: Relocate.to(
+        {
+          QueuePosition.topLeft,
+        },
       ),
-    },
-    queues: {
-      TopCenterQueue(
-        margin: EdgeInsetsGeometry.zero,
-        closeButtonBehavior: QueueCloseButtonBehavior.onHover,
-        style: const FilledQueueStyle(),
-        dragBehavior: const Disabled(),
-        longPressDragBehavior: Relocate.to(
-          {
-            QueuePosition.centerRight,
-            QueuePosition.centerLeft,
-            QueuePosition.topCenter,
-          },
-        ),
-      ),
-      BottomCenterQueue(
-        maxStackSize: 1,
-        margin: EdgeInsetsGeometry.zero,
-        style: const FlatQueueStyle(),
-        longPressDragBehavior: Relocate.to(
-          {
-            QueuePosition.topLeft,
-          },
-        ),
-      ),
-    },
-  );
-  runApp(const NotificationQueueExample());
+    ),
+  }, child: const NotificationQueueExample()));
 }
 
 class NotificationQueueExample extends StatefulWidget {

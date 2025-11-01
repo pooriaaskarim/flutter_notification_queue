@@ -1,6 +1,6 @@
 name: flutter_notification_queue_example
 description: 'Example of flutter_notification_queue usage'
-publish_to:  none
+publish_to: none
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -22,4 +22,3 @@ flutter:
 
   assets:
     - ./assets/img/
-    - ./assets/svg/
