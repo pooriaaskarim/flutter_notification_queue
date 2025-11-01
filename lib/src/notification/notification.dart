@@ -3,8 +3,10 @@ import 'dart:ui';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:logd/logd.dart';
 
 import '../../flutter_notification_queue.dart';
+import '../core/core.dart';
 import '../utils/utils.dart';
 
 part 'draggables/draggable_transitions.dart';
@@ -22,10 +24,9 @@ part 'type_defts.dart';
 @immutable
 class NotificationWidget extends StatefulWidget {
   const NotificationWidget._({
-    required GlobalObjectKey<NotificationWidgetState> key,
+    required final GlobalObjectKey<NotificationWidgetState> key,
     required this.message,
     required this.id,
-    required this.position,
     required this.queue,
     required this.channelName,
     required this.channel,
@@ -55,8 +56,9 @@ class NotificationWidget extends StatefulWidget {
   }) {
     final resolvedId = id ?? DateTime.now().toString();
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
-    final resolveChannel = NotificationManager.instance.getChannel(channelName);
-    final resolvedQueue = NotificationManager.instance
+    final resolveChannel =
+        ConfigurationManager.instance.getChannel(channelName);
+    final resolvedQueue = ConfigurationManager.instance
         .getQueue(position ?? resolveChannel.position);
 
     return NotificationWidget._(
@@ -64,9 +66,8 @@ class NotificationWidget extends StatefulWidget {
       key: resolvedKey,
       message: message,
       channelName: channelName,
-      channel: NotificationManager.instance.getChannel(channelName),
+      channel: resolveChannel,
       queue: resolvedQueue,
-      position: resolvedQueue.position,
       title: title,
       action: action,
       icon: icon,
@@ -94,8 +95,8 @@ class NotificationWidget extends StatefulWidget {
 
   /// Name of the notification channel.
   ///
-  /// Defaults to [NotificationManager]'s default [NotificationChannel] if
-  /// [channelName] is not registered in [NotificationManager].
+  /// Defaults to the system's default [NotificationChannel] if
+  /// [channelName] is not registered.
   ///
   final String channelName;
 
@@ -152,24 +153,26 @@ class NotificationWidget extends StatefulWidget {
   //todo: (bool) permanent field for notification or the channel?
   final Duration? dismissDuration;
 
-  final QueuePosition position;
   final NotificationQueue queue;
-
-  // NotificationWidgetState? state;
 
   final NotificationChannel channel;
 
   /// Custom builder for the notification stack indicator.
   final NotificationBuilder? builder;
 
-  void show(final BuildContext context) =>
-      NotificationManager.instance.show(this, context);
+  void show() => queue.queue(this);
 
-  void dismiss(final BuildContext context) =>
-      NotificationManager.instance.dismiss(this, context);
+  Future<void> dismiss() async {
+    final state = key.currentState;
+    if (state != null) {
+      await state.dismiss();
+    } else {
+      queue.dismiss(this);
+    }
+  }
 
-  void relocateTo(final QueuePosition position, final BuildContext context) =>
-      NotificationManager.instance.relocate(this, position, context);
+  NotificationWidget? relocateTo(final QueuePosition position) =>
+      queue.relocate(this, position);
 
   @override
   State<StatefulWidget> createState() => NotificationWidgetState();
@@ -186,7 +189,6 @@ class NotificationWidget extends StatefulWidget {
       ' backgroundColor: $backgroundColor,'
       ' color: $color,'
       ' dismissDuration: $dismissDuration,'
-      ' position: $position,'
       ' builder: $builder,)';
 
   NotificationWidget copyWith(
@@ -233,10 +235,13 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   late final AnimationController animationController;
 
+  static final _logger = Logger.get('fnq.Notification');
+
   @override
   void initState() {
-    debugPrint('''
-----------Notification${widget.key}: initState called----------''');
+    _logger.debugBuffer
+      ?..writeln('Created State.')
+      ..sink();
     super.initState();
     _showCloseButton.value =
         widget.queue.closeButtonBehavior == QueueCloseButtonBehavior.always;
@@ -252,35 +257,31 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   @override
   void didChangeDependencies() {
-    debugPrint('''
-----------Notification${widget.key}: didChangeDependencies called----------''');
-
     // widget.state = this;
     theme = NotificationTheme.resolveWith(context, widget.queue.style, widget);
-    debugPrint('''
-------------|NotificationState: $this
-
-''');
+    _logger.debugBuffer
+      ?..writeAll([
+        'NotificationState: $this',
+      ])
+      ..sink();
 
     super.didChangeDependencies();
   }
 
   @override
   void didUpdateWidget(final NotificationWidget oldWidget) {
-    debugPrint('''
-----------Notification${widget.key}: didUpdateWidget called----------''');
+    _logger.debugBuffer
+      ?..writeAll(['oldWidget: $oldWidget', 'newWidget: $widget'])
+      ..sink();
     super.didUpdateWidget(oldWidget);
   }
 
   Future<void> dismiss() async {
     await animationController.reverse();
-    NotificationManager.instance.dismiss(
-      widget,
-      context,
-    );
-    debugPrint('''
-----------Notification${widget.key}::::dismiss----------
-------------|Dismissed.''');
+    widget.queue.dismiss(widget);
+    _logger.debugBuffer
+      ?..writeAll(['Dismissed.'])
+      ..sink();
   }
 
   @override
@@ -289,10 +290,9 @@ class NotificationWidgetState extends State<NotificationWidget>
     animationController.dispose();
     ditchDismissTimer();
     isExpanded.dispose();
-    debugPrint('''
-----------Notification${widget.key}:::dispose----------
-------------|Disposed.
-''');
+    _logger.debugBuffer
+      ?..writeln('Disposed')
+      ..sink();
   }
 
   void initDismissTimer() {
@@ -543,49 +543,24 @@ class NotificationWidgetState extends State<NotificationWidget>
         dimension: 24,
         child: ValueListenableBuilder(
           valueListenable: _showCloseButton,
-          builder: (final context, final showCloseButton, final child) {
-            // final shouldShow =
-            //     showCloseButton || widget.queue.dismissThreshold == null;
-            return AnimatedOpacity(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeInOut,
-              opacity: showCloseButton ? 1 : 0,
-              child: showCloseButton
-                  ? IconButton(
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      onPressed: dismiss,
-                      iconSize: 18,
-                      icon: Icon(
-                        Icons.close,
-                        color: theme.foregroundColor,
-                      ),
-                    )
-                  : const SizedBox.shrink(),
-            );
-          },
+          builder: (final context, final showCloseButton, final child) =>
+              AnimatedOpacity(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            opacity: showCloseButton ? 1 : 0,
+            child: showCloseButton
+                ? IconButton(
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    onPressed: dismiss,
+                    iconSize: 18,
+                    icon: Icon(
+                      Icons.close,
+                      color: theme.foregroundColor,
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ),
       );
 }
-
-// class InheritedNotificationWidget extends InheritedWidget {
-//   const InheritedNotificationWidget({
-//     required this.state,
-//     required super.child,
-//     super.key,
-//   });
-//
-//   static InheritedNotificationWidget? of(final BuildContext context) =>
-//       context.dependOnInheritedWidgetOfExactType<InheritedNotificationWidget>();
-//
-//   NotificationWidget get widget => state.widget;
-//   NotificationQueue get queue => state.widget.queue;
-//   NotificationChannel get channel => state.widget.channel;
-//   final NotificationWidgetState state;
-//
-//   @override
-//   bool updateShouldNotify(
-//     covariant final InheritedNotificationWidget oldWidget,
-//   ) =>
-//       oldWidget.state != state;
-// }

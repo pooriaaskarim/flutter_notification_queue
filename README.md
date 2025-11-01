@@ -10,9 +10,9 @@ A powerful, feature-rich overlay-based notification system for Flutter applicati
 FlutterNotificationQueue provides a comprehensive solution for displaying in-app notifications with
 advanced queuing, interactive gestures, multi-language support, and extensive customization options.
 
-## ✨ Key Features
+## Key Features
 
-### 🎯 **Advanced Notification System**
+### **Advanced Notification System**
 
 - **Multiple Notification Types**: Success, Error, Warning, Info with predefined styling
 - **Custom Notifications**: Full control over appearance, behavior, and content
@@ -20,7 +20,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Auto-dismiss with Timer**: Visual progress indicator and configurable duration
 - **Expandable Content**: Tap to expand long messages with auto-pause on expansion
 
-### 🚀 **Intelligent Queue Management**
+### **Intelligent Queue Management**
 
 - **Smart Queuing**: FIFO-based queue system with configurable stack limits
 - **Multiple Queue Positions**: 8 different screen positions (top, center, bottom + left, center,
@@ -29,7 +29,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Channel System**: Organized notification channels with individual configurations
 - **Dynamic Relocation**: Drag notifications between different queue positions
 
-### 🎨 **Rich Interactive Features**
+### **Rich Interactive Features**
 
 - **Drag-to-Dismiss**: Swipe notifications away in any direction
 - **Long-press Actions**: Relocate or dismiss with long-press gestures
@@ -37,7 +37,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Hover Effects**: Close button appears on hover (web/desktop)
 - **Gesture Feedback**: Smooth opacity changes during interactions
 
-### 🌍 **Internationalization & Accessibility**
+### **Internationalization & Accessibility**
 
 - **RTL Language Support**: Automatic text direction detection for Arabic, Persian, Hebrew, and more
 - **Multi-language Examples**: Comprehensive support for 10+ languages
@@ -45,7 +45,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Safe Area Integration**: Automatic handling of notches and status bars
 - **Screen Reader Support**: Proper semantic labels and accessibility features
 
-### 🎨 **Extensive Customization**
+### **Extensive Customization**
 
 - **Queue Styles**: Flat, Filled, and Outlined notification styles
 - **Color Theming**: Custom colors for each notification type and channel
@@ -68,23 +68,71 @@ Then run:
 flutter pub get
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
-### Basic Usage
+### 1. Initialize and Integrate
+
+Initialize the system and integrate the `NotificationOverlay` into your `MaterialApp` using the
+`builder` pattern. This enables contextless notification support throughout your app.
 
 ```dart
-import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+void main() {
+  // 1. Initialize configuration
+  FlutterNotificationQueue.initialize(
+    channels: {
+      const NotificationChannel(
+        name: 'success',
+        position: QueuePosition.topCenter,
+        defaultColor: Colors.green,
+      ),
+      // add another channel
+      // const NotificationChannel(
+      //   name: 'error',
+      //   position: QueuePosition.topCenter,
+      //   defaultColor: Colors.red,
+      // ),
+      // ...
+    },
+    queues: {
+      QueuePosition.topCenter: {
+        'success': const FilledQueueStyle(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          opacity: 0.9,
+          elevation: 8,
+        ),
+      },
+    },
+  );
 
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      // 2. Integrate the overlay builder
+      builder: FlutterNotificationQueue.builder,
+      home: const MyHomePage(),
+    );
+  }
+}
+```
+
+### 2. Display Notifications
+
+Use the `.show()` extension on any `NotificationWidget` to trigger a notification.
+
+```dart
 // Simple success notification
-NotificationWidget
+const NotificationWidget
 (
 message: 'Operation completed successfully!',
 title: 'Success',
 channelName: 'success',
-).show(context);
+).show();
 
 // Error with retry action
-NotificationManager.instance.show(
 NotificationWidget(
 channelName: 'error',
 message: 'Network connection failed. Please try again.',
@@ -92,58 +140,8 @@ title: 'Connection Error',
 action: NotificationAction.button(
 label: 'Retry',
 onPressed: () => retryOperation(),
-)
-,
-)
-,
-context
-,
-);
-```
-
-### Initialize with Custom Configuration
-
-```dart
-void main() {
-  NotificationManager.initialize(
-    channels: {
-      const NotificationChannel(
-        name: 'success',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: Duration(seconds: 3),
-        defaultColor: Colors.green,
-        defaultIcon: Icon(Icons.check_circle),
-      ),
-      const NotificationChannel(
-        name: 'error',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: null,
-        // Permanent
-        defaultColor: Colors.red,
-        defaultIcon: Icon(Icons.error),
-      ),
-      // Add more channels...
-    },
-    queues: {
-      TopCenterQueue(
-        maxStackSize: 3,
-        style: const FilledQueueStyle(),
-        dragBehavior: const Dismiss(),
-        longPressDragBehavior: Relocate.to({
-          QueuePosition.centerLeft,
-          QueuePosition.centerRight,
-        }),
-      ),
-      BottomCenterQueue(
-        maxStackSize: 1,
-        style: const FlatQueueStyle(),
-        closeButtonBehavior: QueueCloseButtonBehavior.always,
-      ),
-    },
-  );
-
-  runApp(MyApp());
-}
+),
+).show();
 ```
 
 ## 🎨 Advanced Configuration
@@ -183,7 +181,8 @@ elevation
 // Dismiss on drag
 const Dismiss
 (
-thresholdInPixels: 50)
+thresholdInPixels: 50
+)
 
 // Relocate to specific positions
 Relocate.to({
@@ -221,7 +220,7 @@ action: NotificationAction.button(
 label: 'إعادة التشغيل',
 onPressed: () => restartApp(),
 ),
-).show(context);
+).show();
 
 // Persian notification
 NotificationWidget(
@@ -231,13 +230,11 @@ action: NotificationAction.button(
 label: 'تأیید',
 onPressed: () => confirmAction(),
 ),
-).show
-(
-context
+).show(
 );
 ```
 
-## 📱 Platform-Specific Features
+## Platform-Specific Features
 
 ### Mobile (iOS/Android)
 
@@ -260,7 +257,7 @@ context
 - Window-aware positioning
 - High DPI support
 
-## 🎯 Use Cases
+## Use Cases
 
 ### Success Messages
 
@@ -271,8 +268,7 @@ message: 'File saved successfully!',
 title: 'Success',
 channelName: 'success',
 dismissDuration: Duration(seconds: 3),
-).show(context
-);
+).show();
 ```
 
 ### Error Handling
@@ -291,7 +287,6 @@ onPressed: () => retryConnection(),
 .
 show
 (
-context
 );
 ```
 
@@ -306,7 +301,7 @@ channelName: 'warning',
 action: NotificationAction.onTap(
 onPressed: () => openStorageSettings(),
 ),
-).show(context);
+).show();
 ```
 
 ### Info Messages
@@ -325,7 +320,6 @@ onPressed: () => showUpdateDetails(),
 .
 show
 (
-context
 );
 ```
 
@@ -343,19 +337,21 @@ onPressed: () => dismissNotification(),
 ),
 ).show
 (
-context
 );
 ```
 
-## 🔧 API Reference
+## API Reference
 
-### Core Classes
+### Core Components
 
-- **`NotificationWidget`**: Main notification widget with full customization
-- **`NotificationManager`**: Singleton for managing notifications and queues
-- **`NotificationChannel`**: Configuration for notification types and behavior
-- **`NotificationQueue`**: Queue management with position-specific settings
-- **`NotificationAction`**: Action system for user interactions
+- **`FlutterNotificationQueue`**: The primary entry point.
+    - `initialize()`: Configures global queues and channels.
+    - `builder`: Integration hook for `MaterialApp.builder`.
+- **`NotificationWidget`**: The main configuration for individual notifications.
+- **`NotificationChannel`**: Defines shared behavior and styling for groups of notifications.
+- **`NotificationQueue`**: Manages the lifecycle and rendering constraints of a specific screen
+  position.
+- **`NotificationAction`**: Definable user interactions (buttons, taps, gestures).
 
 ### Queue Positions
 
@@ -382,22 +378,15 @@ NotificationAction.button
 (
 label: 'Action Label',
 onPressed: () => handleAction(),
-)
+);
 
 // Tap action
 NotificationAction.onTap(
-onPressed:
-(
-)
-=>
-handleTap
-(
-)
-,
-)
+onPressed: () => handleTap(),
+);
 ```
 
-## 🎨 Customization Examples
+## Customization Examples
 
 ### Custom Notification Builder
 
@@ -433,7 +422,7 @@ style: TextStyle(color: Colors.white),
 ),
 ),
 ),
-).show(context);
+).show();
 ```
 
 ### Custom Queue Indicator
@@ -442,14 +431,16 @@ style: TextStyle(color: Colors.white),
 TopCenterQueue
 (
 queueIndicatorBuilder: (context, count, config) => Container(
-padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
 decoration: BoxDecoration(
 color: Colors.red,
 borderRadius: BorderRadius.circular(12),
 ),
 child: Text(
 '+$count',
-style: TextStyle(color: Colors.white, fontSize: 12)
+style: const TextStyle(color: Colors.white, fontSize:
+12
+)
 ,
 )
 ,
@@ -458,7 +449,7 @@ style: TextStyle(color: Colors.white, fontSize: 12)
 )
 ```
 
-## 📊 Performance Features
+## Performance Features
 
 - **Efficient Rendering**: Single overlay for all notifications
 - **Memory Management**: Automatic cleanup and disposal
@@ -466,35 +457,58 @@ style: TextStyle(color: Colors.white, fontSize: 12)
 - **Gesture Optimization**: Smooth 60fps interactions
 - **Queue Efficiency**: O(1) queue operations
 
-## 🧪 Testing
+## 📈 Migration Guide
 
-The package includes comprehensive examples and test cases:
+### From 0.3.x to 0.4.0
+
+Version 0.4.0 introduces a unified core engine, replacing the legacy context based
+`NotificationManager` singleton with a more robust contextless widget-tree integration.
+
+**Key Changes:**
+
+- `NotificationManager` has been removed.
+- Initialization is now explicitly required via `FlutterNotificationQueue.initialize()`.
+- Integration is now handled via the `builder` pattern in `MaterialApp`.
+
+**Old Pattern (Singleton-based):**
 
 ```dart
-// Test notification display
-testWidgets
-('should display notification
-'
-, (tester) async {
-await tester.pumpWidget(MyApp());
-
-// Trigger notification
-NotificationWidget(message: 'Test').show(context);
-await tester.pump();
-
-// Verify notification appears
-expect(find.text('Test'), findsOneWidget);
-});
+// Initialization was often implicit or internal
+NotificationManager.instance.show
+(...);
 ```
 
-## 📈 Migration Guide
+**New Pattern (Core Engine):**
+
+```dart
+void main() {
+  // 1. Initialize configuration
+  FlutterNotificationQueue.initialize(
+    channels: {...},
+    queues: {...},
+  );
+
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      // 2. Wrap your app using the builder
+      builder: FlutterNotificationQueue.builder,
+      home: const Screen(),
+    );
+  }
+}
+```
 
 ### From 0.1.x to 0.2.0
 
 The API has been significantly enhanced while maintaining backward compatibility:
 
 ```dart
-// Old way (still works)
+// Old way (deprecated)
 context.showSuccess
 ('Message
 '
@@ -503,11 +517,17 @@ context.showSuccess
 // New way (recommended)
 NotificationWidget(
 message: 'Message',
-channelName: 'success',
-).show(context);
+channelName: 'success
+'
+,
+)
+.
+show
+(
+);
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open
 an issue first to discuss what you would like to change.
@@ -523,21 +543,3 @@ an issue first to discuss what you would like to change.
 This project is licensed under the BSD 3-Clause License - see the [LICENSE](LICENSE) file for
 details.
 
-## 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Material Design team for the design system
-- Contributors and users who provide feedback
-
-## 📞 Support
-
-- 📧 **Issues**: [GitHub Issues](https://github.com/pooriaaskarim/flutter_notification_queue/issues)
-- 💬 **Discussions
-  **: [GitHub Discussions](https://github.com/pooriaaskarim/flutter_notification_queue/discussions)
-- 📖 **Documentation
-  **: [API Reference](https://pub.dev/documentation/flutter_notification_queue/latest/)
-
----
-
-Made with ❤️ by [Pooria Askari Moqaddam](https://github.com/pooriaaskarim). If you find this package
-helpful, please consider giving it a ⭐ on GitHub!

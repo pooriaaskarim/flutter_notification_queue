@@ -1,18 +1,18 @@
 part of 'notification.dart';
 
-/// Creates an action for [StandardNotificationWidget].
+/// Creates an action for [NotificationWidget].
 ///
-/// [StandardNotificationWidget] **will be dismissed**
+/// [NotificationWidget] **will be dismissed**
 /// after [onPressed] callback is executed.
 /// ```
-/// QuetificationAction.button(
+/// NotificationAction.button(
 ///       label: 'Text',
 ///       onPressed: () {},
 ///       )
 /// ```
 /// creates a **button** in the *content of the notification* and
 /// ```
-/// QuetificationAction.onTap(
+/// NotificationAction.onTap(
 ///       onPressed: () {},
 ///       )
 /// ```
@@ -35,7 +35,7 @@ class NotificationAction {
         type: NotificationActionType.button,
       );
 
-  /// Creates callback on [StandardNotificationWidget] tap
+  /// Creates callback on [NotificationWidget] tap
   factory NotificationAction.onTap({
     required final void Function() onPressed,
   }) =>
@@ -55,9 +55,9 @@ class NotificationAction {
   final NotificationActionType type;
 }
 
-/// Type of action for [StandardNotificationWidget].
+/// Type of action for [NotificationWidget].
 ///
-/// [button] creates a **button** bellow the [StandardNotificationWidget.message].
+/// [button] creates a **button** bellow the [NotificationWidget.message].
 /// [onTap] executes [NotificationAction.onPressed] callback
 /// *on notification tap*.
 enum NotificationActionType {

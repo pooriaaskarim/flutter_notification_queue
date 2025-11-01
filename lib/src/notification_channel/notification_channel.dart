@@ -37,9 +37,10 @@ class NotificationChannel {
   ///
   /// This binds the Channel [NotificationWidget]s to a [NotificationQueue]
   /// based on the [position].
-  /// [NotificationWidget.position] will override [NotificationChannel.position]
+  /// [NotificationQueue.position] position will override
+  /// [NotificationChannel.position]
   /// if available.
-  /// If null, binds to [NotificationManager]'s default [NotificationQueue].
+  /// If null, binds to the system's default [NotificationQueue].
   final QueuePosition? position;
 
   /// Default duration of channel [NotificationWidget]s.
@@ -78,4 +79,8 @@ class NotificationChannel {
 
   /// Default channel Icon
   final Widget? defaultIcon;
+
+  @override
+  String toString() => 'NotificationChannel{name: $name'
+      '${description != null ? ', description: $description,\n' : ''}}';
 }

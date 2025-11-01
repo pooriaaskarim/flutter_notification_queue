@@ -74,162 +74,134 @@ class DemoScreen extends StatelessWidget {
           title: 'Success Message',
           icon: Icons.check_circle,
           color: Colors.green,
-          onPressed: (final context) {
-            NotificationWidget(
-              message: 'Operation completed successfully!',
-              title: 'Success',
-              channelName: 'success',
-            ).show(context);
-          },
+          onPressed: (final context) => NotificationWidget(
+            message: 'Operation completed successfully!',
+            title: 'Success',
+            channelName: 'success',
+          ).show(),
         ),
         NotificationExample(
           title: 'Error with Retry',
           icon: Icons.error,
           color: Colors.red,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              channelName: 'error',
-              message: 'Network connection failed. Please try again.',
-              title: 'Connection Error',
-              action: NotificationAction.button(
-                label: 'Retry',
-                onPressed: () => debugPrint('Retrying connection...'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            channelName: 'error',
+            message: 'Network connection failed. Please try again.',
+            title: 'Connection Error',
+            action: NotificationAction.button(
+              label: 'Retry',
+              onPressed: () => debugPrint('Retrying connection...'),
             ),
-            context,
-          ),
+          ).show(),
         ),
         NotificationExample(
           title: 'Warning with Tap',
           icon: Icons.warning,
           color: Colors.orange,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              channelName: 'warning',
-              message: 'Low storage space detected. Tap to manage.',
-              title: 'Storage Warning',
-              action: NotificationAction.onTap(
-                onPressed: () => debugPrint('Opening storage settings...'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            channelName: 'warning',
+            message: 'Low storage space detected. Tap to manage.',
+            title: 'Storage Warning',
+            action: NotificationAction.onTap(
+              onPressed: () => debugPrint('Opening storage settings...'),
             ),
-            context,
-          ),
+          ).show(),
         ),
         NotificationExample(
           title: 'Info Message',
           icon: Icons.info,
           color: Colors.blue,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              channelName: 'info',
-              title: 'New Feature Available',
-              message: 'Check out our new dark mode feature!'
-                  ' This notification stays until you interact with it.',
-              action: NotificationAction.button(
-                label: 'Explore',
-                onPressed: () => debugPrint('Opening new features...'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            channelName: 'info',
+            title: 'New Feature Available',
+            message: 'Check out our new dark mode feature!'
+                ' This notification stays until you interact with it.',
+            action: NotificationAction.button(
+              label: 'Explore',
+              onPressed: () => debugPrint('Opening new features...'),
             ),
-            context,
-          ),
+          ).show(),
         ),
         NotificationExample(
           title: 'Scaffold Notification',
           icon: Icons.android,
           color: Colors.black,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              id: '1',
-              channelName: 'scaffold',
-              title: 'Scaffold Notification',
-              icon: const Icon(Icons.lightbulb),
-              message: 'Scaffold Message!',
-            ),
-            context,
-          ),
+          onPressed: (final context) => NotificationWidget(
+            id: '1',
+            channelName: 'scaffold',
+            title: 'Scaffold Notification',
+            icon: const Icon(Icons.lightbulb),
+            message: 'Scaffold Message!',
+          ).show(),
         ),
         NotificationExample(
           title: 'Scaffold Notification\nUpdated Message',
           icon: Icons.android,
           color: Colors.black,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              id: '1',
-              channelName: 'scaffold',
-              icon: const Icon(Icons.tips_and_updates),
-              title: 'Updated on Scaffold Notification',
-              message: 'Updated Scaffold Message! Same ID caused update '
-                  'to this notification.',
-            ),
-            context,
-          ),
+          onPressed: (final context) => NotificationWidget(
+            id: '1',
+            channelName: 'scaffold',
+            icon: const Icon(Icons.tips_and_updates),
+            title: 'Updated on Scaffold Notification',
+            message: 'Updated Scaffold Message! Same ID caused update '
+                'to this notification.',
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Scaffold Success Message',
           icon: Icons.android,
           color: Colors.green,
-          onPressed: (final context) {
-            NotificationWidget(
-              channelName: 'scaffold.success',
-              message: 'Operation completed successfully!',
-              title: 'Success',
-            ).show(context);
-          },
+          onPressed: (final context) => NotificationWidget(
+            channelName: 'scaffold.success',
+            message: 'Operation completed successfully!',
+            title: 'Success',
+          ).show(),
         ),
         NotificationExample(
           title: 'Scaffold Error with Retry',
           icon: Icons.android,
           color: Colors.red,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              channelName: 'scaffold.error',
-              message: 'Network connection failed. Please try again.',
-              title: 'Connection Error',
-              dismissDuration: null,
-              action: NotificationAction.button(
-                label: 'Retry',
-                onPressed: () => debugPrint('Retrying connection...'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            channelName: 'scaffold.error',
+            message: 'Network connection failed. Please try again.',
+            title: 'Connection Error',
+            dismissDuration: null,
+            action: NotificationAction.button(
+              label: 'Retry',
+              onPressed: () => debugPrint('Retrying connection...'),
             ),
-            context,
-          ),
+          ).show(),
         ),
         NotificationExample(
           title: 'Scaffold Warning with Tap',
           icon: Icons.android,
           color: Colors.orange,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              channelName: 'scaffold.warning',
-              message: 'Low storage space detected. Tap to manage.',
-              title: 'Storage Warning',
-              action: NotificationAction.onTap(
-                onPressed: () => debugPrint('Opening storage settings...'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            channelName: 'scaffold.warning',
+            message: 'Low storage space detected. Tap to manage.',
+            title: 'Storage Warning',
+            action: NotificationAction.onTap(
+              onPressed: () => debugPrint('Opening storage settings...'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Scaffold Info',
           icon: Icons.android,
           color: Colors.blue,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              channelName: 'scaffold.info',
-              title: 'New Feature Available',
-              message: 'Check out our new dark mode feature!'
-                  ' This notification stays until you interact with it.',
-              position: QueuePosition.bottomCenter,
-              action: NotificationAction.button(
-                label: 'Explore',
-                onPressed: () => debugPrint('Opening new features...'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            channelName: 'scaffold.info',
+            title: 'New Feature Available',
+            message: 'Check out our new dark mode feature!'
+                ' This notification stays until you interact with it.',
+            position: QueuePosition.bottomCenter,
+            action: NotificationAction.button(
+              label: 'Explore',
+              onPressed: () => debugPrint('Opening new features...'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         // RTL Languages
@@ -237,52 +209,43 @@ class DemoScreen extends StatelessWidget {
           title: 'اطلاعیه فارسی',
           icon: Icons.language,
           color: Colors.purple,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: 'اطلاعیه',
-              message: 'عملیات با موفقیت انجام شد! سیستم آماده استفاده است.',
-              action: NotificationAction.button(
-                label: 'تأیید',
-                onPressed: () => debugPrint('Persian action pressed'),
-              ),
-              icon: const Icon(Icons.notifications),
+          onPressed: (final context) => NotificationWidget(
+            title: 'اطلاعیه',
+            message: 'عملیات با موفقیت انجام شد! سیستم آماده استفاده است.',
+            action: NotificationAction.button(
+              label: 'تأیید',
+              onPressed: () => debugPrint('Persian action pressed'),
             ),
-            context,
-          ),
+            icon: const Icon(Icons.notifications),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'إشعار عربي',
           icon: Icons.language,
           color: Colors.teal,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: 'إشعار هام',
-              message: 'تم تحديث التطبيق بنجاح. يرجى إعادة تشغيل التطبيق'
-                  ' للحصول على أفضل تجربة.',
-              action: NotificationAction.button(
-                label: 'إعادة التشغيل',
-                onPressed: () => debugPrint('Arabic restart action'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: 'إشعار هام',
+            message: 'تم تحديث التطبيق بنجاح. يرجى إعادة تشغيل التطبيق'
+                ' للحصول على أفضل تجربة.',
+            action: NotificationAction.button(
+              label: 'إعادة التشغيل',
+              onPressed: () => debugPrint('Arabic restart action'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'התראה בעברית',
           icon: Icons.language,
           color: Colors.indigo,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: 'אזהרת מערכת',
-              message: 'שטח האחסון עומד להתמלא. אנא פנה מקום נוסף.',
-              action: NotificationAction.onTap(
-                onPressed: () => debugPrint('Hebrew storage action'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: 'אזהרת מערכת',
+            message: 'שטח האחסון עומד להתמלא. אנא פנה מקום נוסף.',
+            action: NotificationAction.onTap(
+              onPressed: () => debugPrint('Hebrew storage action'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         // Other Languages
@@ -290,71 +253,59 @@ class DemoScreen extends StatelessWidget {
           title: 'Notificación Española',
           icon: Icons.language,
           color: Colors.deepOrange,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '¡Éxito!',
-              message: '¡La operación se completó exitosamente!'
-                  ' Tu archivo ha sido guardado.',
-              action: NotificationAction.button(
-                label: 'Aceptar',
-                onPressed: () => debugPrint('Spanish accept action'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '¡Éxito!',
+            message: '¡La operación se completó exitosamente!'
+                ' Tu archivo ha sido guardado.',
+            action: NotificationAction.button(
+              label: 'Aceptar',
+              onPressed: () => debugPrint('Spanish accept action'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: '日本語通知',
           icon: Icons.language,
           color: Colors.pink,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '新しいメッセージ',
-              message: 'アップデートが利用可能です。最新の機能を体験するために今すぐアップデートしてください。',
-              action: NotificationAction.button(
-                label: '更新する',
-                onPressed: () => debugPrint('Japanese update action'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '新しいメッセージ',
+            message: 'アップデートが利用可能です。最新の機能を体験するために今すぐアップデートしてください。',
+            action: NotificationAction.button(
+              label: '更新する',
+              onPressed: () => debugPrint('Japanese update action'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Notification Française',
           icon: Icons.language,
           color: Colors.blue[800]!,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: 'Attention',
-              message: 'Votre session expirera dans 5 minutes.'
-                  ' Veuillez sauvegarder votre travail.',
-              action: NotificationAction.button(
-                label: 'Prolonger',
-                onPressed: () => debugPrint('French extend session'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: 'Attention',
+            message: 'Votre session expirera dans 5 minutes.'
+                ' Veuillez sauvegarder votre travail.',
+            action: NotificationAction.button(
+              label: 'Prolonger',
+              onPressed: () => debugPrint('French extend session'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Deutsche Benachrichtigung',
           icon: Icons.language,
           color: Colors.brown,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: 'Fehler',
-              message:
-                  'Die Verbindung zum Server konnte nicht hergestellt werden.',
-              action: NotificationAction.button(
-                label: 'Wiederholen',
-                onPressed: () => debugPrint('German retry action'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: 'Fehler',
+            message:
+                'Die Verbindung zum Server konnte nicht hergestellt werden.',
+            action: NotificationAction.button(
+              label: 'Wiederholen',
+              onPressed: () => debugPrint('German retry action'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         // Long Text Examples
@@ -362,48 +313,41 @@ class DemoScreen extends StatelessWidget {
           title: 'Long Text Example',
           icon: Icons.article,
           color: Colors.cyan,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: 'Terms of Service Update',
-              message:
-                  'We have updated our Terms of Service and Privacy Policy. '
-                  'The changes include new data processing guidelines,'
-                  ' enhanced security measures, improved user rights,'
-                  ' and updated third-party integrations. Please review'
-                  ' the changes carefully as they will take'
-                  ' effect in 30 days. Your continued use of our'
-                  ' service constitutes acceptance of these terms.',
-              dismissDuration: const Duration(seconds: 8),
-              action: NotificationAction.button(
-                label: 'Review Terms',
-                onPressed: () => debugPrint('Opening terms review'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: 'Terms of Service Update',
+            message: 'We have updated our Terms of Service and Privacy Policy. '
+                'The changes include new data processing guidelines,'
+                ' enhanced security measures, improved user rights,'
+                ' and updated third-party integrations. Please review'
+                ' the changes carefully as they will take'
+                ' effect in 30 days. Your continued use of our'
+                ' service constitutes acceptance of these terms.',
+            dismissDuration: const Duration(seconds: 8),
+            action: NotificationAction.button(
+              label: 'Review Terms',
+              onPressed: () => debugPrint('Opening terms review'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'متن طولانی فارسی',
           icon: Icons.article,
           color: Colors.deepPurple,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: 'اطلاعیه مهم سیستم',
-              message: 'سیستم در حال انجام بروزرسانی اساسی است. '
-                  'این فرآیند ممکن است چند دقیقه طول بکشد و در طول این مدت '
-                  'برخی از قابلیت‌ها موقتاً در دسترس نخواهند بود. '
-                  'لطفاً کارهای خود را ذخیره کرده و تا اتمام فرآیند صبر کنید. '
-                  'پس از اتمام بروزرسانی، سیستم با عملکرد بهتر و امکانات جدید '
-                  'در اختیار شما خواهد بود.',
-              dismissDuration: const Duration(seconds: 10),
-              action: NotificationAction.button(
-                label: 'متوجه شدم',
-                onPressed: () => debugPrint('Persian acknowledgment'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: 'اطلاعیه مهم سیستم',
+            message: 'سیستم در حال انجام بروزرسانی اساسی است. '
+                'این فرآیند ممکن است چند دقیقه طول بکشد و در طول این مدت '
+                'برخی از قابلیت‌ها موقتاً در دسترس نخواهند بود. '
+                'لطفاً کارهای خود را ذخیره کرده و تا اتمام فرآیند صبر کنید. '
+                'پس از اتمام بروزرسانی، سیستم با عملکرد بهتر و امکانات جدید '
+                'در اختیار شما خواهد بود.',
+            dismissDuration: const Duration(seconds: 10),
+            action: NotificationAction.button(
+              label: 'متوجه شدم',
+              onPressed: () => debugPrint('Persian acknowledgment'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         // Creative Custom Examples
@@ -411,155 +355,131 @@ class DemoScreen extends StatelessWidget {
           title: 'Custom Purple Style',
           icon: Icons.palette,
           color: Colors.purple,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🎨 Creative Notification',
-              message:
-                  'This is a custom styled notification with beautiful colors!',
-              backgroundColor: Colors.purple[700],
-              color: Colors.white,
-              icon: const Icon(Icons.palette),
-              dismissDuration: const Duration(seconds: 5),
-            ),
-            context,
-          ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🎨 Creative Notification',
+            message:
+                'This is a custom styled notification with beautiful colors!',
+            backgroundColor: Colors.purple[700],
+            color: Colors.white,
+            icon: const Icon(Icons.palette),
+            dismissDuration: const Duration(seconds: 5),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Gaming Achievement',
           icon: Icons.emoji_events,
           color: Colors.amber,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🏆 Achievement Unlocked!',
-              message:
-                  'Congratulations! You have completed 100 notifications demo!',
-              backgroundColor: Colors.amber[700],
-              color: Colors.black,
-              icon: const Icon(Icons.emoji_events),
-              action: NotificationAction.button(
-                label: 'Collect Reward',
-                onPressed: () => debugPrint('Collecting achievement reward'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🏆 Achievement Unlocked!',
+            message:
+                'Congratulations! You have completed 100 notifications demo!',
+            backgroundColor: Colors.amber[700],
+            color: Colors.black,
+            icon: const Icon(Icons.emoji_events),
+            action: NotificationAction.button(
+              label: 'Collect Reward',
+              onPressed: () => debugPrint('Collecting achievement reward'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Social Notification',
           icon: Icons.favorite,
           color: Colors.pink,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '💖 Sarah liked your photo',
-              message: 'Your sunset photo from yesterday received a new like!',
-              backgroundColor: Colors.pink[50],
-              color: Colors.pink[800],
-              action: NotificationAction.onTap(
-                onPressed: () => debugPrint('Opening photo'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '💖 Sarah liked your photo',
+            message: 'Your sunset photo from yesterday received a new like!',
+            backgroundColor: Colors.pink[50],
+            color: Colors.pink[800],
+            action: NotificationAction.onTap(
+              onPressed: () => debugPrint('Opening photo'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Dark Theme Toggle',
           icon: Icons.dark_mode,
           color: Colors.grey[800]!,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🌙 Dark Mode Activated',
-              message: 'Your eyes will thank you! Dark mode is now enabled.',
-              backgroundColor: Colors.grey[900],
-              color: Colors.white,
-              icon: const Icon(Icons.dark_mode),
-            ),
-            context,
-          ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🌙 Dark Mode Activated',
+            message: 'Your eyes will thank you! Dark mode is now enabled.',
+            backgroundColor: Colors.grey[900],
+            color: Colors.white,
+            icon: const Icon(Icons.dark_mode),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Music Player',
           icon: Icons.music_note,
           color: Colors.green,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🎵 Now Playing',
-              message: '"Bohemian Rhapsody" by Queen'
-                  ' is now playing in the background.',
-              backgroundColor: Colors.green[600],
-              color: Colors.white,
-              icon: const Icon(Icons.music_note),
-              dismissDuration: const Duration(seconds: 4),
-              action: NotificationAction.button(
-                label: 'Open Player',
-                onPressed: () => debugPrint('Opening music player'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🎵 Now Playing',
+            message: '"Bohemian Rhapsody" by Queen'
+                ' is now playing in the background.',
+            backgroundColor: Colors.green[600],
+            color: Colors.white,
+            icon: const Icon(Icons.music_note),
+            dismissDuration: const Duration(seconds: 4),
+            action: NotificationAction.button(
+              label: 'Open Player',
+              onPressed: () => debugPrint('Opening music player'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Flash Sale Alert',
           icon: Icons.local_fire_department,
           color: Colors.red,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🔥 Flash Sale Alert!',
-              message: '50% OFF on all electronics!'
-                  ' Limited time offer ending in 2 hours.',
-              backgroundColor: Colors.red[600],
-              color: Colors.white,
-              icon: const Icon(Icons.local_fire_department),
-              dismissDuration: const Duration(seconds: 6),
-              action: NotificationAction.button(
-                label: 'Shop Now',
-                onPressed: () => debugPrint('Opening shop'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🔥 Flash Sale Alert!',
+            message: '50% OFF on all electronics!'
+                ' Limited time offer ending in 2 hours.',
+            backgroundColor: Colors.red[600],
+            color: Colors.white,
+            icon: const Icon(Icons.local_fire_department),
+            dismissDuration: const Duration(seconds: 6),
+            action: NotificationAction.button(
+              label: 'Shop Now',
+              onPressed: () => debugPrint('Opening shop'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Weather Update',
           icon: Icons.wb_sunny,
           color: Colors.orange,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🌤️ Weather Update',
-              message: 'Sunny weather expected today with a high of 75°F.'
-                  ' Perfect for outdoor activities!',
-              backgroundColor: Colors.orange[400],
-              color: Colors.white,
-              dismissDuration: const Duration(seconds: 4),
-            ),
-            context,
-          ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🌤️ Weather Update',
+            message: 'Sunny weather expected today with a high of 75°F.'
+                ' Perfect for outdoor activities!',
+            backgroundColor: Colors.orange[400],
+            color: Colors.white,
+            dismissDuration: const Duration(seconds: 4),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'Celebration',
           icon: Icons.celebration,
           color: Colors.yellow[700]!,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🎉🎊 Celebration Time! 🎊🎉',
-              message: '🚀 Your app has reached 1000 downloads!'
-                  ' 🎯✨ Amazing work! 👏💪 Keep it up! 🔥⭐',
-              backgroundColor: Colors.yellow[600],
-              color: Colors.black,
-              icon: const Icon(Icons.celebration),
-              action: NotificationAction.button(
-                label: '🎉 Celebrate',
-                onPressed: () => debugPrint('Celebration time!'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🎉🎊 Celebration Time! 🎊🎉',
+            message: '🚀 Your app has reached 1000 downloads!'
+                ' 🎯✨ Amazing work! 👏💪 Keep it up! 🔥⭐',
+            backgroundColor: Colors.yellow[600],
+            color: Colors.black,
+            icon: const Icon(Icons.celebration),
+            action: NotificationAction.button(
+              label: '🎉 Celebrate',
+              onPressed: () => debugPrint('Celebration time!'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         // System-like notifications
@@ -567,36 +487,29 @@ class DemoScreen extends StatelessWidget {
           title: 'Battery Warning',
           icon: Icons.battery_alert,
           color: Colors.red[700]!,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '🔋 Battery Low',
-              message:
-                  'Device battery is at 15%. Consider connecting to power.',
-              action: NotificationAction.button(
-                label: 'Power Settings',
-                onPressed: () => debugPrint('Opening power settings'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '🔋 Battery Low',
+            message: 'Device battery is at 15%. Consider connecting to power.',
+            action: NotificationAction.button(
+              label: 'Power Settings',
+              onPressed: () => debugPrint('Opening power settings'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         NotificationExample(
           title: 'App Update',
           icon: Icons.system_update,
           color: Colors.blue[600]!,
-          onPressed: (final context) => NotificationManager.instance.show(
-            NotificationWidget(
-              title: '📱 App Update Available',
-              message:
-                  'Version 2.1.0 is available with bug fixes and new features.',
-              action: NotificationAction.button(
-                label: 'Update Now',
-                onPressed: () => debugPrint('Starting app update'),
-              ),
+          onPressed: (final context) => NotificationWidget(
+            title: '📱 App Update Available',
+            message:
+                'Version 2.1.0 is available with bug fixes and new features.',
+            action: NotificationAction.button(
+              label: 'Update Now',
+              onPressed: () => debugPrint('Starting app update'),
             ),
-            context,
-          ),
+          ).show(),
         ),
 
         // Queue stress test
@@ -606,15 +519,12 @@ class DemoScreen extends StatelessWidget {
           color: Colors.deepPurple,
           onPressed: (final context) {
             for (int i = 0; i < 5; i++) {
-              NotificationManager.instance.show(
-                NotificationWidget(
-                  title: 'Queue Test #${i + 1}',
-                  message:
-                      'This is notification ${i + 1} of 5 in the queue test.',
-                  dismissDuration: Duration(seconds: 3 + i),
-                ),
-                context,
-              );
+              NotificationWidget(
+                title: 'Queue Test #${i + 1}',
+                message:
+                    'This is notification ${i + 1} of 5 in the queue test.',
+                dismissDuration: Duration(seconds: 3 + i),
+              ).show();
             }
           },
         ),
