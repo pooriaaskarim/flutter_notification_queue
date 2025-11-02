@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../flutter_notification_queue.dart';
 import '../notification_wrapper/notification_manager/notification_manager.dart';
 import '../notification_wrapper/overlay_manager/overlay_manager.dart';
+import '../utils/logger.dart';
 
 part 'extensions.dart';
 
@@ -106,10 +107,23 @@ sealed class NotificationQueue {
 
   QueueWidget? _queueWidget;
 
-  QueueWidget get widget => _queueWidget ??= QueueWidget._(
-        parentQueue: this,
-        key: GlobalKey<QueueWidgetState>(),
-      );
+  QueueWidget get widget {
+    if (_queueWidget != null) {
+      return _queueWidget!;
+    } else {}
+    _queueWidget = QueueWidget._(
+      parentQueue: this,
+      key: GlobalKey<QueueWidgetState>(),
+    );
+    OverlayManager.instance.show(
+      toString(),
+      OverlayEntryData(
+        builder: (final context) => _queueWidget!,
+        position: AlignedPosition(widget.parentQueue.position.alignment),
+      ),
+    );
+    return _queueWidget!;
+  }
 
   // QueueManager? _queueManager;
   //

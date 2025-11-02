@@ -36,28 +36,27 @@ class _RelocationTargets extends StatelessWidget {
               hitTestBehavior: HitTestBehavior.opaque,
               onWillAcceptWithDetails: (final details) => true,
               onMove: (final details) {
-                debugPrint('''
-------------------RelocationTargets:::onMove---------------------------
---------------------|PassedThreshold(Parent): $passedThreshold
---------------------|CandidatePosition: $candidatePosition
-''');
+                final b = LogBuffer.d
+                  ?..writeAll([
+                    'PassedThreshold: $passedThreshold',
+                    '----> on: $candidatePosition',
+                  ])
+                  ..flush();
               },
               onAcceptWithDetails: (final details) {
-                debugPrint('''
-------------------RelocationTargets:::onAccept---------------------------
---------------------|CandidatePosition: $candidatePosition
---------------------|PassedThreshold(Parent): $passedThreshold''');
+                final b = LogBuffer.d
+                  ?..writeAll([
+                    'CandidatePosition: $candidatePosition',
+                    'PassedThreshold(Parent): $passedThreshold',
+                  ]);
+
                 if (candidatePosition != null) {
-                  debugPrint('''
---------------------|----> Relocating to $candidatePosition...
-''');
+                  b?.writeAll(['----> Relocating to $candidatePosition... .']);
                   onAccept(candidatePosition!);
                 } else {
-                  debugPrint('''
---------------------|No Candidates.
---------------------|----> Skipped Relocation.
-''');
+                  b?.writeAll(['No Candidates.', '----> Skipped Relocation.']);
                 }
+                b?.flush();
               },
               builder: (
                 final context,

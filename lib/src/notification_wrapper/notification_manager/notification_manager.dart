@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 
 import '../../../flutter_notification_queue.dart';
+import '../../utils/logger.dart';
 
 class NotificationManager {
   NotificationManager._()
@@ -21,16 +22,14 @@ class NotificationManager {
     final Set<NotificationChannel>? channels,
   }) {
     // assert(NotificationManager._initialized != true, 'Already initialized.');
-    debugPrint('''
---NotificationManager:::configure--''');
+    final b = LogBuffer.d;
     if (!initialized) {
-      debugPrint('''
-----|Initializing...''');
-      NotificationManager.initialized = true;
+      b?.writeAll(['Initializing... .']);
+      initialized = true;
     }
     if (queues != null && queues.isNotEmpty) {
-      debugPrint('''
-----|Configuring queues: $queues''');
+      b?.writeAll(['Configuring queues: $queues']);
+
       for (final queue in queues) {
         final otherQueues = {...queues}..remove(queue);
         for (final target in queue.groupPositions) {
@@ -58,15 +57,14 @@ class NotificationManager {
           style: const FilledQueueStyle(),
         ),
       );
-      debugPrint('''
-----|No queues provided, adding default queue.
-----|Default queue added.
-----|Queues: $_queues''');
+      b?.writeAll([
+        'No queues provided, adding default queue.',
+        'Queues: $_queues',
+      ]);
     }
     if (channels != null && channels.isNotEmpty) {
-      debugPrint('''
-----|Configuring channels: $channels
-''');
+      b?.writeAll(['Configuring channels: $channels']);
+
       _channels.addAll(channels);
     } else {
       _channels.add(
@@ -76,12 +74,13 @@ class NotificationManager {
           description: 'Default notification channel.',
         ),
       );
-      debugPrint('''
-----|No channels provided, adding default channel.
-----|Default channel added.
-----|Channels: $_channels
-''');
+      b?.writeAll([
+        'No channels provided, adding default channel.',
+        'Default channel added.',
+        'Channels: $_channels',
+      ]);
     }
+    b?.flush();
   }
 
   static final _channels = LinkedHashSet<NotificationChannel>(
@@ -110,29 +109,36 @@ class NotificationManager {
       },
       orElse: () => _channels.first,
     );
-    debugPrint('''
---NotificationManager:::getChannel--
-----|Channel: $channelName
-----|Channels: $_channels
-----|${registeredChannel ? 'Registered Channel' : 'Unregistered Channel. Defaulting to NotificationManager default channel'}.
-----|NotificationChannel: $notificationChannel
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Channel: $channelName',
+        'Channels: $_channels',
+        (registeredChannel
+            ? 'Registered Channel'
+            : 'Unregistered Channel. Defaulting to NotificationManager default channel'),
+        'NotificationChannel: $notificationChannel',
+      ]);
+
     return notificationChannel;
   }
 
   NotificationQueue getQueue(
     final QueuePosition? position,
   ) {
-    debugPrint('''
---NotificationManager:::getQueue--
-----|Position: $position
-----|Queues: $_queues''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Position: $position',
+        'Queues: $_queues',
+      ]);
+
     if (position == null) {
       final defaultQueue = _queues.first;
-      debugPrint('''
-----|No Position provided,
-----|Returning default queue: $defaultQueue
-''');
+      b
+        ?..writeAll([
+          'No Position provided,',
+          'Returning default queue: $defaultQueue',
+        ])
+        ..flush();
       return defaultQueue;
     }
     bool configuredQueue = false;
@@ -149,10 +155,15 @@ class NotificationManager {
         return generateQueueFromDefault;
       },
     );
-    debugPrint('''
-----|${configuredQueue ? 'Configured Queue.' : 'Unconfigured Queue. Defaulting to default queue at new position.'}
-----|Queue: $queue
-''');
+    b
+      ?..writeAll([
+        (configuredQueue
+            ? 'Configured Queue.'
+            : 'Unconfigured Queue. Defaulting to default queue at new position.'),
+        'Queue: $queue',
+      ])
+      ..flush();
+
     return queue;
   }
 
@@ -161,7 +172,7 @@ class NotificationManager {
 //     final NotificationWidget notification,
 //     final BuildContext context,
 //   ) {
-//     debugPrint('''
+//     AppDebugger.log('''
 // --NotificationManager:::show--
 // ----|Notification: $notification
 // ----|Context: $context
@@ -175,7 +186,7 @@ class NotificationManager {
 //     final QueuePosition newPosition,
 //     final BuildContext context,
 //   ) {
-//     debugPrint('''
+//     AppDebugger.log('''
 // --NotificationManager:::relocate--
 // ----|Notification: $notification
 // ----|Context: $context
@@ -198,7 +209,7 @@ class NotificationManager {
 //     final NotificationWidget notification,
 //     final BuildContext context,
 //   ) {
-//     debugPrint('''
+//     AppDebugger.log('''
 // --NotificationManager:::dismiss--
 // ----|Notification: $notification
 // ----|Context: $context

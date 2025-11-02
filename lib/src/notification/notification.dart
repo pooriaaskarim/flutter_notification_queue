@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
 import '../notification_wrapper/notification_manager/notification_manager.dart';
+import '../utils/logger.dart';
 import '../utils/utils.dart';
 
 part 'draggables/draggable_transitions.dart';
@@ -230,8 +231,9 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   @override
   void initState() {
-    debugPrint('''
-----------Notification${widget.key}: initState called----------''');
+    LogBuffer.d
+      ?..writeln('Created State.')
+      ..flush();
     super.initState();
     _showCloseButton.value =
         widget.queue.closeButtonBehavior == QueueCloseButtonBehavior.always;
@@ -247,32 +249,31 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   @override
   void didChangeDependencies() {
-    debugPrint('''
-----------Notification${widget.key}: didChangeDependencies called----------''');
-
     // widget.state = this;
     theme = NotificationTheme.resolveWith(context, widget.queue.style, widget);
-    debugPrint('''
-------------|NotificationState: $this
-
-''');
+    LogBuffer.d
+      ?..writeAll([
+        'NotificationState: $this',
+      ])
+      ..flush();
 
     super.didChangeDependencies();
   }
 
   @override
   void didUpdateWidget(final NotificationWidget oldWidget) {
-    debugPrint('''
-----------Notification${widget.key}: didUpdateWidget called----------''');
+    LogBuffer.d
+      ?..writeAll(['oldWidget: $oldWidget', 'newWidget: $widget'])
+      ..flush();
     super.didUpdateWidget(oldWidget);
   }
 
   Future<void> dismiss() async {
     await animationController.reverse();
     widget.queue.widget.key.currentState?.dismiss(widget);
-    debugPrint('''
-----------Notification${widget.key}::::dismiss----------
-------------|Dismissed.''');
+    LogBuffer.d
+      ?..writeAll(['Dismissed.'])
+      ..flush();
   }
 
   @override
@@ -281,10 +282,9 @@ class NotificationWidgetState extends State<NotificationWidget>
     animationController.dispose();
     ditchDismissTimer();
     isExpanded.dispose();
-    debugPrint('''
-----------Notification${widget.key}:::dispose----------
-------------|Disposed.
-''');
+    LogBuffer.d
+      ?..writeln('Disposed')
+      ..flush();
   }
 
   void initDismissTimer() {

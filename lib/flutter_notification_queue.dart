@@ -15,4 +15,3 @@ export 'src/notification_wrapper/overlay_manager/overlay_manager.dart'
         OverlayEntryData,
         OverlayManager,
         OverlayPosition;
-export 'src/utils/utils.dart' hide ColorUtils, Utils;

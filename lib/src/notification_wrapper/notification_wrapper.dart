@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
+import '../utils/logger.dart';
 import 'notification_manager/notification_manager.dart';
 import 'overlay_manager/overlay_manager.dart';
 
@@ -32,14 +33,24 @@ class NotificationQueueWrapper extends StatefulWidget {
 
 class _NotificationQueueWrapperState extends State<NotificationQueueWrapper> {
   @override
+  void initState() {
+    final b = LogBuffer.d
+      ?..writeAll(['NotificationQueueWrapper Created State.'])
+      ..flush();
+    super.initState();
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    debugPrint('''
---NotificationQueueWrapper:::didChangeDependencies---
-----|NotificationManager ${NotificationManager.initialized ? 'already initialized' : 'not initialized'}.
-----|OverlayManager ${OverlayManager.initialized ? 'already initialized' : 'not initialized'}.
-----|Debug mode: ${widget.debugMode}
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'NotificationManager ${NotificationManager.initialized ? 'already initialized' : 'not initialized'}.',
+        'OverlayManager ${OverlayManager.initialized ? 'already initialized' : 'not initialized'}.',
+        'Debug mode: ${widget.debugMode}.',
+      ])
+      ..flush();
+
     OverlayManager.configure(context);
     NotificationManager.configure(
       queues: widget.queues,

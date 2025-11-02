@@ -30,29 +30,32 @@ class _DismissionTargets extends StatelessWidget {
                 hitTestBehavior: HitTestBehavior.opaque,
                 onWillAcceptWithDetails: (final details) => true,
                 onMove: (final details) {
-                  debugPrint('''
-------------------DismissionTargets:::onMove---------------------------
---------------------|TargetData: ${details.data}
---------------------|TargetOffset: ${details.offset}
---------------------|PassedThreshold: $passedThreshold
---------------------|----> on: $candidateAlignment''');
+                  final b = LogBuffer.d
+                    ?..writeAll([
+                      'DismissionTargets:::onMove',
+                      'TargetData: ${details.data}',
+                      'TargetOffset: ${details.offset}',
+                      'PassedThreshold: $passedThreshold',
+                      '----> on: $alignment',
+                    ])
+                    ..flush();
                 },
                 onAcceptWithDetails: (final details) {
-                  debugPrint('''
-------------------DismissionTargets:::onAccept---------------------------
---------------------|PassedThreshold: $passedThreshold
---------------------|----> on: $candidateAlignment''');
+                  final b = LogBuffer.d
+                    ?..writeAll([
+                      'DismissionTargets:::onAcceptWithDetails',
+                      'PassedThreshold: $passedThreshold'
+                          '----> on: $candidateAlignment'
+                    ]);
 
                   if (passedThreshold) {
-                    debugPrint('''
---------------------|----> Dismissing... .
-''');
+                    b?.writeAll(['----> Dismissing... .']);
+
                     onAccept();
                   } else {
-                    debugPrint('''
---------------------|----> Dismiss Skipped.
-''');
+                    b?.writeAll(['----> Dismiss Skipped.']);
                   }
+                  b?.flush();
                 },
                 builder: (
                   final context,
@@ -60,8 +63,10 @@ class _DismissionTargets extends StatelessWidget {
                   final rejectedData,
                 ) {
                   if (passedThreshold && candidateData.isNotEmpty) {
-                    debugPrint('''
---------------------|----> CandidateAlignmentPosition: $candidateAlignment''');
+                    final b = LogBuffer.d
+                      ?..writeAll([
+                        '----> CandidateAlignmentPosition: $candidateAlignment'
+                      ]);
                     candidateAlignment = alignment;
                   }
                   return AnimatedContainer(

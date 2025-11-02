@@ -29,36 +29,42 @@ class QueueWidgetState extends State<QueueWidget> {
   final _listKey = GlobalKey<AnimatedListState>();
 
   void queue(final NotificationWidget notification) {
-    debugPrint('''
-------${widget.parentQueue}:::QueueWidgetState:::queue------
---------|Notification: $notification
---------|From Context: $context''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Queueing Notification: $notification',
+      ])
+      ..flush();
+
     _pendingNotifications.value.add(notification);
     _processQueue();
   }
 
   void _processQueue() {
-    debugPrint('''
-------${widget.parentQueue}:::QueueWidgetState:::_processQueue------''');
+    final b = LogBuffer.d;
     while (_pendingNotifications.value.isNotEmpty &&
         _activeNotifications.value.length < widget.parentQueue.maxStackSize) {
-      debugPrint('''
---------Processing Queue InProgress--------''');
       final latestNotification =
           _pendingNotifications.value.toList().removeAt(0);
       _activeNotifications.value.add(
         latestNotification,
       ); // Insert at top for stack behavior
       _listKey.currentState?.insertItem(0);
+      b
+        ?..writeAll([
+          'Processing Queue InProgress',
+          'Notification: $latestNotification',
+        ])
+        ..flush();
     }
   }
 
   void dismiss(
     final NotificationWidget notification,
   ) {
-    debugPrint('''
-------${widget.parentQueue}:::QueueWidgetState:::dismiss------
---------|Removing Notification: $notification''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Dismissing Notification: $notification',
+      ]);
     final activeIndex = _activeNotifications.value
         .toList()
         .indexWhere((final n) => n.id == notification.id);
@@ -75,22 +81,23 @@ class QueueWidgetState extends State<QueueWidget> {
         ),
         duration: const Duration(milliseconds: 300),
       );
-      debugPrint('''
---------|Notification Removed from Active.
-''');
+      b?.writeAll([
+        'Notification Removed from Active.',
+      ]);
     } else {
       final removedFromPending =
           _pendingNotifications.value.remove(notification);
       if (removedFromPending) {
-        debugPrint('''
---------|Notification Removed from Pending.
-''');
+        b?.writeAll([
+          'Notification Removed from Pending.',
+        ]);
       } else {
-        debugPrint('''
---------|Notification Not Found. Already Dismissed????
-''');
+        b?.writeAll([
+          'Notification Not Found. Already Dismissed????',
+        ]);
       }
     }
+    b?.flush();
     _safeDispose();
   }
 
@@ -98,11 +105,12 @@ class QueueWidgetState extends State<QueueWidget> {
     final NotificationWidget notification,
     final QueuePosition newPosition,
   ) {
-    debugPrint('''
-------${widget.parentQueue}:::QueueWidgetState:::relocate------
---------|Notification: $notification
---------|RelocatingTo: $newPosition
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Relocating Notification: $notification',
+        'To: $newPosition',
+      ]);
+
     final activeIndex = _activeNotifications.value
         .toList()
         .indexWhere((final n) => n.id == notification.id);
@@ -119,36 +127,45 @@ class QueueWidgetState extends State<QueueWidget> {
       removed = _pendingNotifications.value.toList().remove(notification);
     }
     if (removed) {
-      debugPrint('''
---------|Notification Removed.
-''');
+      b?.writeAll([
+        'Notification Removed from: ${removed ? 'Active' : 'Pending'} ${widget.parentQueue}.',
+      ]);
+
       final newQueue = NotificationManager.instance.getQueue(newPosition);
       final newNotification = notification.copyWith(newPosition);
+      b?.writeAll([
+        'Notification Queued in: $newQueue',
+      ]);
       newQueue.widget.key.currentState?.queue(newNotification);
     } else {
-      debugPrint('''
---------|Notification Not Found.
-''');
+      b?.writeAll([
+        'Notification Not Found in ${widget.parentQueue}.',
+      ]);
     }
+    b?.flush();
     _safeDispose();
   }
 
   bool _safeDispose() {
-    debugPrint('''
-------${widget.parentQueue}:::QueueWidgetState:::safeDispose------''');
+    final b = LogBuffer.d;
     if (_pendingNotifications.value.toList().isEmpty &&
         _activeNotifications.value.toList().isEmpty) {
-      debugPrint('''
---------|No Pending Notifications And No Active Notifications.
---------|Disposing... .
-''');
+      b
+        ?..writeAll([
+          'No Pending Notifications And No Active Notifications.',
+          'Disposing... .',
+        ])
+        ..flush();
+
       dispose();
       return true;
     } else {
-      debugPrint('''
---------|Has Pending/Active Notifications.
---------|Not Disposing.
-''');
+      b
+        ?..writeAll([
+          'Has Pending/Active Notifications.',
+          'Not Disposing.',
+        ])
+        ..flush();
       return false;
     }
   }
@@ -156,13 +173,6 @@ class QueueWidgetState extends State<QueueWidget> {
   @override
   void initState() {
     super.initState();
-    OverlayManager.instance.show(
-      widget.parentQueue.toString(),
-      OverlayEntryData(
-        builder: (final context) => widget,
-        position: AlignedPosition(widget.parentQueue.position.alignment),
-      ),
-    );
   }
 
   @override
@@ -176,74 +186,72 @@ class QueueWidgetState extends State<QueueWidget> {
   }
 
   @override
-  Widget build(final BuildContext context) {
-    debugPrint('''
-------${widget.parentQueue}:::QueueWidgetState:::build------''');
-    return ValueListenableBuilder(
-      valueListenable: _pendingNotifications,
-      builder: (final context, final pendingNotifications, final child) {
-        final pendingNotificationsCount = pendingNotifications.length;
-        return SafeArea(
-          child: Container(
-            alignment: widget.parentQueue.position.alignment,
-            margin: widget.parentQueue.margin,
-            child: Column(
-              spacing: widget.parentQueue.spacing,
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: widget.parentQueue.mainAxisAlignment,
-              crossAxisAlignment: widget.parentQueue.crossAxisAlignment,
-              verticalDirection: widget.parentQueue.verticalDirection,
-              children: [
-                widget.parentQueue.queueIndicatorBuilder?.call(
-                      pendingNotificationsCount,
-                    ) ??
-                    const SizedBox.shrink(),
-                ValueListenableBuilder(
-                  valueListenable: _activeNotifications,
-                  builder:
-                      (final context, final activeNotifications, final child) =>
-                          AnimatedList.separated(
-                    key: _listKey,
-                    initialItemCount: activeNotifications.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (final context, final index, final animation) {
-                      final notification = activeNotifications.toList()[index];
-                      return SlideTransition(
-                        position: Tween<Offset>(
-                          begin: widget.parentQueue.slideTransitionOffset,
-                          end: Offset.zero,
-                        ).animate(
-                          CurvedAnimation(
-                            parent: animation,
-                            curve: Curves.easeInOut,
+  Widget build(final BuildContext context) => ValueListenableBuilder(
+        valueListenable: _pendingNotifications,
+        builder: (final context, final pendingNotifications, final child) {
+          final pendingNotificationsCount = pendingNotifications.length;
+          return SafeArea(
+            child: Container(
+              alignment: widget.parentQueue.position.alignment,
+              margin: widget.parentQueue.margin,
+              child: Column(
+                spacing: widget.parentQueue.spacing,
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: widget.parentQueue.mainAxisAlignment,
+                crossAxisAlignment: widget.parentQueue.crossAxisAlignment,
+                verticalDirection: widget.parentQueue.verticalDirection,
+                children: [
+                  widget.parentQueue.queueIndicatorBuilder?.call(
+                        pendingNotificationsCount,
+                      ) ??
+                      const SizedBox.shrink(),
+                  ValueListenableBuilder(
+                    valueListenable: _activeNotifications,
+                    builder: (final context, final activeNotifications,
+                            final child) =>
+                        AnimatedList.separated(
+                      key: _listKey,
+                      initialItemCount: activeNotifications.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder:
+                          (final context, final index, final animation) {
+                        final notification =
+                            activeNotifications.toList()[index];
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: widget.parentQueue.slideTransitionOffset,
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeInOut,
+                            ),
                           ),
-                        ),
-                        child: FadeTransition(
-                          opacity: animation,
-                          child: DraggableTransitions(
-                            notification: notification,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: DraggableTransitions(
+                              notification: notification,
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    separatorBuilder:
-                        (final context, final index, final animation) =>
-                            SizedBox(
-                      height: widget.parentQueue.spacing,
-                    ),
-                    removedSeparatorBuilder:
-                        (final context, final index, final animation) =>
-                            SizedBox(
-                      height: widget.parentQueue.spacing,
+                        );
+                      },
+                      separatorBuilder:
+                          (final context, final index, final animation) =>
+                              SizedBox(
+                        height: widget.parentQueue.spacing,
+                      ),
+                      removedSeparatorBuilder:
+                          (final context, final index, final animation) =>
+                              SizedBox(
+                        height: widget.parentQueue.spacing,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
-  }
+          );
+        },
+      );
 }

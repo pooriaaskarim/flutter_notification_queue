@@ -27,26 +27,35 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
 
   @override
   void initState() {
-    debugPrint('''
-----------------Notification${widget.notification.key}:::DraggableTransition:::initState------------
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Notification${widget.notification.key} DraggableTransition created State',
+        'State: $this',
+      ])
+      ..flush();
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
-    debugPrint('''
-----------------Notification${widget.notification.key}:::DraggableTransition:::didChangeDependency------------
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Notification${widget.notification.key} DraggableTransition',
+        'State: $this',
+      ])
+      ..flush();
     _screenSize = MediaQuery.of(context).size;
     super.didChangeDependencies();
   }
 
   @override
   void dispose() {
-    debugPrint('''
-----------------Notification${widget.notification.key}:::DraggableTransition:::dispose------------
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Disposed Notification${widget.notification.key} DraggableTransition.',
+        '',
+      ])
+      ..flush();
 
     _dragOffsetPairNotifier.dispose();
 
@@ -66,12 +75,13 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
     final passedThreshold =
         passedVerticalThreshold || passedHorizontalThreshold;
 
-//     debugPrint('''
-// ----------------Notification${widget.notification.key}:::DraggableTransition:::_passedThreshold------------
-// ------------------|Global Drag Offset: $globalOffset
-// ------------------|ThresholdInPixels: ${widget.thresholdInPixels} Points
-// ------------------|PassedThreshold: $passedThreshold
-// ''');
+    // final b = LogBuffer.init
+    //   ?..writeAll([
+    //     'Global Drag Offset: $globalOffset',
+    //     'ThresholdInPixels: $thresholdInPixels Points',
+    //     'PassedThreshold: $passedThreshold',
+    //   ])
+    //   ..sync();
 
     return passedThreshold;
   }
@@ -88,7 +98,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
+              //         AppDebugger.log('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
@@ -159,7 +169,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position.alignment,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
+              //         AppDebugger.log('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
@@ -229,7 +239,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
+              //         AppDebugger.log('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.dragBehavior is! Disabled) {
@@ -295,7 +305,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position.alignment,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
+              //         AppDebugger.log('''
               // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.dragBehavior is! Disabled) {

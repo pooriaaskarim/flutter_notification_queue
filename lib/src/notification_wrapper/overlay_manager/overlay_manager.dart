@@ -1,6 +1,8 @@
 // lib/src/overlay_manager/overlay_manager.dart
 import 'package:flutter/material.dart';
 
+import '../../utils/logger.dart';
+
 part 'overlay_position.dart';
 
 part 'overlay_entry_data.dart';
@@ -34,16 +36,15 @@ class OverlayManager {
   //  INITIALIZE
   // --------------------------------------------------------------------- //
   static void configure(final BuildContext rootContext) {
-    debugPrint('''
---OverlayManager:::configure--    ''');
+    final b = LogBuffer.d;
     if (!initialized) {
-      debugPrint('''
-----|Initializing...''');
+      b?.writeAll(['Initializing... .']);
+
       initialized = true;
     }
-    debugPrint('''
-----|rootContext: $rootContext
-''');
+    b
+      ?..writeAll(['RootContext: $rootContext'])
+      ..flush();
     _rootContext = rootContext;
   }
 
@@ -51,23 +52,22 @@ class OverlayManager {
   //  SHOW
   // --------------------------------------------------------------------- //
   void show(final String identifier, final OverlayEntryData data) {
-    debugPrint('''
---OverlayManager:::show--
-----|identifier: $identifier
-----|data.builder: ${data.builder}
-----|data.position: ${data.position}
-----|data.priority: ${data.priority}
-----|data.entryDuration: ${data.entryDuration}
-----|data.exitDuration: ${data.exitDuration}
-----|data.entryCurve: ${data.entryCurve}
-----|data.exitCurve: ${data.exitCurve}
-----|data.maintainState: ${data.maintainState}
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'identifier: $identifier',
+        'data.builder: ${data.builder}',
+        'data.position: ${data.position}',
+        'data.priority: ${data.priority}',
+        'data.entryDuration: ${data.entryDuration}',
+        'data.exitDuration: ${data.exitDuration}',
+        'data.entryCurve: ${data.entryCurve}',
+        'data.exitCurve: ${data.exitCurve}',
+        'data.maintainState: ${data.maintainState}',
+      ]);
 
     if (_entries.containsKey(identifier)) {
-      debugPrint('''
-----|Entry already exists → calling update()
-''');
+      b?.writeAll(['Entry Already Exists,', '----> Updating... .']);
+
       update(identifier, data);
       return;
     }
@@ -77,9 +77,8 @@ class OverlayManager {
     data.onShow?.call();
 
     if (_rootEntry == null) {
-      debugPrint('''
-----|No root entry → inserting _rootEntry
-''');
+      b?.writeAll(['No Root Entry,', '----> Inserting... .']);
+
       _insertRootEntry();
     }
 
@@ -90,91 +89,90 @@ class OverlayManager {
   //  HIDE
   // --------------------------------------------------------------------- //
   void hide(final String identifier) {
-    debugPrint('''
---OverlayManager:::hide--
-----|identifier: $identifier
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Hiding Identifier: $identifier',
+      ]);
 
-    final data = _entries.remove(identifier);
-    if (data == null) {
-      debugPrint('''
-----|No entry found for identifier → nothing to hide
-''');
+    final removed = _entries.remove(identifier);
+    if (removed == null) {
+      b
+        ?..writeAll(['No Entry Found For Identifier,', '----> Skipped Hiding.'])
+        ..flush();
+
       return;
     }
 
-    debugPrint('''
-----|Removed entry
-----|Calling onHide callback
-''');
-    data.onHide?.call();
+    b?.writeAll([
+      'Removing Entry... .',
+      'Calling onHide callback... .',
+    ]);
+
+    removed.onHide?.call();
 
     _updateActiveIdentifiers();
     _activeIdentifiersNotifier.update();
 
     if (_entries.isEmpty) {
-      debugPrint('''
-----|No more entries → removing root entry
-''');
+      b?.writeAll(['No more entries,', '----> Removing root entry... .']);
+
       _removeRootEntry();
     }
+    b?.flush();
   }
 
   // --------------------------------------------------------------------- //
   //  UPDATE
   // --------------------------------------------------------------------- //
   void update(final String identifier, final OverlayEntryData newData) {
-    debugPrint('''
---OverlayManager:::update--
-----|identifier: $identifier
-----|newData.builder: ${newData.builder}
-----|newData.position: ${newData.position}
-----|newData.priority: ${newData.priority}
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'identifier: $identifier',
+        'NewData/Builder: ${newData.builder}',
+        'NewData/Position: ${newData.position}',
+        'NewData/Priority: ${newData.priority}',
+      ]);
 
     if (_entries.containsKey(identifier)) {
       _entries[identifier] = newData;
-      debugPrint('''
-----|Entry updated → marking root entry for rebuild
-''');
+      b?.writeAll(['Entry Updated,', '----> Marking Root Entry For Rebuild.']);
+
       _rootEntry?.markNeedsBuild();
     } else {
-      debugPrint('''
-----|No entry for identifier → ignoring update
-''');
+      b?.writeAll(['No Entry Found For Identifier,', '----> Skipped Update.']);
     }
+    b?.flush();
   }
 
   // --------------------------------------------------------------------- //
   //  INSERT ROOT ENTRY
   // --------------------------------------------------------------------- //
   void _insertRootEntry() {
-    debugPrint('''
---OverlayManager::_insertRootEntry--
-''');
-
+    final b = LogBuffer.d;
     _rootEntry = OverlayEntry(
       builder: (final context) {
-        debugPrint('''
-----|Building root overlay (Stack with ${_entries.length} children)
-''');
+        b?.writeAll([
+          'Building root overlay (Stack with ${_entries.length} children)',
+        ]);
+
         return ValueListenableBuilder<List<String>>(
           valueListenable: _activeIdentifiersNotifier,
           builder: (final context, final activeIdentifiers, final _) {
-            debugPrint('''
-----|ValueListenableBuilder rebuild
-----|activeIdentifiers: $activeIdentifiers
-''');
+            b?.writeAll([
+              'ValueListenableBuilder rebuild',
+              'activeIdentifiers: $activeIdentifiers',
+            ]);
+            b?.flush();
             return Stack(
               children: activeIdentifiers.map((final identifier) {
                 final data = _entries[identifier]!;
-                debugPrint('''
-----|Rendering child
-----|  identifier: $identifier
-----|  priority: ${data.priority}
-----|  position: ${data.position}
-''');
-
+                b
+                  ?..writeAll([
+                    'identifier: $identifier',
+                    'data.position: ${data.position}',
+                    'data.priority: ${data.priority}',
+                  ])
+                  ..flush();
                 Widget content = KeyedSubtree(
                   key: data.stateKey,
                   child: data.builder(context),
@@ -222,9 +220,10 @@ class OverlayManager {
       opaque: false,
     );
 
-    debugPrint('''
-----|Inserting root entry into Overlay
-''');
+    b
+      ?..writeAll(['Inserting root entry into Overlay'])
+      ..flush();
+
     Overlay.of(_rootContext).insert(_rootEntry!);
   }
 
@@ -232,35 +231,29 @@ class OverlayManager {
   //  REMOVE ROOT ENTRY
   // --------------------------------------------------------------------- //
   void _removeRootEntry() {
-    debugPrint('''
---OverlayManager::_removeRootEntry--
-''');
-
     _rootEntry?.remove();
     _rootEntry = null;
-    debugPrint('''
-----|Root entry removed
-''');
+
+    final b = LogBuffer.d
+      ?..writeAll(['Root Entry Removed'])
+      ..flush();
   }
 
   // --------------------------------------------------------------------- //
   //  UPDATE ACTIVE IDENTIFIERS (priority sort)
   // --------------------------------------------------------------------- //
   void _updateActiveIdentifiers() {
-    debugPrint('''
---OverlayManager::_updateActiveIdentifiers--
-----|Current entries count: ${_entries.length}
-''');
+    final b = LogBuffer.d
+      ?..writeAll(['Current Entries Cound: ${_entries.length}']);
 
     final sorted = _entries.keys.toList()
       ..sort((final a, final b) =>
           _entries[a]!.priority.compareTo(_entries[b]!.priority));
 
-    debugPrint('''
-----|Sorted identifiers: $sorted
-''');
+    b?.writeAll(['Sorted Identifires: $sorted']);
 
     _activeIdentifiersNotifier.value = sorted;
+    b?.flush();
   }
 
   // --------------------------------------------------------------------- //
@@ -273,29 +266,31 @@ class OverlayManager {
     final Alignment followerAlignment,
     final Alignment targetAlignment,
   ) {
-    debugPrint('''
---OverlayManager::_buildAnchored--
-----|anchorKey: $anchorKey
-----|followerAlignment: $followerAlignment
-----|targetAlignment: $targetAlignment
-''');
+    final b = LogBuffer.d
+      ?..writeAll([
+        'Anchor Key: $anchorKey',
+        'Follower Alignment: $followerAlignment',
+        'Target Alignment: $targetAlignment'
+      ]);
 
     final renderBox =
         anchorKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) {
-      debugPrint('''
-----|Anchor RenderBox not found → returning SizedBox.shrink()
-''');
+      b?.writeAll([
+        'Anchor RenderBox not found.',
+        '----> Returning Empty Widget',
+      ]);
       return const SizedBox.shrink();
     }
 
     final position = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
-
-    debugPrint('''
-----|Anchor global position: $position
-----|Anchor size: $size
-''');
+    b
+      ?..writeAll([
+        'Anchor Global Position: $position',
+        'Anchor Size: $size',
+      ])
+      ..flush();
 
     return Positioned(
       left: position.dx,
@@ -310,17 +305,11 @@ class OverlayManager {
   //  DISPOSE
   // --------------------------------------------------------------------- //
   void dispose() {
-    debugPrint('''
---OverlayManager:::dispose--
-----|Clearing ${_entries.length} entries
-''');
-
     _entries.clear();
     _activeIdentifiersNotifier.value = [];
     _removeRootEntry();
-
-    debugPrint('''
-----|OverlayManager fully disposed
-''');
+    final b = LogBuffer.d
+      ?..writeAll(['Disposed OverlayManager.'])
+      ..flush();
   }
 }
