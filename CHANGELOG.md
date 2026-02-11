@@ -5,9 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-02-12
+
+### Architecture Overhaul (Unified Core Engine)
+
+- **Unified Core Engine**: Replaced the global `NotificationManager` singleton with a modular core engine consisting of `QueueCoordinator`, `NotificationOverlay`, and `ConfigurationManager`.
+- **Public Facade**: Introduced `FlutterNotificationQueue` as the primary entry point for initialization and `MaterialApp` integration.
+- **Stateful Queue Rendering**: Refactored queue management into `QueueWidget` for reactive, widget-tree-native state handling.
+- **Structured Logging**: Implemented package-wide structured logging using `LogBuffer` for enhanced diagnostics.
+- **Component Decoupling**: Refactored `NotificationWidget` and `NotificationQueue` to remove direct dependencies on global singletons.
+- **Directory Harmonization**: Consolidated internal core components into a unified barrel file structure (`core.dart`).
+
+### Improvements & Fixes
+
+- **Contextless Support**: Seamless integration with `MaterialApp.builder` via `FlutterNotificationQueue.builder`.
+- **Reactive State**: Improved UI updates and animations through stateful queue widgets.
+- **API Cleanup**: Harmonized exports and removed legacy managers.
+
+### Breaking Changes
+
+- `NotificationManager` has been removed.
+- Initialization must now use `FlutterNotificationQueue.initialize()`.
+- Apps must integrate via `MaterialApp.builder` using `FlutterNotificationQueue.builder`.
+
 ## [0.3.1] - 2025-01-28
 
-### 🔧 Bug Fixes
+### Bug Fixes
 
 #### **State Management Improvements**
 
@@ -19,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Constructor Cleanup**: Removed unnecessary `super.key` from helper widget constructors
 - **Code Quality**: Removed unused variables and unnecessary null checks
 
-### 🏗️ Architecture Improvements
+### Architecture Improvements
 
 #### **NotificationWidget Refactoring**
 
@@ -34,13 +57,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Null Check Optimization**: Removed unnecessary null check for notification ID
 - **Better Encapsulation**: Factory pattern provides cleaner initialization logic
 
-### 🎯 Performance Improvements
+### Performance Improvements
 
 - **Immutable Widgets**: More efficient widget rebuilds with immutable properties
 - **Proper State Access**: Eliminates potential memory leaks from stale state references
 - **Cleaner Initialization**: Factory constructor reduces object creation overhead
 
-### 🔍 Technical Details
+### Technical Details
 
 #### **Breaking Changes**
 
@@ -59,7 +82,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.3.0] - 2025-01-27
 
-### 🚀 Major Features
+### Major Features
 
 #### **Enhanced Queue Management**
 
@@ -75,7 +98,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Long-Press Actions**: Rich long-press behaviors with customizable targets
 - **Gesture Feedback**: Visual and haptic feedback for all interactions
 
-### 🎨 UI/UX Improvements
+### UI/UX Improvements
 
 #### **Enhanced Visual Design**
 
@@ -98,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **High Contrast Mode**: Enhanced visibility in high contrast environments
 - **Focus Management**: Proper focus handling for interactive elements
 
-### 🌍 Internationalization
+### Internationalization
 
 #### **RTL Language Support**
 

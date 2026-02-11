@@ -25,28 +25,40 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
       ValueNotifier(null);
 
+  static final _logger = Logger.get('fnq.Notification.Draggables');
+
   @override
   void initState() {
-    debugPrint('''
-----------------Notification${widget.notification.key}:::DraggableTransition:::initState------------
-''');
+    _logger.debugBuffer
+      ?..writeAll([
+        'Notification${widget.notification.key} '
+            'DraggableTransition created State',
+        'State: $this',
+      ])
+      ..sink();
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
-    debugPrint('''
-----------------Notification${widget.notification.key}:::DraggableTransition:::didChangeDependency------------
-''');
+    _logger.debugBuffer
+      ?..writeAll([
+        'Notification${widget.notification.key} DraggableTransition',
+        'State: $this',
+      ])
+      ..sink();
     _screenSize = MediaQuery.of(context).size;
     super.didChangeDependencies();
   }
 
   @override
   void dispose() {
-    debugPrint('''
-----------------Notification${widget.notification.key}:::DraggableTransition:::dispose------------
-''');
+    _logger.debugBuffer
+      ?..writeAll([
+        'Disposed Notification${widget.notification.key} DraggableTransition.',
+        '',
+      ])
+      ..sink();
 
     _dragOffsetPairNotifier.dispose();
 
@@ -66,13 +78,6 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
     final passedThreshold =
         passedVerticalThreshold || passedHorizontalThreshold;
 
-//     debugPrint('''
-// ----------------Notification${widget.notification.key}:::DraggableTransition:::_passedThreshold------------
-// ------------------|Global Drag Offset: $globalOffset
-// ------------------|ThresholdInPixels: ${widget.thresholdInPixels} Points
-// ------------------|PassedThreshold: $passedThreshold
-// ''');
-
     return passedThreshold;
   }
 
@@ -88,8 +93,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
-              // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
+              widget.notification.queue.bringToFront();
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
@@ -138,11 +142,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                         .positions,
                     currentPosition: widget.notification.queue.position,
                     onAccept: (final candidatePosition) {
-                      NotificationManager.instance.relocate(
-                        widget.notification,
-                        candidatePosition,
-                        context,
-                      );
+                      widget.notification.queue
+                          .relocate(widget.notification, candidatePosition);
                     },
                     screenSize: layoutInfo.overlaySize,
                     passedThreshold: passedThreshold,
@@ -162,8 +163,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position.alignment,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
-              // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
+              widget.notification.queue.bringToFront();
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
@@ -232,8 +232,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
-              // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
+              widget.notification.queue.bringToFront();
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.dragBehavior is! Disabled) {
                 _overlayPortalController.show();
@@ -277,11 +276,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                             .positions,
                     currentPosition: widget.notification.queue.position,
                     onAccept: (final candidatePosition) {
-                      NotificationManager.instance.relocate(
-                        widget.notification,
-                        candidatePosition,
-                        context,
-                      );
+                      widget.notification.queue
+                          .relocate(widget.notification, candidatePosition);
                     },
                     screenSize: layoutInfo.overlaySize,
                     passedThreshold: passedThreshold,
@@ -301,8 +297,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position.alignment,
             axis: null,
             onDragStarted: () {
-              //         debugPrint('''
-              // --------------Notification${widget.notification.key}:::DraggableTransition:::Relocation:::onDragStarted--------------''');
+              widget.notification.queue.bringToFront();
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.dragBehavior is! Disabled) {
                 _overlayPortalController.show();

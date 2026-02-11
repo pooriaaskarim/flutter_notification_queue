@@ -19,6 +19,8 @@ class _RelocationTargets extends StatelessWidget {
 
   double get _screenHeight => screenSize.height;
 
+  static final _logger = Logger.get('fnq.Notification.Draggables.Relocate');
+
   @override
   Widget build(final BuildContext context) {
     QueuePosition? candidatePosition;
@@ -36,28 +38,27 @@ class _RelocationTargets extends StatelessWidget {
               hitTestBehavior: HitTestBehavior.opaque,
               onWillAcceptWithDetails: (final details) => true,
               onMove: (final details) {
-                debugPrint('''
-------------------RelocationTargets:::onMove---------------------------
---------------------|PassedThreshold(Parent): $passedThreshold
---------------------|CandidatePosition: $candidatePosition
-''');
+                _logger.debugBuffer
+                  ?..writeAll([
+                    'PassedThreshold: $passedThreshold',
+                    '----> on: $candidatePosition',
+                  ])
+                  ..sink();
               },
               onAcceptWithDetails: (final details) {
-                debugPrint('''
-------------------RelocationTargets:::onAccept---------------------------
---------------------|CandidatePosition: $candidatePosition
---------------------|PassedThreshold(Parent): $passedThreshold''');
+                final b = _logger.debugBuffer
+                  ?..writeAll([
+                    'CandidatePosition: $candidatePosition',
+                    'PassedThreshold(Parent): $passedThreshold',
+                  ]);
+
                 if (candidatePosition != null) {
-                  debugPrint('''
---------------------|----> Relocating to $candidatePosition...
-''');
+                  b?.writeAll(['----> Relocating to $candidatePosition... .']);
                   onAccept(candidatePosition!);
                 } else {
-                  debugPrint('''
---------------------|No Candidates.
---------------------|----> Skipped Relocation.
-''');
+                  b?.writeAll(['No Candidates.', '----> Skipped Relocation.']);
                 }
+                b?.sink();
               },
               builder: (
                 final context,

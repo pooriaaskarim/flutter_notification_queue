@@ -1,12 +1,14 @@
 import 'dart:collection';
 
 import 'package:flutter/material.dart';
+import 'package:logd/logd.dart';
 
 import '../../flutter_notification_queue.dart';
+import '../core/core.dart';
+
+part 'queue_widget.dart';
 
 part 'extensions.dart';
-
-part 'queue_manager.dart';
 
 part 'type_defs.dart';
 
@@ -23,14 +25,10 @@ part 'styles.dart';
 /// - [BottomCenterQueue]
 /// - [BottomRightQueue].
 ///
-/// Used Only inside
-/// ```dart
-/// NotificationManager.instance.configureQueues(Set<Queue>)
-/// ```
-/// to configure Queue layouts.
+/// Used in [FlutterNotificationQueue.initialize] to configure queue layouts.
 ///
 /// If no [NotificationQueue] is provided for a [QueuePosition],
-/// defaults to a that positions constructor defaults.
+/// defaults to that position's constructor defaults.
 
 sealed class NotificationQueue {
   NotificationQueue({
@@ -53,9 +51,9 @@ sealed class NotificationQueue {
       if (behavior is Relocate) {
         final relocationBehavior = behavior as Relocate;
         relocationBehavior.positions.add(position);
-        _groupPositions.addAll(relocationBehavior.positions);
+        groupPositions.addAll(relocationBehavior.positions);
       } else {
-        _groupPositions.add(position);
+        groupPositions.add(position);
       }
     }
   }
@@ -83,9 +81,7 @@ sealed class NotificationQueue {
   ///  + [Disabled]
   final DragBehavior dragBehavior;
 
-  Set<QueuePosition> get groupPosition => _groupPositions;
-
-  final Set<QueuePosition> _groupPositions = {};
+  final Set<QueuePosition> groupPositions = {};
 
   /// Spacing between queue notifications.
   final double spacing;
@@ -102,9 +98,196 @@ sealed class NotificationQueue {
   /// Looks and feels of [NotificationWidget]s inside the queue
   final QueueStyle style;
 
-  QueueManager? _queueManager;
+  final _pendingNotifications = Queue<NotificationWidget>();
+  final _activeNotifications = ValueNotifier(
+    LinkedHashSet<NotificationWidget>(
+      equals: (final n1, final n2) => n1.id == n2.id,
+      hashCode: (final n) => n.id.hashCode,
+    ),
+  );
 
-  QueueManager get manager => _queueManager ??= QueueManager(this);
+  LinkedHashSet<NotificationWidget> _createSet() =>
+      LinkedHashSet<NotificationWidget>(
+        equals: (final n1, final n2) => n1.id == n2.id,
+        hashCode: (final n) => n.id.hashCode,
+      );
+
+  void queue(final NotificationWidget notification) {
+    final b = _logger.debugBuffer
+      ?..writeAll(['Queueing Notification: $notification']);
+
+    if (!notification.channel.enabled) {
+      b?.writeln('Channel ${notification.channel.name} is disabled. Skipping.');
+      b?.sink();
+      return;
+    }
+
+    // 1. Check Active: Update in place if exists (preserve order)
+    final activeSet = _activeNotifications.value;
+    // We can't efficiently check "contains" with custom equality without
+    // iterating anyway
+    // if we want to replace.
+    // But let's check if we need to update first to avoid unnecessary allocs.
+    final isActiveUpdate = activeSet.any((final n) => n.id == notification.id);
+    if (isActiveUpdate) {
+      final newSet = LinkedHashSet<NotificationWidget>(
+        equals: (final n1, final n2) => n1.id == n2.id,
+        hashCode: (final n) => n.id.hashCode,
+      );
+      for (final n in activeSet) {
+        if (n.id == notification.id) {
+          newSet.add(notification);
+        } else {
+          newSet.add(n);
+        }
+      }
+      _activeNotifications.value = newSet;
+      b?.writeln('Updated active notification.');
+      b?.sink();
+      return;
+    }
+
+    // 2. Check Pending: Update in place if exists (preserve order)
+    bool isPendingUpdate = false;
+    // Queue doesn't support indexed access/replace easily.
+    // We rebuild it.
+    final tempQueue = Queue<NotificationWidget>();
+    while (_pendingNotifications.isNotEmpty) {
+      final n = _pendingNotifications.removeFirst();
+      if (n.id == notification.id) {
+        tempQueue.add(notification);
+        isPendingUpdate = true;
+      } else {
+        tempQueue.add(n);
+      }
+    }
+    _pendingNotifications.addAll(tempQueue);
+
+    if (isPendingUpdate) {
+      b?.writeln('Updated pending notification.');
+      b?.sink();
+      return;
+    }
+
+    // 3. New Notification
+    final wasEmpty =
+        _pendingNotifications.isEmpty && _activeNotifications.value.isEmpty;
+    _pendingNotifications.add(notification);
+    if (wasEmpty) {
+      final _ = _widget; // Force creation if this is the first
+    }
+    _processPending();
+    b?.sink();
+  }
+
+  void dismiss(final NotificationWidget notification) {
+    final b = _logger.debugBuffer
+      ?..writeAll(['Dismissing Notification: $notification']);
+    final removed = _activeNotifications.value.remove(notification);
+    if (removed) {
+      _activeNotifications.value = _createSet()
+        ..addAll(_activeNotifications.value);
+    } else {
+      _pendingNotifications.removeWhere((final n) => n.id == notification.id);
+    }
+    _processPending(); // Fill from pending if space now
+    _safeDispose();
+    b?.sink();
+  }
+
+  void bringToFront() {
+    QueueCoordinator.instance.bringToFront(position);
+  }
+
+  NotificationWidget? relocate(
+    final NotificationWidget notification,
+    final QueuePosition newPosition,
+  ) {
+    final b = _logger.debugBuffer
+      ?..writeAll([
+        'Relocating Notification: $notification',
+        'To: $newPosition',
+      ]);
+    final removedFromActive = _activeNotifications.value.remove(notification);
+    _pendingNotifications.removeWhere((final n) => n.id == notification.id);
+    final removedFromPending = !removedFromActive &&
+        _pendingNotifications
+            .where((final n) => n.id == notification.id)
+            .isEmpty;
+
+    NotificationWidget? newNotification;
+    if (removedFromActive || removedFromPending) {
+      final newQueue = ConfigurationManager.instance.getQueue(newPosition);
+      newNotification = notification.copyWith(newPosition);
+      newQueue.queue(newNotification);
+      if (removedFromActive) {
+        _activeNotifications.value = _createSet()
+          ..addAll(_activeNotifications.value);
+      }
+      _processPending(); // Fill from pending if space now
+    } else {
+      b?.writeAll(['Notification Not Found.']);
+    }
+    _safeDispose();
+    b?.sink();
+    return newNotification;
+  }
+
+  void _processPending() {
+    final b = _logger.debugBuffer;
+    while (_pendingNotifications.isNotEmpty &&
+        _activeNotifications.value.length < maxStackSize) {
+      final notification = _pendingNotifications.removeFirst();
+      _activeNotifications.value.add(notification);
+      _activeNotifications.value = _createSet()
+        ..addAll(_activeNotifications.value);
+    }
+
+    // If we have active notifications, ensure the queue is active in the
+    // coordinator
+    if (_activeNotifications.value.isNotEmpty) {
+      QueueCoordinator.instance.activateQueue(this);
+    }
+
+    b?.sink();
+  }
+
+  bool _safeDispose() {
+    final b = _logger.debugBuffer;
+    if (_pendingNotifications.isEmpty && _activeNotifications.value.isEmpty) {
+      b?.writeAll(['No pending or active. Deactivating queue.']);
+      QueueCoordinator.instance.deactivateQueue(position);
+      // We don't null out _cachedWidget anymore because we might reuse it.
+      // But if we want to save memory, we could. For now, let's keep it
+      // consistent with Phase 1 fix.
+      _cachedWidget = null;
+      return true;
+    }
+    return false;
+  }
+
+  QueueWidget? _cachedWidget;
+  static final _logger = Logger.get('fnq.Queue');
+
+  /// The widget that renders this queue's notifications.
+  QueueWidget get widget => _widget;
+
+  QueueWidget get _widget {
+    final b = _logger.debugBuffer;
+    if (_cachedWidget != null) {
+      b
+        ?..writeln('QueueWidget already exists.')
+        ..sink();
+      return _cachedWidget!;
+    } else {
+      b?.writeln('No QueueWidget exists, creating... .');
+      _cachedWidget = QueueWidget._(
+        parentQueue: this,
+        key: GlobalKey<QueueWidgetState>(),
+      );
+      return _cachedWidget!;
+    }
+  }
 
   MainAxisAlignment get mainAxisAlignment {
     switch (this) {

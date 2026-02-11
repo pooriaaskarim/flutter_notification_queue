@@ -11,7 +11,8 @@ sealed class QueueNotificationBehavior<T> {
   const QueueNotificationBehavior({required this.thresholdInPixels})
       : assert(
           thresholdInPixels >= kDefaultQueueDragBehaviorThreshold,
-          ',thresholdInPixels must be greater than kDefaultQueueBehaviorThreshold Pixels',
+          'thresholdInPixels must be greater than '
+          'kDefaultQueueBehaviorThreshold Pixels',
         );
 
   final int thresholdInPixels;

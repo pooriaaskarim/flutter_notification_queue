@@ -10,20 +10,18 @@ void main() {
 
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  FlutterNativeSplash.remove();
-
-  NotificationManager.initialize(
-    channels: {
-      const NotificationChannel(
+  // Initialize global configuration for Notification Queue
+  FlutterNotificationQueue.initialize(
+    channels: const {
+      NotificationChannel(
         name: 'scaffold',
         position: QueuePosition.bottomCenter,
         defaultDismissDuration: Duration(seconds: 5),
         defaultBackgroundColor: Colors.black,
         defaultForegroundColor: Colors.white,
         defaultColor: Colors.black,
-        enabled: false,
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'success',
         position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 3),
@@ -32,7 +30,7 @@ void main() {
           Icons.check_circle,
         ),
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'scaffold.success',
         position: QueuePosition.bottomCenter,
         defaultDismissDuration: Duration(seconds: 5),
@@ -42,9 +40,8 @@ void main() {
         defaultIcon: Icon(
           Icons.check_circle,
         ),
-        enabled: false,
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'error',
         position: QueuePosition.topCenter,
         defaultDismissDuration: null,
@@ -53,7 +50,7 @@ void main() {
           Icons.error,
         ),
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'scaffold.error',
         position: QueuePosition.bottomCenter,
         defaultDismissDuration: Duration(seconds: 5),
@@ -63,9 +60,8 @@ void main() {
         defaultIcon: Icon(
           Icons.error,
         ),
-        enabled: false,
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'info',
         position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 3),
@@ -74,7 +70,7 @@ void main() {
           Icons.info,
         ),
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'scaffold.info',
         position: QueuePosition.bottomCenter,
         defaultDismissDuration: Duration(seconds: 5),
@@ -84,9 +80,8 @@ void main() {
         defaultIcon: Icon(
           Icons.info,
         ),
-        enabled: false,
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'warning',
         position: QueuePosition.topCenter,
         defaultDismissDuration: Duration(seconds: 5),
@@ -95,7 +90,7 @@ void main() {
           Icons.warning,
         ),
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'scaffold.warning',
         position: QueuePosition.bottomCenter,
         defaultDismissDuration: Duration(seconds: 5),
@@ -105,9 +100,8 @@ void main() {
         defaultIcon: Icon(
           Icons.warning,
         ),
-        enabled: false,
       ),
-      const NotificationChannel(
+      NotificationChannel(
         name: 'default',
         defaultColor: Colors.pink,
       ),
@@ -138,6 +132,9 @@ void main() {
       ),
     },
   );
+
+  FlutterNativeSplash.remove();
+
   runApp(const NotificationQueueExample());
 }
 
@@ -175,7 +172,9 @@ class NotificationQueueExampleState extends State<NotificationQueueExample> {
   @override
   Widget build(final BuildContext context) => InheritedNotificationQueueExample(
         state: this,
+        // Use the builder pattern to wrap the entire app correctly
         child: MaterialApp(
+          builder: FlutterNotificationQueue.builder,
           title: 'NotificationQueue Example',
           theme: ThemeData.from(
             colorScheme: ColorScheme.fromSeed(
