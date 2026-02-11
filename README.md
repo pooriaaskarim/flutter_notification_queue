@@ -125,22 +125,21 @@ Use the `.show()` extension on any `NotificationWidget` to trigger a notificatio
 
 ```dart
 // Simple success notification
-const NotificationWidget
-(
-message: 'Operation completed successfully!',
-title: 'Success',
-channelName: 'success',
+const NotificationWidget(
+  message: 'Operation completed successfully!',
+  title: 'Success',
+  channelName: 'success',
 ).show();
 
 // Error with retry action
 NotificationWidget(
-channelName: 'error',
-message: 'Network connection failed. Please try again.',
-title: 'Connection Error',
-action: NotificationAction.button(
-label: 'Retry',
-onPressed: () => retryOperation(),
-),
+  channelName: 'error',
+  message: 'Network connection failed. Please try again.',
+  title: 'Connection Error',
+  action: NotificationAction.button(
+    label: 'Retry',
+    onPressed: () => retryOperation(),
+  ),
 ).show();
 ```
 
@@ -150,28 +149,24 @@ onPressed: () => retryOperation(),
 
 ```dart
 // Filled style with rounded corners
-const FilledQueueStyle
-(
-borderRadius: BorderRadius.all(Radius.circular(12)),
-opacity: 0.9,
-elevation: 8,
+const FilledQueueStyle(
+  borderRadius: BorderRadius.all(Radius.circular(12)),
+  opacity: 0.9,
+  elevation: 8,
 )
 
 // Flat style for minimal design
 const FlatQueueStyle(
-borderRadius: BorderRadius.zero,
-opacity: 0.8,
-elevation: 2,
+  borderRadius: BorderRadius.zero,
+  opacity: 0.8,
+  elevation: 2,
 )
 
 // Outlined style with borders
 const OutlinedQueueStyle(
-borderRadius: BorderRadius.all(Radius.circular(8)),
-opacity: 0.7,
-elevation
-:
-4
-,
+  borderRadius: BorderRadius.all(Radius.circular(8)),
+  opacity: 0.7,
+  elevation: 4,
 )
 ```
 
@@ -179,10 +174,7 @@ elevation
 
 ```dart
 // Dismiss on drag
-const Dismiss
-(
-thresholdInPixels: 50
-)
+const Dismiss(thresholdInPixels: 50)
 
 // Relocate to specific positions
 Relocate.to({
@@ -192,10 +184,7 @@ QueuePosition.bottomCenter,
 })
 
 // Disable gestures
-const
-Disabled
-(
-)
+const Disabled()
 ```
 
 ### Close Button Behaviors
@@ -212,26 +201,24 @@ FlutterNotificationQueue automatically detects text direction and supports RTL l
 
 ```dart
 // Arabic notification
-NotificationWidget
-(
-title: 'إشعار هام',
-message: 'تم تحديث التطبيق بنجاح. يرجى إعادة تشغيل التطبيق.',
-action: NotificationAction.button(
-label: 'إعادة التشغيل',
-onPressed: () => restartApp(),
-),
+NotificationWidget(
+  title: 'إشعار هام',
+  message: 'تم تحديث التطبيق بنجاح. يرجى إعادة تشغيل التطبيق.',
+  action: NotificationAction.button(
+    label: 'إعادة التشغيل',
+    onPressed: () => restartApp(),
+  ),
 ).show();
 
 // Persian notification
 NotificationWidget(
-title: 'اطلاعیه',
-message: 'عملیات با موفقیت انجام شد! سیستم آماده استفاده است.',
-action: NotificationAction.button(
-label: 'تأیید',
-onPressed: () => confirmAction(),
-),
-).show(
-);
+  title: 'اطلاعیه',
+  message: 'عملیات با موفقیت انجام شد! سیستم آماده استفاده است.',
+  action: NotificationAction.button(
+    label: 'تأیید',
+    onPressed: () => confirmAction(),
+  ),
+).show();
 ```
 
 ## Platform-Specific Features
@@ -262,82 +249,67 @@ onPressed: () => confirmAction(),
 ### Success Messages
 
 ```dart
-NotificationWidget
-(
-message: 'File saved successfully!',
-title: 'Success',
-channelName: 'success',
-dismissDuration: Duration(seconds: 3),
+NotificationWidget(
+  message: 'File saved successfully!',
+  title: 'Success',
+  channelName: 'success',
+  dismissDuration: Duration(seconds: 3),
 ).show();
 ```
 
 ### Error Handling
 
 ```dart
-NotificationWidget
-(
-message: 'Failed to connect to server. Please check your internet connection.',
-title: 'Connection Error',
-channelName: 'error',
-action: NotificationAction.button(
-label: 'Retry',
-onPressed: () => retryConnection(),
-),
-)
-.
-show
-(
-);
+NotificationWidget(
+  message: 'Failed to connect to server. Please check your internet connection.',
+  title: 'Connection Error',
+  channelName: 'error',
+  action: NotificationAction.button(
+    label: 'Retry',
+    onPressed: () => retryConnection(),
+  ),
+).show();
 ```
 
 ### Warning Notifications
 
 ```dart
-NotificationWidget
-(
-message: 'Low storage space detected. Tap to manage.',
-title: 'Storage Warning',
-channelName: 'warning',
-action: NotificationAction.onTap(
-onPressed: () => openStorageSettings(),
-),
+NotificationWidget(
+  message: 'Low storage space detected. Tap to manage.',
+  title: 'Storage Warning',
+  channelName: 'warning',
+  action: NotificationAction.onTap(
+    onPressed: () => openStorageSettings(),
+  ),
 ).show();
 ```
 
 ### Info Messages
 
 ```dart
-NotificationWidget
-(
-message: 'New features available! Check out our latest update.',
-title: 'App Update',
-channelName: 'info',
-action: NotificationAction.button(
-label: 'Learn More',
-onPressed: () => showUpdateDetails(),
-),
-)
-.
-show
-(
-);
+NotificationWidget(
+  message: 'New features available! Check out our latest update.',
+  title: 'App Update',
+  channelName: 'info',
+  action: NotificationAction.button(
+    label: 'Learn More',
+    onPressed: () => showUpdateDetails(),
+  ),
+).show();
 ```
 
 ### Permanent Notifications
 
 ```dart
-NotificationWidget
-(
-message: 'Important system maintenance scheduled for tonight.',
-title: 'Maintenance Notice',
-dismissDuration: null, // Permanent until dismissed
-action: NotificationAction.button(
-label: 'Dismiss',
-onPressed: () => dismissNotification(),
-),
-).show
-(
-);
+NotificationWidget(
+  message: 'Important system maintenance scheduled for tonight.',
+  title: 'Maintenance Notice',
+  dismissDuration: null, // Permanent until dismissed
+  action: NotificationAction.button(
+    label: 'Dismiss',
+    onPressed: () => dismissNotification(),
+  ),
+).show();
 ```
 
 ## API Reference
@@ -374,15 +346,14 @@ onPressed: () => dismissNotification(),
 
 ```dart
 // Button action
-NotificationAction.button
-(
-label: 'Action Label',
-onPressed: () => handleAction(),
+NotificationAction.button(
+  label: 'Action Label',
+  onPressed: () => handleAction(),
 );
 
 // Tap action
 NotificationAction.onTap(
-onPressed: () => handleTap(),
+  onPressed: () => handleTap(),
 );
 ```
 
@@ -391,61 +362,53 @@ onPressed: () => handleTap(),
 ### Custom Notification Builder
 
 ```dart
-NotificationWidget
-(
-message: 'Custom styled notification',
-builder: (context, notification) => Container(
-decoration: BoxDecoration(
-gradient: LinearGradient(
-colors: [Colors.purple, Colors.blue],
-begin: Alignment.topLeft,
-end: Alignment.bottomRight,
-),
-borderRadius: BorderRadius.circular(16),
-),
-child: Material(
-color: Colors.transparent,
-child: Padding(
-padding: EdgeInsets.all(16),
-child: Row(
-children: [
-Icon(Icons.star, color: Colors.white),
-SizedBox(width: 12),
-Expanded(
-child: Text(
-notification.message,
-style: TextStyle(color: Colors.white),
-),
-),
-],
-),
-),
-),
-),
+NotificationWidget(
+  message: 'Custom styled notification',
+  builder: (context, notification) => Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.purple, Colors.blue],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.star, color: Colors.white),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                notification.message,
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+        ],
+      ),
+    ),
+  ),
 ).show();
 ```
 
 ### Custom Queue Indicator
 
 ```dart
-TopCenterQueue
-(
-queueIndicatorBuilder: (context, count, config) => Container(
-padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-decoration: BoxDecoration(
-color: Colors.red,
-borderRadius: BorderRadius.circular(12),
-),
-child: Text(
-'+$count',
-style: const TextStyle(color: Colors.white, fontSize:
-12
-)
-,
-)
-,
-)
-,
+TopCenterQueue(
+  queueIndicatorBuilder: (context, count, config) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: Colors.red,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      '+$count',
+      style: const TextStyle(color: Colors.white, fontSize: 12),
+    ),
+  ),
 )
 ```
 
@@ -474,8 +437,7 @@ Version 0.4.0 introduces a unified core engine, replacing the legacy context bas
 
 ```dart
 // Initialization was often implicit or internal
-NotificationManager.instance.show
-(...);
+NotificationManager.instance.show(...);
 ```
 
 **New Pattern (Core Engine):**
@@ -509,22 +471,13 @@ The API has been significantly enhanced while maintaining backward compatibility
 
 ```dart
 // Old way (deprecated)
-context.showSuccess
-('Message
-'
-);
+context.showSuccess('Message');
 
 // New way (recommended)
 NotificationWidget(
-message: 'Message',
-channelName: 'success
-'
-,
-)
-.
-show
-(
-);
+  message: 'Message',
+  channelName: 'success',
+).show();
 ```
 
 ## Contributing
