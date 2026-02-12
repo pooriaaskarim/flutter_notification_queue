@@ -39,3 +39,7 @@ scripts/
 
 # Os Related Stuff
 *.directory
+/.vscode/launch.json
+/example/linux/flutter/generated_plugin_registrant.cc
+/example/linux/flutter/generated_plugin_registrant.h
+/example/linux/flutter/generated_plugins.cmake

@@ -9,16 +9,11 @@ import '../../flutter_notification_queue.dart';
 import '../core/core.dart';
 import '../utils/utils.dart';
 
-part 'draggables/draggable_transitions.dart';
-
-part 'draggables/relocation_targets.dart';
-
 part 'draggables/dismission_targets.dart';
-
-part 'theme/notification_theme.dart';
-
+part 'draggables/draggable_transitions.dart';
+part 'draggables/relocation_targets.dart';
 part 'notification_action.dart';
-
+part 'theme/notification_theme.dart';
 part 'type_defts.dart';
 
 @immutable

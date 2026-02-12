@@ -7,11 +7,7 @@ import '../../flutter_notification_queue.dart';
 import '../core/core.dart';
 
 part 'queue_widget.dart';
-
-part 'extensions.dart';
-
 part 'type_defs.dart';
-
 part 'styles.dart';
 
 ///  [NotificationQueue]s based on [QueuePosition].
