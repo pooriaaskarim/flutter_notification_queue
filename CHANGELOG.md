@@ -1,9 +1,30 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [0.4.1] - 2026-02-13
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Standard Defaults System
+- **Factory Methods**: Added `from` factory methods to `NotificationChannel` (e.g., `successChannel`, `errorChannel`) and `NotificationQueue` for easier instantiation.
+- **Unified Standard Channels**: Introduced `NotificationChannel.standardChannels()` to quickly generate a set of common channels (success, error, info, warning).
+- **Default Queue Factory**: Added `NotificationQueue.defaultQueue()` for creating standard queue configurations without boilerplate.
+- **Zero-Config Initialization**: `FlutterNotificationQueue.initialize()` can now be called with minimal or no arguments, utilizing sensible defaults.
+
+### Architecture & Stability
+- **Stateless Queues**: Fully refactored `NotificationQueue` to be immutable and stateless, moving logic to `QueueCoordinator`.
+- **Relocation Fixes**: Improved notification relocation logic and resolved issues with global keys during drag operations.
+- **Singleton Removal**: `QueueCoordinator` is no longer a singleton, allowing for better testability and lifecycle management.
+- **Initialization Guard**: Internal checks to prevent accidental re-initialization of the facade.
+- **Enhanced Debugging**: Implemented `toString()` overrides for `NotificationChannel` and `NotificationQueue` to provide clearer debug output.
+
+### Documentation
+- **Updated Examples**: Refactored example application to demonstrate the new "Standard Defaults" system.
+- **API Reference**: Updated README with new factory methods and usage guides.
+
+### Testing
+- **Comprehensive Test Suite**: Added extensive unit, widget, and integration tests covering:
+    - `QueueCoordinator` state logic.
+    - `QueueWidget` rendering and animations.
+    - `NotificationWidget` interactions.
+    - `NotificationOverlay` integration with `builder`.
 
 ## [0.4.0] - 2026-02-12
 

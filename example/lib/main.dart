@@ -12,8 +12,14 @@ void main() {
 
   // Initialize global configuration for Notification Queue
   FlutterNotificationQueue.initialize(
-    channels: const {
-      NotificationChannel(
+    channels: {
+      // 1. Add Standard Channels (success, error, warning, info)
+      ...NotificationChannel.standardChannels(
+        position: QueuePosition.topCenter,
+      ),
+
+      // 2. Add Custom Channels
+      const NotificationChannel(
         name: 'scaffold',
         position: QueuePosition.bottomCenter,
         defaultDismissDuration: Duration(seconds: 5),
@@ -21,105 +27,31 @@ void main() {
         defaultForegroundColor: Colors.white,
         defaultColor: Colors.black,
       ),
-      NotificationChannel(
-        name: 'success',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: Duration(seconds: 3),
-        defaultColor: Colors.green,
-        defaultIcon: Icon(
-          Icons.check_circle,
+      NotificationChannel.defaultChannel(
+        defaultDismissDuration: const Duration(
+          seconds: 5,
         ),
-      ),
-      NotificationChannel(
-        name: 'scaffold.success',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.green,
-        defaultIcon: Icon(
-          Icons.check_circle,
-        ),
-      ),
-      NotificationChannel(
-        name: 'error',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: null,
-        defaultColor: Colors.red,
-        defaultIcon: Icon(
-          Icons.error,
-        ),
-      ),
-      NotificationChannel(
-        name: 'scaffold.error',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.red,
-        defaultIcon: Icon(
-          Icons.error,
-        ),
-      ),
-      NotificationChannel(
-        name: 'info',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: Duration(seconds: 3),
-        defaultColor: Colors.blue,
-        defaultIcon: Icon(
-          Icons.info,
-        ),
-      ),
-      NotificationChannel(
-        name: 'scaffold.info',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.blue,
-        defaultIcon: Icon(
-          Icons.info,
-        ),
-      ),
-      NotificationChannel(
-        name: 'warning',
-        position: QueuePosition.topCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultColor: Colors.orange,
-        defaultIcon: Icon(
-          Icons.warning,
-        ),
-      ),
-      NotificationChannel(
-        name: 'scaffold.warning',
-        position: QueuePosition.bottomCenter,
-        defaultDismissDuration: Duration(seconds: 5),
-        defaultBackgroundColor: Colors.black,
-        defaultForegroundColor: Colors.white,
-        defaultColor: Colors.orange,
-        defaultIcon: Icon(
-          Icons.warning,
-        ),
-      ),
-      NotificationChannel(
-        name: 'default',
-        defaultColor: Colors.pink,
       ),
     },
     queues: {
+      // 1. Use Default Queue for TopCenter
       TopCenterQueue(
         margin: EdgeInsetsGeometry.zero,
-        closeButtonBehavior: QueueCloseButtonBehavior.onHover,
-        style: const FilledQueueStyle(),
-        dragBehavior: const Disabled(),
+        style: const FilledQueueStyle(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+          opacity: 0.9,
+          elevation: 8,
+        ),
         longPressDragBehavior: Relocate.to(
           {
             QueuePosition.centerRight,
             QueuePosition.centerLeft,
-            QueuePosition.topCenter,
+            QueuePosition.bottomCenter,
           },
         ),
       ),
+
+      // 2. Custom Queue Configuration for BottomCenter
       BottomCenterQueue(
         maxStackSize: 1,
         margin: EdgeInsetsGeometry.zero,

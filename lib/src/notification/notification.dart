@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:logd/logd.dart';
 
 import '../../flutter_notification_queue.dart';
-import '../core/core.dart';
 import '../utils/utils.dart';
 
 part 'draggables/dismission_targets.dart';
@@ -14,7 +13,7 @@ part 'draggables/draggable_transitions.dart';
 part 'draggables/relocation_targets.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
-part 'type_defts.dart';
+part 'type_defs.dart';
 
 @immutable
 class NotificationWidget extends StatefulWidget {
@@ -52,8 +51,8 @@ class NotificationWidget extends StatefulWidget {
     final resolvedId = id ?? DateTime.now().toString();
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
     final resolveChannel =
-        ConfigurationManager.instance.getChannel(channelName);
-    final resolvedQueue = ConfigurationManager.instance
+        FlutterNotificationQueue.configuration.getChannel(channelName);
+    final resolvedQueue = FlutterNotificationQueue.configuration
         .getQueue(position ?? resolveChannel.position);
 
     return NotificationWidget._(
@@ -85,7 +84,6 @@ class NotificationWidget extends StatefulWidget {
   /// if [id] is provided or not,
   /// but to have more control over [NotificationWidget], you can
   /// set the [id] and use it.
-  //todo: implement id based handlers in notification manager
   final String id;
 
   /// Name of the notification channel.
@@ -155,19 +153,19 @@ class NotificationWidget extends StatefulWidget {
   /// Custom builder for the notification stack indicator.
   final NotificationBuilder? builder;
 
-  void show() => queue.queue(this);
+  void show() => FlutterNotificationQueue.coordinator.queue(this);
 
   Future<void> dismiss() async {
     final state = key.currentState;
     if (state != null) {
       await state.dismiss();
     } else {
-      queue.dismiss(this);
+      FlutterNotificationQueue.coordinator.dismiss(this);
     }
   }
 
   NotificationWidget? relocateTo(final QueuePosition position) =>
-      queue.relocate(this, position);
+      FlutterNotificationQueue.coordinator.relocate(this, position);
 
   @override
   State<StatefulWidget> createState() => NotificationWidgetState();
@@ -273,7 +271,7 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   Future<void> dismiss() async {
     await animationController.reverse();
-    widget.queue.dismiss(widget);
+    FlutterNotificationQueue.coordinator.dismiss(widget);
     _logger.debugBuffer
       ?..writeAll(['Dismissed.'])
       ..sink();

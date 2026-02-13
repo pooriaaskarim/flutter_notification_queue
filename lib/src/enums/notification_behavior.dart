@@ -25,7 +25,13 @@ final class Relocate<T> extends QueueNotificationBehavior<T> {
   });
 
   factory Relocate.to(final Set<QueuePosition> positions) {
-    assert(positions.isNotEmpty, 'positions cannot be empty');
+    if (positions.isEmpty) {
+      throw ArgumentError.value(
+        positions,
+        'positions',
+        'positions must not be empty',
+      );
+    }
     return Relocate._(positions: positions);
   }
 
