@@ -2,128 +2,197 @@ part of 'core.dart';
 
 /// The lifecycle bridge between [NotificationQueue]s and the rendering surface.
 ///
-/// Owns the single [OverlayPortalController] and maintains a registry of
-/// active queues. When a queue has notifications to display, it registers
-/// itself here via [activateQueue]. When it empties, it unregisters via
-/// [deactivateQueue]. The coordinator then signals the NotificationOverlay
-/// to show or hide accordingly.
+/// Owns the [OverlayPortalController] and manages the lifecycle of queue
+/// widgets.
 ///
-/// ## Lifecycle
-///
-/// 1. [attach] is called by `NotificationOverlay.initState`, binding
-///    the overlay's [OverlayPortalController] to this coordinator.
-/// 2. [NotificationQueue]s call [activateQueue] / [deactivateQueue]
-///    as their notification count changes.
-/// 3. [detach] is called by `NotificationOverlay.dispose`, clearing all
-///    state and releasing the controller.
-///
-/// ## Rendering Contract
-///
-/// The [activeQueues] listenable is consumed by `_NotificationQueueStack`
-/// inside the overlay to rebuild the notification stack whenever the set
-/// of active queues changes.
+/// Refactored to delegate state management to [QueueWidgetState] via
+/// [GlobalKey]s, using a "startup mailbox" pattern to pass initial data to
+/// newly mounting widgets.
 class QueueCoordinator {
-  QueueCoordinator._();
-
-  static final instance = QueueCoordinator._();
+  QueueCoordinator();
 
   static final _logger = Logger.get('fnq.Core.Coordinator');
 
   OverlayPortalController? _controller;
-  final _activeQueues = <QueuePosition, NotificationQueue>{};
+
+  /// Registry of keys to communicate with active queue widgets.
+  final _widgetStateKeys = <QueuePosition, GlobalKey<QueueWidgetState>>{};
+
+  /// Holds notifications for queues that are initializing (mounting).
+  ///
+  /// This bridges the gap between a logical enqueue request and the visual
+  /// mount of the [QueueWidget]. When a queue is requested but not yet mounted,
+  /// items are stored here.
+  final _initializationQueue = <QueuePosition, List<NotificationWidget>>{};
+
+  /// The set of currently active queues (those with visible notifications).
   final _activeQueuesNotifier =
       ValueNotifier<Map<QueuePosition, NotificationQueue>>({});
 
-  /// Binds the overlay's [OverlayPortalController] to this coordinator.
-  ///
-  /// Called by `NotificationOverlay.initState`.
   void attach(final OverlayPortalController controller) {
-    _logger.debugBuffer
-      ?..writeAll(['Attaching OverlayPortalController...'])
-      ..sink();
+    _logger.debug('Attaching OverlayPortalController...');
     _controller = controller;
   }
 
-  /// Releases the controller and clears all active queue state.
-  ///
-  /// Called by `NotificationOverlay.dispose`.
   void detach() {
-    _logger.debugBuffer
-      ?..writeAll(['Detaching OverlayPortalController...'])
-      ..sink();
+    _logger.debug('Detaching OverlayPortalController...');
     _controller = null;
-    _activeQueues.clear();
+    _widgetStateKeys.clear();
+    _initializationQueue.clear();
     _activeQueuesNotifier.value = {};
   }
 
-  /// Registers [queue] as active, triggering the overlay to rebuild
-  /// and include this queue's widget in the notification stack.
-  ///
-  /// No-op if the queue's position is already active.
-  void activateQueue(final NotificationQueue queue) {
-    if (_activeQueues.containsKey(queue.position)) {
+  /// Retrieves and clears pending initialization items for a queue.
+  /// Called by [QueueWidgetState.initState].
+  List<NotificationWidget> consumeInitializationQueue(
+    final QueuePosition position,
+  ) =>
+      _initializationQueue.remove(position) ?? [];
+
+  /// Registers a queue's key. Called by [QueueWidget] constructor/build?
+  /// Typically we create the key here and pass it to the widget.
+  GlobalKey<QueueWidgetState> _getKey(final QueuePosition position) =>
+      _widgetStateKeys.putIfAbsent(
+        position,
+        () => GlobalKey<QueueWidgetState>(),
+      );
+
+  // --- Actions ---
+
+  void queue(
+    final NotificationWidget notification,
+  ) {
+    if (!notification.channel.enabled) {
       return;
     }
 
-    _logger.debugBuffer
-      ?..writeAll([
-        'Activating Queue: ${queue.position}',
-        'Queue: $queue',
-      ])
-      ..sink();
+    final notificationQueue = notification.queue;
+    final key = _widgetStateKeys[notificationQueue.position];
+    final isMounted = key?.currentState != null;
 
-    _activeQueues[queue.position] = queue;
-    _notify();
+    if (isMounted) {
+      // Widget is alive, delegate directly.
+      key!.currentState!.enqueue(notification);
+    } else {
+      // Widget is not alive. Schedule startup.
+      _initializationQueue
+          .putIfAbsent(notificationQueue.position, () => [])
+          .add(notification);
+      _mountQueue(notificationQueue);
+    }
+  }
+
+  void dismiss(
+    final NotificationWidget notification,
+  ) {
+    final notificationQueue = notification.queue;
+    final key = _widgetStateKeys[notificationQueue.position];
+    if (key?.currentState != null) {
+      key!.currentState!.dismiss(notification);
+    } else {
+      // If not mounted, check initialization queue (rare race condition where
+      // we dismiss before mount?)
+      _initializationQueue[notificationQueue.position]
+          ?.removeWhere((final n) => n.id == notification.id);
+
+      // If we emptied the init queue before it even mounted, cancel mount?
+      if (_initializationQueue[notificationQueue.position]?.isEmpty ?? false) {
+        _unmountQueue(notificationQueue.position);
+      }
+    }
+  }
+
+  NotificationWidget? relocate(
+    final NotificationWidget notification,
+    final QueuePosition newPosition,
+  ) {
+    final notificationQueue = notification.queue;
+    NotificationWidget? newNotification;
+    final sourceKey = _widgetStateKeys[notificationQueue.position];
+
+    // 1. Remove from source
+    bool removed = false;
+    if (sourceKey?.currentState != null) {
+      removed = sourceKey!.currentState!.remove(notification);
+    } else {
+      // Check initialization queue
+      final initQueue = _initializationQueue[notificationQueue.position];
+      if (initQueue != null) {
+        final initialLen = initQueue.length;
+        initQueue.removeWhere((final n) => n.id == notification.id);
+        removed = initQueue.length < initialLen;
+      }
+    }
+
+    // 2. Add to target if removed
+    if (removed) {
+      newNotification = notification.copyWith(newPosition);
+      // Defer addition to next frame to avoid Duplicate GlobalKey error
+      // if the source queue animates the exit (keeping the key alive).
+      // Note: This effectively unmounts and remounts the widget, resetting
+      // transient state. This is the trade-off for avoiding "Ghost" widgets
+      // while preventing crashes.
+      WidgetsBinding.instance.addPostFrameCallback((final _) {
+        queue(newNotification!);
+      });
+    }
+
+    return newNotification;
+  }
+
+  void bringToFront(final QueuePosition position) {
+    if (!_activeQueuesNotifier.value.containsKey(position)) {
+      return;
+    }
+    final currentMap = Map.of(_activeQueuesNotifier.value);
+    final queue = currentMap.remove(position)!;
+    currentMap[position] = queue;
+    _activeQueuesNotifier.value = currentMap;
+  }
+
+  /// Called by QueueWidgetState when it's empty to self-destruct.
+  void unmountQueue(final QueuePosition position) {
+    _unmountQueue(position);
+  }
+
+  // --- Helpers ---
+
+  void _mountQueue(final NotificationQueue queue) {
+    if (_activeQueuesNotifier.value.containsKey(queue.position)) {
+      return;
+    }
+
+    _getKey(queue.position); // Ensure key exists
+    final newMap = Map.of(_activeQueuesNotifier.value);
+    newMap[queue.position] = queue;
+    _activeQueuesNotifier.value = newMap;
     _controller?.show();
   }
 
-  /// Unregisters the queue at [position]. If no queues remain active,
-  /// the overlay is hidden.
-  void deactivateQueue(final QueuePosition position) {
-    if (!_activeQueues.containsKey(position)) {
+  void _unmountQueue(final QueuePosition position) {
+    if (!_activeQueuesNotifier.value.containsKey(position)) {
       return;
     }
 
-    _activeQueues.remove(position);
-    _notify();
+    final newMap = Map.of(_activeQueuesNotifier.value)..remove(position);
+    _activeQueuesNotifier.value = newMap;
 
-    if (_activeQueues.isEmpty) {
+    // We can clean up the key too if we want fresh state next time
+    // (which we do, since the widget is disposing)
+    _widgetStateKeys.remove(position);
+    _initializationQueue.remove(position);
+
+    if (newMap.isEmpty) {
       _controller?.hide();
     }
   }
 
-  /// Moves the queue at [position] to the top of the rendering stack.
-  void bringToFront(final QueuePosition position) {
-    if (!_activeQueues.containsKey(position)) {
-      return;
-    }
-    final queue = _activeQueues.remove(position)!;
+  /// Exposed for overlay.
+  /// Note: The overlay builder needs to use the GlobalKey we created.
+  /// We need a way to look it up.
+  GlobalKey<QueueWidgetState> getWidgetKey(final QueuePosition position) =>
+      _widgetStateKeys[position]!;
 
-    _logger.debugBuffer
-      ?..writeAll([
-        'Bringing Queue to front: $position',
-        'Queue: $queue',
-      ])
-      ..sink();
-    _activeQueues[position] = queue; // Re-insert at end (top of stack)
-    _notify();
-  }
-
-  void _notify() {
-    _activeQueuesNotifier.value = Map.of(_activeQueues);
-  }
-
-  /// The set of currently active queues, exposed as a [ValueListenable]
-  /// for the notification stack to rebuild against.
   ValueListenable<Map<QueuePosition, NotificationQueue>> get activeQueues =>
       _activeQueuesNotifier;
-
-  // Future: coordinate drag-hold across a relocation group
-  void holdGroup(final Set<QueuePosition> group) {
-    /* pause timers in group */
-  }
-
-  void releaseGroup(final Set<QueuePosition> group) {
-    /* resume timers */
-  }
 }

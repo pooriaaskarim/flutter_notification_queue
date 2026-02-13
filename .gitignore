@@ -30,13 +30,6 @@ migrate_working_dir/
 /build/
 /coverage/
 
-
-# Temprarily ignoring tests
-test/
-
-# My Scripts
-scripts/
-
 # Os Related Stuff
 *.directory
 /.vscode/launch.json

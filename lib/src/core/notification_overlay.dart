@@ -56,7 +56,7 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
     super.initState();
 
     // Guard: ensure ConfigurationManager has been configured.
-    if (!ConfigurationManager.isInitialized) {
+    if (!FlutterNotificationQueue.isInitialized) {
       throw StateError(
         'FlutterNotificationQueue has not been initialized. '
         'Call FlutterNotificationQueue.initialize() in your main() function '
@@ -67,7 +67,7 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
     // Attach QueueCoordinator immediately.
     // It's safe to pass the controller even if not yet attached to the
     // OverlayPortal.
-    QueueCoordinator.instance.attach(_overlayPortalController);
+    FlutterNotificationQueue.coordinator.attach(_overlayPortalController);
 
     _logger.debugBuffer
       ?..writeAll(['NotificationOverlay created state.'])
@@ -76,7 +76,7 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 
   @override
   void dispose() {
-    QueueCoordinator.instance.detach();
+    FlutterNotificationQueue.coordinator.detach();
     super.dispose();
   }
 
@@ -132,14 +132,21 @@ class _NotificationQueueStack extends StatelessWidget {
   @override
   Widget build(final BuildContext context) =>
       ValueListenableBuilder<Map<QueuePosition, NotificationQueue>>(
-        valueListenable: QueueCoordinator.instance.activeQueues,
+        valueListenable: FlutterNotificationQueue.coordinator.activeQueues,
         builder: (final context, final activeQueues, final child) {
           _logger.debug(
             'QueueCoordinator rebuild with ${activeQueues.length} queues',
           );
           return Stack(
-            children:
-                activeQueues.values.map((final queue) => queue.widget).toList(),
+            children: activeQueues.values
+                .map(
+                  (final queue) => QueueWidget(
+                    key: FlutterNotificationQueue.coordinator
+                        .getWidgetKey(queue.position),
+                    queue: queue,
+                  ),
+                )
+                .toList(),
           );
         },
       );

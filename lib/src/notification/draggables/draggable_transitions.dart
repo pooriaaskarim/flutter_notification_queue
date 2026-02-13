@@ -93,7 +93,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position,
             axis: null,
             onDragStarted: () {
-              widget.notification.queue.bringToFront();
+              FlutterNotificationQueue.coordinator
+                  .bringToFront(widget.notification.queue.position);
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
@@ -142,7 +143,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                         .positions,
                     currentPosition: widget.notification.queue.position,
                     onAccept: (final candidatePosition) {
-                      widget.notification.queue
+                      FlutterNotificationQueue.coordinator
                           .relocate(widget.notification, candidatePosition);
                     },
                     screenSize: layoutInfo.overlaySize,
@@ -163,7 +164,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position.alignment,
             axis: null,
             onDragStarted: () {
-              widget.notification.queue.bringToFront();
+              FlutterNotificationQueue.coordinator
+                  .bringToFront(widget.notification.queue.position);
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.longPressDragBehavior
                   is! Disabled) {
@@ -232,7 +234,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position,
             axis: null,
             onDragStarted: () {
-              widget.notification.queue.bringToFront();
+              FlutterNotificationQueue.coordinator
+                  .bringToFront(widget.notification.queue.position);
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.dragBehavior is! Disabled) {
                 _overlayPortalController.show();
@@ -276,7 +279,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                             .positions,
                     currentPosition: widget.notification.queue.position,
                     onAccept: (final candidatePosition) {
-                      widget.notification.queue
+                      FlutterNotificationQueue.coordinator
                           .relocate(widget.notification, candidatePosition);
                     },
                     screenSize: layoutInfo.overlaySize,
@@ -297,7 +300,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             data: widget.notification.queue.position.alignment,
             axis: null,
             onDragStarted: () {
-              widget.notification.queue.bringToFront();
+              FlutterNotificationQueue.coordinator
+                  .bringToFront(widget.notification.queue.position);
               widget.notification.key.currentState?.ditchDismissTimer();
               if (widget.notification.queue.dragBehavior is! Disabled) {
                 _overlayPortalController.show();
