@@ -34,7 +34,7 @@ class ConfigurationManager {
         registeredChannel = channel.name == channelName;
         return registeredChannel;
       },
-      orElse: () => channels.first,
+      orElse: () => NotificationChannel.defaultChannel(),
     );
 
     _logger.debugBuffer
@@ -83,14 +83,9 @@ class ConfigurationManager {
           ..sink();
         return queue;
       } catch (_) {
-        //todo: isn't it better to just fallback to default queue?
-        // what if the first queue is configured in a way that causes conflicts?
-        // is that possible?
-        final NotificationQueue defaultQueue = queues.isNotEmpty
-            ? queues.first
-            : NotificationQueue.defaultQueue(position: position);
-
-        final generatedQueue = position.generateQueueFrom(defaultQueue);
+        final generatedQueue = position.generateQueueFrom(
+          NotificationQueue.defaultQueue(position: position),
+        );
 
         b
           ?..writeln('Unconfigured Queue. Generated default at position.')

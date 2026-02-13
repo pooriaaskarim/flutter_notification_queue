@@ -38,7 +38,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Hello World'), findsOneWidget);
-      expect(find.byIcon(Icons.abc), findsOneWidget); // Default icon from channel
+      expect(find.byIcon(Icons.abc), findsOneWidget); // Default icon from
+      // channel
     });
 
     testWidgets('Renders title when provided', (final tester) async {
@@ -81,7 +82,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Initially collapsed (maxLines: 1)
-      // It's hard to verify maxLines directly on the RenderObject easily without checking properties on the widget.
+      // It's hard to verify maxLines directly on the RenderObject easily
+      // without checking properties on the widget.
       // But we can check for the Expand button.
       final expandButton = find.byIcon(Icons.expand_more);
       expect(expandButton, findsOneWidget);
@@ -94,7 +96,8 @@ void main() {
       expect(find.byIcon(Icons.expand_less), findsOneWidget);
     });
 
-    testWidgets('Action button is rendered and clickable', (final tester) async {
+    testWidgets('Action button is rendered and clickable',
+        (final tester) async {
       bool actionClicked = false;
       final notification = NotificationWidget(
         message: 'Action Test',

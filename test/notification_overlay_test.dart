@@ -21,11 +21,12 @@ void main() {
 
     tearDown(FlutterNotificationQueue.reset);
 
-    testWidgets('Shows notification via builder integration', (final tester) async {
+    testWidgets('Shows notification via builder integration',
+        (final tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           builder: FlutterNotificationQueue.builder,
-          home: const Scaffold(
+          home: Scaffold(
             body: Center(child: Text('App Home')),
           ),
         ),
@@ -44,26 +45,28 @@ void main() {
 
       await tester.pump(); // Start animation (enqueue)
       await tester.pump(); // Frame for adding post-frame callbacks if any
-      
+
       // Verify it appears
       expect(find.text('Overlay Test'), findsOneWidget);
       expect(find.byType(NotificationWidget), findsOneWidget);
 
-      // Capture location to verify it's valid (and conceptually "above" or at least visible)
+      // Capture location to verify it's valid (and conceptually "above" or at
+      // least visible)
       firstLocation = tester.getCenter(find.text('Overlay Test'));
       expect(firstLocation, isNotNull);
 
       await tester.pumpAndSettle(); // Finish entry animation
-      
+
       // Verify it stays
       expect(find.text('Overlay Test'), findsOneWidget);
     });
 
-    testWidgets('Dismissal removes notification from overlay', (final tester) async {
+    testWidgets('Dismissal removes notification from overlay',
+        (final tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           builder: FlutterNotificationQueue.builder,
-          home: const Scaffold(
+          home: Scaffold(
             body: Center(child: Text('App Home')),
           ),
         ),
@@ -72,15 +75,14 @@ void main() {
       final notification = NotificationWidget(
         message: 'Dismiss Test',
         channelName: 'test_channel',
-      );
-      notification.show();
+      )..show();
 
       await tester.pumpAndSettle();
       expect(find.text('Dismiss Test'), findsOneWidget);
 
       // Dismiss (async because it waits for animation)
       // We must pump while waiting for it, otherwise deadlock.
-      final dismissFuture = notification.dismiss(); 
+      final dismissFuture = notification.dismiss();
       await tester.pumpAndSettle();
       await dismissFuture;
 
@@ -88,18 +90,18 @@ void main() {
       expect(find.byType(NotificationWidget), findsNothing);
     });
 
-     testWidgets('Multiple notifications stack correctly', (final tester) async {
+    testWidgets('Multiple notifications stack correctly', (final tester) async {
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           builder: FlutterNotificationQueue.builder,
-          home: const Scaffold(
+          home: Scaffold(
             body: Center(child: Text('App Home')),
           ),
         ),
       );
 
       NotificationWidget(message: 'First', channelName: 'test_channel').show();
-      await tester.pump(); 
+      await tester.pump();
       NotificationWidget(message: 'Second', channelName: 'test_channel').show();
       await tester.pumpAndSettle();
 
@@ -110,12 +112,13 @@ void main() {
       final firstCenter = tester.getCenter(find.text('First'));
       final secondCenter = tester.getCenter(find.text('Second'));
 
-      // TopRightQueue typically stacks downwards? 
-      // Need to check specific queue behavior or just ensure they constitute a column-like structure.
-      // Usually "First" is at the top? Or bottom depending on implementation.
-      // TopRightQueue typically has newer items at the bottom or top depending on "gravity"?
-      // Standard/Default is usually growing downwards.
-      
+      // TopRightQueue typically stacks downwards?
+      // Need to check specific queue behavior or just ensure they constitute a
+      // column-like structure. Usually "First" is at the top? Or bottom
+      // depending on implementation.
+      // TopRightQueue typically has newer items at the bottom or top depending
+      // on "gravity"? Standard/Default is usually growing downwards.
+
       // We just ensure they are not at the same position
       expect(firstCenter.dy, isNot(equals(secondCenter.dy)));
     });

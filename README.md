@@ -321,8 +321,11 @@ NotificationWidget(
     - `builder`: Integration hook for `MaterialApp.builder`.
 - **`NotificationWidget`**: The main configuration for individual notifications.
 - **`NotificationChannel`**: Defines shared behavior and styling for groups of notifications.
+    - `standardChannels()`: Returns a set of standard channels (success, error, info, warning).
+    - `successChannel()`, `errorChannel()`, etc.: Factory methods for common channel types.
 - **`NotificationQueue`**: Manages the lifecycle and rendering constraints of a specific screen
   position.
+    - `defaultQueue()`: Factory method for creating a standard queue configuration.
 - **`NotificationAction`**: Definable user interactions (buttons, taps, gestures).
 
 ### Queue Positions
