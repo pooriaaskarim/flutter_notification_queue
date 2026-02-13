@@ -47,16 +47,35 @@ final class FlutterNotificationQueue {
   /// Initialize the notification queue system with custom queues and channels.
   ///
   /// This should be called once, typically in your `main()` function.
+  ///
+  /// Empty/Null configuration would fallback to [NotificationQueue.defaultQueue]
+  /// and [NotificationChannel.standardChannels].
   static void initialize({
     final Set<NotificationQueue>? queues,
     final Set<NotificationChannel>? channels,
   }) {
+    if (isInitialized) {
+      throw StateError(
+        'FlutterNotificationQueue is already initialized. '
+        'Do not call FlutterNotificationQueue.initialize() multiple times.',
+      );
+    }
+
     _configureLogger();
     _configuration = ConfigurationManager(
-      queues: queues ?? const {},
-      channels: channels ?? const {},
+      queues: queues ?? {NotificationQueue.defaultQueue()},
+      channels: channels ?? NotificationChannel.standardChannels(),
     );
     _coordinator = QueueCoordinator();
+  }
+
+  /// Resets the notification queue system.
+  ///
+  /// This is intended for testing purposes only.
+  @visibleForTesting
+  static void reset() {
+    _configuration = null;
+    _coordinator = null;
   }
 
   /// Configure the logger hierarchy for the package.

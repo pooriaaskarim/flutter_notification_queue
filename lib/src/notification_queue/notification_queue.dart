@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import '../../flutter_notification_queue.dart';
 import '../utils/extensions.dart' show ExtendedStringFuntionalities;
 
+part 'styles.dart';
 part 'queue_widget.dart';
 part 'type_defs.dart';
-part 'styles.dart';
 
 ///  [NotificationQueue]s based on [QueuePosition].
 ///
@@ -37,6 +37,30 @@ sealed class NotificationQueue {
     required this.style,
     required this.queueIndicatorBuilder,
   }) : assert(maxStackSize > 0, 'maxStackSize must be greater than 0');
+
+  factory NotificationQueue.defaultQueue({
+    final QueuePosition position = QueuePosition.topCenter,
+    final int maxStackSize = 3,
+    final DragBehavior dragBehavior = const Disabled(),
+    final LongPressDragBehavior longPressDragBehavior = const Disabled(),
+    final QueueCloseButtonBehavior closeButtonBehavior =
+        QueueCloseButtonBehavior.always,
+    final double spacing = 4.0,
+    final EdgeInsetsGeometry margin =
+        const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
+    final QueueStyle style = const FilledQueueStyle(),
+    final QueueIndicatorBuilder? queueIndicatorBuilder,
+  }) =>
+      position.generateQueue(
+        maxStackSize: maxStackSize,
+        dragBehavior: dragBehavior,
+        longPressDragBehavior: longPressDragBehavior,
+        closeButtonBehavior: closeButtonBehavior,
+        spacing: spacing,
+        style: style,
+        margin: margin,
+        queueIndicatorBuilder: queueIndicatorBuilder,
+      );
 
   // NOTE: Assertions that depend on runtime checks of concrete types or complex
   // logic within const constructors are limited. We removed the complex init

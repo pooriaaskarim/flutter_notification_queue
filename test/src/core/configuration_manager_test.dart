@@ -10,8 +10,33 @@ void main() {
       expect(manager, isA<ConfigurationManager>());
     });
 
-    // 2. Default Configuration
-    test('Default Configuration: Returns default queue and channel', () {
+    tearDown(() {
+      try {
+        FlutterNotificationQueue.reset();
+      } catch (_) {}
+    });
+
+    // 2. Zero-Config Initialization
+    test('Zero-Config Initialization: Uses standard defaults', () {
+      FlutterNotificationQueue.initialize();
+      final config = FlutterNotificationQueue.configuration;
+
+      expect(config.queues, isNotEmpty);
+      expect(config.channels, isNotEmpty);
+
+      // Verify Standard Channels
+      expect(config.getChannel('success'), isNotNull);
+      expect(config.getChannel('error'), isNotNull);
+
+      // Verify Standard Queues
+      // Default is desktop, which has TopRightQueue
+      expect(config.getQueue(QueuePosition.topRight), isA<TopRightQueue>());
+    });
+
+    // 3. Default Configuration
+    test(
+        'ConfigurationManager Default Configuration: Returns'
+        ' default queue and channel', () {
       const manager = ConfigurationManager();
 
       // Verify default queue logic (generates fallbacks)

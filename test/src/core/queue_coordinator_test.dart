@@ -32,7 +32,10 @@ void main() {
       coordinator.attach(mockOverlayController);
       when(() => mockOverlayController.show()).thenReturn(null);
       when(() => mockOverlayController.hide()).thenReturn(null);
+      when(() => mockOverlayController.hide()).thenReturn(null);
     });
+
+    tearDown(FlutterNotificationQueue.reset);
 
     test('Initial state is clear', () {
       expect(coordinator.activeQueues.value.isEmpty, isTrue);

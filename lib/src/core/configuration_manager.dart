@@ -25,11 +25,7 @@ class ConfigurationManager {
   /// or a default channel if no channels are registered.
   NotificationChannel getChannel(final String channelName) {
     if (channels.isEmpty) {
-      return const NotificationChannel(
-        name: 'default',
-        position: QueuePosition.topCenter,
-        description: 'Default notification channel.',
-      );
+      return NotificationChannel.defaultChannel();
     }
 
     bool registeredChannel = false;
@@ -46,7 +42,7 @@ class ConfigurationManager {
         'Channel: $channelName',
         (registeredChannel
             ? 'Registered Channel'
-            : 'Unregistered Channel. Defaulting to default channel'),
+            : 'Unregistered Channel. Defaulting to the default channel!'),
         'NotificationChannel: $notificationChannel',
       ])
       ..sink();
@@ -78,33 +74,31 @@ class ConfigurationManager {
         ])
         ..sink();
       return defaultQueue;
-    }
+    } else {
+      // 2. Find Configured Queue
+      try {
+        final queue = queues.firstWhere((final q) => q.position == position);
+        b
+          ?..writeln('Configured Queue found: $queue')
+          ..sink();
+        return queue;
+      } catch (_) {
+        //todo: isn't it better to just fallback to default queue?
+        // what if the first queue is configured in a way that causes conflicts?
+        // is that possible?
+        final NotificationQueue defaultQueue = queues.isNotEmpty
+            ? queues.first
+            : NotificationQueue.defaultQueue(position: position);
 
-    // 2. Find Configured Queue
-    try {
-      final queue = queues.firstWhere((final q) => q.position == position);
-      b
-        ?..writeln('Configured Queue found: $queue')
-        ..sink();
-      return queue;
-    } catch (_) {
-      // 3. Generate Fallback
-      // We can't mutate `queues` because this class is immutable.
-      // We must generate a notification queue config on the fly.
-      // This is safe because state is now in QueueCoordinator!
+        final generatedQueue = position.generateQueueFrom(defaultQueue);
 
-      final NotificationQueue defaultQueue = queues.isNotEmpty
-          ? queues.first
-          : const TopCenterQueue(style: FilledQueueStyle());
+        b
+          ?..writeln('Unconfigured Queue. Generated default at position.')
+          ..writeln('Queue: $generatedQueue')
+          ..sink();
 
-      final generatedQueue = position.generateQueueFrom(defaultQueue);
-
-      b
-        ?..writeln('Unconfigured Queue. Generated default at position.')
-        ..writeln('Queue: $generatedQueue')
-        ..sink();
-
-      return generatedQueue;
+        return generatedQueue;
+      }
     }
   }
 }

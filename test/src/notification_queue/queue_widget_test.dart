@@ -24,6 +24,8 @@ void main() {
       );
     });
 
+    tearDown(FlutterNotificationQueue.reset);
+
     testWidgets('enqueue adds to active list immediately if under limit',
         (final tester) async {
       await tester.pumpWidget(
