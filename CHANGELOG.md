@@ -3,7 +3,7 @@
 ## [0.4.1] - 2026-02-13
 
 ### Standard Defaults System
-- **Factory Methods**: Added `from` factory methods to `NotificationChannel` (e.g., `successChannel`, `errorChannel`) and `NotificationQueue` for easier instantiation.
+- **Factory Methods**: Added factory methods to `NotificationChannel` (e.g., `successChannel`, `errorChannel`) and `NotificationQueue` for easier instantiation.
 - **Unified Standard Channels**: Introduced `NotificationChannel.standardChannels()` to quickly generate a set of common channels (success, error, info, warning).
 - **Default Queue Factory**: Added `NotificationQueue.defaultQueue()` for creating standard queue configurations without boilerplate.
 - **Zero-Config Initialization**: `FlutterNotificationQueue.initialize()` can now be called with minimal or no arguments, utilizing sensible defaults.
