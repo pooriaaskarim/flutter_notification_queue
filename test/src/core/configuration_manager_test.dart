@@ -74,7 +74,10 @@ void main() {
       expect(manager.getChannel('two'), equals(c2));
 
       // Fallback
-      expect(manager.getChannel('unknown'), equals(c1));
+      expect(
+        manager.getChannel('unknown'),
+        isA<NotificationChannel>().having((c) => c.name, 'name', 'default'),
+      );
     });
 
     // 5. Queue Resolution (Stateless)
