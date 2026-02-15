@@ -1,49 +1,58 @@
-# FNQ — API Surface
+# API Reference
 
-## 🧭 Philosophy
-FNQ follows a philosophy of **Progressive Disclosure**. Simple use cases require almost zero code, while complex configurations are available through descriptive declarative parameters.
+This document outlines the public API surface of FNQ.
 
----
+## Philosophy
+FNQ follows a philosophy of **Progressive Disclosure**. Simple use cases require minimal code, while complex configurations are available through descriptive declarative parameters.
 
-## 💎 Public API Surface
+## Public Components
 
-### 1. Integration: `FlutterNotificationQueue`
-The primary entry point.
+### 1. FlutterNotificationQueue
+The primary entry point and facade.
 
-| Member | Usage |
+| Method | Description |
 |---|---|
-| `initialize()` | Global configuration (Mandatory). Call in `main()`. |
-| `builder()` | Integration with `MaterialApp.builder`. Requires prior initialization. |
+| `initialize()` | Global setup. Must be called in `main()`. Accepts `queues` and `channels`. |
+| `builder()` | Integration method for `MaterialApp.builder`. Wraps the app in the required overlay. |
+| `reset()` | **Testing Only**. Resets the singleton state. |
 
-### 2. Usage: `NotificationWidget`
-The primary interaction point.
+### 2. NotificationWidget
+The main artifact for displaying notifications.
 
-| Member | Usage |
+| Member | Description |
 |---|---|
-| Constructor | Create a notification with a `message`. Auto-resolves its own channel/queue. |
-| `show()` | Enqueue and display the notification. |
-| `dismiss()` | Perform an animated dismissal and removal from queue. |
-| `relocateTo()` | Move the notification to a different `QueuePosition` (e.g., Drag & Drop). |
+| `Constructor` | Creates a definition. Requires `message`. Optional `title`, `channelName`, `id`. |
+| `show()` | Enqueues the notification. Does **not** require a `BuildContext`. |
+| `dismiss()` | Programmatically dismisses the notification. |
+| `relocateTo()` | Moves the active notification to a different queue position (e.g., during drag). |
 
-### 3. Configuration: `NotificationQueue` & `NotificationChannel`
-Declarative units of organization.
+### 3. Queue Configuration
+Declarative configuration objects for layout and behavior. Use concrete classes for customization.
 
--   **Queues**: Define position-specific behavior (Max stack, drag behavior, style).
--   **Channels**: Define semantic categories (Success, Error) with shared visual overrides.
+| Class | Description |
+|---|---|
+| `TopLeftQueue` | Anchor: Top-Left corner. |
+| `TopCenterQueue` | Anchor: Top-Center. |
+| `TopRightQueue` | Anchor: Top-Right corner. |
+| `CenterLeftQueue` | Anchor: Center-Left edge. |
+| `CenterRightQueue` | Anchor: Center-Right edge. |
+| `BottomLeftQueue` | Anchor: Bottom-Left corner. |
+| `BottomCenterQueue` | Anchor: Bottom-Center. |
+| `BottomRightQueue` | Anchor: Bottom-Right corner. |
 
----
+### 4. NotificationChannel
+Semantic categories for notifications.
 
-## 🔒 Internal Components (Hidden)
-The following core components are **explicitly hidden** from the public API to ensure structural integrity:
+| Property | Description |
+|---|---|
+| `name` | Unique string ID (e.g., 'success'). |
+| `defaultColor` | Base color for notifications in this channel. |
+| `defaultIcon` | Icon widget to use if the individual notification doesn't provide one. |
+| `position` | Optional override to force all channel notifications to a specific queue. |
 
--   `ConfigurationManager`: Managed via `initialize()`.
--   `QueueCoordinator`: Internal lifecycle bridge.
--   `NotificationOverlay`: Hosted via `builder()`. Exposed only for manual wrapper usage.
--   `QueueWidget`: Internal rendering implementation.
+## Internal Components (Hidden)
+These components are part of the engine and are not exposed for public use to ensure stability.
 
----
-
-## 🛠️ Design Rules
-1.  **Immutability**: Notification configurations (Channels/Queues) should be immutable after initialization.
-2.  **No Contextual Leaks**: Showing a notification does not require a `BuildContext` (handled by the singleton hierarchy).
-3.  **Self-Regulating**: The API surface does not provide "Close All" or manual overlay toggles; these are automated by the system lifecycle.
+- **ConfigurationManager**: Validates and stores immutable config.
+- **QueueCoordinator**: Manages runtime state and the OverlayPortal.
+- **NotificationOverlay**: The actual rendering surface.

@@ -1,60 +1,32 @@
-# FNQ — Lifecycle & Coordination
+# Notification Lifecycle
 
-This document details the internal flow of information and the coordination between domain logic and the rendering surface.
+Understanding the lifecycle of a notification is essential for debugging and advanced customization.
 
-## 🔄 The Notification Lifecycle
+## The 5 Stages
 
-```mermaid
-sequenceDiagram
-    participant User as User Code
-    participant NW as NotificationWidget
-    participant CM as ConfigurationManager
-    participant Q as NotificationQueue
-    participant QC as QueueCoordinator
-    participant NO as NotificationOverlay
+### 1. Creation (`NotificationWidget.show`)
+- The user requests a notification.
+- The request is validated against the `ConfigurationManager`.
+- If valid, a `NotificationWidget` instance is created.
 
-    Note over User,NO: 1. Construction
-    User->>NW: NotificationWidget(message)
-    NW->>CM: resolveConfiguration()
-    CM-->>NW: Returns Queue & Channel
+### 2. Enqueueing
+- The widget is passed to the `QueueCoordinator`.
+- The Coordinator checks if the target queue is active (mounted).
+  - **If Active**: The notification is added directly to the existing `QueueWidget`.
+  - **If Inactive**: The notification is buffered, and the `QueueWidget` is mounted.
 
-    Note over User,NO: 2. Activation
-    User->>NW: show()
-    NW->>Q: enqueue(this)
-    Q->>QC: activateQueue(this)
-    QC->>NO: notifyListeners()
-    NO->>NO: Rebuild Stack
+### 3. Mounting & Display
+- The `QueueWidget` initializes.
+- It consumes any buffered notifications from the Coordinator.
+- The notification enters via an **Entrance Animation** (slide/fade).
 
-    Note over User,NO: 3. Deactivation
-    User->>NW: dismiss()
-    NW->>Q: remove(this)
-    Q->>QC: deactivateQueue(this)
-    QC->>NO: notifyListeners()
-    Note right of NO: Overlay hides if all queues empty
-```
+### 4. Interaction (Active State)
+- The notification sits in the queue.
+- Users can interact (tap, dismiss, drag).
+- **Auto-Dismiss**: If configured, a timer counts down.
 
----
-
-## 🤝 The Coordination Bridge (`QueueCoordinator`)
-
-The `QueueCoordinator` is the most critical internal singleton. It solves a classic architectural problem: **How do domain objects (which know nothing of widgets) trigger a UI rebuild?**
-
-1.  **Registry**: It acts as a registry of "Active" queues.
-2.  **ValueListenable**: It exposes its registry as a `ValueListenable`.
-3.  **Subscriber**: The `NotificationOverlay` (a widget) listens to this registry.
-
-This separation ensures that `NotificationQueue` remains a pure logic/data structure with no dependency on `BuildContext` or the Widget tree.
-
----
-
-## 🎢 Feedback & Self-Regulation
-
-### Queue Pressure (Balancing Loop)
-Each `NotificationQueue` maintains two internal collections:
--   **Active Stock**: What is currently being rendered (up to `maxStackSize`).
--   **Pending Stock**: Notifications waiting for a slot.
-
-When an active notification is dismissed, the queue automatically promotes the next pending item. This creates a goal-seeking loop that ensures the screen is never overwhelmed while ensuring all notifications eventual visibility.
-
-### Empty State Hiding
-The `QueueCoordinator` monitors the aggregate activity count. When the count drops to zero, it signals the `OverlayPortalController` to `hide()`, ensuring zero rendering overhead when the system is idle.
+### 5. Dismissal & Cleanup
+- **Trigger**: Timer ends, user swipes, or programmatic dismissal.
+- **Exit Animation**: The notification animates out.
+- **Garbage Collection**: Once the animation completes, the widget is removed from the tree.
+- **Queue Unmount**: If the queue becomes empty, the `QueueWidget` itself unmounts to free resources.
