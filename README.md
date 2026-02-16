@@ -34,7 +34,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Drag-to-Dismiss**: Swipe notifications away in any direction
 - **Long-press Actions**: Relocate or dismiss with long-press gestures
 - **Tap Actions**: Button actions or tap-anywhere functionality
-- **Hover Effects**: Close button appears on hover (web/desktop)
+- **Hover Effects**: Adaptive close button with [progressive enhancement](doc/queue/README.md#close-button-visibility)
 - **Gesture Feedback**: Smooth opacity changes during interactions
 
 ### **Internationalization & Accessibility**
@@ -53,7 +53,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Layout Customization**: Margins, spacing, elevation, and border radius
 - **Custom Builders**: Override notification UI with custom widgets
 
-## 📦 Installation
+## Installation
 
 Add FlutterNotificationQueue to your `pubspec.yaml`:
 
@@ -261,9 +261,9 @@ const Disabled()
 ### Close Button Behaviors
 
 ```dart
-QueueCloseButtonBehavior.always // Always visible
-QueueCloseButtonBehavior.onHover // Show on hover (web/desktop)
-QueueCloseButtonBehavior.never // Never show
+const AlwaysVisible() // Always visible
+const VisibleOnHover() // Adaptive visibility (touch-safe)
+const Hidden() // Never show (gesture-only)
 ```
 
 ## 🌍 Multi-language Support

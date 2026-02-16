@@ -239,7 +239,7 @@ class NotificationWidgetState extends State<NotificationWidget>
       ?..writeln('Created State.')
       ..sink();
     super.initState();
-    _showCloseButton.value = widget.queue.closeButtonBehavior.initialVisibility;
+    _showCloseButton.value = widget.queue.closeButtonBehavior.initialOpacity;
     animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -330,80 +330,81 @@ class NotificationWidgetState extends State<NotificationWidget>
                 borderOnForeground: true,
                 type: MaterialType.canvas,
                 color: theme.backgroundColor.withValues(alpha: theme.opacity),
-                child: InkWell(
-                  onHover: (final isHovering) => _showCloseButton.value = widget
+                child: MouseRegion(
+                  onEnter: (final _) => _showCloseButton.value = widget
                       .queue.closeButtonBehavior
-                      .onHover(isHovering: isHovering),
-                  onTap: () {
-                    // 1. Handle Primary Action
-                    if (hasOnTapAction) {
-                      widget.action?.onPressed();
-                      dismiss();
-                      return;
-                    }
-
-                    // 2. Handle Touch Fallback (Zombie Prevention)
-                    _showCloseButton.value = widget.queue.closeButtonBehavior
-                        .onTap(currentVisibility: _showCloseButton.value);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    constraints: Utils.horizontalConstraints(context),
-                    curve: Curves.easeOut,
-                    decoration: BoxDecoration(
-                      border: theme.border,
-                    ),
-                    padding: EdgeInsetsDirectional.symmetric(
-                      vertical: isExpanded ? 8 : 4,
-                      horizontal: 4,
-                    ),
-                    // padding: EdgeInsets.all(8),
-                    child: Column(
-                      spacing: 4,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 4,
-                          children: [
-                            _getExpandButton(isExpanded: isExpanded),
-                            Expanded(child: _getTitle(isExpanded: isExpanded)),
-                            _getCloseButton(isExpanded: true),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsetsGeometry.symmetric(
-                            horizontal: 12,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 8,
+                      .onHover(isHovering: true),
+                  onExit: (final _) => _showCloseButton.value = widget
+                      .queue.closeButtonBehavior
+                      .onHover(isHovering: false),
+                  child: InkWell(
+                    onTap: !hasOnTapAction
+                        ? null
+                        : () {
+                            widget.action?.onPressed();
+                            dismiss();
+                          },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      constraints: Utils.horizontalConstraints(context),
+                      curve: Curves.easeOut,
+                      decoration: BoxDecoration(
+                        border: theme.border,
+                      ),
+                      padding: EdgeInsetsDirectional.symmetric(
+                        vertical: isExpanded ? 8 : 4,
+                        horizontal: 4,
+                      ),
+                      // padding: EdgeInsets.all(8),
+                      child: Column(
+                        spacing: 4,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            spacing: 4,
                             children: [
-                              IconTheme(
-                                data: IconThemeData(
-                                  color: theme.color,
-                                  size: 24,
-                                ),
-                                child: widget.icon ??
-                                    widget.channel.defaultIcon ??
-                                    const SizedBox.shrink(),
-                              ),
+                              _getExpandButton(isExpanded: isExpanded),
                               Expanded(
-                                child: Text(
-                                  widget.message,
-                                  style: theme.themeData.textTheme.bodyMedium
-                                      ?.copyWith(
-                                    color: theme.foregroundColor,
-                                  ),
-                                  maxLines: isExpanded ? 10 : 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                child: _getTitle(isExpanded: isExpanded),
                               ),
+                              _getCloseButton(isExpanded: true),
                             ],
                           ),
-                        ),
-                        _getActionButton(),
-                        _timerIndicator(isExpanded: isExpanded),
-                      ],
+                          Padding(
+                            padding: const EdgeInsetsGeometry.symmetric(
+                              horizontal: 12,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 8,
+                              children: [
+                                IconTheme(
+                                  data: IconThemeData(
+                                    color: theme.color,
+                                    size: 24,
+                                  ),
+                                  child: widget.icon ??
+                                      widget.channel.defaultIcon ??
+                                      const SizedBox.shrink(),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    widget.message,
+                                    style: theme.themeData.textTheme.bodyMedium
+                                        ?.copyWith(
+                                      color: theme.foregroundColor,
+                                    ),
+                                    maxLines: isExpanded ? 10 : 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _getActionButton(),
+                          _timerIndicator(isExpanded: isExpanded),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -523,29 +524,29 @@ class NotificationWidgetState extends State<NotificationWidget>
     );
   }
 
-  final _showCloseButton = ValueNotifier(false);
+  final _showCloseButton = ValueNotifier(0.0);
 
   Widget _getCloseButton({required final bool isExpanded}) => SizedBox.square(
         dimension: 24,
         child: ValueListenableBuilder(
           valueListenable: _showCloseButton,
-          builder: (final context, final showCloseButton, final child) =>
-              AnimatedOpacity(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeInOut,
-            opacity: showCloseButton ? 1 : 0,
-            child: showCloseButton
-                ? IconButton(
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    onPressed: dismiss,
-                    iconSize: 18,
-                    icon: Icon(
-                      Icons.close,
-                      color: theme.foregroundColor,
-                    ),
-                  )
-                : const SizedBox.shrink(),
+          builder: (final context, final opacity, final child) => IgnorePointer(
+            ignoring: opacity == 0.0,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+              opacity: opacity,
+              child: IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                onPressed: dismiss,
+                iconSize: 18,
+                icon: Icon(
+                  Icons.close,
+                  color: theme.foregroundColor,
+                ),
+              ),
+            ),
           ),
         ),
       );
