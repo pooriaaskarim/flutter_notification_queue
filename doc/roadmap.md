@@ -46,9 +46,10 @@ Focusing on the "Feel" and "Value" of interactions.
   - [ ] **Structural Enhancements**: data structures to support arbitrary index insertion.
 - [ ] **Target UI**:
   - [ ] Replace "Placeholder" Drop Zones with production-grade UI (blur, scale, icons).
-- [ ] **Input Resilience** (Zombie Prevention):
-  - [ ] Handle `CloseButtonBehavior.never` + Touch Screen (tap-to-show-close or swipe fallback).
-  - [ ] Ensure no notification becomes "undismissable" due to config/platform mismatch.
+- [x] **Input Resilience** (Zombie Prevention):
+  - [x] Handle `CloseButtonBehavior.never` + Touch Screen (adaptive opacity fallback).
+  - [x] Ensure no notification becomes "undismissable" due to config/platform mismatch.
+  - [x] **Progressive Enhancement**: Evidence-based mouse detection for hybrid devices.
  
 ### 🟡 P1: Animation Harmony (Completed)
  
@@ -117,6 +118,7 @@ Ensuring the UI library doesn't regress visually.
 | Animation Harmony | v0.4.2 | Refactored `QueueWidget` to Managed State for synchronized layout animations |
 | Decoupled Animations | v0.4.2 | Introduced `NotificationTransition` strategy pattern with Slide, Scale, Fade, and Builder support |
 | Relocation Maturity | v0.4.3 | Automated group expansion, validation, and characteristic inheritance for relocation |
+| Adaptive Close Button | v0.4.4 | Opacity-based model with progressive enhancement for touch/mouse adaptation |
 
 ---
 
