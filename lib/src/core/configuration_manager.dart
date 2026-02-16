@@ -9,13 +9,94 @@ part of 'core.dart';
 /// class directly.
 @internal
 class ConfigurationManager {
-  const ConfigurationManager({
-    this.queues = const {},
+  ConfigurationManager({
+    final Set<NotificationQueue> queues = const {},
     this.channels = const {},
-  });
+  }) : queues = _initQueues(queues);
+
+  static Set<NotificationQueue> _initQueues(
+    final Set<NotificationQueue> inputQueues,
+  ) {
+    _validateRelocationGroups(inputQueues);
+    return _expandRelocationGroups(inputQueues);
+  }
 
   final Set<NotificationQueue> queues;
   final Set<NotificationChannel> channels;
+
+  /// Expands relocation groups: for every [Relocate] behavior,
+  /// ensures sibling queues exist and the source position is included
+  /// in the target set (self-inclusion, so notifications can return home).
+  static Set<NotificationQueue> _expandRelocationGroups(
+    final Set<NotificationQueue> inputQueues,
+  ) {
+    if (inputQueues.isEmpty) {
+      return inputQueues;
+    }
+
+    final expanded = LinkedHashSet<NotificationQueue>(
+      equals: (final a, final b) => a.position == b.position,
+      hashCode: (final q) => q.position.hashCode,
+    )..addAll(inputQueues);
+
+    for (final queue in inputQueues) {
+      for (final behavior in [
+        queue.longPressDragBehavior,
+        queue.dragBehavior,
+      ]) {
+        if (behavior is Relocate) {
+          final relocate = behavior as Relocate;
+          // Self-inclusion: add source position to targets
+          relocate.positions.add(queue.position);
+          // Expand: create sibling queues for all target positions
+          for (final targetPosition in relocate.positions) {
+            final alreadyRegistered =
+                expanded.any((final q) => q.position == targetPosition);
+            if (!alreadyRegistered) {
+              expanded.add(targetPosition.generateQueueFrom(queue));
+            }
+          }
+        }
+      }
+    }
+    return expanded;
+  }
+
+  /// Validates that no [QueuePosition] appears in multiple relocation groups.
+  static void _validateRelocationGroups(
+    final Set<NotificationQueue> queues,
+  ) {
+    final seen = <QueuePosition, NotificationQueue>{};
+
+    for (final queue in queues) {
+      final group = <QueuePosition>{};
+      var hasRelocate = false;
+      for (final behavior in [
+        queue.longPressDragBehavior,
+        queue.dragBehavior,
+      ]) {
+        if (behavior is Relocate) {
+          hasRelocate = true;
+          group.addAll((behavior as Relocate).positions);
+        }
+      }
+      if (!hasRelocate) {
+        continue;
+      }
+      // Include self in group for validation
+      group.add(queue.position);
+
+      for (final position in group) {
+        if (seen.containsKey(position) && seen[position] != queue) {
+          throw ArgumentError(
+            '$position appears in both $queue and ${seen[position]} groups. '
+            'Relocation is only allowed within the same group.',
+          );
+        }
+        seen[position] = queue;
+      }
+    }
+  }
 
   static final _logger = Logger.get('fnq.Core.Manager');
 

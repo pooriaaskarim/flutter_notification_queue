@@ -16,6 +16,7 @@ void main() {
       // 1. Add Standard Channels (success, error, warning, info)
       ...NotificationChannel.standardChannels(
         position: QueuePosition.topCenter,
+        defaultDismissDuration: null,
       ),
 
       // 2. Add Custom Channels
@@ -39,14 +40,14 @@ void main() {
         margin: EdgeInsetsGeometry.zero,
         style: const FilledQueueStyle(
           borderRadius: BorderRadius.all(Radius.circular(12)),
-          opacity: 0.9,
+          opacity: 0.7,
           elevation: 8,
         ),
+        dragBehavior: const Disabled(),
         longPressDragBehavior: Relocate.to(
           {
             QueuePosition.centerRight,
             QueuePosition.centerLeft,
-            QueuePosition.bottomCenter,
           },
         ),
         transition: const ScaleTransitionStrategy(),

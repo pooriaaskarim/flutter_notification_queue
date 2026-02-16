@@ -45,6 +45,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case topCenter:
         return TopCenterQueue(
@@ -56,6 +57,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case topRight:
         return TopRightQueue(
@@ -67,6 +69,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case centerLeft:
         return CenterLeftQueue(
@@ -78,6 +81,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case centerRight:
         return CenterRightQueue(
@@ -89,6 +93,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case bottomLeft:
         return BottomLeftQueue(
@@ -100,6 +105,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case bottomCenter:
         return BottomCenterQueue(
@@ -111,6 +117,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case bottomRight:
         return BottomRightQueue(
@@ -122,6 +129,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
     }
   }

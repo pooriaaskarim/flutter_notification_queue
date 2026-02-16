@@ -184,21 +184,24 @@ class NotificationWidget extends StatefulWidget {
       ' dismissDuration: $dismissDuration,'
       ' builder: $builder,)';
 
-  NotificationWidget copyWith(
-    final QueuePosition newPosition,
+  NotificationWidget copyToQueue(
+    final NotificationQueue targetQueue,
   ) =>
-      NotificationWidget(
-        message: message,
-        position: newPosition,
-        channelName: channelName,
+      NotificationWidget._(
+        key: GlobalObjectKey<NotificationWidgetState>(id),
         id: id,
+        message: message,
+        queue: targetQueue,
+        channelName: channelName,
+        channel: channel,
         title: title,
         action: action,
         icon: icon,
+        color: color,
+        foregroundColor: foregroundColor,
         backgroundColor: backgroundColor,
         dismissDuration: dismissDuration,
         builder: builder,
-        color: color,
       );
 }
 
