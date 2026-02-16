@@ -239,8 +239,7 @@ class NotificationWidgetState extends State<NotificationWidget>
       ?..writeln('Created State.')
       ..sink();
     super.initState();
-    _showCloseButton.value =
-        widget.queue.closeButtonBehavior == QueueCloseButtonBehavior.always;
+    _showCloseButton.value = widget.queue.closeButtonBehavior.initialVisibility;
     animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 380),
@@ -332,22 +331,21 @@ class NotificationWidgetState extends State<NotificationWidget>
                 type: MaterialType.canvas,
                 color: theme.backgroundColor.withValues(alpha: theme.opacity),
                 child: InkWell(
-                  onHover: widget.queue.closeButtonBehavior ==
-                          QueueCloseButtonBehavior.onHover
-                      ? (final isHovering) {
-                          _showCloseButton.value = isHovering;
-                        }
-                      : null,
-                  onTap: hasOnTapAction ||
-                          widget.queue.closeButtonBehavior ==
-                              QueueCloseButtonBehavior.onHover
-                      ? () {
-                          if (hasOnTapAction) {
-                            widget.action?.onPressed();
-                            dismiss();
-                          }
-                        }
-                      : null,
+                  onHover: (final isHovering) => _showCloseButton.value = widget
+                      .queue.closeButtonBehavior
+                      .onHover(isHovering: isHovering),
+                  onTap: () {
+                    // 1. Handle Primary Action
+                    if (hasOnTapAction) {
+                      widget.action?.onPressed();
+                      dismiss();
+                      return;
+                    }
+
+                    // 2. Handle Touch Fallback (Zombie Prevention)
+                    _showCloseButton.value = widget.queue.closeButtonBehavior
+                        .onTap(currentVisibility: _showCloseButton.value);
+                  },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
                     constraints: Utils.horizontalConstraints(context),

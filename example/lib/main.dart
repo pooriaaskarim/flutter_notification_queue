@@ -43,6 +43,7 @@ void main() {
           opacity: 0.7,
           elevation: 8,
         ),
+        closeButtonBehavior: const VisibleOnHover(),
         dragBehavior: const Disabled(),
         longPressDragBehavior: Relocate.to(
           {

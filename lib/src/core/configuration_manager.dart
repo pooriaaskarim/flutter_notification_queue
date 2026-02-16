@@ -18,6 +18,7 @@ class ConfigurationManager {
     final Set<NotificationQueue> inputQueues,
   ) {
     _validateRelocationGroups(inputQueues);
+    _validateInputResilience(inputQueues);
     return _expandRelocationGroups(inputQueues);
   }
 
@@ -94,6 +95,29 @@ class ConfigurationManager {
           );
         }
         seen[position] = queue;
+      }
+    }
+  }
+
+  /// Validates that queues have at least one interactive way to be dismissed.
+  ///
+  /// Prevents "Zombie" notifications that cannot be closed by the user.
+  static void _validateInputResilience(
+    final Set<NotificationQueue> queues,
+  ) {
+    for (final queue in queues) {
+      final isDismissible = queue.dragBehavior is Dismiss ||
+          queue.longPressDragBehavior is Dismiss;
+      final hasCloseButton = queue.closeButtonBehavior is! Hidden;
+
+      if (!isDismissible && !hasCloseButton) {
+        throw ArgumentError(
+          'Queue ${queue.position} configuration creates "Zombie"'
+          ' notifications. Notifications in this queue cannot be dismissed '
+          'by the user because gestures are disabled AND the close button '
+          'is hidden.  Please enable at least one interaction method or '
+          'show the close button.',
+        );
       }
     }
   }
