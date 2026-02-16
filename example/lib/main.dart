@@ -49,6 +49,7 @@ void main() {
             QueuePosition.bottomCenter,
           },
         ),
+        transition: const ScaleTransitionStrategy(),
       ),
 
       // 2. Custom Queue Configuration for BottomCenter
@@ -56,6 +57,7 @@ void main() {
         maxStackSize: 1,
         margin: EdgeInsetsGeometry.zero,
         style: const FlatQueueStyle(),
+        transition: const SlideTransitionStrategy(),
         longPressDragBehavior: Relocate.to(
           {
             QueuePosition.topLeft,

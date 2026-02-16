@@ -7,6 +7,7 @@ import '../utils/extensions.dart' show ExtendedStringFuntionalities;
 
 part 'styles.dart';
 part 'queue_widget.dart';
+part 'transitions.dart';
 part 'type_defs.dart';
 
 ///  [NotificationQueue]s based on [QueuePosition].
@@ -36,6 +37,7 @@ sealed class NotificationQueue {
     required this.margin,
     required this.style,
     required this.queueIndicatorBuilder,
+    required this.transition,
   }) : assert(maxStackSize > 0, 'maxStackSize must be greater than 0');
 
   factory NotificationQueue.defaultQueue({
@@ -50,6 +52,7 @@ sealed class NotificationQueue {
         const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
     final QueueStyle style = const FilledQueueStyle(),
     final QueueIndicatorBuilder? queueIndicatorBuilder,
+    final NotificationTransition? transition,
   }) =>
       position.generateQueue(
         maxStackSize: maxStackSize,
@@ -60,6 +63,7 @@ sealed class NotificationQueue {
         style: style,
         margin: margin,
         queueIndicatorBuilder: queueIndicatorBuilder,
+        transition: transition,
       );
 
   // NOTE: Assertions that depend on runtime checks of concrete types or complex
@@ -114,6 +118,9 @@ sealed class NotificationQueue {
 
   /// Looks and feels of [NotificationWidget]s inside the queue
   final QueueStyle style;
+
+  /// Entrance/Exit animation strategy.
+  final NotificationTransition transition;
 
   //
   // /// The widget that renders this queue's notifications.
@@ -175,24 +182,6 @@ sealed class NotificationQueue {
     }
   }
 
-  Offset get slideTransitionOffset {
-    switch (this) {
-      case TopLeftQueue():
-      case CenterLeftQueue():
-      case BottomLeftQueue():
-        return const Offset(-1, 0);
-      case TopCenterQueue():
-        return const Offset(0, -1);
-
-      case BottomCenterQueue():
-        return const Offset(0, 1);
-      case TopRightQueue():
-      case CenterRightQueue():
-      case BottomRightQueue():
-        return const Offset(1, 0);
-    }
-  }
-
   @override
   String toString() => '${position.toString().capitalize}Queue';
 }
@@ -207,6 +196,7 @@ final class TopLeftQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.topLeft);
 }
 
@@ -220,6 +210,7 @@ final class TopCenterQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.topCenter);
 }
 
@@ -233,6 +224,7 @@ final class TopRightQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.topRight);
 }
 
@@ -246,6 +238,7 @@ final class CenterLeftQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.centerLeft);
 }
 
@@ -259,6 +252,7 @@ final class CenterRightQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.centerRight);
 }
 
@@ -272,6 +266,7 @@ final class BottomLeftQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.bottomLeft);
 }
 
@@ -285,6 +280,7 @@ final class BottomCenterQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.bottomCenter);
 }
 
@@ -298,5 +294,6 @@ final class BottomRightQueue extends NotificationQueue {
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
     super.closeButtonBehavior = QueueCloseButtonBehavior.always,
+    super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.bottomRight);
 }

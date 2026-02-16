@@ -279,13 +279,14 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   @override
   void dispose() {
-    super.dispose();
     animationController.dispose();
     ditchDismissTimer();
     isExpanded.dispose();
     _logger.debugBuffer
       ?..writeln('Disposed')
       ..sink();
+
+    super.dispose();
   }
 
   void initDismissTimer() {
@@ -304,20 +305,11 @@ class NotificationWidgetState extends State<NotificationWidget>
   }
 
   @override
-  Widget build(final BuildContext context) => SlideTransition(
-        position: Tween<Offset>(
-          begin: widget.queue.slideTransitionOffset,
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: animationController,
-            curve: Curves.easeInOut,
-          ),
-        ),
-        child: FadeTransition(
-          opacity: animationController,
-          child: _buildNotification(),
-        ),
+  Widget build(final BuildContext context) => widget.queue.transition.build(
+        context,
+        animationController,
+        widget.queue.position,
+        _buildNotification(),
       );
 
   Widget _buildNotification() => Directionality(

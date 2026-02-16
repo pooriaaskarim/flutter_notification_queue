@@ -76,7 +76,8 @@ void main() {
       // Fallback
       expect(
         manager.getChannel('unknown'),
-        isA<NotificationChannel>().having((c) => c.name, 'name', 'default'),
+        isA<NotificationChannel>()
+            .having((final c) => c.name, 'name', 'default'),
       );
     });
 

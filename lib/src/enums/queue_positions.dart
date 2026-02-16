@@ -20,6 +20,7 @@ enum QueuePosition {
         dragBehavior: anotherQueue.dragBehavior,
         closeButtonBehavior: anotherQueue.closeButtonBehavior,
         queueIndicatorBuilder: anotherQueue.queueIndicatorBuilder,
+        transition: anotherQueue.transition,
       );
 
   NotificationQueue generateQueue({
@@ -31,6 +32,7 @@ enum QueuePosition {
     required final LongPressDragBehavior longPressDragBehavior,
     required final QueueCloseButtonBehavior closeButtonBehavior,
     required final QueueIndicatorBuilder? queueIndicatorBuilder,
+    required final NotificationTransition? transition,
   }) {
     switch (this) {
       case topLeft:
@@ -143,6 +145,23 @@ enum QueuePosition {
         return Alignment.bottomCenter;
       case bottomRight:
         return Alignment.bottomRight;
+    }
+  }
+
+  Offset get defaultSlideOffset {
+    switch (this) {
+      case topLeft:
+      case centerLeft:
+      case bottomLeft:
+        return const Offset(-1, 0);
+      case topCenter:
+        return const Offset(0, -1);
+      case bottomCenter:
+        return const Offset(0, 1);
+      case topRight:
+      case centerRight:
+      case bottomRight:
+        return const Offset(1, 0);
     }
   }
 }
