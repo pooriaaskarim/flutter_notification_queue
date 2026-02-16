@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.4] - 2026-02-16
+
+### Adaptive Close Button & Subtle Presence
+- **Opacity-Based Model**: Replaced boolean visibility with a refined `double` opacity model (`0.0`–`1.0`) for smoother transitions and better control.
+- **Subtle Presence Pattern**: Implemented an adaptive design for touch devices; the close button starts at `0.3` opacity to ensure discoverability while staying visually de-emphasized.
+- **Progressive Enhancement**: Introduced evidence-based mouse detection. The close button stays at `0.3` until a mouse hover is detected, upon which it upgrades to true desktop-style hidden/reveal (`0.0`/`1.0`) behavior.
+- **Reliable Hover Detection**: Migrated from `InkWell.onHover` to `MouseRegion` to ensure hover events fire reliably even when notifications have no primary tap action.
+- **Premium Animations**: Smoothed the close button fade using a `400ms` duration and `easeOutCubic` curve.
+- **Zombie Prevention**: Added strict `ConfigurationManager` validation to ensure `Hidden` close buttons are always accompanied by gesture dismissal (`Dismiss` or `Relocate`).
+- **Documentation Overhaul**: Updated the entire `doc/` suite and root `README.md` to reflect the new class-based interaction API.
+
 ## [0.4.3] - 2026-02-16
 
 ### Relocation Maturity

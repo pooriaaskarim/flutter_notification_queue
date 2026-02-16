@@ -8,6 +8,7 @@ A `NotificationQueue` is a configuration object that defines:
 - **Position**: Where on the screen the queue is anchored.
 - **Behavior**: How notifications enter, leave, and handle gestures.
 - **Transition**: The entrance and exit animation strategy.
+- **Close Button**: Visibility strategy (`AlwaysVisible`, `VisibleOnHover`, `Hidden`).
 - **Style**: The visual appearance of notifications within this queue.
 - **Constraints**: Maximum stack size (`maxStackSize`) and spacing.
 
@@ -37,8 +38,18 @@ Behaviors define how users interact with notifications:
 - **Dismiss**: Standard swipe-to-remove.
 - **Disabled**: Non-interactive notifications.
 
-> [!TIP]
 > **Relocation Intelligence**: Defining `Relocate.to({...})` automatically generates sibling queues for target positions, inheriting the source's style, transition, and constraints.
+
+### Close Button Visibility
+
+The `closeButtonBehavior` property accepts a `QueueCloseButtonBehavior` instance.
+
+- **AlwaysVisible** (Default): Button is always present.
+- **VisibleOnHover**: Adaptive behavior. Hidden on desktop until hover; subtly visible (0.3 opacity) on touch devices to ensure discoverability.
+- **Hidden**: Removes the close button.
+
+> [!WARNING]
+> **Zombie Prevention**: If you use `Hidden()`, you **must** enable another dismissal method like `Dismiss()` or `Relocate()`. The system validates this at startup to prevent undismissable notifications.
 
 ### Using Concrete Classes (Recommended)
 
