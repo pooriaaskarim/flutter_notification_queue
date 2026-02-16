@@ -94,13 +94,16 @@ void main() {
       // ...
     },
     queues: {
-      QueuePosition.topCenter: {
-        'success': const FilledQueueStyle(
+      const TopCenterQueue(
+        style: FilledQueueStyle(
           borderRadius: BorderRadius.all(Radius.circular(12)),
           opacity: 0.9,
           elevation: 8,
         ),
-      },
+      ),
+      const BottomCenterQueue(
+        style: FlatQueueStyle(),
+      ),
     },
   );
 
@@ -143,7 +146,68 @@ NotificationWidget(
 ).show();
 ```
 
-## 🎨 Advanced Configuration
+## Advanced Configuration
+
+### Animation Control
+
+FlutterNotificationQueue provides powerful built-in transitions and allows for full customization.
+
+#### Standard Transitions
+The system tries to be smart about defaults. For example, a `SlideTransitionStrategy` will automatically slide from the correct direction based on the queue's position.
+
+```dart
+// Auto-slide from TopCenter
+TopCenterQueue(
+  transition: const SlideTransitionStrategy(), 
+)
+
+// Custom curve and duration
+BottomRightQueue(
+  transition: const SlideTransitionStrategy(
+    curve: Curves.elasticOut,
+    reverseCurve: Curves.easeOutExpo,
+  ),
+)
+```
+
+#### Customizing Properties
+You can override standard properties like the slide offset or initial scale.
+
+```dart
+// Slide from the side instead of bottom
+BottomCenterQueue(
+  transition: const SlideTransitionStrategy(
+    slideOffset: Offset(-1, 0), // Slide from left
+  ),
+)
+
+// Pop-in with custom scale and alignment
+CenterRightQueue(
+  transition: const ScaleTransitionStrategy(
+    initialScale: 0.5, // Start/end at 50% size
+    alignment: Alignment.centerLeft, // Expand from left
+  ),
+)
+```
+
+#### Custom Animations (Builder)
+For complete control, use the `BuilderTransitionStrategy` to define any animation inline.
+
+```dart
+TopCenterQueue(
+  transition: BuilderTransitionStrategy(
+    (context, animation, position, child) {
+      return RotationTransition(
+        turns: animation,
+        child: FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
+      );
+    },
+  ),
+)
+```
 
 ### Custom Queue Styles
 
@@ -178,13 +242,20 @@ const Dismiss(thresholdInPixels: 50)
 
 // Relocate to specific positions
 Relocate.to({
-QueuePosition.topLeft,
-QueuePosition.topRight,
-QueuePosition.bottomCenter,
+  QueuePosition.topLeft,
+  QueuePosition.topRight,
+  QueuePosition.bottomCenter,
 })
 
-// Disable gestures
+// Disable gesture
 const Disabled()
+
+> [!TIP]
+> **Relocation Intelligence**: When you define `Relocate.to({...})` for a queue, the system automatically:
+> 1. Registers sibling queues for all target positions (no need to define them manually).
+> 2. Clones all characteristics (style, transition, spacing, maxStackSize) from the source queue to siblings.
+> 3. Adds the source position to the target set so notifications can be dragged back home.
+
 ```
 
 ### Close Button Behaviors

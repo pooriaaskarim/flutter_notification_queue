@@ -67,7 +67,7 @@ FlutterNotificationQueue.initialize(
     ),
   },
   channels: {
-     NotificationChannel(
+     const NotificationChannel(
        name: 'custom_alert',
        defaultColor: Colors.purple,
        defaultIcon: Icon(Icons.star),

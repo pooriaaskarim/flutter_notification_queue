@@ -29,18 +29,24 @@ The main artifact for displaying notifications.
 ### 3. Queue Configuration
 Declarative configuration objects for layout and behavior. Use concrete classes for customization.
 
-| Class | Description |
+| Property | Description |
 |---|---|
-| `TopLeftQueue` | Anchor: Top-Left corner. |
-| `TopCenterQueue` | Anchor: Top-Center. |
-| `TopRightQueue` | Anchor: Top-Right corner. |
-| `CenterLeftQueue` | Anchor: Center-Left edge. |
-| `CenterRightQueue` | Anchor: Center-Right edge. |
-| `BottomLeftQueue` | Anchor: Bottom-Left corner. |
-| `BottomCenterQueue` | Anchor: Bottom-Center. |
-| `BottomRightQueue` | Anchor: Bottom-Right corner. |
+| `style` | Layout template (Filled, Flat, Outlined). |
+| `behavior` | Interaction strategy (`Dismiss`, `Relocate`, `Disabled`). |
+| `transition` | Entrance/Exit animation (`Slide`, `Scale`, `Fade`). |
+| `maxStackSize` | Maximum concurrent notifications. |
+| `spacing` | Gap between notifications. |
 
-### 4. NotificationChannel
+### 4. Behaviors
+Determines how users interact with notifications.
+
+| Behavior | Effect |
+|---|---|
+| `Dismiss` | Swipe to remove (directional). |
+| `Relocate` | Drag to move between queues. |
+| `Disabled` | Gestures are ignored. |
+
+### 5. NotificationChannel
 Semantic categories for notifications.
 
 | Property | Description |

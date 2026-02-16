@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.4.3] - 2026-02-16
+
+### Relocation Maturity
+- **Automatic Group Expansion**: Added `_expandRelocationGroups` to `ConfigurationManager` to automatically generate sibling queues for all relocation targets.
+- **Relocation Characteristics Inheritance**: Generated sibling queues now correctly inherit `style`, `transition`, `maxStackSize`, and `spacing` from the source queue.
+- **Self-Relocation Support**: Every relocation group now automatically includes its own source position, allowing notifications to return to their home queue.
+- **Cross-Group Validation**: Implemented strict validation to prevent a single position from belonging to multiple relocation groups, ensuring deterministic behavior.
+- **Fixed Transition Forwarding**: Resolved a bug where `generateQueue` omitted the `transition` parameter, causing siblings to lose custom entrance/exit logic.
+- **Queue-Preserving Copy**: Enhanced `NotificationWidget.copyToQueue` to use internal constructors, bypassing manager resolution and preserving existing queue instances.
+
+
+## [0.4.2] - 2026-02-16
+
+### Animation Harmony (UX Polish)
+- **Managed State Pattern**: Refactored `QueueWidget` to use a managed state approach with individual `AnimationController`s per notification.
+- **Synchronized Transitions**: Unified `SizeTransition` (layout) and `NotificationTransition` (fade/scale) for perfectly synchronized entry/exit.
+- **Improved Layout Logic**: Fixed spacing inconsistencies and ensured correct cross-axis alignment for all queue positions.
+
+### Decoupled Animation Strategy
+- **New Feature**: Introduced `NotificationTransition` strategy pattern for custom entrance/exit animations.
+- **Builder Support**: Added `BuilderTransitionStrategy` for inline custom animations via a callback.
+- **Standard Transitions**: Added `SlideTransitionStrategy` (default), `ScaleTransitionStrategy`, and `FadeTransitionStrategy`.
+- **Queue Integration**: `NotificationQueue` now accepts a `transition` property.
+
+### Documentation
+- **Documentation Overhaul**: Added documentations for NFQ system components and refreshed documentation tone/structure.
+- **Animation Control**: Added detailed animation guide to `README.md`.
+
 ## [0.4.1] - 2026-02-13
 
 ### Standard Defaults System
