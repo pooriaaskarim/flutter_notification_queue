@@ -38,13 +38,16 @@ void main() {
       // 1. Use Default Queue for TopCenter
       TopCenterQueue(
         margin: EdgeInsetsGeometry.zero,
+        spacing: 8.0,
         style: const FilledQueueStyle(
           borderRadius: BorderRadius.all(Radius.circular(12)),
           opacity: 0.7,
           elevation: 8,
         ),
         closeButtonBehavior: const VisibleOnHover(),
-        dragBehavior: const Disabled(),
+        dragBehavior: const Dismiss(
+          zones: DismissZone.naturalDirection,
+        ),
         longPressDragBehavior: Relocate.to(
           {
             QueuePosition.centerRight,
@@ -60,6 +63,7 @@ void main() {
         margin: EdgeInsetsGeometry.zero,
         style: const FlatQueueStyle(),
         transition: const SlideTransitionStrategy(),
+        dragBehavior: const Dismiss(zones: DismissZone.naturalDirection),
         longPressDragBehavior: Relocate.to(
           {
             QueuePosition.topLeft,

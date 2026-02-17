@@ -172,4 +172,25 @@ enum QueuePosition {
         return const Offset(1, 0);
     }
   }
+
+  String get displayName {
+    switch (this) {
+      case QueuePosition.topLeft:
+        return 'Top Left';
+      case QueuePosition.topCenter:
+        return 'Top Center';
+      case QueuePosition.topRight:
+        return 'Top Right';
+      case QueuePosition.centerLeft:
+        return 'Center Left';
+      case QueuePosition.centerRight:
+        return 'Center Right';
+      case QueuePosition.bottomLeft:
+        return 'Bottom Left';
+      case QueuePosition.bottomCenter:
+        return 'Bottom Center';
+      case QueuePosition.bottomRight:
+        return 'Bottom Right';
+    }
+  }
 }

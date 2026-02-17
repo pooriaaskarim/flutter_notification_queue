@@ -22,6 +22,33 @@ class ColorUtils {
 
     return MaterialColor(color.toARGB32(), shades);
   }
+
+  /// The grayscale conversion matrix.
+  ///
+  /// Extracting this as a constant prevents array allocation and matrix
+  /// construction on every frame of the drag interaction.
+  static const grayscaleFilter = ColorFilter.matrix([
+    0.2126,
+    0.7152,
+    0.0722,
+    0,
+    0,
+    0.2126,
+    0.7152,
+    0.0722,
+    0,
+    0,
+    0.2126,
+    0.7152,
+    0.0722,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ]);
 }
 
 class Utils {

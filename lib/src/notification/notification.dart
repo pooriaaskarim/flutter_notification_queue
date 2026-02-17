@@ -1,16 +1,17 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:logd/logd.dart';
 
 import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
-part 'draggables/dismission_targets.dart';
-part 'draggables/draggable_transitions.dart';
-part 'draggables/relocation_targets.dart';
+part 'interaction/dismissal/dismissal_zone.dart';
+part 'interaction/dismissal/dismissal_targets.dart';
+part 'interaction/draggable_transitions.dart';
+part 'interaction/relocation/relocation_targets.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
 part 'type_defs.dart';
