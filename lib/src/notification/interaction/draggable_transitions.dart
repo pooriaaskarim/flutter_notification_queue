@@ -63,19 +63,19 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   }
 
   // Determine active zones based on behavior and position
-  List<DismissalZone> _getZones(
+  List<InteractionZone> _getZones(
     final QueueNotificationBehavior behavior,
     final QueuePosition position,
   ) {
     if (behavior is Dismiss) {
-      return DismissalZone.generate(behavior.zones, position);
+      return InteractionZone.generate(behavior.zones, position);
     } else if (behavior is Relocate) {
       // Relocate can happen from any edge by default (Rationalized Subclasses)
       return const [
-        LeftDismissalZone(),
-        RightDismissalZone(),
-        TopDismissalZone(),
-        BottomDismissalZone(),
+        LeftInteractionZone(),
+        RightInteractionZone(),
+        TopInteractionZone(),
+        BottomInteractionZone(),
       ];
     }
     return [];
@@ -84,7 +84,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   bool _passedThreshold(
     final Offset? globalOffset,
     final int thresholdInPixels,
-    final List<DismissalZone> zones,
+    final List<InteractionZone> zones,
   ) {
     if (globalOffset == null) {
       return false;
@@ -246,7 +246,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                   controller: _overlayPortalController,
                   overlayChildBuilder: (final context) => LayoutBuilder(
                     builder: (final context, final constraints) =>
-                        _DismissionTargets(
+                        _DismissalTargets(
                       onAccept: () {
                         widget.notification.key.currentState?.dismiss();
                       },
@@ -393,7 +393,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                   controller: _overlayPortalController,
                   overlayChildBuilder: (final context) => LayoutBuilder(
                     builder: (final context, final constraints) =>
-                        _DismissionTargets(
+                        _DismissalTargets(
                       onAccept: () {
                         widget.notification.key.currentState?.dismiss();
                       },
@@ -438,12 +438,17 @@ class _DragStartData {
 /// A sophisticated overlay that handles the physical transformation of the
 /// Notification Widget during dismissal and relocation interactions.
 ///
-/// It implements a "Three-Stage Interaction Model":
-/// 1. Proximity Aura: Subtle scaling and opacity shifts as zones are
-/// approached.
-/// 2. Engagement: Grayscale and blur filters applied in the "Death State".
-/// 3. Magnet Lock: Physical edge-snapping and scale anchoring to the
-/// lockedZone.
+/// This component implements a **Three-Stage Interaction Model**:
+///
+/// 1.  **Proximity Aura**: As the pointer approaches a dismissal edge, the
+///     notification subtly scales down and fades, providing a soft "proximity
+///     hint" (Stage 1).
+/// 2.  **Engagement (The Void)**: Upon passing the threshold, the notification
+///     enters the "Death State", becoming grayscale and slightly blurred to
+///     signal commitment (Stage 2).
+/// 3.  **Magnet Lock**: While engaged, the notification snaps physically to the
+///     outer boundary of the dismissal bar. This "anchors" the action and
+///     prevents the widget from obscuring the active zone (Stage 3).
 class _DismissFeedbackOverlay extends StatelessWidget {
   const _DismissFeedbackOverlay({
     required this.passedThreshold,
@@ -460,18 +465,18 @@ class _DismissFeedbackOverlay extends StatelessWidget {
   final int thresholdInPixels;
   final Size screenSize;
   final _DragStartData? startData;
-  final List<DismissalZone> zones;
+  final List<InteractionZone> zones;
   final Widget child;
 
   @override
   Widget build(final BuildContext context) {
-    DismissalZone? lockedZone;
+    InteractionZone? lockedZone;
     double proximityProgress = 0.0;
 
     if (dragOffset != null) {
       final List<double> progressList = [];
       double maxProgress = 0.0;
-      DismissalZone? maxZone;
+      InteractionZone? maxZone;
 
       for (final zone in zones) {
         // Calculate the proximity to each dismissal zone.
@@ -509,57 +514,11 @@ class _DismissFeedbackOverlay extends StatelessWidget {
 
     Offset correction = Offset.zero;
     if (dragOffset != null && startData != null) {
-      final Offset nominalTopLeft = dragOffset! - startData!.touchOffset;
-
-      double clampedX = nominalTopLeft.dx
-          .clamp(0.0, screenSize.width - startData!.widgetSize.width);
-      double clampedY = nominalTopLeft.dy
-          .clamp(0.0, screenSize.height - startData!.widgetSize.height);
-
-      // Magnet Lock: Physically snap the widget to the OUTER edge of the
-      // dismissal bar when locked. This ensures the widget is fully visible
-      // and "docked" against the red void, rather than being covered by it.
-      if (passedThreshold && lockedZone != null) {
-        final double barSize = thresholdInPixels.toDouble();
-        final align = lockedZone.alignment;
-
-        // Side Zones
-        if (align == Alignment.centerLeft) {
-          clampedX = barSize;
-        }
-        if (align == Alignment.centerRight) {
-          clampedX = screenSize.width - startData!.widgetSize.width - barSize;
-        }
-        // Vertical Zones
-        if (align == Alignment.topCenter) {
-          clampedY = barSize;
-        }
-        if (align == Alignment.bottomCenter) {
-          clampedY = screenSize.height - startData!.widgetSize.height - barSize;
-        }
-
-        // Unified Corner Zones (Horizontal Dominant for now, can be refined)
-        // For corners, we snap to both edges, effectively tucking it into
-        // the corner but offset by the bar size to avoid overlap.
-        if (align == Alignment.topLeft) {
-          clampedX = barSize;
-          clampedY = barSize;
-        }
-        if (align == Alignment.topRight) {
-          clampedX = screenSize.width - startData!.widgetSize.width - barSize;
-          clampedY = barSize;
-        }
-        if (align == Alignment.bottomLeft) {
-          clampedX = barSize;
-          clampedY = screenSize.height - startData!.widgetSize.height - barSize;
-        }
-        if (align == Alignment.bottomRight) {
-          clampedX = screenSize.width - startData!.widgetSize.width - barSize;
-          clampedY = screenSize.height - startData!.widgetSize.height - barSize;
-        }
-      }
-
-      correction = Offset(clampedX, clampedY) - nominalTopLeft;
+      correction = _calculateMagnetCorrection(
+        dragOffset: dragOffset!,
+        startData: startData!,
+        lockedZone: lockedZone,
+      );
     }
 
     final double opacity = 1.0 - (proximityProgress * 0.5);
@@ -666,5 +625,40 @@ class _DismissFeedbackOverlay extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Calculates the positional "correction" needed to achieve the Magnet Lock
+  /// effect.
+  ///
+  /// This snaps the notification to the boundary of the dismissal bar when
+  /// [lockedZone] is active, or simply clamps it to screen bounds otherwise.
+  Offset _calculateMagnetCorrection({
+    required final Offset dragOffset,
+    required final _DragStartData startData,
+    required final InteractionZone? lockedZone,
+  }) {
+    final Offset nominalTopLeft = dragOffset - startData.touchOffset;
+
+    double x = nominalTopLeft.dx
+        .clamp(0.0, screenSize.width - startData.widgetSize.width);
+    double y = nominalTopLeft.dy
+        .clamp(0.0, screenSize.height - startData.widgetSize.height);
+
+    if (passedThreshold && lockedZone != null) {
+      final double barSize = thresholdInPixels.toDouble();
+      final Alignment align = lockedZone.alignment;
+
+      // Snap logic based on alignment
+      if (align.x == -1.0) x = barSize; // Left
+      if (align.x == 1.0) {
+        x = screenSize.width - startData.widgetSize.width - barSize; // Right
+      }
+      if (align.y == -1.0) y = barSize; // Top
+      if (align.y == 1.0) {
+        y = screenSize.height - startData.widgetSize.height - barSize; // Bottom
+      }
+    }
+
+    return Offset(x, y) - nominalTopLeft;
   }
 }

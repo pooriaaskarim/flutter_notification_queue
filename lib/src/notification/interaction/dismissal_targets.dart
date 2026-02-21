@@ -1,7 +1,13 @@
-part of '../../notification.dart';
+part of '../notification.dart';
 
-class _DismissionTargets extends StatefulWidget {
-  const _DismissionTargets({
+/// A specialized widget that renders the interactive dismissal targets
+/// (auras and engagement bars) for a notification.
+///
+/// This widget coordinates the "Independent Edge" interaction model, where
+/// multiple edges (e.g., in a corner) can be approached, but only one
+/// is engaged at a time.
+class _DismissalTargets extends StatefulWidget {
+  const _DismissalTargets({
     required this.onAccept,
     required this.screenSize,
     required this.threshold,
@@ -9,17 +15,26 @@ class _DismissionTargets extends StatefulWidget {
     required this.pointerPositionNotifier,
   });
 
+  /// Callback triggered when the notification is dropped into an active zone.
   final void Function() onAccept;
+
+  /// The width/height threshold of the dismissal bars.
   final double threshold;
+
+  /// The dimensions of the screen for coordinate calculations.
   final Size screenSize;
-  final List<DismissalZone> zones;
+
+  /// The list of edges where dismissal can occur.
+  final List<InteractionZone> zones;
+
+  /// A notifier providing the current global pointer position.
   final ValueNotifier<OffsetPair?> pointerPositionNotifier;
 
   @override
-  State<_DismissionTargets> createState() => _DismissionTargetsState();
+  State<_DismissalTargets> createState() => _DismissalTargetsState();
 }
 
-class _DismissionTargetsState extends State<_DismissionTargets> {
+class _DismissalTargetsState extends State<_DismissalTargets> {
 // No local _dragPosition needed, use parent's notifier
 
   @override
@@ -95,6 +110,8 @@ class _DismissionTargetsState extends State<_DismissionTargets> {
       );
 }
 
+/// A positioned wrapper for the [_InteractionFeedbackZone] that handles the
+/// physical placement of the target bar relative to the screen edges.
 class _PositionedZone extends StatelessWidget {
   const _PositionedZone({
     required this.zone,
@@ -103,49 +120,29 @@ class _PositionedZone extends StatelessWidget {
     required this.dragPosition,
   });
 
-  final DismissalZone zone;
+  final InteractionZone zone;
   final Size screenSize;
   final double inverseThreshold;
   final ValueNotifier<OffsetPair?> dragPosition;
 
   @override
   Widget build(final BuildContext context) {
-    // Calculate position based on alignment and axis
-    double? left;
-    double? right;
-    double? top;
-    double? bottom;
-    double? width;
-    double? height;
+    final bool isVertical = zone.axis == Axis.vertical;
+    final Alignment alignment = zone.alignment;
 
-    if (zone.axis == Axis.vertical) {
-      width = 1.0 / inverseThreshold;
-      height = screenSize.height; // Assuming extent 1.0 (Rationalized)
-      top = 0;
-      if (zone.alignment == Alignment.centerLeft) {
-        left = 0;
-      } else if (zone.alignment == Alignment.centerRight) {
-        right = 0;
-      }
-    } else {
-      height = 1.0 / inverseThreshold;
-      width = screenSize.width; // Assuming extent 1.0 (Rationalized)
-      left = 0;
-      if (zone.alignment == Alignment.topCenter) {
-        top = 0;
-      } else if (zone.alignment == Alignment.bottomCenter) {
-        bottom = 0;
-      }
-    }
+    // The cross-axis size is derived from the threshold.
+    final double barSize = 1.0 / inverseThreshold;
 
     return Positioned(
-      left: left,
-      right: right,
-      top: top,
-      bottom: bottom,
-      width: width,
-      height: height,
-      child: _DismissionZone(
+      left: (isVertical && alignment == Alignment.centerLeft) ? 0 : null,
+      right: (isVertical && alignment == Alignment.centerRight) ? 0 : null,
+      top: (!isVertical && alignment == Alignment.topCenter)
+          ? 0
+          : (isVertical ? 0 : null),
+      bottom: (!isVertical && alignment == Alignment.bottomCenter) ? 0 : null,
+      width: isVertical ? barSize : screenSize.width,
+      height: isVertical ? screenSize.height : barSize,
+      child: _InteractionFeedbackZone(
         zone: zone,
         screenSize: screenSize,
         inverseThreshold: inverseThreshold,
@@ -155,15 +152,19 @@ class _PositionedZone extends StatelessWidget {
   }
 }
 
-class _DismissionZone extends StatelessWidget {
-  const _DismissionZone({
+/// A core feedback component that displays the dismissal state of a target zone.
+///
+/// It handles the visual transition from an "Idle" state (pulsing handle) to
+/// an "Engaged" state (stretching glass bar with icon).
+class _InteractionFeedbackZone extends StatelessWidget {
+  const _InteractionFeedbackZone({
     required this.zone,
     required this.screenSize,
     required this.inverseThreshold,
     required this.dragPosition,
   });
 
-  final DismissalZone zone;
+  final InteractionZone zone;
   final Size screenSize;
   final double inverseThreshold;
   final ValueNotifier<OffsetPair?> dragPosition;
@@ -199,8 +200,10 @@ class _DismissionZone extends StatelessWidget {
               ? colorScheme.error.withValues(alpha: 0.6)
               : colorScheme.onSurface.withValues(alpha: 0.1);
 
-          final double blur = isHit ? 0.0 : (progress * 15.0);
-          final double borderRadius = isHit ? 0.0 : 24.0;
+          final double blur =
+              isHit ? 0.0 : (progress * _InteractionPhysics.kMaxBlur);
+          final double borderRadius =
+              isHit ? 0.0 : _InteractionPhysics.kBaseRadius;
 
           final isVertical = zone.axis == Axis.vertical;
           final alignment = zone.alignment;
@@ -215,17 +218,17 @@ class _DismissionZone extends StatelessWidget {
           // Calculate normalized pointer position for the radial gradient
           // and pinch. We default to center (0,0) if no pointer is present.
           Offset gradientAlignment = Offset.zero;
-          final RenderBox? rb = context.findRenderObject() as RenderBox?;
-          if (rb != null) {
-            final local = rb.globalToLocal(pointerOffset);
+          final RenderBox? renderBox = context.findRenderObject() as RenderBox?;
+          if (renderBox != null) {
+            final local = renderBox.globalToLocal(pointerOffset);
             gradientAlignment = Offset(
-              ((local.dx / rb.size.width) * 2 - 1).clamp(-1.0, 1.0),
-              ((local.dy / rb.size.height) * 2 - 1).clamp(-1.0, 1.0),
+              ((local.dx / renderBox.size.width) * 2 - 1).clamp(-1.0, 1.0),
+              ((local.dy / renderBox.size.height) * 2 - 1).clamp(-1.0, 1.0),
             );
           }
 
           return AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
+            duration: _InteractionPhysics.kInteractionDuration,
             curve: Curves.easeOutCubic,
             child: Stack(
               alignment: alignment, // Align children to the relevant edge
@@ -247,28 +250,12 @@ class _DismissionZone extends StatelessWidget {
                 Opacity(
                   opacity: isHit ? 1.0 : barOpacity,
                   child: ClipRRect(
-                    borderRadius: BorderRadius.only(
-                      topLeft: (alignment == Alignment.bottomCenter ||
-                              alignment == Alignment.centerRight)
-                          ? Radius.circular(borderRadius)
-                          : Radius.zero,
-                      topRight: (alignment == Alignment.bottomCenter ||
-                              alignment == Alignment.centerLeft)
-                          ? Radius.circular(borderRadius)
-                          : Radius.zero,
-                      bottomLeft: (alignment == Alignment.topCenter ||
-                              alignment == Alignment.centerRight)
-                          ? Radius.circular(borderRadius)
-                          : Radius.zero,
-                      bottomRight: (alignment == Alignment.topCenter ||
-                              alignment == Alignment.centerLeft)
-                          ? Radius.circular(borderRadius)
-                          : Radius.zero,
-                    ),
+                    borderRadius:
+                        _calculateBorderRadius(alignment, borderRadius),
                     child: BackdropFilter(
                       filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
+                        duration: _InteractionPhysics.kInteractionDuration,
                         curve: Curves.easeOutCubic,
                         width: isVertical
                             ? ((1.0 / inverseThreshold) *
@@ -351,6 +338,32 @@ class _DismissionZone extends StatelessWidget {
           );
         },
       );
+
+  BorderRadius _calculateBorderRadius(
+    final Alignment alignment,
+    final double radius,
+  ) {
+    if (radius <= 0) return BorderRadius.zero;
+
+    return BorderRadius.only(
+      topLeft: (alignment == Alignment.bottomCenter ||
+              alignment == Alignment.centerRight)
+          ? Radius.circular(radius)
+          : Radius.zero,
+      topRight: (alignment == Alignment.bottomCenter ||
+              alignment == Alignment.centerLeft)
+          ? Radius.circular(radius)
+          : Radius.zero,
+      bottomLeft: (alignment == Alignment.topCenter ||
+              alignment == Alignment.centerRight)
+          ? Radius.circular(radius)
+          : Radius.zero,
+      bottomRight: (alignment == Alignment.topCenter ||
+              alignment == Alignment.centerLeft)
+          ? Radius.circular(radius)
+          : Radius.zero,
+    );
+  }
 }
 
 class _IdleHandle extends StatefulWidget {
@@ -440,6 +453,8 @@ class _IdleHandleState extends State<_IdleHandle>
   }
 }
 
+/// A subtle background gradient that appears when the pointer is approaching
+/// a dismissal zone, providing a soft "proximity hint" before engagement.
 class _EdgeAura extends StatelessWidget {
   const _EdgeAura({
     required this.zone,
@@ -448,7 +463,7 @@ class _EdgeAura extends StatelessWidget {
     required this.threshold,
   });
 
-  final DismissalZone zone;
+  final InteractionZone zone;
   final ValueNotifier<OffsetPair?> dragPosition;
   final Size screenSize;
   final double threshold;
@@ -465,11 +480,11 @@ class _EdgeAura extends StatelessWidget {
 
           // Calculate "aura" progress based on a larger distance
           // (e.g., 3x threshold)
-          final auraThreshold = threshold * 3;
+          final auraThreshold = threshold * 3.0;
           final progress = zone.calculateProgress(
             pointerOffset,
             screenSize,
-            auraThreshold,
+            1.0 / auraThreshold,
           );
 
           if (progress <= 0) {
@@ -485,7 +500,7 @@ class _EdgeAura extends StatelessWidget {
 
           return Positioned.fill(
             child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 300),
+              duration: _InteractionPhysics.kAuraDuration,
               opacity: (progress * 0.15).clamp(0.0, 0.15),
               child: Container(
                 decoration: BoxDecoration(
@@ -516,4 +531,19 @@ class _EdgeAura extends StatelessWidget {
           );
         },
       );
+}
+
+/// Internal physics constants for controlling the "feel" of interactions.
+abstract final class _InteractionPhysics {
+  /// The duration of the proximity aura fade-in/out.
+  static const Duration kAuraDuration = Duration(milliseconds: 300);
+
+  /// The duration of the visual stretching/engagement transitions.
+  static const Duration kInteractionDuration = Duration(milliseconds: 150);
+
+  /// The standard blur factor for the dismissal background.
+  static const double kMaxBlur = 15.0;
+
+  /// The standard border radius for the floating elements.
+  static const double kBaseRadius = 24.0;
 }

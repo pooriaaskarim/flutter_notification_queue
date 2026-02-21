@@ -1,5 +1,9 @@
-part of '../../notification.dart';
+part of '../notification.dart';
 
+/// A specialized widget that renders drop targets for repositioning a notification.
+///
+/// It displays a set of [targets] (excluding the [currentPosition]) and
+/// triggers [onAccept] when the notification is dropped into a valid [_DropZone].
 class _RelocationTargets extends StatelessWidget {
   const _RelocationTargets({
     required this.onAccept,
@@ -9,10 +13,19 @@ class _RelocationTargets extends StatelessWidget {
     required this.passedThreshold,
   });
 
+  /// Callback triggered when a new position is selected.
   final void Function(QueuePosition candidatePosition) onAccept;
+
+  /// The set of available positions for relocation.
   final Set<QueuePosition> targets;
+
+  /// Whether the drag interaction has passed the required engagement threshold.
   final bool passedThreshold;
+
+  /// The current position of the notification queue.
   final QueuePosition currentPosition;
+
+  /// The dimensions of the screen.
   final Size screenSize;
 
   @override
@@ -102,38 +115,7 @@ class _DropZoneState extends State<_DropZone>
   double _getArrowRotation(final BuildContext context) {
     final Alignment resolved =
         widget.alignment.resolve(Directionality.of(context));
-
-    if (resolved.y == -1.0) {
-      if (resolved.x == -1.0) {
-        return -3 * 3.14159 / 4;
-      }
-      if (resolved.x == 0.0) {
-        return -3.14159 / 2;
-      }
-      if (resolved.x == 1.0) {
-        return -3.14159 / 4;
-      }
-    }
-    if (resolved.y == 0.0) {
-      if (resolved.x == -1.0) {
-        return 3.14159;
-      }
-      if (resolved.x == 1.0) {
-        return 0.0;
-      }
-    }
-    if (resolved.y == 1.0) {
-      if (resolved.x == -1.0) {
-        return 3 * 3.14159 / 4;
-      }
-      if (resolved.x == 0.0) {
-        return 3.14159 / 2;
-      }
-      if (resolved.x == 1.0) {
-        return 3.14159 / 4;
-      }
-    }
-    return 0.0;
+    return _RelocationPhysics.calculateRotation(resolved);
   }
 
   @override
@@ -160,34 +142,40 @@ class _DropZoneState extends State<_DropZone>
 
     final Alignment resolvedAlignment =
         widget.alignment.resolve(Directionality.of(context));
-    const double kBaseMargin = 24.0;
-    const double kDockedMargin = 0.0;
 
     final EdgeInsetsGeometry margin = widget.willAccept
         ? EdgeInsets.fromLTRB(
-            resolvedAlignment.x == -1.0 ? kDockedMargin : kBaseMargin,
-            resolvedAlignment.y == -1.0 ? kDockedMargin : kBaseMargin,
-            resolvedAlignment.x == 1.0 ? kDockedMargin : kBaseMargin,
-            resolvedAlignment.y == 1.0 ? kDockedMargin : kBaseMargin,
+            resolvedAlignment.x == -1.0
+                ? _RelocationPhysics.kDockedMargin
+                : _RelocationPhysics.kBaseMargin,
+            resolvedAlignment.y == -1.0
+                ? _RelocationPhysics.kDockedMargin
+                : _RelocationPhysics.kBaseMargin,
+            resolvedAlignment.x == 1.0
+                ? _RelocationPhysics.kDockedMargin
+                : _RelocationPhysics.kBaseMargin,
+            resolvedAlignment.y == 1.0
+                ? _RelocationPhysics.kDockedMargin
+                : _RelocationPhysics.kBaseMargin,
           )
-        : const EdgeInsets.all(kBaseMargin);
+        : const EdgeInsets.all(_RelocationPhysics.kBaseMargin);
 
     final bool showHintArrow = widget.isDragging && !widget.hasCandidate;
 
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 300),
+      duration: _RelocationPhysics.kTransitionDuration,
       curve: Curves.easeOut,
       opacity: opacity,
       child: AnimatedScale(
-        duration: const Duration(milliseconds: 300),
+        duration: _RelocationPhysics.kTransitionDuration,
         curve: Curves.easeOutBack,
         scale: scale,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
+          duration: _RelocationPhysics.kTransitionDuration,
           curve: Curves.easeOutCubic,
           margin: margin,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
+            duration: _RelocationPhysics.kTransitionDuration,
             curve: Curves.easeOutCubic,
             padding: EdgeInsets.symmetric(
               horizontal: widget.hasCandidate ? 20 : 12,
@@ -257,5 +245,37 @@ class _DropZoneState extends State<_DropZone>
         ),
       ),
     );
+  }
+}
+
+/// Internal physics and layout utilities for relocation interactions.
+abstract final class _RelocationPhysics {
+  /// Standard margin for drop zones when idle.
+  static const double kBaseMargin = 24.0;
+
+  /// Margin for drop zones when they are snapped to an edge during engagement.
+  static const double kDockedMargin = 0.0;
+
+  /// Standard duration for relocation UI transitions.
+  static const Duration kTransitionDuration = Duration(milliseconds: 300);
+
+  /// Calculates the rotation angle (in radians) for a hint arrow based on
+  /// its [alignment] relative to the screen.
+  static double calculateRotation(final Alignment alignment) {
+    if (alignment.y == -1.0) {
+      if (alignment.x == -1.0) return -3 * 3.14159 / 4;
+      if (alignment.x == 0.0) return -3.14159 / 2;
+      if (alignment.x == 1.0) return -3.14159 / 4;
+    }
+    if (alignment.y == 0.0) {
+      if (alignment.x == -1.0) return 3.14159;
+      if (alignment.x == 1.0) return 0.0;
+    }
+    if (alignment.y == 1.0) {
+      if (alignment.x == -1.0) return 3 * 3.14159 / 4;
+      if (alignment.x == 0.0) return 3.14159 / 2;
+      if (alignment.x == 1.0) return 3.14159 / 4;
+    }
+    return 0.0;
   }
 }

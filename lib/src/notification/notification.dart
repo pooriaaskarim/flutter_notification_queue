@@ -8,10 +8,10 @@ import 'package:logd/logd.dart';
 import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
-part 'interaction/dismissal/dismissal_zone.dart';
-part 'interaction/dismissal/dismissal_targets.dart';
+part 'interaction/zones.dart';
+part 'interaction/dismissal_targets.dart';
 part 'interaction/draggable_transitions.dart';
-part 'interaction/relocation/relocation_targets.dart';
+part 'interaction/relocation_targets.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
 part 'type_defs.dart';
