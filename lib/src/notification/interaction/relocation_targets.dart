@@ -1,9 +1,11 @@
 part of '../notification.dart';
 
-/// A specialized widget that renders drop targets for repositioning a notification.
+/// A specialized widget that renders drop targets for repositioning a
+/// notification.
 ///
 /// It displays a set of [targets] (excluding the [currentPosition]) and
-/// triggers [onAccept] when the notification is dropped into a valid [_DropZone].
+/// triggers [onAccept] when the notification is dropped into a valid
+/// [_DropZone].
 class _RelocationTargets extends StatelessWidget {
   const _RelocationTargets({
     required this.onAccept,
@@ -250,6 +252,8 @@ class _DropZoneState extends State<_DropZone>
 
 /// Internal physics and layout utilities for relocation interactions.
 abstract final class _RelocationPhysics {
+  const _RelocationPhysics._();
+
   /// Standard margin for drop zones when idle.
   static const double kBaseMargin = 24.0;
 
@@ -263,18 +267,34 @@ abstract final class _RelocationPhysics {
   /// its [alignment] relative to the screen.
   static double calculateRotation(final Alignment alignment) {
     if (alignment.y == -1.0) {
-      if (alignment.x == -1.0) return -3 * 3.14159 / 4;
-      if (alignment.x == 0.0) return -3.14159 / 2;
-      if (alignment.x == 1.0) return -3.14159 / 4;
+      if (alignment.x == -1.0) {
+        return -3 * 3.14159 / 4;
+      }
+      if (alignment.x == 0.0) {
+        return -3.14159 / 2;
+      }
+      if (alignment.x == 1.0) {
+        return -3.14159 / 4;
+      }
     }
     if (alignment.y == 0.0) {
-      if (alignment.x == -1.0) return 3.14159;
-      if (alignment.x == 1.0) return 0.0;
+      if (alignment.x == -1.0) {
+        return 3.14159;
+      }
+      if (alignment.x == 1.0) {
+        return 0.0;
+      }
     }
     if (alignment.y == 1.0) {
-      if (alignment.x == -1.0) return 3 * 3.14159 / 4;
-      if (alignment.x == 0.0) return 3.14159 / 2;
-      if (alignment.x == 1.0) return 3.14159 / 4;
+      if (alignment.x == -1.0) {
+        return 3 * 3.14159 / 4;
+      }
+      if (alignment.x == 0.0) {
+        return 3.14159 / 2;
+      }
+      if (alignment.x == 1.0) {
+        return 3.14159 / 4;
+      }
     }
     return 0.0;
   }

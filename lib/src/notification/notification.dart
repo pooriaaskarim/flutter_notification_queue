@@ -8,7 +8,9 @@ import 'package:logd/logd.dart';
 import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
 
-part 'interaction/zones.dart';
+part 'interaction/zones/base.dart';
+part 'interaction/zones/edges.dart';
+part 'interaction/zones/resolvers.dart';
 part 'interaction/dismissal_targets.dart';
 part 'interaction/draggable_transitions.dart';
 part 'interaction/relocation_targets.dart';

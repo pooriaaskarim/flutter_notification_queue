@@ -25,7 +25,7 @@ class _DismissalTargets extends StatefulWidget {
   final Size screenSize;
 
   /// The list of edges where dismissal can occur.
-  final List<InteractionZone> zones;
+  final List<EdgeDropZone> zones;
 
   /// A notifier providing the current global pointer position.
   final ValueNotifier<OffsetPair?> pointerPositionNotifier;
@@ -120,7 +120,7 @@ class _PositionedZone extends StatelessWidget {
     required this.dragPosition,
   });
 
-  final InteractionZone zone;
+  final EdgeDropZone zone;
   final Size screenSize;
   final double inverseThreshold;
   final ValueNotifier<OffsetPair?> dragPosition;
@@ -152,7 +152,8 @@ class _PositionedZone extends StatelessWidget {
   }
 }
 
-/// A core feedback component that displays the dismissal state of a target zone.
+/// A core feedback component that displays the dismissal state of a target
+/// zone.
 ///
 /// It handles the visual transition from an "Idle" state (pulsing handle) to
 /// an "Engaged" state (stretching glass bar with icon).
@@ -164,7 +165,7 @@ class _InteractionFeedbackZone extends StatelessWidget {
     required this.dragPosition,
   });
 
-  final InteractionZone zone;
+  final EdgeDropZone zone;
   final Size screenSize;
   final double inverseThreshold;
   final ValueNotifier<OffsetPair?> dragPosition;
@@ -343,7 +344,9 @@ class _InteractionFeedbackZone extends StatelessWidget {
     final Alignment alignment,
     final double radius,
   ) {
-    if (radius <= 0) return BorderRadius.zero;
+    if (radius <= 0) {
+      return BorderRadius.zero;
+    }
 
     return BorderRadius.only(
       topLeft: (alignment == Alignment.bottomCenter ||
@@ -463,7 +466,7 @@ class _EdgeAura extends StatelessWidget {
     required this.threshold,
   });
 
-  final InteractionZone zone;
+  final EdgeDropZone zone;
   final ValueNotifier<OffsetPair?> dragPosition;
   final Size screenSize;
   final double threshold;

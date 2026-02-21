@@ -62,21 +62,20 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
     super.dispose();
   }
 
-  // Determine active zones based on behavior and position
-  List<InteractionZone> _getZones(
+  // Derives the active edge zones based on the interaction behavior.
+  //
+  // - Dismiss: uses DismissZone policy + current position.
+  // - Relocate: derives zones from the set of target positions, correctly
+  //   marking home-edges as isNatural to prevent hair-trigger engagement.
+  // - Disabled: returns empty (unreachable in practice).
+  List<EdgeDropZone> _getZones(
     final QueueNotificationBehavior behavior,
     final QueuePosition position,
   ) {
     if (behavior is Dismiss) {
-      return InteractionZone.generate(behavior.zones, position);
+      return _edgesFromDismissZone(behavior.zones, position);
     } else if (behavior is Relocate) {
-      // Relocate can happen from any edge by default (Rationalized Subclasses)
-      return const [
-        LeftInteractionZone(),
-        RightInteractionZone(),
-        TopInteractionZone(),
-        BottomInteractionZone(),
-      ];
+      return _edgesFromPositions(behavior.positions, position);
     }
     return [];
   }
@@ -84,7 +83,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   bool _passedThreshold(
     final Offset? globalOffset,
     final int thresholdInPixels,
-    final List<InteractionZone> zones,
+    final List<EdgeDropZone> zones,
   ) {
     if (globalOffset == null) {
       return false;
@@ -465,18 +464,18 @@ class _DismissFeedbackOverlay extends StatelessWidget {
   final int thresholdInPixels;
   final Size screenSize;
   final _DragStartData? startData;
-  final List<InteractionZone> zones;
+  final List<EdgeDropZone> zones;
   final Widget child;
 
   @override
   Widget build(final BuildContext context) {
-    InteractionZone? lockedZone;
+    EdgeDropZone? lockedZone;
     double proximityProgress = 0.0;
 
     if (dragOffset != null) {
       final List<double> progressList = [];
       double maxProgress = 0.0;
-      InteractionZone? maxZone;
+      EdgeDropZone? maxZone;
 
       for (final zone in zones) {
         // Calculate the proximity to each dismissal zone.
@@ -635,7 +634,7 @@ class _DismissFeedbackOverlay extends StatelessWidget {
   Offset _calculateMagnetCorrection({
     required final Offset dragOffset,
     required final _DragStartData startData,
-    required final InteractionZone? lockedZone,
+    required final EdgeDropZone? lockedZone,
   }) {
     final Offset nominalTopLeft = dragOffset - startData.touchOffset;
 
@@ -649,11 +648,15 @@ class _DismissFeedbackOverlay extends StatelessWidget {
       final Alignment align = lockedZone.alignment;
 
       // Snap logic based on alignment
-      if (align.x == -1.0) x = barSize; // Left
+      if (align.x == -1.0) {
+        x = barSize; // Left
+      }
       if (align.x == 1.0) {
         x = screenSize.width - startData.widgetSize.width - barSize; // Right
       }
-      if (align.y == -1.0) y = barSize; // Top
+      if (align.y == -1.0) {
+        y = barSize; // Top
+      }
       if (align.y == 1.0) {
         y = screenSize.height - startData.widgetSize.height - barSize; // Bottom
       }
