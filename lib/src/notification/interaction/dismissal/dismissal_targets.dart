@@ -4,14 +4,12 @@ class _DismissionTargets extends StatefulWidget {
   const _DismissionTargets({
     required this.onAccept,
     required this.screenSize,
-    required this.passedThreshold,
     required this.threshold,
     required this.zones,
     required this.pointerPositionNotifier,
   });
 
   final void Function() onAccept;
-  final bool passedThreshold;
   final double threshold;
   final Size screenSize;
   final List<DismissalZone> zones;
@@ -35,7 +33,6 @@ class _DismissionTargetsState extends State<_DismissionTargets> {
         fit: StackFit.expand,
         children: [
           // Stage 1: The Proximity Aura (Hint State)
-          // Subtle glow at the edges indicating where the user can dismiss.
           IgnorePointer(
             child: Stack(
               children: [
@@ -52,7 +49,6 @@ class _DismissionTargetsState extends State<_DismissionTargets> {
 
           // Stage 2 & 3: The Stretching Bar (Engagement) &
           // Action Lock (Activation)
-          // We wrap them in IgnorePointer so they don't block the DragTarget.
           IgnorePointer(
             child: Stack(
               children: [
@@ -60,26 +56,18 @@ class _DismissionTargetsState extends State<_DismissionTargets> {
                   _PositionedZone(
                     zone: zone,
                     dragPosition: widget.pointerPositionNotifier,
-                    passedThreshold: widget.passedThreshold,
-                    threshold: widget.threshold,
+                    inverseThreshold: 1.0 / widget.threshold,
                     screenSize: widget.screenSize,
                   ),
               ],
             ),
           ),
 
-          // We use a single global DragTarget on top of everything to catch
-          // drops and track position accurately.
+          // Single global DragTarget
           Positioned.fill(
             child: DragTarget<AlignmentGeometry>(
               hitTestBehavior: HitTestBehavior.opaque,
               onWillAcceptWithDetails: (final details) => true,
-              onMove: (final details) {
-                // Notifier updated by parent DraggableTransitions
-              },
-              onLeave: (final data) {
-                // Notifier updated by parent DraggableTransitions
-              },
               onAcceptWithDetails: (final details) {
                 final pointerLocation =
                     widget.pointerPositionNotifier.value?.global;
@@ -111,15 +99,13 @@ class _PositionedZone extends StatelessWidget {
   const _PositionedZone({
     required this.zone,
     required this.screenSize,
-    required this.threshold,
-    required this.passedThreshold,
+    required this.inverseThreshold,
     required this.dragPosition,
   });
 
   final DismissalZone zone;
   final Size screenSize;
-  final double threshold;
-  final bool passedThreshold;
+  final double inverseThreshold;
   final ValueNotifier<OffsetPair?> dragPosition;
 
   @override
@@ -133,7 +119,7 @@ class _PositionedZone extends StatelessWidget {
     double? height;
 
     if (zone.axis == Axis.vertical) {
-      width = threshold;
+      width = 1.0 / inverseThreshold;
       height = screenSize.height; // Assuming extent 1.0 (Rationalized)
       top = 0;
       if (zone.alignment == Alignment.centerLeft) {
@@ -142,7 +128,7 @@ class _PositionedZone extends StatelessWidget {
         right = 0;
       }
     } else {
-      height = threshold;
+      height = 1.0 / inverseThreshold;
       width = screenSize.width; // Assuming extent 1.0 (Rationalized)
       left = 0;
       if (zone.alignment == Alignment.topCenter) {
@@ -162,8 +148,7 @@ class _PositionedZone extends StatelessWidget {
       child: _DismissionZone(
         zone: zone,
         screenSize: screenSize,
-        thresholdInPixels: threshold,
-        isThresholdPassed: passedThreshold,
+        inverseThreshold: inverseThreshold,
         dragPosition: dragPosition,
       ),
     );
@@ -174,15 +159,13 @@ class _DismissionZone extends StatelessWidget {
   const _DismissionZone({
     required this.zone,
     required this.screenSize,
-    required this.thresholdInPixels,
-    required this.isThresholdPassed,
+    required this.inverseThreshold,
     required this.dragPosition,
   });
 
   final DismissalZone zone;
   final Size screenSize;
-  final double thresholdInPixels;
-  final bool isThresholdPassed;
+  final double inverseThreshold;
   final ValueNotifier<OffsetPair?> dragPosition;
 
   @override
@@ -197,25 +180,27 @@ class _DismissionZone extends StatelessWidget {
             progress = zone.calculateProgress(
               pointerOffset,
               screenSize,
-              thresholdInPixels,
+              inverseThreshold,
             );
           }
 
-          // We show a hint (Idle Handle) as long as we are dragging
-          // (pointerOffset != null)
-          if (pointerOffset == null && !isThresholdPassed) {
+          final bool isHit = pointerOffset != null &&
+              zone.isHit(pointerOffset, screenSize, 1.0 / inverseThreshold);
+
+          // Pointer condition for visibility
+          if (pointerOffset == null) {
             return const SizedBox.shrink();
           }
 
           final ColorScheme colorScheme = Theme.of(context).colorScheme;
           final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-          final Color baseColor = isThresholdPassed
+          final Color baseColor = isHit
               ? colorScheme.error.withValues(alpha: 0.6)
               : colorScheme.onSurface.withValues(alpha: 0.1);
 
-          final double blur = isThresholdPassed ? 0.0 : (progress * 15.0);
-          final double borderRadius = isThresholdPassed ? 0.0 : 24.0;
+          final double blur = isHit ? 0.0 : (progress * 15.0);
+          final double borderRadius = isHit ? 0.0 : 24.0;
 
           final isVertical = zone.axis == Axis.vertical;
           final alignment = zone.alignment;
@@ -230,15 +215,13 @@ class _DismissionZone extends StatelessWidget {
           // Calculate normalized pointer position for the radial gradient
           // and pinch. We default to center (0,0) if no pointer is present.
           Offset gradientAlignment = Offset.zero;
-          if (pointerOffset != null) {
-            final RenderBox? rb = context.findRenderObject() as RenderBox?;
-            if (rb != null) {
-              final local = rb.globalToLocal(pointerOffset);
-              gradientAlignment = Offset(
-                ((local.dx / rb.size.width) * 2 - 1).clamp(-1.0, 1.0),
-                ((local.dy / rb.size.height) * 2 - 1).clamp(-1.0, 1.0),
-              );
-            }
+          final RenderBox? rb = context.findRenderObject() as RenderBox?;
+          if (rb != null) {
+            final local = rb.globalToLocal(pointerOffset);
+            gradientAlignment = Offset(
+              ((local.dx / rb.size.width) * 2 - 1).clamp(-1.0, 1.0),
+              ((local.dy / rb.size.height) * 2 - 1).clamp(-1.0, 1.0),
+            );
           }
 
           return AnimatedContainer(
@@ -248,7 +231,7 @@ class _DismissionZone extends StatelessWidget {
               alignment: alignment, // Align children to the relevant edge
               children: [
                 // The Idle Handle (The Invitation)
-                if (!isThresholdPassed)
+                if (!isHit)
                   Opacity(
                     opacity: handleOpacity,
                     child: Center(
@@ -262,7 +245,7 @@ class _DismissionZone extends StatelessWidget {
 
                 // The Stretching Glass Bar (The Void)
                 Opacity(
-                  opacity: isThresholdPassed ? 1.0 : barOpacity,
+                  opacity: isHit ? 1.0 : barOpacity,
                   child: ClipRRect(
                     borderRadius: BorderRadius.only(
                       topLeft: (alignment == Alignment.bottomCenter ||
@@ -288,16 +271,16 @@ class _DismissionZone extends StatelessWidget {
                         duration: const Duration(milliseconds: 150),
                         curve: Curves.easeOutCubic,
                         width: isVertical
-                            ? (thresholdInPixels *
-                                (isThresholdPassed ? 1.0 : progress))
+                            ? ((1.0 / inverseThreshold) *
+                                (isHit ? 1.0 : progress))
                             : null,
                         height: !isVertical
-                            ? (thresholdInPixels *
-                                (isThresholdPassed ? 1.0 : progress))
+                            ? ((1.0 / inverseThreshold) *
+                                (isHit ? 1.0 : progress))
                             : null,
                         decoration: BoxDecoration(
                           color: baseColor,
-                          gradient: isThresholdPassed
+                          gradient: isHit
                               ? RadialGradient(
                                   center: Alignment(
                                     gradientAlignment.dx,
@@ -327,22 +310,22 @@ class _DismissionZone extends StatelessWidget {
                   Positioned(
                     left: isVertical
                         ? (alignment == Alignment.centerLeft
-                            ? (thresholdInPixels * progress - 24)
+                            ? ((1.0 / inverseThreshold) * progress - 24)
                             : null)
                         : null,
                     right: isVertical
                         ? (alignment == Alignment.centerRight
-                            ? (thresholdInPixels * progress - 24)
+                            ? ((1.0 / inverseThreshold) * progress - 24)
                             : null)
                         : null,
                     top: !isVertical
                         ? (alignment == Alignment.topCenter
-                            ? (thresholdInPixels * progress - 24)
+                            ? ((1.0 / inverseThreshold) * progress - 24)
                             : null)
                         : null,
                     bottom: !isVertical
                         ? (alignment == Alignment.bottomCenter
-                            ? (thresholdInPixels * progress - 24)
+                            ? ((1.0 / inverseThreshold) * progress - 24)
                             : null)
                         : null,
                     child: Transform.translate(
@@ -356,9 +339,7 @@ class _DismissionZone extends StatelessWidget {
                           scale: 0.5 + (progress * 0.5),
                           child: Icon(
                             Icons.close_rounded,
-                            color: isThresholdPassed
-                                ? Colors.white
-                                : colorScheme.onSurface,
+                            color: isHit ? Colors.white : colorScheme.onSurface,
                             size: 20,
                           ),
                         ),

@@ -251,7 +251,6 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                         widget.notification.key.currentState?.dismiss();
                       },
                       screenSize: constraints.biggest,
-                      passedThreshold: passedThreshold,
                       threshold: behavior.thresholdInPixels.toDouble(),
                       zones: zones,
                       pointerPositionNotifier: _dragOffsetPairNotifier,
@@ -399,7 +398,6 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                         widget.notification.key.currentState?.dismiss();
                       },
                       screenSize: constraints.biggest,
-                      passedThreshold: passedThreshold,
                       threshold: behavior.thresholdInPixels.toDouble(),
                       zones: zones,
                       pointerPositionNotifier: _dragOffsetPairNotifier,
@@ -457,8 +455,6 @@ class _DismissFeedbackOverlay extends StatelessWidget {
     required this.child,
   });
 
-
-
   final bool passedThreshold;
   final Offset? dragOffset;
   final int thresholdInPixels;
@@ -482,18 +478,21 @@ class _DismissFeedbackOverlay extends StatelessWidget {
         final progress = zone.calculateProgress(
           dragOffset!,
           screenSize,
-          thresholdInPixels.toDouble(),
+          1.0 / thresholdInPixels,
         );
         progressList.add(progress);
+
+        // Edge Priority: If multiple zones hit the threshold (1.0),
+        // we pick the one that is "deeper" into its boundary if we could,
+        // but since it's clamped, we keep the FIRST one that hits 1.0
+        // to provide stability, or update if another is clearly dominant.
+        if (progress >= 1.0 && (lockedZone == null || progress > maxProgress)) {
+          lockedZone = zone;
+        }
 
         if (progress > maxProgress) {
           maxProgress = progress;
           maxZone = zone;
-        }
-
-        // Deterministic Lock Check: If progress hits 1.0, we are "Locked".
-        if (progress >= 1.0) {
-          lockedZone = zone;
         }
       }
       // Use the highest proximity score across all zones to drive visual

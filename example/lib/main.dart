@@ -52,6 +52,8 @@ void main() {
           {
             QueuePosition.centerRight,
             QueuePosition.centerLeft,
+            QueuePosition.bottomLeft,
+            QueuePosition.bottomRight,
           },
         ),
         transition: const ScaleTransitionStrategy(),

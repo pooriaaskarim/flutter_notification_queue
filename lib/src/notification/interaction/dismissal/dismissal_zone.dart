@@ -31,7 +31,7 @@ sealed class DismissalZone {
   double calculateProgress(
     final Offset pointer,
     final Size screenSize,
-    final double threshold,
+    final double inverseThreshold,
   );
 
   /// Returns whether a pointer position is considered "in" this zone.
@@ -40,7 +40,8 @@ sealed class DismissalZone {
     final Size screenSize,
     final double threshold,
   ) {
-    final progress = calculateProgress(pointer, screenSize, threshold);
+    // Optimization: Use inverse multiplication
+    final progress = calculateProgress(pointer, screenSize, 1.0 / threshold);
     if (isNatural) {
       // Natural (home-edge) zones require a deeper pull to prevent
       // immediate trigger. progress >= 0.7 means within 30% of
@@ -107,10 +108,10 @@ class LeftDismissalZone extends DismissalZone {
   double calculateProgress(
     final Offset pointer,
     final Size screenSize,
-    final double threshold,
+    final double inverseThreshold,
   ) =>
       (pointer.dx < screenSize.width * 0.5)
-          ? (1.0 - (pointer.dx / threshold)).clamp(0.0, 1.0)
+          ? (1.0 - (pointer.dx * inverseThreshold)).clamp(0.0, 1.0)
           : 0.0;
 }
 
@@ -124,10 +125,10 @@ class RightDismissalZone extends DismissalZone {
   double calculateProgress(
     final Offset pointer,
     final Size screenSize,
-    final double threshold,
+    final double inverseThreshold,
   ) =>
       (pointer.dx > screenSize.width * 0.5)
-          ? (1.0 - ((screenSize.width - pointer.dx) / threshold))
+          ? (1.0 - ((screenSize.width - pointer.dx) * inverseThreshold))
               .clamp(0.0, 1.0)
           : 0.0;
 }
@@ -142,10 +143,10 @@ class TopDismissalZone extends DismissalZone {
   double calculateProgress(
     final Offset pointer,
     final Size screenSize,
-    final double threshold,
+    final double inverseThreshold,
   ) =>
       (pointer.dy < screenSize.height * 0.5)
-          ? (1.0 - (pointer.dy / threshold)).clamp(0.0, 1.0)
+          ? (1.0 - (pointer.dy * inverseThreshold)).clamp(0.0, 1.0)
           : 0.0;
 }
 
@@ -159,10 +160,10 @@ class BottomDismissalZone extends DismissalZone {
   double calculateProgress(
     final Offset pointer,
     final Size screenSize,
-    final double threshold,
+    final double inverseThreshold,
   ) =>
       (pointer.dy > screenSize.height * 0.5)
-          ? (1.0 - ((screenSize.height - pointer.dy) / threshold))
+          ? (1.0 - ((screenSize.height - pointer.dy) * inverseThreshold))
               .clamp(0.0, 1.0)
           : 0.0;
 }

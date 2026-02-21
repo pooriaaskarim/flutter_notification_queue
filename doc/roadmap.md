@@ -37,6 +37,9 @@ Focusing on the "Feel" and "Value" of interactions.
   - [x] **Expansion**: Auto-generate sibling queues.
   - [x] **Cross-Group Validation**: Prevent position conflicts at init.
   - [x] **Characteristic Inheritance**: Clones style, transition, and constraints.
+- [ ] **Interaction Refinement**:
+  - [x] **Corner Interaction**: Independent edge hit detection and distinct axis feedback.
+  - [ ] **Unified Corner Bars**: Cohesive L-shaped visual for adjacent dismissal zones (Future Consideration).
 - [ ] **Relocation Purpose**:
   - [ ] Research/Define Desktop value (e.g., "Park" notification in a corner).
   - [ ] **Pinning**: "Pin to Edge" functionality for deferred action.
