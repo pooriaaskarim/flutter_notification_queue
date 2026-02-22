@@ -16,6 +16,25 @@ List<PositionDropZone> _zonesFromPositions(
         .map((final p) => PositionDropZone(position: p))
         .toList();
 
+/// Derives one [SlotDropZone] per insertion slot in a queue of [itemCount]
+/// notifications.
+///
+/// Slots are numbered `0` (before the first item) through `itemCount` (after
+/// the last item). All slots use the same proximity threshold — including the
+/// home slot — so the notification can always be dropped back where it came
+/// from.
+///
+/// Anchors are not set here — they are computed and assigned by the feedback
+/// widget after layout, once sibling rendered positions are known.
+List<SlotDropZone> _zonesFromSlots(
+  final int itemCount,
+  final int currentIndex,
+) =>
+    List.generate(
+      itemCount,
+      (final i) => SlotDropZone(targetIndex: i),
+    );
+
 /// Resolves the active [EdgeDropZone]s for a [Dismiss] behavior.
 List<EdgeDropZone> _edgesFromDismissZone(
   final DismissZone zones,

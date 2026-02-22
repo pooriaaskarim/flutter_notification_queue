@@ -62,11 +62,12 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
     super.dispose();
   }
 
-  // Derives the active edge zones based on the interaction behavior.
+  // Derives the active drop zones based on the interaction behavior.
   //
   // - Dismiss: uses DismissZone policy + current position.
-  // - Relocate: derives zones from the set of target positions, correctly
-  //   marking home-edges as isNatural to prevent hair-trigger engagement.
+  // - Relocate: derives zones from the set of target positions.
+  // - Reorder: returns empty — zones are built in the Reorder branch
+  //   directly, since item count and index require QueueWidgetState access.
   // - Disabled: returns empty (unreachable in practice).
   List<DropZone> _getZones(
     final QueueNotificationBehavior behavior,
@@ -95,6 +96,29 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       }
     }
     return false;
+  }
+
+  /// Returns the proximity progress [0.0, 1.0] for the nearest [SlotDropZone].
+  ///
+  /// Used by [_LiftedFeedback] to pick the correct visual stage without
+  /// knowing which specific slot is closest.
+  double _nearestZoneProgress(
+    final Offset? pointer,
+    final List<DropZone> zones,
+  ) {
+    if (pointer == null) {
+      return 0.0;
+    }
+    var best = 0.0;
+    for (final zone in zones) {
+      if (zone is SlotDropZone) {
+        final p = zone.calculateProgress(pointer, 1.0 / 120.0);
+        if (p > best) {
+          best = p;
+        }
+      }
+    }
+    return best;
   }
 
   final OverlayPortalController _overlayPortalController =
@@ -269,6 +293,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             ),
             child: draggable(),
           ),
+        Reorder() => _buildLongPressReorderDraggable(),
         Disabled() => draggable(),
       };
 
@@ -416,8 +441,177 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             ),
             child: widget.notification,
           ),
+        Reorder() => _buildReorderDraggable(),
         Disabled() => widget.notification,
       };
+
+  Widget _buildLongPressReorderDraggable() {
+    final position = widget.notification.queue.position;
+    final behavior = widget.notification.queue.longPressDragBehavior as Reorder;
+    final queueKey =
+        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+    final queueState = queueKey.currentState;
+    final itemCount = queueState?.itemCount ?? 1;
+    final currentIndex = queueState?.indexOf(widget.notification) ?? 0;
+    final zones = _zonesFromSlots(itemCount, currentIndex);
+
+    return LongPressDraggable<int>(
+      data: currentIndex,
+      axis: null,
+      onDragStarted: () {
+        FlutterNotificationQueue.coordinator.bringToFront(position);
+        widget.notification.key.currentState?.ditchDismissTimer();
+        _overlayPortalController.show();
+      },
+      onDragUpdate: (final details) {
+        _dragOffsetPairNotifier.value = OffsetPair(
+          local: details.delta,
+          global: details.globalPosition,
+        );
+      },
+      onDragEnd: (final details) {
+        _dragOffsetPairNotifier.value = null;
+        widget.notification.key.currentState?.initDismissTimer();
+        _overlayPortalController.hide();
+      },
+      maxSimultaneousDrags: 1,
+      hapticFeedbackOnStart: widget.hapticFeedbackOnStart,
+      hitTestBehavior: HitTestBehavior.deferToChild,
+      childWhenDragging: _ReorderPlaceholder(
+        child: _buildDummyGhost(_dragStartData?.widgetSize ?? Size.zero),
+      ),
+      feedback: ValueListenableBuilder(
+        valueListenable: _dragOffsetPairNotifier,
+        builder: (final context, final offsetPair, final child) {
+          final pointer = offsetPair?.global;
+          final passedThreshold = _passedThreshold(
+            pointer,
+            behavior.thresholdInPixels,
+            zones,
+          );
+          final nearestProgress = _nearestZoneProgress(pointer, zones);
+
+          return OverlayPortal(
+            controller: _overlayPortalController,
+            overlayChildBuilder: (final context) => LayoutBuilder(
+              builder: (final context, final constraints) => _ReorderTargets(
+                draggedIndex: currentIndex,
+                zones: zones,
+                itemKeys: queueState?.itemGlobalKeys ?? [],
+                onAccept: (final targetIndex) {
+                  FlutterNotificationQueue.coordinator
+                      .reorder(widget.notification, targetIndex);
+                },
+                passedThreshold: passedThreshold,
+                pointerPositionNotifier: _dragOffsetPairNotifier,
+                ghostChild:
+                    _buildDummyGhost(_dragStartData?.widgetSize ?? Size.zero),
+              ),
+            ),
+            child: _LiftedFeedback(
+              passedThreshold: passedThreshold,
+              nearestProgress: nearestProgress,
+              widgetSize: _dragStartData?.widgetSize ?? Size.zero,
+              child: widget.notification,
+            ),
+          );
+        },
+      ),
+      child: draggable(),
+    );
+  }
+
+  Widget _buildReorderDraggable() {
+    final position = widget.notification.queue.position;
+    final behavior = widget.notification.queue.dragBehavior as Reorder;
+    final queueKey =
+        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+    final queueState = queueKey.currentState;
+    final itemCount = queueState?.itemCount ?? 1;
+    final currentIndex = queueState?.indexOf(widget.notification) ?? 0;
+    final zones = _zonesFromSlots(itemCount, currentIndex);
+
+    return Draggable<int>(
+      data: currentIndex,
+      axis: null,
+      onDragStarted: () {
+        FlutterNotificationQueue.coordinator.bringToFront(position);
+        widget.notification.key.currentState?.ditchDismissTimer();
+        _overlayPortalController.show();
+      },
+      onDragUpdate: (final details) {
+        _dragOffsetPairNotifier.value = OffsetPair(
+          local: details.delta,
+          global: details.globalPosition,
+        );
+      },
+      onDragEnd: (final details) {
+        _dragOffsetPairNotifier.value = null;
+        widget.notification.key.currentState?.initDismissTimer();
+        _overlayPortalController.hide();
+      },
+      maxSimultaneousDrags: 1,
+      childWhenDragging: _ReorderPlaceholder(
+        child: _buildDummyGhost(_dragStartData?.widgetSize ?? Size.zero),
+      ),
+      feedback: ValueListenableBuilder(
+        valueListenable: _dragOffsetPairNotifier,
+        builder: (final context, final offsetPair, final child) {
+          final pointer = offsetPair?.global;
+          final passedThreshold = _passedThreshold(
+            pointer,
+            behavior.thresholdInPixels,
+            zones,
+          );
+          final nearestProgress = _nearestZoneProgress(pointer, zones);
+
+          return OverlayPortal(
+            controller: _overlayPortalController,
+            overlayChildBuilder: (final context) => LayoutBuilder(
+              builder: (final context, final constraints) => _ReorderTargets(
+                draggedIndex: currentIndex,
+                zones: zones,
+                itemKeys: queueState?.itemGlobalKeys ?? [],
+                onAccept: (final targetIndex) {
+                  FlutterNotificationQueue.coordinator
+                      .reorder(widget.notification, targetIndex);
+                },
+                passedThreshold: passedThreshold,
+                pointerPositionNotifier: _dragOffsetPairNotifier,
+                ghostChild: _buildDummyGhost(
+                  _dragStartData?.widgetSize ?? Size.zero,
+                ),
+              ),
+            ),
+            child: _LiftedFeedback(
+              passedThreshold: passedThreshold,
+              nearestProgress: nearestProgress,
+              widgetSize: _dragStartData?.widgetSize ?? Size.zero,
+              child: widget.notification,
+            ),
+          );
+        },
+      ),
+      child: widget.notification,
+    );
+  }
+
+  /// Creates a visual proxy of the notification card that exactly matches its
+  /// captured dimensions on the screen.
+  ///
+  /// This is critical for Draggable overlay ghosts. Returning the actual
+  /// `widget.notification` causes fatal layout errors (e.g. "Tried to build
+  /// dirty widget in the wrong build scope") because the real widget instance
+  /// possesses a [GlobalObjectKey] that cannot be mounted multiple times.
+  Widget _buildDummyGhost(final Size size) => Container(
+        width: size.width > 0 ? size.width : null,
+        height: size.height > 0 ? size.height : null,
+        decoration: BoxDecoration(
+          color: widget.notification.backgroundColor ??
+              const Color(0xFF2B2C50), // Fallback to a typical dark card color
+          borderRadius: BorderRadius.circular(14),
+        ),
+      );
 }
 
 class _DragStartData {

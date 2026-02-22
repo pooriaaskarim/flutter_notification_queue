@@ -48,14 +48,15 @@ void main() {
         dragBehavior: const Dismiss(
           zones: DismissZone.naturalDirection,
         ),
-        longPressDragBehavior: Relocate.to(
-          {
-            QueuePosition.centerRight,
-            QueuePosition.centerLeft,
-            QueuePosition.bottomLeft,
-            QueuePosition.bottomRight,
-          },
-        ),
+        longPressDragBehavior: Reorder(),
+        // longPressDragBehavior: Relocate.to(
+        //   {
+        //     QueuePosition.centerRight,
+        //     QueuePosition.centerLeft,
+        //     QueuePosition.bottomLeft,
+        //     QueuePosition.bottomRight,
+        //   },
+        // ),
         transition: const ScaleTransitionStrategy(),
       ),
 

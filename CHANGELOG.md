@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0] - 2026-02-23
+
+### The Interaction Engine Overhaul (Reorder & Physics)
+- **Reorder Behavior**: Introduced the highly requested `Reorder` drag-and-drop behavior. Users can now pick up notifications and seamlessly rearrange them within their queue, empowering sophisticated inbox management.
+- **Overlap Mechanics**: Replaced legacy gap-based targeting with a deeply physical "Overlap Target" model. The engine dynamically calculates the 2D bounding `Rect` of every active notification on the fly to yield precise target indices.
+- **Perfect Deadband Hysteresis**: Implemented a mathematically rigorous "Gravity Well" (Target-Centric State) algorithm. The active drop zone applies a persistent 40-pixel magnetic lock to its own hit-test calculations, generating a flawless 80-pixel optical deadband that is 100% immune to pointer jitter, velocity spikes, and physical hand vibrations.
+- **Premium Bounding Reticles**: Replaced the destructive horizontal center-line drop indicator with a gorgeous, non-destructive **Selection Reticle**. Hovering over a card instantly frames its exterior in a glowing border while subtly darkening the interior (Recess Effect), visually communicating that the card is preparing to be displaced.
+- **Self-Target Suppression**: The physics engine now natively understands "cancel" drags. Hovering a payload over its own original starting slot visually suppresses all target feedback, rendering an empty placeholder hole so the user can comfortably drop the card back to safely abort.
+- **Semantic Zone Hierarchy**: Completely rebuilt the `zones.dart` monolith into a dedicated `zones/` subdirectory. `DropZone` is now a clean abstract base. Edge detection math is safely isolated within the sealed `EdgeDropZone`, while list slot math lives natively in `SlotDropZone`.
+- **Intelligent Resolvers**: Replaced static interface generation with `_edgesFromPositions()` and `_zonesFromSlots()`. The drag behaviors (`Dismiss`, `Relocate`, `Reorder`) now dynamically request the exact, minimal layout geometry they require, stripping away dozens of dead calculations per frame.
+- **Type Safety & Polishing**: Scrubbed the entire internal interaction codebase. Resolved all static line-length violations, updated comment references, and fortified Dart 3 type safety. The orchestrator is structurally immaculate.
+
 ## [0.4.4] - 2026-02-16
 
 ### Adaptive Close Button & Subtle Presence

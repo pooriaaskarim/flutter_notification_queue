@@ -141,6 +141,15 @@ class QueueCoordinator {
     return newNotification;
   }
 
+  /// Reorders [notification] to [targetIndex] within its current queue.
+  void reorder(
+    final NotificationWidget notification,
+    final int targetIndex,
+  ) {
+    final key = _widgetStateKeys[notification.queue.position];
+    key?.currentState?.reorder(notification, targetIndex);
+  }
+
   void bringToFront(final QueuePosition position) {
     if (!_activeQueuesNotifier.value.containsKey(position)) {
       return;

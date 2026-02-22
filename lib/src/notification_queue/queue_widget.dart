@@ -102,6 +102,46 @@ class QueueWidgetState extends State<QueueWidget>
     return removed;
   }
 
+  /// Moves [notification] to [targetIndex] within the active items list.
+  ///
+  /// Has no effect if [notification] is not found in the active list.
+  /// Dropping at the current index is allowed and resolves as a no-op.
+  void reorder(
+    final NotificationWidget notification,
+    final int targetIndex,
+  ) {
+    final currentIndex = _indexOf(notification.id);
+    if (currentIndex == -1) {
+      return;
+    }
+    if (currentIndex == targetIndex) {
+      // Dropped at own original position — nothing to move, but the gesture
+      // completed successfully so we do not suppress the interaction.
+      return;
+    }
+
+    setState(() {
+      final item = _items.removeAt(currentIndex);
+      // After removal the list is shorter, so clamp the insertion index.
+      final clampedTarget = targetIndex.clamp(0, _items.length);
+      _items.insert(clampedTarget, item);
+    });
+  }
+
+  /// The number of currently active (non-pending) notifications.
+  int get itemCount => _items.length;
+
+  /// The active-list index of [notification], or -1 if not found.
+  int indexOf(final NotificationWidget notification) =>
+      _indexOf(notification.id);
+
+  /// The [GlobalKey]s of active notification widgets, in stack order.
+  ///
+  /// Used by the reorder feedback layer to query each notification's
+  /// [RenderBox] position for slot anchor computation.
+  List<GlobalKey> get itemGlobalKeys =>
+      _items.map((final item) => item.globalKey).toList();
+
   void _processPending() {
     if (_pendingNotifications.isEmpty) {
       return;
@@ -228,7 +268,7 @@ class QueueWidgetState extends State<QueueWidget>
             item.controller,
             widget.queue.position,
             KeyedSubtree(
-              key: ValueKey(item.widget.id),
+              key: item.globalKey,
               child: DraggableTransitions(
                 notification: item.widget,
               ),
@@ -250,5 +290,6 @@ class _NotificationItemState {
 
   NotificationWidget widget;
   final AnimationController controller;
+  final GlobalKey globalKey = GlobalKey();
   _ItemStatus status = _ItemStatus.entering;
 }

@@ -85,6 +85,17 @@ final class Dismiss<T> extends QueueNotificationBehavior<T> {
   final DismissZone zones;
 }
 
+/// Reorders the notification within its current queue.
+///
+/// When the user drags the notification, slot targets appear between all
+/// notifications in the stack. Dropping onto a slot moves this notification
+/// to that index.
+final class Reorder<T> extends QueueNotificationBehavior<T> {
+  const Reorder({
+    super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
+  });
+}
+
 final class Disabled<T> extends QueueNotificationBehavior<T> {
   const Disabled()
       : super(thresholdInPixels: kDefaultQueueDragBehaviorThreshold);
