@@ -16,6 +16,15 @@ part of '../../notification.dart';
 ///     ├── TopEdgeDropZone
 ///     └── BottomEdgeDropZone
 /// ```
+// ignore: one_member_abstracts
 abstract class DropZone {
   const DropZone();
+
+  /// Returns `true` when the pointer is considered to have committed to this
+  /// zone (i.e. the drop should be accepted).
+  bool isHit(
+    final Offset pointer,
+    final Size screenSize,
+    final double threshold,
+  );
 }

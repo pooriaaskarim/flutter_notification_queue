@@ -68,14 +68,14 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   // - Relocate: derives zones from the set of target positions, correctly
   //   marking home-edges as isNatural to prevent hair-trigger engagement.
   // - Disabled: returns empty (unreachable in practice).
-  List<EdgeDropZone> _getZones(
+  List<DropZone> _getZones(
     final QueueNotificationBehavior behavior,
     final QueuePosition position,
   ) {
     if (behavior is Dismiss) {
       return _edgesFromDismissZone(behavior.zones, position);
     } else if (behavior is Relocate) {
-      return _edgesFromPositions(behavior.positions, position);
+      return _zonesFromPositions(behavior.positions, position);
     }
     return [];
   }
@@ -83,7 +83,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   bool _passedThreshold(
     final Offset? globalOffset,
     final int thresholdInPixels,
-    final List<EdgeDropZone> zones,
+    final List<DropZone> zones,
   ) {
     if (globalOffset == null) {
       return false;
@@ -251,7 +251,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                       },
                       screenSize: constraints.biggest,
                       threshold: behavior.thresholdInPixels.toDouble(),
-                      zones: zones,
+                      zones: zones.cast<EdgeDropZone>(),
                       pointerPositionNotifier: _dragOffsetPairNotifier,
                     ),
                   ),
@@ -261,7 +261,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                     thresholdInPixels: behavior.thresholdInPixels,
                     screenSize: _screenSize,
                     startData: _dragStartData,
-                    zones: zones,
+                    zones: zones.cast<EdgeDropZone>(),
                     child: widget.notification,
                   ),
                 );
@@ -398,7 +398,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                       },
                       screenSize: constraints.biggest,
                       threshold: behavior.thresholdInPixels.toDouble(),
-                      zones: zones,
+                      zones: zones.cast<EdgeDropZone>(),
                       pointerPositionNotifier: _dragOffsetPairNotifier,
                     ),
                   ),
@@ -408,7 +408,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
                     thresholdInPixels: behavior.thresholdInPixels,
                     screenSize: _screenSize,
                     startData: _dragStartData,
-                    zones: zones,
+                    zones: zones.cast<EdgeDropZone>(),
                     child: widget.notification,
                   ),
                 );

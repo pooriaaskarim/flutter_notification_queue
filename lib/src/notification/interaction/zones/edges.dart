@@ -35,6 +35,7 @@ sealed class EdgeDropZone extends DropZone {
 
   /// Returns `true` when the pointer is considered to have committed
   /// to this zone, according to the [_ThresholdPolicies] for [isNatural].
+  @override
   bool isHit(
     final Offset pointer,
     final Size screenSize,

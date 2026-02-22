@@ -10,6 +10,7 @@ import '../utils/utils.dart';
 
 part 'interaction/zones/base.dart';
 part 'interaction/zones/edges.dart';
+part 'interaction/zones/positions.dart';
 part 'interaction/zones/resolvers.dart';
 part 'interaction/dismissal_targets.dart';
 part 'interaction/draggable_transitions.dart';
