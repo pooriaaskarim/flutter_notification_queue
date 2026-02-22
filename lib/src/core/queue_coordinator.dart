@@ -126,7 +126,8 @@ class QueueCoordinator {
 
     // 2. Add to target if removed
     if (removed) {
-      newNotification = notification.copyWith(newPosition);
+      final targetQueue = newPosition.generateQueueFrom(notification.queue);
+      newNotification = notification.copyToQueue(targetQueue);
       // Defer addition to next frame to avoid Duplicate GlobalKey error
       // if the source queue animates the exit (keeping the key alive).
       // Note: This effectively unmounts and remounts the widget, resetting
@@ -138,6 +139,15 @@ class QueueCoordinator {
     }
 
     return newNotification;
+  }
+
+  /// Reorders [notification] to [targetIndex] within its current queue.
+  void reorder(
+    final NotificationWidget notification,
+    final int targetIndex,
+  ) {
+    final key = _widgetStateKeys[notification.queue.position];
+    key?.currentState?.reorder(notification, targetIndex);
   }
 
   void bringToFront(final QueuePosition position) {

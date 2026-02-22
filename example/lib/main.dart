@@ -16,6 +16,7 @@ void main() {
       // 1. Add Standard Channels (success, error, warning, info)
       ...NotificationChannel.standardChannels(
         position: QueuePosition.topCenter,
+        defaultDismissDuration: null,
       ),
 
       // 2. Add Custom Channels
@@ -37,18 +38,26 @@ void main() {
       // 1. Use Default Queue for TopCenter
       TopCenterQueue(
         margin: EdgeInsetsGeometry.zero,
+        spacing: 8.0,
         style: const FilledQueueStyle(
           borderRadius: BorderRadius.all(Radius.circular(12)),
-          opacity: 0.9,
+          opacity: 0.7,
           elevation: 8,
         ),
-        longPressDragBehavior: Relocate.to(
-          {
-            QueuePosition.centerRight,
-            QueuePosition.centerLeft,
-            QueuePosition.bottomCenter,
-          },
+        closeButtonBehavior: const VisibleOnHover(),
+        dragBehavior: const Dismiss(
+          zones: DismissZone.naturalDirection,
         ),
+        longPressDragBehavior: Reorder(),
+        // longPressDragBehavior: Relocate.to(
+        //   {
+        //     QueuePosition.centerRight,
+        //     QueuePosition.centerLeft,
+        //     QueuePosition.bottomLeft,
+        //     QueuePosition.bottomRight,
+        //   },
+        // ),
+        transition: const ScaleTransitionStrategy(),
       ),
 
       // 2. Custom Queue Configuration for BottomCenter
@@ -56,6 +65,8 @@ void main() {
         maxStackSize: 1,
         margin: EdgeInsetsGeometry.zero,
         style: const FlatQueueStyle(),
+        transition: const SlideTransitionStrategy(),
+        dragBehavior: const Dismiss(zones: DismissZone.naturalDirection),
         longPressDragBehavior: Relocate.to(
           {
             QueuePosition.topLeft,

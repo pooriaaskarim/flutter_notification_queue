@@ -34,7 +34,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Drag-to-Dismiss**: Swipe notifications away in any direction
 - **Long-press Actions**: Relocate or dismiss with long-press gestures
 - **Tap Actions**: Button actions or tap-anywhere functionality
-- **Hover Effects**: Close button appears on hover (web/desktop)
+- **Hover Effects**: Adaptive close button with [progressive enhancement](doc/queue/README.md#close-button-visibility)
 - **Gesture Feedback**: Smooth opacity changes during interactions
 
 ### **Internationalization & Accessibility**
@@ -53,7 +53,7 @@ advanced queuing, interactive gestures, multi-language support, and extensive cu
 - **Layout Customization**: Margins, spacing, elevation, and border radius
 - **Custom Builders**: Override notification UI with custom widgets
 
-## 📦 Installation
+## Installation
 
 Add FlutterNotificationQueue to your `pubspec.yaml`:
 
@@ -94,13 +94,16 @@ void main() {
       // ...
     },
     queues: {
-      QueuePosition.topCenter: {
-        'success': const FilledQueueStyle(
+      const TopCenterQueue(
+        style: FilledQueueStyle(
           borderRadius: BorderRadius.all(Radius.circular(12)),
           opacity: 0.9,
           elevation: 8,
         ),
-      },
+      ),
+      const BottomCenterQueue(
+        style: FlatQueueStyle(),
+      ),
     },
   );
 
@@ -143,7 +146,68 @@ NotificationWidget(
 ).show();
 ```
 
-## 🎨 Advanced Configuration
+## Advanced Configuration
+
+### Animation Control
+
+FlutterNotificationQueue provides powerful built-in transitions and allows for full customization.
+
+#### Standard Transitions
+The system tries to be smart about defaults. For example, a `SlideTransitionStrategy` will automatically slide from the correct direction based on the queue's position.
+
+```dart
+// Auto-slide from TopCenter
+TopCenterQueue(
+  transition: const SlideTransitionStrategy(), 
+)
+
+// Custom curve and duration
+BottomRightQueue(
+  transition: const SlideTransitionStrategy(
+    curve: Curves.elasticOut,
+    reverseCurve: Curves.easeOutExpo,
+  ),
+)
+```
+
+#### Customizing Properties
+You can override standard properties like the slide offset or initial scale.
+
+```dart
+// Slide from the side instead of bottom
+BottomCenterQueue(
+  transition: const SlideTransitionStrategy(
+    slideOffset: Offset(-1, 0), // Slide from left
+  ),
+)
+
+// Pop-in with custom scale and alignment
+CenterRightQueue(
+  transition: const ScaleTransitionStrategy(
+    initialScale: 0.5, // Start/end at 50% size
+    alignment: Alignment.centerLeft, // Expand from left
+  ),
+)
+```
+
+#### Custom Animations (Builder)
+For complete control, use the `BuilderTransitionStrategy` to define any animation inline.
+
+```dart
+TopCenterQueue(
+  transition: BuilderTransitionStrategy(
+    (context, animation, position, child) {
+      return RotationTransition(
+        turns: animation,
+        child: FadeTransition(
+          opacity: animation,
+          child: child,
+        ),
+      );
+    },
+  ),
+)
+```
 
 ### Custom Queue Styles
 
@@ -178,21 +242,28 @@ const Dismiss(thresholdInPixels: 50)
 
 // Relocate to specific positions
 Relocate.to({
-QueuePosition.topLeft,
-QueuePosition.topRight,
-QueuePosition.bottomCenter,
+  QueuePosition.topLeft,
+  QueuePosition.topRight,
+  QueuePosition.bottomCenter,
 })
 
-// Disable gestures
+// Disable gesture
 const Disabled()
+
+> [!TIP]
+> **Relocation Intelligence**: When you define `Relocate.to({...})` for a queue, the system automatically:
+> 1. Registers sibling queues for all target positions (no need to define them manually).
+> 2. Clones all characteristics (style, transition, spacing, maxStackSize) from the source queue to siblings.
+> 3. Adds the source position to the target set so notifications can be dragged back home.
+
 ```
 
 ### Close Button Behaviors
 
 ```dart
-QueueCloseButtonBehavior.always // Always visible
-QueueCloseButtonBehavior.onHover // Show on hover (web/desktop)
-QueueCloseButtonBehavior.never // Never show
+const AlwaysVisible() // Always visible
+const VisibleOnHover() // Adaptive visibility (touch-safe)
+const Hidden() // Never show (gesture-only)
 ```
 
 ## 🌍 Multi-language Support

@@ -1,12 +1,14 @@
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_notification_queue/src/core/core.dart';
+import 'package:flutter_notification_queue/src/enums/enums.dart'
+    show OnLongPress;
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ConfigurationManager', () {
-    // 1. Const Constructor
-    test('Const Constructor: Can be instantiated as const', () {
-      const manager = ConfigurationManager();
+    // 1. Constructor
+    test('Constructor: Can be instantiated', () {
+      final manager = ConfigurationManager();
       expect(manager, isA<ConfigurationManager>());
     });
 
@@ -37,7 +39,7 @@ void main() {
     test(
         'ConfigurationManager Default Configuration: Returns'
         ' default queue and channel', () {
-      const manager = ConfigurationManager();
+      final manager = ConfigurationManager();
 
       // Verify default queue logic (generates fallbacks)
       final queue = manager.getQueue(null);
@@ -55,7 +57,7 @@ void main() {
       const customChannel =
           NotificationChannel(name: 'custom', position: QueuePosition.topRight);
 
-      const manager = ConfigurationManager(
+      final manager = ConfigurationManager(
         queues: {customQueue},
         channels: {customChannel},
       );
@@ -68,7 +70,7 @@ void main() {
     test('Channel Resolution: Falls back to first channel on miss', () {
       const c1 = NotificationChannel(name: 'one');
       const c2 = NotificationChannel(name: 'two');
-      const manager = ConfigurationManager(channels: {c1, c2});
+      final manager = ConfigurationManager(channels: {c1, c2});
 
       expect(manager.getChannel('one'), equals(c1));
       expect(manager.getChannel('two'), equals(c2));
@@ -76,13 +78,14 @@ void main() {
       // Fallback
       expect(
         manager.getChannel('unknown'),
-        isA<NotificationChannel>().having((c) => c.name, 'name', 'default'),
+        isA<NotificationChannel>()
+            .having((final c) => c.name, 'name', 'default'),
       );
     });
 
     // 5. Queue Resolution (Stateless)
     test('Queue Resolution: Generates queues on fly (stateless)', () {
-      const manager = ConfigurationManager(); // Defaults
+      final manager = ConfigurationManager(); // Defaults
 
       // Request a position that wasn't configured
       final q1 = manager.getQueue(QueuePosition.bottomRight);
@@ -96,6 +99,196 @@ void main() {
 
       expect(q2.position, equals(q1.position));
       expect(q2.style.runtimeType, equals(q1.style.runtimeType));
+    });
+  });
+
+  group('Relocation Groups', () {
+    // 6. Self-Inclusion
+    test('Self-Inclusion: Source position is added to Relocate targets', () {
+      final relocateBehavior = Relocate<OnLongPress>.to(
+        {QueuePosition.centerRight, QueuePosition.centerLeft},
+      );
+      final manager = ConfigurationManager(
+        queues: {
+          TopCenterQueue(longPressDragBehavior: relocateBehavior),
+        },
+      );
+
+      // After init, source position (topCenter) should be in the targets
+      expect(
+        relocateBehavior.positions,
+        contains(QueuePosition.topCenter),
+      );
+
+      // Original targets should still be present
+      expect(
+        relocateBehavior.positions,
+        containsAll([QueuePosition.centerRight, QueuePosition.centerLeft]),
+      );
+
+      // Should have 3 positions total
+      expect(relocateBehavior.positions.length, equals(3));
+
+      // Manager should have the source queue
+      expect(manager.queues, isNotEmpty);
+    });
+
+    // 7. Group Expansion
+    test('Group Expansion: Sibling queues are created for all targets', () {
+      final manager = ConfigurationManager(
+        queues: {
+          TopCenterQueue(
+            longPressDragBehavior: Relocate<OnLongPress>.to(
+              {QueuePosition.centerRight, QueuePosition.centerLeft},
+            ),
+            style: const FilledQueueStyle(),
+          ),
+        },
+      );
+
+      // Should have 3 queues: topCenter + centerRight + centerLeft
+      expect(manager.queues.length, equals(3));
+
+      // Verify each sibling was created
+      final centerRight = manager.getQueue(QueuePosition.centerRight);
+      expect(centerRight, isA<CenterRightQueue>());
+
+      final centerLeft = manager.getQueue(QueuePosition.centerLeft);
+      expect(centerLeft, isA<CenterLeftQueue>());
+
+      // Verify original queue remains
+      final topCenter = manager.getQueue(QueuePosition.topCenter);
+      expect(topCenter, isA<TopCenterQueue>());
+    });
+
+    // 8. Sibling queues inherit characteristics
+    test('Group Expansion: Siblings inherit source queue characteristics', () {
+      const sourceStyle = FilledQueueStyle(
+        opacity: 0.5,
+        elevation: 12,
+      );
+
+      final manager = ConfigurationManager(
+        queues: {
+          TopCenterQueue(
+            longPressDragBehavior: Relocate<OnLongPress>.to(
+              {QueuePosition.bottomRight},
+            ),
+            style: sourceStyle,
+            maxStackSize: 5,
+            spacing: 10.0,
+          ),
+        },
+      );
+
+      // Sibling should inherit style
+      final sibling = manager.getQueue(QueuePosition.bottomRight);
+      expect(sibling.style.runtimeType, equals(sourceStyle.runtimeType));
+      expect(sibling.maxStackSize, equals(5));
+      expect(sibling.spacing, equals(10.0));
+    });
+
+    // 9. Transition forwarding
+    test('Group Expansion: Siblings inherit transition', () {
+      const sourceTransition = ScaleTransitionStrategy();
+
+      final manager = ConfigurationManager(
+        queues: {
+          TopCenterQueue(
+            longPressDragBehavior: Relocate<OnLongPress>.to(
+              {QueuePosition.bottomLeft},
+            ),
+            transition: sourceTransition,
+          ),
+        },
+      );
+
+      final sibling = manager.getQueue(QueuePosition.bottomLeft);
+      expect(sibling.transition, isA<ScaleTransitionStrategy>());
+    });
+
+    // 10. Cross-Group Validation
+    test('Cross-Group Validation: Throws on overlapping groups', () {
+      expect(
+        () => ConfigurationManager(
+          queues: {
+            TopCenterQueue(
+              longPressDragBehavior: Relocate<OnLongPress>.to(
+                {QueuePosition.centerRight},
+              ),
+            ),
+            BottomCenterQueue(
+              longPressDragBehavior: Relocate<OnLongPress>.to(
+                {QueuePosition.centerRight}, // overlap!
+              ),
+            ),
+          },
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    // 11. Independent groups coexist
+    test('Independent Groups: Two separate groups coexist without conflict',
+        () {
+      final manager = ConfigurationManager(
+        queues: {
+          TopCenterQueue(
+            longPressDragBehavior: Relocate<OnLongPress>.to(
+              {QueuePosition.centerRight, QueuePosition.centerLeft},
+            ),
+          ),
+          BottomCenterQueue(
+            longPressDragBehavior: Relocate<OnLongPress>.to(
+              {QueuePosition.topLeft},
+            ),
+          ),
+        },
+      );
+
+      // Group 1: topCenter + centerRight + centerLeft = 3 queues
+      // Group 2: bottomCenter + topLeft = 2 queues
+      // Total: 5
+      expect(manager.queues.length, equals(5));
+    });
+
+    // 12. No expansion for non-Relocate behaviors
+    test('No Expansion: Dismiss/Disabled behaviors do not expand', () {
+      final manager = ConfigurationManager(
+        queues: {
+          const TopCenterQueue(
+            dragBehavior: Dismiss(),
+            longPressDragBehavior: Disabled(),
+          ),
+        },
+      );
+
+      // Only the original queue should exist
+      expect(manager.queues.length, equals(1));
+    });
+
+    // 13. Pre-configured target is not overwritten
+    test('Pre-Configured Target: Existing target queue is preserved', () {
+      const customStyle = FilledQueueStyle(opacity: 0.9);
+
+      final manager = ConfigurationManager(
+        queues: {
+          TopCenterQueue(
+            longPressDragBehavior: Relocate<OnLongPress>.to(
+              {QueuePosition.topRight},
+            ),
+            style: const FlatQueueStyle(), // source style
+          ),
+          const TopRightQueue(
+            style: customStyle, // explicitly configured
+          ),
+        },
+      );
+
+      // TopRight should keep its own explicitly configured style,
+      // not inherit the source's FlatQueueStyle
+      final topRight = manager.getQueue(QueuePosition.topRight);
+      expect(topRight.style, equals(customStyle));
     });
   });
 }

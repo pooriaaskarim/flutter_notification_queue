@@ -1,5 +1,56 @@
 # Changelog
 
+## [0.5.0] - 2026-02-23
+
+### The Interaction Engine Overhaul (Reorder & Physics)
+- **Reorder Behavior**: Introduced the highly requested `Reorder` drag-and-drop behavior. Users can now pick up notifications and seamlessly rearrange them within their queue, empowering sophisticated inbox management.
+- **Overlap Mechanics**: Replaced legacy gap-based targeting with a deeply physical "Overlap Target" model. The engine dynamically calculates the 2D bounding `Rect` of every active notification on the fly to yield precise target indices.
+- **Perfect Deadband Hysteresis**: Implemented a mathematically rigorous "Gravity Well" (Target-Centric State) algorithm. The active drop zone applies a persistent 40-pixel magnetic lock to its own hit-test calculations, generating a flawless 80-pixel optical deadband that is 100% immune to pointer jitter, velocity spikes, and physical hand vibrations.
+- **Premium Bounding Reticles**: Replaced the destructive horizontal center-line drop indicator with a gorgeous, non-destructive **Selection Reticle**. Hovering over a card instantly frames its exterior in a glowing border while subtly darkening the interior (Recess Effect), visually communicating that the card is preparing to be displaced.
+- **Self-Target Suppression**: The physics engine now natively understands "cancel" drags. Hovering a payload over its own original starting slot visually suppresses all target feedback, rendering an empty placeholder hole so the user can comfortably drop the card back to safely abort.
+- **Semantic Zone Hierarchy**: Completely rebuilt the `zones.dart` monolith into a dedicated `zones/` subdirectory. `DropZone` is now a clean abstract base. Edge detection math is safely isolated within the sealed `EdgeDropZone`, while list slot math lives natively in `SlotDropZone`.
+- **Intelligent Resolvers**: Replaced static interface generation with `_edgesFromPositions()` and `_zonesFromSlots()`. The drag behaviors (`Dismiss`, `Relocate`, `Reorder`) now dynamically request the exact, minimal layout geometry they require, stripping away dozens of dead calculations per frame.
+- **Type Safety & Polishing**: Scrubbed the entire internal interaction codebase. Resolved all static line-length violations, updated comment references, and fortified Dart 3 type safety. The orchestrator is structurally immaculate.
+
+## [0.4.4] - 2026-02-16
+
+### Adaptive Close Button & Subtle Presence
+- **Opacity-Based Model**: Replaced boolean visibility with a refined `double` opacity model (`0.0`–`1.0`) for smoother transitions and better control.
+- **Subtle Presence Pattern**: Implemented an adaptive design for touch devices; the close button starts at `0.3` opacity to ensure discoverability while staying visually de-emphasized.
+- **Progressive Enhancement**: Introduced evidence-based mouse detection. The close button stays at `0.3` until a mouse hover is detected, upon which it upgrades to true desktop-style hidden/reveal (`0.0`/`1.0`) behavior.
+- **Reliable Hover Detection**: Migrated from `InkWell.onHover` to `MouseRegion` to ensure hover events fire reliably even when notifications have no primary tap action.
+- **Premium Animations**: Smoothed the close button fade using a `400ms` duration and `easeOutCubic` curve.
+- **Zombie Prevention**: Added strict `ConfigurationManager` validation to ensure `Hidden` close buttons are always accompanied by gesture dismissal (`Dismiss` or `Relocate`).
+- **Documentation Overhaul**: Updated the entire `doc/` suite and root `README.md` to reflect the new class-based interaction API.
+
+## [0.4.3] - 2026-02-16
+
+### Relocation Maturity
+- **Automatic Group Expansion**: Added `_expandRelocationGroups` to `ConfigurationManager` to automatically generate sibling queues for all relocation targets.
+- **Relocation Characteristics Inheritance**: Generated sibling queues now correctly inherit `style`, `transition`, `maxStackSize`, and `spacing` from the source queue.
+- **Self-Relocation Support**: Every relocation group now automatically includes its own source position, allowing notifications to return to their home queue.
+- **Cross-Group Validation**: Implemented strict validation to prevent a single position from belonging to multiple relocation groups, ensuring deterministic behavior.
+- **Fixed Transition Forwarding**: Resolved a bug where `generateQueue` omitted the `transition` parameter, causing siblings to lose custom entrance/exit logic.
+- **Queue-Preserving Copy**: Enhanced `NotificationWidget.copyToQueue` to use internal constructors, bypassing manager resolution and preserving existing queue instances.
+
+
+## [0.4.2] - 2026-02-16
+
+### Animation Harmony (UX Polish)
+- **Managed State Pattern**: Refactored `QueueWidget` to use a managed state approach with individual `AnimationController`s per notification.
+- **Synchronized Transitions**: Unified `SizeTransition` (layout) and `NotificationTransition` (fade/scale) for perfectly synchronized entry/exit.
+- **Improved Layout Logic**: Fixed spacing inconsistencies and ensured correct cross-axis alignment for all queue positions.
+
+### Decoupled Animation Strategy
+- **New Feature**: Introduced `NotificationTransition` strategy pattern for custom entrance/exit animations.
+- **Builder Support**: Added `BuilderTransitionStrategy` for inline custom animations via a callback.
+- **Standard Transitions**: Added `SlideTransitionStrategy` (default), `ScaleTransitionStrategy`, and `FadeTransitionStrategy`.
+- **Queue Integration**: `NotificationQueue` now accepts a `transition` property.
+
+### Documentation
+- **Documentation Overhaul**: Added documentations for NFQ system components and refreshed documentation tone/structure.
+- **Animation Control**: Added detailed animation guide to `README.md`.
+
 ## [0.4.1] - 2026-02-13
 
 ### Standard Defaults System

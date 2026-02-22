@@ -20,6 +20,7 @@ enum QueuePosition {
         dragBehavior: anotherQueue.dragBehavior,
         closeButtonBehavior: anotherQueue.closeButtonBehavior,
         queueIndicatorBuilder: anotherQueue.queueIndicatorBuilder,
+        transition: anotherQueue.transition,
       );
 
   NotificationQueue generateQueue({
@@ -31,6 +32,7 @@ enum QueuePosition {
     required final LongPressDragBehavior longPressDragBehavior,
     required final QueueCloseButtonBehavior closeButtonBehavior,
     required final QueueIndicatorBuilder? queueIndicatorBuilder,
+    required final NotificationTransition? transition,
   }) {
     switch (this) {
       case topLeft:
@@ -43,6 +45,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case topCenter:
         return TopCenterQueue(
@@ -54,6 +57,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case topRight:
         return TopRightQueue(
@@ -65,6 +69,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case centerLeft:
         return CenterLeftQueue(
@@ -76,6 +81,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case centerRight:
         return CenterRightQueue(
@@ -87,6 +93,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case bottomLeft:
         return BottomLeftQueue(
@@ -98,6 +105,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case bottomCenter:
         return BottomCenterQueue(
@@ -109,6 +117,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
       case bottomRight:
         return BottomRightQueue(
@@ -120,6 +129,7 @@ enum QueuePosition {
           longPressDragBehavior: longPressDragBehavior,
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
+          transition: transition ?? const SlideTransitionStrategy(),
         );
     }
   }
@@ -143,6 +153,44 @@ enum QueuePosition {
         return Alignment.bottomCenter;
       case bottomRight:
         return Alignment.bottomRight;
+    }
+  }
+
+  Offset get defaultSlideOffset {
+    switch (this) {
+      case topLeft:
+      case centerLeft:
+      case bottomLeft:
+        return const Offset(-1, 0);
+      case topCenter:
+        return const Offset(0, -1);
+      case bottomCenter:
+        return const Offset(0, 1);
+      case topRight:
+      case centerRight:
+      case bottomRight:
+        return const Offset(1, 0);
+    }
+  }
+
+  String get displayName {
+    switch (this) {
+      case QueuePosition.topLeft:
+        return 'Top Left';
+      case QueuePosition.topCenter:
+        return 'Top Center';
+      case QueuePosition.topRight:
+        return 'Top Right';
+      case QueuePosition.centerLeft:
+        return 'Center Left';
+      case QueuePosition.centerRight:
+        return 'Center Right';
+      case QueuePosition.bottomLeft:
+        return 'Bottom Left';
+      case QueuePosition.bottomCenter:
+        return 'Bottom Center';
+      case QueuePosition.bottomRight:
+        return 'Bottom Right';
     }
   }
 }

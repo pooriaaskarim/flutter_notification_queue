@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/core.dart';
 import '../notification_queue/notification_queue.dart';
 
 part './close_button_behaviour.dart';
