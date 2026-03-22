@@ -15,7 +15,7 @@ void main() {
 
     setUp(() {
       // Initialize system to support NotificationWidget factory
-      FlutterNotificationQueue.initialize(
+      FlutterNotificationQueue.configure(
         queues: {
           const TopRightQueue(),
         },

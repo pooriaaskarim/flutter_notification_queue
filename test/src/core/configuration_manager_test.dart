@@ -15,12 +15,14 @@ void main() {
     tearDown(() {
       try {
         FlutterNotificationQueue.reset();
-      } catch (_) {}
+      // ignore: avoid_catching_errors
+      } on StateError catch (_) {
+      }
     });
 
     // 2. Zero-Config Initialization
     test('Zero-Config Initialization: Uses standard defaults', () {
-      FlutterNotificationQueue.initialize();
+      FlutterNotificationQueue.configure();
       final config = FlutterNotificationQueue.configuration;
 
       expect(config.queues, isNotEmpty);

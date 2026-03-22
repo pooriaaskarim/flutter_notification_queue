@@ -2,7 +2,7 @@ part of 'core.dart';
 
 /// The entry point for the Flutter Notification Queue package.
 ///
-/// Use [initialize] to configure the global queues and channels.
+/// Use [configure] to configure the global queues and channels.
 ///
 /// Use [builder] in [MaterialApp.builder] to integrate contextless
 ///  notification support into your app.
@@ -16,57 +16,65 @@ final class FlutterNotificationQueue {
   static ConfigurationManager? _configuration;
   static QueueCoordinator? _coordinator;
 
+  static final _logger = Logger.get('fnq.Core');
+
   /// Access the global configuration.
   ///
-  /// Throws [StateError] if [initialize] has not been called.
+  /// Automatically calls [configure] with defaults if not already initialized.
   static ConfigurationManager get configuration {
-    if (_configuration == null) {
-      throw StateError(
-        'FlutterNotificationQueue is not initialized. '
-        'Call FlutterNotificationQueue.initialize() before accessing '
-        'configuration.',
-      );
-    }
+    _ensureInitialized();
     return _configuration!;
   }
 
   /// Access the global queue coordinator.
   ///
-  /// Throws [StateError] if [initialize] has not been called.
+  /// Automatically calls [configure] with defaults if not already initialized.
   static QueueCoordinator get coordinator {
-    if (_coordinator == null) {
-      throw StateError(
-        'FlutterNotificationQueue is not initialized. '
-        'Call FlutterNotificationQueue.initialize() before accessing '
-        'coordinator.',
-      );
-    }
+    _ensureInitialized();
     return _coordinator!;
   }
 
-  /// Initialize the notification queue system with custom queues and channels.
+  static void _ensureInitialized() {
+    if (!isInitialized) {
+      _logger.info(
+        'NFQ: Lazy configuration triggered (accessed before configure())',
+      );
+      configure();
+    }
+  }
+
+  /// Configure the notification queue system with custom queues and channels.
   ///
-  /// This should be called once, typically in your `main()` function.
+  /// This should be called to set up the system, typically in your `main()`
+  /// function, but can be called again to reconfigure at runtime.
   ///
   /// Empty/Null configuration would fallback to [NotificationQueue.defaultQueue]
   /// and [NotificationChannel.standardChannels].
-  static void initialize({
+  static void configure({
     final Set<NotificationQueue>? queues,
     final Set<NotificationChannel>? channels,
   }) {
-    if (isInitialized) {
-      throw StateError(
-        'FlutterNotificationQueue is already initialized. '
-        'Do not call FlutterNotificationQueue.initialize() multiple times.',
-      );
-    }
+    final isReconfig = isInitialized;
 
     _configureLogger();
     _configuration = ConfigurationManager(
       queues: queues ?? {NotificationQueue.defaultQueue()},
       channels: channels ?? NotificationChannel.standardChannels(),
     );
-    _coordinator = QueueCoordinator();
+
+    final wasNew = _coordinator == null;
+    _coordinator ??= QueueCoordinator();
+
+    final mode = isReconfig ? 'Re-configured' : 'Configured';
+    final strategy = wasNew ? 'Initial Lifecycle' : 'Preserved Coordinator';
+
+    _logger.info('NFQ $mode ($strategy): ${_configuration!.summary}');
+
+    _logger.debugBuffer
+      ?..writeln('FlutterNotificationQueue $mode')
+      ..writeln('  - Strategy: $strategy')
+      ..writeln('  - Validation: System integrity verified')
+      ..sink();
   }
 
   /// Resets the notification queue system.
@@ -82,15 +90,15 @@ final class FlutterNotificationQueue {
   static void _configureLogger() {
     Logger.configure(
       'global',
+      logLevel: LogLevel.debug,
       handlers: [
-        const Handler(
-          formatter: StructuredFormatter(),
-          decorators: [
+        Handler(
+          formatter: const StructuredFormatter(),
+          decorators: const [
             BoxDecorator(),
             HierarchyDepthPrefixDecorator(),
           ],
           sink: ConsoleSink(),
-          lineLength: 120,
         ),
       ],
       stackMethodCount: {

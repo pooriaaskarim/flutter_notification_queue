@@ -11,7 +11,7 @@ void main() {
   group('QueueWidgetState', () {
     setUp(() {
       // Initialize system
-      FlutterNotificationQueue.initialize(
+      FlutterNotificationQueue.configure(
         queues: {
           const TopRightQueue(maxStackSize: 2), // Limit 2 for testing overflow
         },
