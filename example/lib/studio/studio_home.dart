@@ -4,10 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'bloc/studio_bloc.dart';
-import 'bloc/studio_event.dart';
-import 'bloc/studio_state.dart';
 import 'panels/code_editor_panel.dart';
 import 'panels/configurator_panel.dart';
+import 'studio_theme.dart';
 
 /// The root layout for NFQ Studio.
 ///
@@ -56,10 +55,7 @@ class _StudioShellState extends State<_StudioShell> {
             BlocBuilder<StudioBloc, StudioState>(
               builder: (final context, final state) => IconButton(
                 onPressed: () {
-                  final newMode = state.themeMode == ThemeMode.dark
-                      ? ThemeMode.light
-                      : ThemeMode.dark;
-                  context.read<StudioBloc>().add(UpdateThemeMode(newMode));
+                  context.read<StudioBloc>().add(const ToggleTheme());
                 },
                 icon: Icon(
                   state.themeMode == ThemeMode.dark
@@ -96,12 +92,10 @@ class _StudioShellState extends State<_StudioShell> {
             return BottomNavigationBar(
               currentIndex: _tabIndex,
               onTap: (final i) => setState(() => _tabIndex = i),
-              backgroundColor: Theme.of(context).colorScheme.surface,
-              selectedItemColor: Theme.of(context).colorScheme.primary,
-              unselectedItemColor: Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.38),
+              backgroundColor: StudioTheme.colorScheme.surface,
+              selectedItemColor: StudioTheme.colorScheme.primary,
+              unselectedItemColor:
+                  StudioTheme.colorScheme.onSurface.withValues(alpha: 0.38),
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.tune),
@@ -122,8 +116,7 @@ class _StudioShellState extends State<_StudioShell> {
           const Expanded(child: ConfiguratorPanel()),
           Container(
             width: 1,
-            color:
-                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.08),
+            color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.08),
           ),
           const Expanded(child: CodeEditorPanel()),
         ],
@@ -148,8 +141,8 @@ class _StudioBackground extends StatelessWidget {
             center: const Alignment(-0.8, -0.8),
             radius: 1.5,
             colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).scaffoldBackgroundColor,
+              StudioTheme.colorScheme.surface,
+              StudioTheme.theme.scaffoldBackgroundColor,
             ],
           ),
         ),
@@ -163,9 +156,7 @@ class _StudioBackground extends StatelessWidget {
                 height: 400,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primary
+                  color: StudioTheme.colorScheme.primary
                       .withValues(alpha: 0.08),
                 ),
               ),

@@ -92,9 +92,9 @@ final class FlutterNotificationQueue {
       'global',
       logLevel: LogLevel.debug,
       handlers: [
-        Handler(
-          formatter: const StructuredFormatter(),
-          decorators: const [
+        const Handler(
+          formatter: StructuredFormatter(),
+          decorators: [
             BoxDecorator(),
             HierarchyDepthPrefixDecorator(),
           ],

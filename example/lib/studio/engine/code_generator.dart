@@ -1,146 +1,197 @@
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
-import '../bloc/studio_state.dart';
+import '../bloc/notification_bloc.dart';
+import '../models/channel_setup.dart';
+import '../models/queue_setup.dart';
+import '../models/studio_setup.dart';
 
 /// Generates a copy-pasteable Dart code snippet from the current
-/// [StudioState]. Omits parameters that match their defaults for
-/// cleaner output.
-String generateCode(final StudioState s) {
-  final buf = StringBuffer()
-    // ── Initialization snippet ──
-    ..writeln('// 1. Initialize NFQ in main()')
+/// [StudioSetup] and [NotificationDraft].
+String generateCode({
+  required final StudioSetup setup,
+  required final NotificationDraft draft,
+}) {
+  final buf = StringBuffer('// NFQ Studio — Generated Code\n')
+    ..writeln()
     ..writeln('FlutterNotificationQueue.configure(')
-    ..writeln('  queues: {')
-    ..writeln('    NotificationQueue.defaultQueue(')
-    ..writeln(
-      '      position: QueuePosition.${s.queuePosition.name},',
-    )
-    ..writeln('      style: ${_styleCode(s)},')
-    ..writeln(
-      '      transition: ${_transitionCode(s)},',
-    );
+    ..writeln('  queues: {');
 
-  if (s.maxStackSize != 3) {
-    buf.writeln('      maxStackSize: ${s.maxStackSize},');
-  }
-  if (s.spacing != 4.0) {
-    buf.writeln('      spacing: ${s.spacing},');
+  for (final entry in setup.queues.entries) {
+    _writeQueue(buf, entry.key, entry.value);
   }
 
   buf
-    ..writeln(
-      '      dragBehavior: ${_behaviorCode(s.dragBehavior, s)},',
-    )
-    ..writeln(
-      '      longPressDragBehavior: '
-      '${_behaviorCode(s.longPressBehavior, s)},',
-    )
-    ..writeln(
-      '      closeButtonBehavior: ${_closeButtonCode(s)},',
-    )
-    ..writeln('    ),')
+    ..writeln('  },')
+    ..writeln('  channels: {');
+
+  for (final channel in setup.channels.values) {
+    _writeChannel(buf, channel);
+  }
+
+  buf
     ..writeln('  },')
     ..writeln(');')
     ..writeln()
 
-    // ── Notification snippet ──
-    ..writeln('// 2. Fire a notification')
-    ..writeln('NotificationWidget(');
+    // ── NotificationWidget ──
 
-  if (s.notificationTitle.isNotEmpty) {
-    buf.writeln("  title: '${_escape(s.notificationTitle)}',");
-  }
+    ..writeln('// Fire a notification')
+    ..writeln('NotificationWidget(')
+    ..writeln("  title: '${draft.title}',")
+    ..writeln("  message: '${draft.message}',")
+    ..writeln("  channelName: '${draft.channelName}',");
 
-  buf.writeln("  message: '${_escape(s.notificationMessage)}',");
-
-  if (s.channelName != 'default') {
-    buf.writeln("  channelName: '${s.channelName}',");
-  }
-  if (s.queuePosition != QueuePosition.topCenter) {
+  if (draft.positionOverride != null) {
     buf.writeln(
-      '  position: QueuePosition.${s.queuePosition.name},',
+      '  position: QueuePosition.${draft.positionOverride!.name},',
     );
   }
-  if (s.dismissDuration != null) {
-    buf.writeln(
-      '  dismissDuration: '
-      'const Duration(seconds: ${s.dismissDuration}),',
-    );
-  }
-  if (s.actionType == ActionType.button) {
+
+  if (draft.actionStyle == NotificationActionStyle.button) {
     buf
       ..writeln('  action: NotificationAction.button(')
-      ..writeln("    label: '${_escape(s.actionLabel)}',")
+      ..writeln("    label: '${draft.actionLabel}',")
       ..writeln('    onPressed: () {},')
       ..writeln('  ),');
-  } else if (s.actionType == ActionType.onTap) {
+  } else if (draft.actionStyle == NotificationActionStyle.onTap) {
     buf
       ..writeln('  action: NotificationAction.onTap(')
       ..writeln('    onPressed: () {},')
       ..writeln('  ),');
   }
-  buf.writeln(').show();');
+
+  if (draft.dismissSeconds != null) {
+    buf.writeln(
+      '  dismissDuration: '
+      'const Duration(seconds: ${draft.dismissSeconds}),',
+    );
+  }
+
+  buf
+    ..writeln(').show();')
+    ..writeln();
 
   return buf.toString();
 }
 
-String _styleCode(final StudioState s) {
-  final name = switch (s.styleType) {
-    StyleType.filled => 'FilledQueueStyle',
-    StyleType.flat => 'FlatQueueStyle',
-    StyleType.outlined => 'OutlinedQueueStyle',
-  };
+void _writeQueue(
+  final StringBuffer buf,
+  final QueuePosition position,
+  final QueueSetup q,
+) {
+  buf
+    ..writeln('    NotificationQueue.defaultQueue(')
+    ..writeln('      position: QueuePosition.${position.name},')
+    ..writeln(
+      '      style: ${_styleSnippet(q)},',
+    )
+    ..writeln(
+      '      transition: ${_transitionSnippet(q.transitionType)},',
+    )
+    ..writeln('      maxStackSize: ${q.maxStackSize},')
+    ..writeln('      spacing: ${q.spacing},')
+    ..writeln(
+      '      dragBehavior: ${_behaviorSnippet(q.dragBehaviorType, q, true)},',
+    )
+    ..writeln(
+      '      longPressDragBehavior: '
+      '${_behaviorSnippet(q.longPressBehaviorType, q, false)},',
+    )
+    ..writeln(
+      '      closeButtonBehavior: '
+      '${_closeButtonSnippet(q.closeButtonBehaviorType)},',
+    )
+    ..writeln(
+      '      margin: const EdgeInsets.symmetric(\n'
+      '        vertical: ${q.verticalMargin},\n'
+      '        horizontal: ${q.horizontalMargin},\n'
+      '      ),',
+    )
+    ..writeln('    ),');
+}
 
-  final params = <String>[];
-  if (s.styleOpacity != 0.7) {
-    params.add('opacity: ${s.styleOpacity}');
+void _writeChannel(final StringBuffer buf, final ChannelSetup c) {
+  buf
+    ..writeln('    NotificationChannel(')
+    ..writeln("      name: '${c.name}',");
+  if (c.description != null) {
+    buf.writeln("      description: '${c.description}',");
   }
-  if (s.styleElevation != 3.0) {
-    params.add('elevation: ${s.styleElevation}');
-  }
-  if (s.styleBorderRadius != 8.0) {
-    params.add(
-      'borderRadius: '
-      'BorderRadius.all(Radius.circular(${s.styleBorderRadius}))',
+  if (c.color != null) {
+    buf.writeln(
+      '      defaultColor: '
+      'Color(0x${c.color!.toARGB32().toRadixString(16).padLeft(8, '0')}'
+      '),',
     );
   }
-
-  if (params.isEmpty) {
-    return 'const $name()';
+  if (c.foregroundColor != null) {
+    buf.writeln(
+      '      defaultForegroundColor: Color(0x'
+      '${c.foregroundColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
+      '),',
+    );
   }
-  return 'const $name(${params.join(', ')})';
+  if (c.backgroundColor != null) {
+    buf.writeln(
+      '      defaultBackgroundColor: Color(0x'
+      '${c.backgroundColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
+      '),',
+    );
+  }
+  if (c.position != null) {
+    buf.writeln(
+      '      position: QueuePosition.${c.position!.name},',
+    );
+  }
+  if (c.dismissSeconds != null) {
+    buf.writeln(
+      '      defaultDismissDuration: '
+      'const Duration(seconds: ${c.dismissSeconds}),',
+    );
+  }
+  if (c.iconPreset != ChannelIconPreset.none) {
+    final iconName = switch (c.iconPreset) {
+      ChannelIconPreset.info => 'info',
+      ChannelIconPreset.success => 'check_circle',
+      ChannelIconPreset.warning => 'warning',
+      ChannelIconPreset.error => 'error',
+      ChannelIconPreset.notification => 'notifications',
+      ChannelIconPreset.none => '', // shouldn't happen
+    };
+    buf.writeln('      defaultIcon: Icon(Icons.$iconName),');
+  }
+  if (!c.enabled) {
+    buf.writeln('      enabled: false,');
+  }
+  buf.writeln('    ),');
 }
 
-String _transitionCode(final StudioState s) => switch (s.transitionType) {
-      TransitionType.slide => 'const SlideTransitionStrategy()',
-      TransitionType.fade => 'const FadeTransitionStrategy()',
-      TransitionType.scale => 'const ScaleTransitionStrategy()',
-    };
+String _styleSnippet(final QueueSetup q) => '${q.styleType}(\n'
+    '        opacity: ${q.opacity},\n'
+    '        elevation: ${q.elevation},\n'
+    '        borderRadius: '
+    'BorderRadius.circular(${q.borderRadius}),\n'
+    '      )';
 
-String _behaviorCode(
-  final BehaviorType type,
-  final StudioState s,
-) =>
-    switch (type) {
-      BehaviorType.dismiss => 'const Dismiss()',
-      BehaviorType.relocate => _relocateCode(s),
-      BehaviorType.reorder => 'const Reorder()',
-      BehaviorType.disabled => 'const Disabled()',
-    };
+String _transitionSnippet(final Type t) => 'const $t()';
 
-String _relocateCode(final StudioState s) {
-  if (s.relocatePositions.isEmpty) {
-    return 'Relocate.to({QueuePosition.topCenter})';
+String _behaviorSnippet(final Type t, final QueueSetup q, final bool isDrag) {
+  final zone = isDrag ? q.dragDismissZone : q.longPressDismissZone;
+
+  if (t == Dismiss) {
+    return 'const Dismiss(zones: DismissZone.${zone.name})';
   }
-  final positions =
-      s.relocatePositions.map((final p) => 'QueuePosition.${p.name}');
-  return 'Relocate.to({${positions.join(', ')}})';
+  if (t == Relocate) {
+    return q.relocateTargets.isEmpty
+        ? 'Relocate.to({}) // ERROR: Relocation targets must not be empty!'
+        : 'Relocate.to({${q.relocateTargets.map(
+              (final p) => 'QueuePosition.${p.name}',
+            ).join(', ')}})';
+  }
+  if (t == Reorder) {
+    return 'const Reorder()';
+  }
+  return 'const Disabled()';
 }
 
-String _closeButtonCode(final StudioState s) => switch (s.closeButton) {
-      CloseButtonType.alwaysVisible => 'const AlwaysVisible()',
-      CloseButtonType.visibleOnHover => 'const VisibleOnHover()',
-      CloseButtonType.hidden => 'const Hidden()',
-    };
-
-String _escape(final String input) => input.replaceAll("'", "\\'");
+String _closeButtonSnippet(final Type t) => 'const $t()';

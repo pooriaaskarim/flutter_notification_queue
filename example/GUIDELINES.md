@@ -18,9 +18,18 @@ The NFQ (Notification Flutter Queue) Studio is the official showcase for the lib
 
 ## 4. Reference Architecture
 - **Modularity**: The example code should be modular and easy to read, serving as a template for developers.
-- **Best Practices**: Use standard Flutter patterns (e.g., `Provider` for state, clear widget separation).
+- **Dual-Bloc Pattern**: Separate state management into distinct concerns:
+  - `ConfigBloc` — owns the `NfqConfig` model and handles library configuration lifecycle.
+  - `StudioBloc` — owns UI presentation state (theme, notification content, actions).
+- **`NfqConfig` as Single Source of Truth**: All queue configuration fields live in the `NfqConfig` Equatable model. Both the code generator and the configurator panel read from this model.
+- **Reactive Configuration**: `ConfigBloc` uses `onChange` to detect when `NfqConfig` actually changes and only then calls `FlutterNotificationQueue.configure()`. Never call `configure()` redundantly.
 - **No Refactor Left Behind**: Ensure legacy example files are removed or updated to prevent confusion.
 
-## 5. Performance & Quality
+## 5. Bidirectional Sync (Planned)
+- **Code ↔ UI**: The code editor and configurator UI must stay in sync. Editing code should update the UI; tweaking the UI should update the code.
+- **Single Model Bridge**: Both `CodeGenerator` and future `CodeParser` operate on `NfqConfig`, ensuring round-trip fidelity.
+- **Conflict Resolution**: Last writer wins through the BLoC event system. Track edit provenance (`ui` vs `code`) to prevent re-generation loops.
+
+## 6. Performance & Quality
 - **Zero Lints**: Maintain a clean, warning-free codebase.
 - **Fluidity**: Ensure all animations and blurs perform at 60/120 FPS on supported hardware.

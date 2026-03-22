@@ -6,6 +6,36 @@ import 'package:flutter/material.dart';
 class StudioTheme {
   StudioTheme._();
 
+  static late ThemeData _theme;
+  static late ColorScheme _colorScheme;
+  static late bool _isDark;
+
+  static ThemeData get theme => _theme;
+  static ColorScheme get colorScheme => _colorScheme;
+  static bool get isDark => _isDark;
+
+  /// Updates the global static theme state.
+  /// Should be called at the root of the app (e.g. in MaterialApp.builder).
+  static void update(final BuildContext context) {
+    _theme = Theme.of(context);
+    _colorScheme = _theme.colorScheme;
+    _isDark = _theme.brightness == Brightness.dark;
+  }
+
+  /// Force-rebuilds all descendants of the given context.
+  ///
+  /// Used to ensure that leaf widgets using static theme access refresh
+  /// when the theme changes, bypassing const optimizations.
+  static void rebuildDescendantChildren(final BuildContext context) {
+    void rebuild(final Element el) {
+      el
+        ..markNeedsBuild()
+        ..visitChildren(rebuild);
+    }
+
+    (context as Element).visitChildren(rebuild);
+  }
+
   static const primaryColor = Color(0xFF0F172A);
   static const surfaceColor = Color(0xFF1E293B);
   static const accentColor = Color(0xFF38BDF8);
@@ -68,8 +98,8 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = StudioTheme.isDark;
+    final colorScheme = StudioTheme.colorScheme;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
