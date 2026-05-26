@@ -160,6 +160,7 @@ void _writeChannel(final StringBuffer buf, final ChannelSetup c) {
     };
     buf.writeln('      defaultIcon: Icon(Icons.$iconName),');
   }
+  // Only emit `enabled: false` — omitting it implies true (the default).
   if (!c.enabled) {
     buf.writeln('      enabled: false,');
   }

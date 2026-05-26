@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
 import '../../bloc/setup_bloc.dart';
+import '../../models/channel_setup.dart';
 import '../../models/queue_setup.dart';
 import '../../studio_theme.dart';
+import '../../widgets/queue_position_map.dart';
 import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_section_header.dart';
 import '../../widgets/studio_slider_tile.dart';
@@ -30,6 +32,10 @@ class QueueSection extends StatelessWidget {
         setupState.setup.queues[setupState.activeQueuePosition] ??
             const QueueSetup();
 
+    final allSlaves = setupState.setup.queues.values
+        .expand((final q) => q.relocateTargets)
+        .toSet();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -45,9 +51,6 @@ class QueueSection extends StatelessWidget {
               ),
               tooltip: 'Add queue position',
               onPressed: () {
-                final allSlaves = setupState.setup.queues.values
-                    .expand((final q) => q.relocateTargets)
-                    .toSet();
                 final availablePositions = QueuePosition.values
                     .where(
                       (final p) =>
@@ -66,13 +69,21 @@ class QueueSection extends StatelessWidget {
             ),
           ],
         ),
-        StudioDropdownTile<QueuePosition>(
-          label: 'ACTIVE QUEUE POSITION',
-          value: setupState.activeQueuePosition,
-          items: setupState.setup.queues.keys.toList(),
-          itemLabel: (final e) => e.name.toUpperCase(),
-          onChanged: (final v) =>
-              context.read<SetupBloc>().add(SelectActiveQueue(v!)),
+        const SizedBox(height: 8),
+        // ── 9-Cell Position Map ──
+        QueuePositionMap(
+          queues: setupState.setup.queues,
+          selectedPosition: setupState.activeQueuePosition,
+          onSelect: (final pos) =>
+              context.read<SetupBloc>().add(SelectActiveQueue(pos)),
+          onAdd: (final pos) =>
+              context.read<SetupBloc>().add(AddQueue(pos)),
+          onRemove: (final pos) => _showConfirmDeleteDialog(
+            context,
+            pos,
+            setupState.setup.channels.values.toList(),
+            () => context.read<SetupBloc>().add(RemoveQueue(pos)),
+          ),
         ),
         const SizedBox(height: 16),
         _QueueEditor(
@@ -151,17 +162,13 @@ class _QueueEditor extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final colorScheme = StudioTheme.colorScheme;
-    final otherQueuesSlaves = context
-        .watch<SetupBloc>()
-        .state
-        .setup
-        .queues
-        .entries
+    final studioSetup = context.watch<SetupBloc>().state.setup;
+    final otherQueuesSlaves = studioSetup.queues.entries
         .where((final entry) => entry.key != position)
         .expand((final entry) => entry.value.relocateTargets)
         .toSet();
-    final activePositions =
-        context.watch<SetupBloc>().state.setup.queues.keys.toSet();
+    final activePositions = studioSetup.queues.keys.toSet();
+    final channels = studioSetup.channels.values.toList();
 
     return Card(
       elevation: 0,
@@ -232,11 +239,17 @@ class _QueueEditor extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                if (position != QueuePosition.topCenter)
+                if (activePositions.length > 1)
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 16),
-                    onPressed: () =>
-                        context.read<SetupBloc>().add(RemoveQueue(position)),
+                    onPressed: () => _showConfirmDeleteDialog(
+                      context,
+                      position,
+                      channels,
+                      () => context
+                          .read<SetupBloc>()
+                          .add(RemoveQueue(position)),
+                    ),
                     tooltip: 'Remove queue',
                   ),
               ],
@@ -315,6 +328,25 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
+            if (setup.dragBehaviorType == Dismiss) ...[
+              const SizedBox(height: 12),
+              StudioDropdownTile<DismissZone>(
+                label: 'DRAG DISMISS ZONE',
+                value: setup.dragDismissZone,
+                items: DismissZone.values,
+                itemLabel: (final e) => switch (e) {
+                  DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
+                  DismissZone.naturalDirection =>
+                    'NATURAL DIRECTION (UP / DOWN)',
+                },
+                onChanged: (final v) => context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(dragDismissZone: v),
+                      ),
+                    ),
+              ),
+            ],
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'LONG PRESS DRAG BEHAVIOR',
@@ -348,6 +380,25 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
+            if (setup.longPressBehaviorType == Dismiss) ...[
+              const SizedBox(height: 12),
+              StudioDropdownTile<DismissZone>(
+                label: 'LONG PRESS DISMISS ZONE',
+                value: setup.longPressDismissZone,
+                items: DismissZone.values,
+                itemLabel: (final e) => switch (e) {
+                  DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
+                  DismissZone.naturalDirection =>
+                    'NATURAL DIRECTION (UP / DOWN)',
+                },
+                onChanged: (final v) => context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(longPressDismissZone: v),
+                      ),
+                    ),
+              ),
+            ],
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'CLOSE BUTTON VISIBILITY',
@@ -366,4 +417,112 @@ class _QueueEditor extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A validation dialog to confirm removal of a queue position, warning about
+/// any affected channels.
+void _showConfirmDeleteDialog(
+  final BuildContext context,
+  final QueuePosition position,
+  final List<ChannelSetup> channels,
+  final VoidCallback onConfirm,
+) {
+  final colorScheme = StudioTheme.colorScheme;
+  final affectedChannels = channels
+      .where((final c) => c.position == position)
+      .map((final c) => c.name.toUpperCase())
+      .toList();
+
+  showDialog(
+    context: context,
+    builder: (final ctx) => AlertDialog(
+      title: Row(
+        children: [
+          Icon(
+            Icons.warning_amber_rounded,
+            color: colorScheme.error,
+            size: 22,
+          ),
+          const SizedBox(width: 8),
+          const Text('Delete Queue Position?'),
+        ],
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Are you sure you want to remove the queue at '
+            '${position.name.toUpperCase()}?',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This will delete its configuration, and any notifications routed '
+            'here will fallback to the remaining active queues.',
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
+          ),
+          if (affectedChannels.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              'AFFECTED CHANNELS:',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+                color: colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 4),
+            ...affectedChannels.map(
+              (final name) => Padding(
+                padding: const EdgeInsets.only(left: 8, top: 2),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.subdirectory_arrow_right_rounded,
+                      size: 12,
+                      color: colorScheme.error.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: colorScheme.onSurface),
+          ),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.pop(ctx);
+            onConfirm();
+          },
+          style: FilledButton.styleFrom(
+            backgroundColor: colorScheme.error,
+            foregroundColor: colorScheme.onError,
+          ),
+          child: const Text('Delete'),
+        ),
+      ],
+    ),
+  );
 }

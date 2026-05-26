@@ -177,7 +177,17 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
 
     // Bulk
     on<ApplySetup>((final event, final emit) {
-      emit(state.copyWith(setup: event.setup));
+      final active = event.setup.queues.isEmpty
+          ? QueuePosition.topCenter
+          : (event.setup.queues.containsKey(state.activeQueuePosition)
+              ? state.activeQueuePosition
+              : event.setup.queues.keys.first);
+      emit(
+        state.copyWith(
+          setup: event.setup,
+          activeQueuePosition: active,
+        ),
+      );
     });
 
     on<ResetSetup>((final event, final emit) {

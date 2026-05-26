@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/notification_bloc.dart';
 import '../bloc/setup_bloc.dart';
 import '../engine/code_generator.dart';
+import '../engine/dart_syntax_highlighter.dart';
 
 /// The right-side code editor panel displaying generated Dart code
 /// with copy, reset, and live preview actions.
@@ -137,25 +138,15 @@ class CodeEditorPanel extends StatelessWidget {
                   ),
                 ),
 
-                // ── Code Display ──
+                // ── Code Display (syntax highlighted) ──
                 Expanded(
                   child: Container(
                     color: Theme.of(context).brightness == Brightness.dark
                         ? const Color(0xFF0D1117)
                         : const Color(0xFFF6F8FA),
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: SelectableText(
-                        code,
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                          height: 1.6,
-                          color: Theme.of(context).brightness == Brightness.dark
-                              ? const Color(0xFFE6EDF3)
-                              : const Color(0xFF24292F),
-                        ),
-                      ),
+                      padding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                      child: _HighlightedCodeView(code: code),
                     ),
                   ),
                 ),
@@ -228,6 +219,63 @@ class CodeEditorPanel extends StatelessWidget {
     }
     return '💡 Adjust parameters in the configurator to see '
         'code update live.';
+  }
+}
+
+/// Renders [code] with a line-number gutter and Dart syntax highlighting.
+class _HighlightedCodeView extends StatelessWidget {
+  const _HighlightedCodeView({required this.code});
+  final String code;
+
+  @override
+  Widget build(final BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gutterColor = isDark
+        ? const Color(0xFF161B22)
+        : const Color(0xFFEAECEF);
+    final gutterTextColor = isDark
+        ? const Color(0xFF484F58)
+        : const Color(0xFFAFB8C1);
+
+    final lines = code.split('\n');
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Line number gutter ──
+        Container(
+          color: gutterColor,
+          padding: const EdgeInsets.fromLTRB(12, 0, 10, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: List.generate(
+              lines.length,
+              (final i) => SizedBox(
+                height: 20.8, // ~13px * 1.6 line-height
+                child: Text(
+                  '${i + 1}',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    height: 1.6,
+                    color: gutterTextColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // ── Highlighted code ──
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16),
+            child: SelectableText.rich(
+              DartSyntaxHighlighter.highlight(code),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
