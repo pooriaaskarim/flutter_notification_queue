@@ -18,7 +18,7 @@ class CustomTransition extends NotificationTransition {
 void main() {
   setUp(() {
     FlutterNotificationQueue.reset();
-    FlutterNotificationQueue.initialize(
+    FlutterNotificationQueue.configure(
       queues: {
         const TopCenterQueue(
           transition: CustomTransition(),
@@ -65,7 +65,7 @@ void main() {
   testWidgets('NotificationWidget uses default transition if not specified',
       (final tester) async {
     FlutterNotificationQueue.reset();
-    FlutterNotificationQueue.initialize(
+    FlutterNotificationQueue.configure(
       queues: {
         const BottomCenterQueue(),
       },
@@ -98,7 +98,7 @@ void main() {
   testWidgets('NotificationWidget uses BuilderTransitionStrategy',
       (final tester) async {
     FlutterNotificationQueue.reset();
-    FlutterNotificationQueue.initialize(
+    FlutterNotificationQueue.configure(
       queues: {
         TopCenterQueue(
           transition: BuilderTransitionStrategy(

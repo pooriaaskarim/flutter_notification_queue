@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('NotificationWidget', () {
     setUp(() {
-      FlutterNotificationQueue.initialize(
+      FlutterNotificationQueue.configure(
         channels: {
           const NotificationChannel(
             name: 'test_channel',

@@ -21,7 +21,7 @@ part 'type_defs.dart';
 /// - [BottomCenterQueue]
 /// - [BottomRightQueue].
 ///
-/// Used in [FlutterNotificationQueue.initialize] to configure queue layouts.
+/// Used in [FlutterNotificationQueue.configure] to configure queue layouts.
 ///
 /// If no [NotificationQueue] is provided for a [QueuePosition],
 /// defaults to that position's constructor defaults.

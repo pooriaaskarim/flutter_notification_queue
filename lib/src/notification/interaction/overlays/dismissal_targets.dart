@@ -1,22 +1,17 @@
-part of '../notification.dart';
+part of '../../notification.dart';
 
-/// A specialized widget that renders the interactive dismissal targets
-/// (auras and engagement bars) for a notification.
+/// A purely visual widget that renders the dismissal target zones (auras and
+/// engagement bars) during a drag interaction.
 ///
-/// This widget coordinates the "Independent Edge" interaction model, where
-/// multiple edges (e.g., in a corner) can be approached, but only one
-/// is engaged at a time.
-class _DismissalTargets extends StatefulWidget {
+/// Drop resolution is handled by [DraggableTransitionsState] in `onDragEnd`
+/// via coordinate-based zone evaluation — this widget has no callbacks.
+class _DismissalTargets extends StatelessWidget {
   const _DismissalTargets({
-    required this.onAccept,
     required this.screenSize,
     required this.threshold,
     required this.zones,
     required this.pointerPositionNotifier,
   });
-
-  /// Callback triggered when the notification is dropped into an active zone.
-  final void Function() onAccept;
 
   /// The width/height threshold of the dismissal bars.
   final double threshold;
@@ -31,19 +26,6 @@ class _DismissalTargets extends StatefulWidget {
   final ValueNotifier<OffsetPair?> pointerPositionNotifier;
 
   @override
-  State<_DismissalTargets> createState() => _DismissalTargetsState();
-}
-
-class _DismissalTargetsState extends State<_DismissalTargets> {
-// No local _dragPosition needed, use parent's notifier
-
-  @override
-  void dispose() {
-// No local notifier to dispose
-    super.dispose();
-  }
-
-  @override
   Widget build(final BuildContext context) => Stack(
         fit: StackFit.expand,
         children: [
@@ -51,12 +33,12 @@ class _DismissalTargetsState extends State<_DismissalTargets> {
           IgnorePointer(
             child: Stack(
               children: [
-                for (final zone in widget.zones)
+                for (final zone in zones)
                   _EdgeAura(
                     zone: zone,
-                    dragPosition: widget.pointerPositionNotifier,
-                    screenSize: widget.screenSize,
-                    threshold: widget.threshold,
+                    dragPosition: pointerPositionNotifier,
+                    screenSize: screenSize,
+                    threshold: threshold,
                   ),
               ],
             ),
@@ -67,43 +49,14 @@ class _DismissalTargetsState extends State<_DismissalTargets> {
           IgnorePointer(
             child: Stack(
               children: [
-                for (final zone in widget.zones)
+                for (final zone in zones)
                   _PositionedZone(
                     zone: zone,
-                    dragPosition: widget.pointerPositionNotifier,
-                    inverseThreshold: 1.0 / widget.threshold,
-                    screenSize: widget.screenSize,
+                    dragPosition: pointerPositionNotifier,
+                    inverseThreshold: 1.0 / threshold,
+                    screenSize: screenSize,
                   ),
               ],
-            ),
-          ),
-
-          // Single global DragTarget
-          Positioned.fill(
-            child: DragTarget<AlignmentGeometry>(
-              hitTestBehavior: HitTestBehavior.opaque,
-              onWillAcceptWithDetails: (final details) => true,
-              onAcceptWithDetails: (final details) {
-                final pointerLocation =
-                    widget.pointerPositionNotifier.value?.global;
-                if (pointerLocation == null) {
-                  return;
-                }
-
-                final bool isHit = widget.zones.any(
-                  (final zone) => zone.isHit(
-                    pointerLocation,
-                    widget.screenSize,
-                    widget.threshold,
-                  ),
-                );
-
-                if (isHit) {
-                  widget.onAccept();
-                }
-              },
-              builder: (final context, final candidate, final rejected) =>
-                  const SizedBox.shrink(),
             ),
           ),
         ],

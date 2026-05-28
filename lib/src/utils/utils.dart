@@ -85,11 +85,6 @@ class Utils {
     end: 900,
     name: tablet,
   );
-  static const _Breakpoint _desktopBreakPoint = _Breakpoint(
-    start: 901,
-    end: 1920,
-    name: desktop,
-  );
 
   static BoxConstraints horizontalConstraints(final BuildContext context) {
     final width = MediaQuery.of(context).size.width;

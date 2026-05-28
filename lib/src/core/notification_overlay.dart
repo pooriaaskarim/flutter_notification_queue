@@ -47,7 +47,6 @@ class NotificationOverlay extends StatefulWidget {
 }
 
 class _NotificationOverlayState extends State<NotificationOverlay> {
-  static final _logger = Logger.get('fnq.Core.Overlay');
   final OverlayPortalController _overlayPortalController =
       OverlayPortalController();
 
@@ -55,23 +54,8 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
   void initState() {
     super.initState();
 
-    // Guard: ensure ConfigurationManager has been configured.
-    if (!FlutterNotificationQueue.isInitialized) {
-      throw StateError(
-        'FlutterNotificationQueue has not been initialized. '
-        'Call FlutterNotificationQueue.initialize() in your main() function '
-        'before using the NotificationOverlay.',
-      );
-    }
-
-    // Attach QueueCoordinator immediately.
-    // It's safe to pass the controller even if not yet attached to the
-    // OverlayPortal.
+    // Ensure system is initialized (lazy fallback triggered if needed)
     FlutterNotificationQueue.coordinator.attach(_overlayPortalController);
-
-    _logger.debugBuffer
-      ?..writeAll(['NotificationOverlay created state.'])
-      ..sink();
   }
 
   @override
@@ -127,27 +111,20 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 class _NotificationQueueStack extends StatelessWidget {
   const _NotificationQueueStack();
 
-  static final _logger = Logger.get('fnq.Core.Overlay.Stack');
-
   @override
   Widget build(final BuildContext context) =>
       ValueListenableBuilder<Map<QueuePosition, NotificationQueue>>(
         valueListenable: FlutterNotificationQueue.coordinator.activeQueues,
-        builder: (final context, final activeQueues, final child) {
-          _logger.debug(
-            'QueueCoordinator rebuild with ${activeQueues.length} queues',
-          );
-          return Stack(
-            children: activeQueues.values
-                .map(
-                  (final queue) => QueueWidget(
-                    key: FlutterNotificationQueue.coordinator
-                        .getWidgetKey(queue.position),
-                    queue: queue,
-                  ),
-                )
-                .toList(),
-          );
-        },
+        builder: (final context, final activeQueues, final child) => Stack(
+          children: activeQueues.values
+              .map(
+                (final queue) => QueueWidget(
+                  key: FlutterNotificationQueue.coordinator
+                      .getWidgetKey(queue.position),
+                  queue: queue,
+                ),
+              )
+              .toList(),
+        ),
       );
 }

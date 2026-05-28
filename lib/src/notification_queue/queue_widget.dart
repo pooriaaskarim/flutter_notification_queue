@@ -15,7 +15,11 @@ class QueueWidget extends StatefulWidget {
 class QueueWidgetState extends State<QueueWidget>
     with TickerProviderStateMixin {
   final _pendingNotifications = Queue<NotificationWidget>();
-  final _items = <_NotificationItemState>[];
+  final List<_NotificationItemState> _items = [];
+
+  /// Key attached to the inner Column to measure the queue's exact visual
+  /// bounds.
+  final GlobalKey _listKey = GlobalKey();
 
   @override
   void initState() {
@@ -142,6 +146,17 @@ class QueueWidgetState extends State<QueueWidget>
   List<GlobalKey> get itemGlobalKeys =>
       _items.map((final item) => item.globalKey).toList();
 
+  /// The [RenderBox] of the inner column containing the notifications.
+  ///
+  /// Used to compute the boundary for [ReorderAndRelocate] escape detection.
+  RenderBox? get listRenderBox {
+    final ctx = _listKey.currentContext;
+    if (ctx == null) {
+      return null;
+    }
+    return ctx.findRenderObject() as RenderBox?;
+  }
+
   void _processPending() {
     if (_pendingNotifications.isEmpty) {
       return;
@@ -223,6 +238,7 @@ class QueueWidgetState extends State<QueueWidget>
             maxHeight: MediaQuery.of(context).size.height * 0.6,
           ),
           child: Column(
+            key: _listKey,
             spacing: 0, // We handle spacing in the wrapper
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: widget.queue.mainAxisAlignment,
@@ -251,7 +267,7 @@ class QueueWidgetState extends State<QueueWidget>
         parent: item.controller,
         curve: Curves.fastOutSlowIn,
       ),
-      axisAlignment: alignment,
+      alignment: Alignment(-1.0, alignment),
       child: Align(
         alignment: widget.queue.position.alignment,
         child: Padding(
