@@ -1,74 +1,69 @@
-part of '../notification.dart';
+part of '../../notification.dart';
 
-/// A specialized widget that renders drop targets for repositioning a
-/// notification.
+/// A purely visual widget that renders the relocation drop-zone buttons.
 ///
-/// It displays a set of [targets] (excluding the [currentPosition]) and
-/// triggers [onAccept] when the notification is dropped into a valid
-/// [_DropZone].
+/// Drop resolution is handled by [DraggableTransitionsState] in `onDragEnd`.
+/// Hover state is driven by [pointerPositionNotifier] proximity rather than
+/// [DragTarget] candidateData, keeping the visual system independent of the
+/// Draggable type.
 class _RelocationTargets extends StatelessWidget {
   const _RelocationTargets({
-    required this.onAccept,
     required this.currentPosition,
     required this.targets,
     required this.screenSize,
-    required this.passedThreshold,
+    required this.pointerPositionNotifier,
+    required this.threshold,
   });
-
-  /// Callback triggered when a new position is selected.
-  final void Function(QueuePosition candidatePosition) onAccept;
 
   /// The set of available positions for relocation.
   final Set<QueuePosition> targets;
 
-  /// Whether the drag interaction has passed the required engagement threshold.
-  final bool passedThreshold;
-
-  /// The current position of the notification queue.
+  /// The current position of the notification queue (excluded from targets).
   final QueuePosition currentPosition;
 
   /// The dimensions of the screen.
   final Size screenSize;
 
-  @override
-  Widget build(final BuildContext context) => Stack(
-        fit: StackFit.passthrough,
-        children: [
-          ...targets.map((final position) {
-            if (position == currentPosition) {
-              return const SizedBox.shrink();
-            }
-            return Align(
-              alignment: position.alignment,
-              child: DragTarget<QueuePosition>(
-                hitTestBehavior: HitTestBehavior.opaque,
-                onWillAcceptWithDetails: (final details) => true,
-                onAcceptWithDetails: (final details) {
-                  if (passedThreshold) {
-                    onAccept(position);
-                  }
-                },
-                builder: (
-                  final context,
-                  final candidateData,
-                  final rejectedData,
-                ) {
-                  final isHovering = candidateData.isNotEmpty;
+  /// Live pointer position for computing per-target proximity hover.
+  final ValueNotifier<OffsetPair?> pointerPositionNotifier;
 
-                  return _DropZone(
+  /// The engagement threshold in pixels (same as behavior.thresholdInPixels).
+  final double threshold;
+
+  @override
+  Widget build(final BuildContext context) =>
+      ValueListenableBuilder<OffsetPair?>(
+        valueListenable: pointerPositionNotifier,
+        builder: (final context, final offsetPair, final child) {
+          final pointer = offsetPair?.global;
+          return Stack(
+            fit: StackFit.passthrough,
+            children: [
+              ...targets.map((final position) {
+                if (position == currentPosition) {
+                  return const SizedBox.shrink();
+                }
+
+                final zone = PositionDropZone(position: position);
+                final isHovering = pointer != null &&
+                    zone.isHit(pointer, screenSize, threshold);
+
+                return Align(
+                  alignment: position.alignment,
+                  child: _DropZone(
                     isDragging: true,
                     hasCandidate: isHovering,
-                    willAccept: isHovering && passedThreshold,
+                    willAccept: isHovering,
                     alignment: position.alignment,
                     icon: Icons.move_to_inbox_rounded,
                     color: Colors.blue,
                     label: position.displayName,
-                  );
-                },
-              ),
-            );
-          }),
-        ],
+                  ),
+                );
+              }),
+            ],
+          );
+        },
       );
 }
 

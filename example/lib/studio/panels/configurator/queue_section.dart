@@ -145,7 +145,13 @@ class _QueueEditor extends StatelessWidget {
     FlatQueueStyle,
     OutlinedQueueStyle,
   ];
-  static const _behaviorTypes = [Disabled, Dismiss, Reorder, Relocate];
+  static const _behaviorTypes = [
+    Disabled,
+    Dismiss,
+    Reorder,
+    Relocate,
+    ReorderAndRelocate,
+  ];
   static const _closeButtonTypes = [AlwaysVisible, VisibleOnHover, Hidden];
   static const _transitionTypes = [
     SlideTransitionStrategy,
@@ -300,13 +306,18 @@ class _QueueEditor extends StatelessWidget {
               label: 'DRAG BEHAVIOR',
               value: setup.dragBehaviorType,
               items: _behaviorTypes.where((final e) {
-                if (e == Relocate) {
+                if (e == Relocate || e == ReorderAndRelocate) {
                   return activePositions.length < QueuePosition.values.length ||
-                      setup.dragBehaviorType == Relocate;
+                      setup.dragBehaviorType == e;
                 }
                 return true;
               }).toList(),
-              itemLabel: (final e) => e.toString().toUpperCase(),
+              itemLabel: (final e) {
+                if (e == ReorderAndRelocate) {
+                  return 'REORDER & RELOCATE';
+                }
+                return e.toString().toUpperCase();
+              },
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateQueue(
                       position,
@@ -314,7 +325,8 @@ class _QueueEditor extends StatelessWidget {
                     ),
                   ),
             ),
-            if (setup.dragBehaviorType == Relocate) ...[
+            if (setup.dragBehaviorType == Relocate ||
+                setup.dragBehaviorType == ReorderAndRelocate) ...[
               const SizedBox(height: 12),
               RelocationSelector(
                 selected: setup.relocateTargets,
@@ -352,13 +364,18 @@ class _QueueEditor extends StatelessWidget {
               label: 'LONG PRESS DRAG BEHAVIOR',
               value: setup.longPressBehaviorType,
               items: _behaviorTypes.where((final e) {
-                if (e == Relocate) {
+                if (e == Relocate || e == ReorderAndRelocate) {
                   return activePositions.length < QueuePosition.values.length ||
-                      setup.longPressBehaviorType == Relocate;
+                      setup.longPressBehaviorType == e;
                 }
                 return true;
               }).toList(),
-              itemLabel: (final e) => e.toString().toUpperCase(),
+              itemLabel: (final e) {
+                if (e == ReorderAndRelocate) {
+                  return 'REORDER & RELOCATE';
+                }
+                return e.toString().toUpperCase();
+              },
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateQueue(
                       position,
@@ -366,7 +383,8 @@ class _QueueEditor extends StatelessWidget {
                     ),
                   ),
             ),
-            if (setup.longPressBehaviorType == Relocate) ...[
+            if (setup.longPressBehaviorType == Relocate ||
+                setup.longPressBehaviorType == ReorderAndRelocate) ...[
               const SizedBox(height: 12),
               RelocationSelector(
                 selected: setup.relocateTargets,

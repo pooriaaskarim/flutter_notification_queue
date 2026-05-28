@@ -189,6 +189,15 @@ String _behaviorSnippet(final Type t, final QueueSetup q, final bool isDrag) {
               (final p) => 'QueuePosition.${p.name}',
             ).join(', ')}})';
   }
+  if (t == ReorderAndRelocate) {
+    return q.relocateTargets.isEmpty
+        ? 'ReorderAndRelocate.to(positions: {}) // ERROR: Relocation targets must not be empty!'
+        : 'ReorderAndRelocate.to(\n'
+          '        positions: {${q.relocateTargets.map(
+                (final p) => 'QueuePosition.${p.name}',
+              ).join(', ')}},\n'
+          '      )';
+  }
   if (t == Reorder) {
     return 'const Reorder()';
   }

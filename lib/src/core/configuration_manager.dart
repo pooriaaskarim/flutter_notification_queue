@@ -26,8 +26,7 @@ class ConfigurationManager {
   final Set<NotificationChannel> channels;
 
   /// Returns a concise summary of the configuration.
-  String get summary =>
-      '${queues.length} Queues '
+  String get summary => '${queues.length} Queues '
       '(${queues.map((final q) => q.position.name).join(', ')}), '
       '${channels.length} Channels '
       '(${channels.map((final c) => c.name).join(', ')})';

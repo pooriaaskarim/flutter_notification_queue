@@ -51,7 +51,10 @@ class QueueSetup extends Equatable {
   /// Whether this queue is in an invalid relocation state (Relocate behavior
   /// selected but no targets chosen). Empty targets cause library crashes.
   bool get hasRelocationError =>
-      (dragBehaviorType == Relocate || longPressBehaviorType == Relocate) &&
+      (dragBehaviorType == Relocate ||
+          longPressBehaviorType == Relocate ||
+          dragBehaviorType == ReorderAndRelocate ||
+          longPressBehaviorType == ReorderAndRelocate) &&
       relocateTargets.isEmpty;
 
   QueueSetup copyWith({
@@ -137,6 +140,11 @@ class QueueSetup extends Equatable {
           ? const Disabled()
           : Relocate.to(relocateTargets);
     }
+    if (dragBehaviorType == ReorderAndRelocate) {
+      return relocateTargets.isEmpty
+          ? const Disabled()
+          : ReorderAndRelocate.to(positions: relocateTargets);
+    }
     if (dragBehaviorType == Reorder) {
       return const Reorder();
     }
@@ -152,6 +160,11 @@ class QueueSetup extends Equatable {
       return relocateTargets.isEmpty
           ? const Disabled()
           : Relocate.to(relocateTargets);
+    }
+    if (longPressBehaviorType == ReorderAndRelocate) {
+      return relocateTargets.isEmpty
+          ? const Disabled()
+          : ReorderAndRelocate.to(positions: relocateTargets);
     }
     if (longPressBehaviorType == Reorder) {
       return const Reorder();

@@ -96,6 +96,37 @@ final class Reorder<T> extends QueueNotificationBehavior<T> {
   });
 }
 
+final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
+  const ReorderAndRelocate._({
+    required this.positions,
+    super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
+    this.escapeThresholdInPixels = 80.0,
+  });
+
+  factory ReorderAndRelocate.to({
+    required final Set<QueuePosition> positions,
+    final double escapeThresholdInPixels = 80.0,
+  }) {
+    if (positions.isEmpty) {
+      throw ArgumentError.value(
+        positions,
+        'positions',
+        'positions must not be empty',
+      );
+    }
+    return ReorderAndRelocate._(
+      positions: positions,
+      escapeThresholdInPixels: escapeThresholdInPixels,
+    );
+  }
+
+  final Set<QueuePosition> positions;
+
+  /// Pixels beyond the source queue's rendered bounding box at which the
+  /// system switches from Reorder to Relocate mode.
+  final double escapeThresholdInPixels;
+}
+
 final class Disabled<T> extends QueueNotificationBehavior<T> {
   const Disabled()
       : super(thresholdInPixels: kDefaultQueueDragBehaviorThreshold);

@@ -56,7 +56,6 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 
     // Ensure system is initialized (lazy fallback triggered if needed)
     FlutterNotificationQueue.coordinator.attach(_overlayPortalController);
-
   }
 
   @override
@@ -111,7 +110,6 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 /// rendering.
 class _NotificationQueueStack extends StatelessWidget {
   const _NotificationQueueStack();
-
 
   @override
   Widget build(final BuildContext context) =>
