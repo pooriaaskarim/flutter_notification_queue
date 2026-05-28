@@ -77,6 +77,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       return _edgesFromDismissZone(behavior.zones, position);
     } else if (behavior is Relocate) {
       return _zonesFromPositions(behavior.positions, position);
+    } else if (behavior is ReorderAndRelocate) {
+      return _zonesFromPositions(behavior.positions, position);
     }
     return [];
   }
@@ -138,8 +140,38 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         },
         child: longPressWidget(),
       );
-
   _DragStartData? _dragStartData;
+  int? _activeZoneIndex;
+
+  int? _nearestZoneIndexWithHysteresis(
+    final Offset? pointer,
+    final List<SlotDropZone> zones,
+  ) {
+    if (pointer == null || zones.isEmpty) {
+      return null;
+    }
+    var minDistance = double.infinity;
+    int? bestIndex;
+    const double gravityWell = 40.0;
+
+    for (var i = 0; i < zones.length; i++) {
+      final anchor = zones[i].anchor;
+      if (anchor == null) {
+        continue;
+      }
+      double distance = (pointer - anchor).distance;
+      if (i == _activeZoneIndex) {
+        distance -= gravityWell;
+      }
+      if (distance < minDistance) {
+        minDistance = distance;
+        bestIndex = i;
+      }
+    }
+
+    _activeZoneIndex = bestIndex;
+    return bestIndex;
+  }
 
   Widget longPressWidget() =>
       switch (widget.notification.queue.longPressDragBehavior) {
@@ -157,28 +189,6 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         ReorderAndRelocate() => _buildUnifiedDraggable(isLongPress: false),
         Disabled() => widget.notification,
       };
-
-  int? _nearestZoneIndex(
-    final Offset? pointer,
-    final List<SlotDropZone> zones,
-  ) {
-    if (pointer == null || zones.isEmpty) {
-      return null;
-    }
-    var minDistance = double.infinity;
-    SlotDropZone? nearestZone;
-    for (final zone in zones) {
-      if (zone.anchor == null) {
-        continue;
-      }
-      final distance = (pointer - zone.anchor!).distance;
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearestZone = zone;
-      }
-    }
-    return nearestZone?.targetIndex;
-  }
 
   /// Creates a visual proxy of the notification card that exactly matches its
   /// captured dimensions on the screen.

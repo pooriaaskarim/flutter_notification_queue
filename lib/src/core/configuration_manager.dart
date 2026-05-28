@@ -31,9 +31,10 @@ class ConfigurationManager {
       '${channels.length} Channels '
       '(${channels.map((final c) => c.name).join(', ')})';
 
-  /// Expands relocation groups: for every [Relocate] behavior,
-  /// ensures sibling queues exist and the source position is included
-  /// in the target set (self-inclusion, so notifications can return home).
+  /// Expands relocation groups: for every [Relocate] and
+  /// [ReorderAndRelocate] behavior, ensures sibling queues exist
+  /// and the source position is included in the target set
+  /// (self-inclusion, so notifications can return home).
   static Set<NotificationQueue> _expandRelocationGroups(
     final Set<NotificationQueue> inputQueues,
   ) {
@@ -51,12 +52,20 @@ class ConfigurationManager {
         queue.longPressDragBehavior,
         queue.dragBehavior,
       ]) {
+        final Set<QueuePosition>? positions;
         if (behavior is Relocate) {
-          final relocate = behavior as Relocate;
+          positions = (behavior as Relocate).positions;
+        } else if (behavior is ReorderAndRelocate) {
+          positions = (behavior as ReorderAndRelocate).positions;
+        } else {
+          positions = null;
+        }
+
+        if (positions != null) {
           // Self-inclusion: add source position to targets
-          relocate.positions.add(queue.position);
+          positions.add(queue.position);
           // Expand: create sibling queues for all target positions
-          for (final targetPosition in relocate.positions) {
+          for (final targetPosition in positions) {
             final alreadyRegistered =
                 expanded.any((final q) => q.position == targetPosition);
             if (!alreadyRegistered) {
@@ -85,6 +94,9 @@ class ConfigurationManager {
         if (behavior is Relocate) {
           hasRelocate = true;
           group.addAll((behavior as Relocate).positions);
+        } else if (behavior is ReorderAndRelocate) {
+          hasRelocate = true;
+          group.addAll((behavior as ReorderAndRelocate).positions);
         }
       }
       if (!hasRelocate) {

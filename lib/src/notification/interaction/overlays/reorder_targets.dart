@@ -39,6 +39,7 @@ class _ReorderTargets extends StatefulWidget {
     required this.zones,
     required this.itemKeys,
     required this.passedThreshold,
+    required this.nearestIndex,
     required this.pointerPositionNotifier,
     required this.ghostChild,
   });
@@ -56,6 +57,9 @@ class _ReorderTargets extends StatefulWidget {
   /// Whether the drag interaction has passed the proximity threshold.
   final bool passedThreshold;
 
+  /// The unified nearest drop zone index.
+  final int? nearestIndex;
+
   /// Tracks the pointer's global position and local delta during drag events.
   final ValueNotifier<OffsetPair?> pointerPositionNotifier;
 
@@ -67,10 +71,6 @@ class _ReorderTargets extends StatefulWidget {
 }
 
 class _ReorderTargetsState extends State<_ReorderTargets> {
-  /// The index of the drop zone that is currently magnetically locked.
-  /// Used to exert an artificial "gravity well" to prevent UI jitter.
-  int? _currentActiveZone;
-
   /// Returns the screen-space bounding box of a rendered notification widget.
   Rect? _boundsOf(final GlobalKey key) {
     final box = key.currentContext?.findRenderObject() as RenderBox?;
@@ -81,41 +81,10 @@ class _ReorderTargetsState extends State<_ReorderTargets> {
     return topLeft & box.size;
   }
 
-  int? _nearestZoneIndex(final Offset pointer) {
-    int? best;
-    double bestDist = double.infinity;
-
-    // Hysteresis physics: apply an artificial gravity well (- distance)
-    // to the CURRENTLY ACTIVE zone. The pointer must drag significantly further
-    // away from the active center to break the lock, completely eliminating
-    // bound-jitter regardless of pointer velocity or micro-vibrations.
-    const double gravityWell = 40.0;
-
-    for (var i = 0; i < widget.zones.length; i++) {
-      final anchor = widget.zones[i].anchor;
-      if (anchor == null) {
-        continue;
-      }
-
-      double dist = (anchor - pointer).distance;
-
-      if (i == _currentActiveZone) {
-        dist -= gravityWell;
-      }
-
-      if (dist < bestDist) {
-        bestDist = dist;
-        best = i;
-      }
-    }
-
-    _currentActiveZone = best;
-    return best;
-  }
-
   @override
   Widget build(final BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((final _) {
+      bool boundsChanged = false;
       for (var i = 0; i < widget.zones.length; i++) {
         Rect? bounds;
 
@@ -123,9 +92,13 @@ class _ReorderTargetsState extends State<_ReorderTargets> {
           bounds = _boundsOf(widget.itemKeys[i]);
         }
 
-        if (bounds != null) {
+        if (bounds != null && widget.zones[i].targetBounds != bounds) {
           widget.zones[i].setTargetBounds(bounds);
+          boundsChanged = true;
         }
+      }
+      if (boundsChanged && mounted) {
+        setState(() {}); // Immediately schedule second frame to draw reticles!
       }
     });
 
@@ -133,8 +106,6 @@ class _ReorderTargetsState extends State<_ReorderTargets> {
       valueListenable: widget.pointerPositionNotifier,
       builder: (final context, final offsetPair, final child) {
         final pointer = offsetPair?.global;
-        final nearestIndex =
-            pointer == null ? null : _nearestZoneIndex(pointer);
 
         return Stack(
           fit: StackFit.expand,
@@ -144,7 +115,7 @@ class _ReorderTargetsState extends State<_ReorderTargets> {
                 isSelfSlot: widget.zones[i].targetIndex == widget.draggedIndex,
                 zone: widget.zones[i],
                 pointer: pointer,
-                isNearest: nearestIndex == i,
+                isNearest: widget.nearestIndex == i,
                 passedThreshold: widget.passedThreshold,
                 ghostChild: widget.ghostChild,
               ),

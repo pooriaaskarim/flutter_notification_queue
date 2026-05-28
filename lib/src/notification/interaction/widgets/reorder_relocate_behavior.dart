@@ -15,7 +15,12 @@ extension _ReorderRelocateBehaviorExtension on DraggableTransitionsState {
     void onDragStarted() {
       FlutterNotificationQueue.coordinator.bringToFront(position);
       widget.notification.key.currentState?.ditchDismissTimer();
+      _activeZoneIndex = null;
       _activeReorderZones = _zonesFromSlots(itemCount, currentIndex);
+      _dragOffsetPairNotifier.value = OffsetPair(
+        local: Offset.zero,
+        global: _dragStartData?.pointerPosition ?? Offset.zero,
+      );
       _overlayPortalController.show();
     }
 
@@ -30,22 +35,24 @@ extension _ReorderRelocateBehaviorExtension on DraggableTransitionsState {
       final pointer = _dragOffsetPairNotifier.value?.global;
       if (pointer != null) {
         final reorderZones = _activeReorderZones ?? [];
-        final hitSlot = reorderZones
-            .where(
-              (final z) => z.isHit(
-                pointer,
-                _screenSize,
-                behavior.thresholdInPixels.toDouble(),
-              ),
-            )
-            .firstOrNull;
+        final passedThreshold = _passedThreshold(
+          pointer,
+          behavior.thresholdInPixels,
+          reorderZones,
+        );
 
-        if (hitSlot != null) {
-          FlutterNotificationQueue.coordinator
-              .reorder(widget.notification, hitSlot.targetIndex);
+        if (passedThreshold) {
+          final nearestZoneIdx =
+              _nearestZoneIndexWithHysteresis(pointer, reorderZones);
+          if (nearestZoneIdx != null) {
+            FlutterNotificationQueue.coordinator.reorder(
+              widget.notification,
+              reorderZones[nearestZoneIdx].targetIndex,
+            );
+          }
         } else {
           final relocateZones = _getZones(
-            Relocate.to(behavior.positions),
+            behavior,
             position,
           ).cast<PositionDropZone>();
 
@@ -67,6 +74,7 @@ extension _ReorderRelocateBehaviorExtension on DraggableTransitionsState {
       }
       _activeReorderZones = null;
       _dragOffsetPairNotifier.value = null;
+      _activeZoneIndex = null;
       widget.notification.key.currentState?.initDismissTimer();
       _overlayPortalController.hide();
     }
@@ -88,7 +96,7 @@ extension _ReorderRelocateBehaviorExtension on DraggableTransitionsState {
 
         if (isEscaped) {
           final relocateZones = _getZones(
-            Relocate.to(behavior.positions),
+            behavior,
             widget.notification.queue.position,
           );
           final passedThreshold = _passedThreshold(
@@ -123,6 +131,7 @@ extension _ReorderRelocateBehaviorExtension on DraggableTransitionsState {
             zones,
           );
           final nearestProgress = _nearestZoneProgress(pointer, zones);
+          final nearestIndex = _nearestZoneIndexWithHysteresis(pointer, zones);
 
           return OverlayPortal(
             controller: _overlayPortalController,
@@ -132,6 +141,7 @@ extension _ReorderRelocateBehaviorExtension on DraggableTransitionsState {
                 zones: zones,
                 itemKeys: queueState?.itemGlobalKeys ?? [],
                 passedThreshold: passedThreshold,
+                nearestIndex: nearestIndex,
                 pointerPositionNotifier: _dragOffsetPairNotifier,
                 ghostChild: _buildDummyGhost(
                   _dragStartData?.widgetSize ?? Size.zero,

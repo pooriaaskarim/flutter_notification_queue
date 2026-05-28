@@ -110,40 +110,35 @@ class _DismissFeedbackOverlay extends StatelessWidget {
     final themeData = Theme.of(context);
     final onSurface = themeData.colorScheme.onSurface;
 
+    final cardContent = ColorFiltered(
+      colorFilter: passedThreshold
+          ? ColorUtils.grayscaleFilter
+          : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: passedThreshold
+            ? ImageFiltered(
+                imageFilter: ImageFilter.blur(
+                  sigmaX: sinkingBlur,
+                  sigmaY: sinkingBlur,
+                ),
+                child: child,
+              )
+            : child,
+      ),
+    );
+
     return Transform.translate(
       offset: correction,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 100),
-            curve: Curves.easeOut,
+          Opacity(
             opacity: opacity,
-            child: AnimatedScale(
-              duration: const Duration(milliseconds: 100),
-              curve: Curves.easeOut,
+            child: Transform.scale(
               scale: baseScale * sinkingScale,
-              // Anchoring the scale to the edge makes it feel like it's
-              // docking INTO the screen boundary rather than floating.
               alignment: lockedZone?.alignment ?? Alignment.center,
-              child: ColorFiltered(
-                // The "Death State": Convert to grayscale once the action
-                // is committed but not yet released.
-                colorFilter: passedThreshold
-                    ? ColorUtils.grayscaleFilter
-                    : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: ImageFiltered(
-                    // Visual "Sinking": Soften the widget as it docks.
-                    imageFilter: ImageFilter.blur(
-                      sigmaX: sinkingBlur,
-                      sigmaY: sinkingBlur,
-                    ),
-                    child: child,
-                  ),
-                ),
-              ),
+              child: cardContent,
             ),
           ),
           if (passedThreshold)
@@ -168,8 +163,6 @@ class _DismissFeedbackOverlay extends StatelessWidget {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            // Premium pure-text legend styled to match the NW
-                            // aesthetic.
                             color: themeData.colorScheme.surface
                                 .withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(16),
@@ -323,37 +316,48 @@ class _DashedBorderPainter extends CustomPainter {
 
   final double opacity;
 
+  static Path? _cachedPath;
+  static Size? _cachedSize;
+
   @override
   void paint(final Canvas canvas, final Size size) {
     const radius = Radius.circular(12);
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(4, 4, size.width - 8, size.height - 8),
-      radius,
-    );
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: opacity)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
-    _drawDashedRRect(canvas, rrect, paint);
+
+    if (_cachedPath == null || _cachedSize != size) {
+      _cachedSize = size;
+      _cachedPath = _buildDashedPath(size, radius);
+    }
+
+    canvas.drawPath(_cachedPath!, paint);
   }
 
-  void _drawDashedRRect(
-    final Canvas canvas,
-    final RRect rrect,
-    final Paint paint,
-  ) {
+  Path _buildDashedPath(final Size size, final Radius radius) {
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(4, 4, size.width - 8, size.height - 8),
+      radius,
+    );
+    final sourcePath = Path()..addRRect(rrect);
+    final dashedPath = Path();
     const dashWidth = 6.0;
     const dashSpace = 4.0;
-    final path = Path()..addRRect(rrect);
-    final metrics = path.computeMetrics();
+
+    final metrics = sourcePath.computeMetrics();
     for (final metric in metrics) {
       var distance = 0.0;
       while (distance < metric.length) {
         final end = (distance + dashWidth).clamp(0, metric.length);
-        canvas.drawPath(metric.extractPath(distance, end as double), paint);
+        dashedPath.addPath(
+          metric.extractPath(distance, end as double),
+          Offset.zero,
+        );
         distance += dashWidth + dashSpace;
       }
     }
+    return dashedPath;
   }
 
   @override
@@ -410,6 +414,12 @@ class _LiftedFeedback extends StatelessWidget {
             ? 2.0
             : 0.0;
 
+    final Color shadowColor = Colors.black.withValues(alpha: 0.25);
+    final double shadowBlur = passedThreshold ? 4.0 : 20.0;
+    final double shadowSpread = passedThreshold ? 0.0 : 4.0;
+    final Offset shadowOffset =
+        passedThreshold ? const Offset(0, 2) : const Offset(0, 8);
+
     return AnimatedScale(
       scale: scale,
       duration: const Duration(milliseconds: 200),
@@ -417,24 +427,25 @@ class _LiftedFeedback extends StatelessWidget {
       child: AnimatedOpacity(
         opacity: opacity,
         duration: const Duration(milliseconds: 200),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
           width: widgetSize.width,
           height: widgetSize.height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
-                blurRadius: passedThreshold ? 4 : 20,
-                spreadRadius: passedThreshold ? 0 : 4,
-                offset: const Offset(0, 8),
+                color: shadowColor,
+                blurRadius: shadowBlur,
+                spreadRadius: shadowSpread,
+                offset: shadowOffset,
               ),
-              if (engaged)
-                BoxShadow(
-                  color: glowColor.withValues(alpha: 0.45),
-                  blurRadius: 24,
-                  spreadRadius: glowSpread,
-                ),
+              BoxShadow(
+                color: glowColor.withValues(alpha: engaged ? 0.45 : 0.0),
+                blurRadius: 24,
+                spreadRadius: glowSpread,
+              ),
             ],
           ),
           child: ClipRRect(

@@ -122,5 +122,19 @@ void main() {
       expect(newPos1.dx, lessThan(400)); // It should be on the left side
       expect(newPos1.dy, lessThan(400)); // It should be on the top side
     });
+
+    testWidgets(
+        'ReorderAndRelocate configures self-inclusion of master queue '
+        'as relocatable target', (final tester) async {
+      final queue = FlutterNotificationQueue.configuration
+          .getQueue(QueuePosition.topRight);
+      final behavior = queue.dragBehavior as ReorderAndRelocate;
+
+      // The original positions Set did not include topRight (the master queue),
+      // but ConfigurationManager must dynamically expand it to include the
+      // source to permit dragging back home.
+      expect(behavior.positions, contains(QueuePosition.topRight));
+      expect(behavior.positions, contains(QueuePosition.topLeft));
+    });
   });
 }

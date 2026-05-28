@@ -10,6 +10,10 @@ extension _DismissBehaviorExtension on DraggableTransitionsState {
     void onDragStarted() {
       FlutterNotificationQueue.coordinator.bringToFront(position);
       widget.notification.key.currentState?.ditchDismissTimer();
+      _dragOffsetPairNotifier.value = OffsetPair(
+        local: Offset.zero,
+        global: _dragStartData?.pointerPosition ?? Offset.zero,
+      );
       _overlayPortalController.show();
     }
 

@@ -15,7 +15,12 @@ extension _ReorderBehaviorExtension on DraggableTransitionsState {
     void onDragStarted() {
       FlutterNotificationQueue.coordinator.bringToFront(position);
       widget.notification.key.currentState?.ditchDismissTimer();
+      _activeZoneIndex = null;
       _activeReorderZones = _zonesFromSlots(itemCount, currentIndex);
+      _dragOffsetPairNotifier.value = OffsetPair(
+        local: Offset.zero,
+        global: _dragStartData?.pointerPosition ?? Offset.zero,
+      );
       _overlayPortalController.show();
     }
 
@@ -36,15 +41,19 @@ extension _ReorderBehaviorExtension on DraggableTransitionsState {
           zones,
         );
         if (passedThreshold) {
-          final nearestIndex = _nearestZoneIndex(pointer, zones);
-          if (nearestIndex != null) {
-            FlutterNotificationQueue.coordinator
-                .reorder(widget.notification, nearestIndex);
+          final nearestZoneIdx =
+              _nearestZoneIndexWithHysteresis(pointer, zones);
+          if (nearestZoneIdx != null) {
+            FlutterNotificationQueue.coordinator.reorder(
+              widget.notification,
+              zones[nearestZoneIdx].targetIndex,
+            );
           }
         }
       }
       _activeReorderZones = null;
       _dragOffsetPairNotifier.value = null;
+      _activeZoneIndex = null;
       widget.notification.key.currentState?.initDismissTimer();
       _overlayPortalController.hide();
     }
@@ -60,6 +69,7 @@ extension _ReorderBehaviorExtension on DraggableTransitionsState {
           zones,
         );
         final nearestProgress = _nearestZoneProgress(pointer, zones);
+        final nearestIndex = _nearestZoneIndexWithHysteresis(pointer, zones);
 
         return OverlayPortal(
           controller: _overlayPortalController,
@@ -69,6 +79,7 @@ extension _ReorderBehaviorExtension on DraggableTransitionsState {
               zones: zones,
               itemKeys: queueState?.itemGlobalKeys ?? [],
               passedThreshold: passedThreshold,
+              nearestIndex: nearestIndex,
               pointerPositionNotifier: _dragOffsetPairNotifier,
               ghostChild: _buildDummyGhost(
                 _dragStartData?.widgetSize ?? Size.zero,
