@@ -15,9 +15,8 @@ void main() {
     tearDown(() {
       try {
         FlutterNotificationQueue.reset();
-      // ignore: avoid_catching_errors
-      } on StateError catch (_) {
-      }
+        // ignore: avoid_catching_errors
+      } on StateError catch (_) {}
     });
 
     // 2. Zero-Config Initialization

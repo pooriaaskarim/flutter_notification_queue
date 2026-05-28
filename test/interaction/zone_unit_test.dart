@@ -17,7 +17,6 @@
 
 import 'package:flutter/painting.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
-import 'package:flutter_notification_queue/src/notification/notification.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -56,20 +55,29 @@ void main() {
 
       test('calculateProgress: 0.0 at threshold boundary', () {
         final p = zone.calculateProgress(
-            const Offset(50, 0), screen, 1.0 / threshold);
+          const Offset(50, 0),
+          screen,
+          1.0 / threshold,
+        );
         expect(p, equals(0.0));
       });
 
       test('calculateProgress: 0.0 beyond threshold (clamped)', () {
         final p = zone.calculateProgress(
-            const Offset(100, 0), screen, 1.0 / threshold);
+          const Offset(100, 0),
+          screen,
+          1.0 / threshold,
+        );
         expect(p, equals(0.0));
       });
 
       test('calculateProgress: intermediate value', () {
         // distance = 25, progress = 1 - 25/50 = 0.5
         final p = zone.calculateProgress(
-            const Offset(25, 0), screen, 1.0 / threshold);
+          const Offset(25, 0),
+          screen,
+          1.0 / threshold,
+        );
         expect(p, closeTo(0.5, 0.001));
       });
     });
@@ -152,7 +160,10 @@ void main() {
 
     test('calculateProgress at dx=25 → 0.5', () {
       final p = zone.calculateProgress(
-          const Offset(25, 300), screen, 1.0 / threshold);
+        const Offset(25, 300),
+        screen,
+        1.0 / threshold,
+      );
       expect(p, closeTo(0.5, 0.001));
     });
   });
@@ -236,36 +247,35 @@ void main() {
     });
 
     test('anchor: center of bounds after setTargetBounds', () {
-      final zone = SlotDropZone(targetIndex: 0);
-      // bounds: left=375, top=100, width=50, height=80 → center=(400,140)
-      zone.setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
+      final zone = SlotDropZone(targetIndex: 0)
+        ..setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
       expect(zone.anchor, equals(const Offset(400, 140)));
     });
 
     test('isHit: true when pointer at anchor', () {
-      final zone = SlotDropZone(targetIndex: 0);
-      zone.setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
+      final zone = SlotDropZone(targetIndex: 0)
+        ..setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
       // center = (400, 140)
       expect(zone.isHit(const Offset(400, 140), screen, threshold), isTrue);
     });
 
     test('isHit: true within threshold', () {
-      final zone = SlotDropZone(targetIndex: 1);
-      zone.setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
+      final zone = SlotDropZone(targetIndex: 1)
+        ..setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
       // center = (400, 140), pointer at (420, 140) → distance=20 < 50
       expect(zone.isHit(const Offset(420, 140), screen, threshold), isTrue);
     });
 
     test('isHit: false beyond threshold', () {
-      final zone = SlotDropZone(targetIndex: 1);
-      zone.setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
+      final zone = SlotDropZone(targetIndex: 1)
+        ..setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
       // center = (400, 140), pointer at (460, 140) → distance=60 > 50
       expect(zone.isHit(const Offset(460, 140), screen, threshold), isFalse);
     });
 
     test('calculateProgress: 1.0 at anchor', () {
-      final zone = SlotDropZone(targetIndex: 0);
-      zone.setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
+      final zone = SlotDropZone(targetIndex: 0)
+        ..setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
       final p = zone.calculateProgress(const Offset(400, 140), 1.0 / threshold);
       expect(p, equals(1.0));
     });
@@ -277,16 +287,16 @@ void main() {
     });
 
     test('calculateProgress: 0.5 at half-threshold distance', () {
-      final zone = SlotDropZone(targetIndex: 0);
-      zone.setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
+      final zone = SlotDropZone(targetIndex: 0)
+        ..setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
       // center=(400,140), pointer=(425,140) → distance=25 → progress=0.5
       final p = zone.calculateProgress(const Offset(425, 140), 1.0 / threshold);
       expect(p, closeTo(0.5, 0.001));
     });
 
     test('isNatural=true: requires 0.7 progress (distance ≤ 15)', () {
-      final zone = SlotDropZone(targetIndex: 0, isNatural: true);
-      zone.setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
+      final zone = SlotDropZone(targetIndex: 0, isNatural: true)
+        ..setTargetBounds(const Rect.fromLTWH(375, 100, 50, 80));
       // center=(400,140), 15px away: (415,140) → distance=15 → progress=0.7
       expect(zone.isHit(const Offset(415, 140), screen, threshold), isTrue);
       // 16px: (416,140) → progress≈0.68 → false

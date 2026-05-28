@@ -16,9 +16,9 @@ class QueueWidgetState extends State<QueueWidget>
     with TickerProviderStateMixin {
   final _pendingNotifications = Queue<NotificationWidget>();
   final List<_NotificationItemState> _items = [];
-  final Queue<_NotificationItemState> _pendingExits = Queue();
 
-  /// Key attached to the inner Column to measure the queue's exact visual bounds.
+  /// Key attached to the inner Column to measure the queue's exact visual
+  /// bounds.
   final GlobalKey _listKey = GlobalKey();
 
   @override
@@ -151,7 +151,9 @@ class QueueWidgetState extends State<QueueWidget>
   /// Used to compute the boundary for [ReorderAndRelocate] escape detection.
   RenderBox? get listRenderBox {
     final ctx = _listKey.currentContext;
-    if (ctx == null) return null;
+    if (ctx == null) {
+      return null;
+    }
     return ctx.findRenderObject() as RenderBox?;
   }
 
@@ -265,7 +267,7 @@ class QueueWidgetState extends State<QueueWidget>
         parent: item.controller,
         curve: Curves.fastOutSlowIn,
       ),
-      axisAlignment: alignment,
+      alignment: Alignment(-1.0, alignment),
       child: Align(
         alignment: widget.queue.position.alignment,
         child: Padding(

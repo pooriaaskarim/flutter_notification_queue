@@ -36,12 +36,10 @@ void main() {
         ),
       );
 
-      final notification = NotificationWidget(
+      NotificationWidget(
         message: 'Drag me',
         channelName: 'test',
-      );
-
-      notification.show();
+      ).show();
       await tester.pumpAndSettle();
 
       final notifFinder = find.byType(NotificationWidget);
@@ -49,15 +47,16 @@ void main() {
 
       // Get start position to calculate exact offset to (0,0)
       final startPos = tester.getCenter(notifFinder);
-      
+
       // Drag exactly to topLeft (0,0)
       await tester.drag(notifFinder, Offset(-startPos.dx, -startPos.dy));
       await tester.pumpAndSettle();
 
       // Verify it is now in TopLeftQueue (TopRight should be unmounted)
       expect(find.byType(NotificationWidget), findsOneWidget);
-      
-      final activeQueues = FlutterNotificationQueue.coordinator.activeQueues.value;
+
+      final activeQueues =
+          FlutterNotificationQueue.coordinator.activeQueues.value;
       expect(activeQueues.containsKey(QueuePosition.topRight), isFalse);
       expect(activeQueues.containsKey(QueuePosition.topLeft), isTrue);
     });
@@ -73,12 +72,10 @@ void main() {
         ),
       );
 
-      final notification = NotificationWidget(
+      NotificationWidget(
         message: 'Dismiss me',
         channelName: 'test',
-      );
-
-      notification.show();
+      ).show();
       await tester.pumpAndSettle();
 
       final notifFinder = find.byType(NotificationWidget);
@@ -99,10 +96,10 @@ void main() {
 
       // Verify it was dismissed
       expect(find.byType(NotificationWidget), findsNothing);
-      
-      final activeQueues = FlutterNotificationQueue.coordinator.activeQueues.value;
+
+      final activeQueues =
+          FlutterNotificationQueue.coordinator.activeQueues.value;
       expect(activeQueues.containsKey(QueuePosition.topRight), isFalse);
     });
   });
 }
-

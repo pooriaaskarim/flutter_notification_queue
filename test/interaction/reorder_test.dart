@@ -47,7 +47,7 @@ void main() {
 
       notification1.show();
       await tester.pumpAndSettle();
-      
+
       notification2.show();
       await tester.pumpAndSettle();
 
@@ -62,18 +62,17 @@ void main() {
       final targetPos = tester.getCenter(notifFinder1);
 
       // We need to move exactly to the target to hit the reorder zone.
-      // Reorder triggers when threshold is passed, and it finds nearest zone index.
+      // Reorder triggers when threshold is passed, and it finds nearest
+      // zone index.
       // Offset from item 2 to item 1
-      final dx = targetPos.dx - startPos.dx;
-      final dy = targetPos.dy - startPos.dy;
 
-      // Because the queue positions items vertically with spacing, 
-      // dragging it UP by more than threshold (e.g. height of an item + spacing)
-      print('startPos: $startPos, targetPos: $targetPos');
+      // Because the queue positions items vertically with spacing,
+      // dragging it UP by more than threshold (e.g. height of an item +
+      // spacing)
 
       final gesture = await tester.startGesture(startPos);
       await tester.pump(const Duration(milliseconds: 100));
-      
+
       // Move in small steps
       await gesture.moveBy(const Offset(0, -20));
       await tester.pump();
@@ -81,15 +80,16 @@ void main() {
       await tester.pump();
       await gesture.moveTo(targetPos);
       await tester.pump();
-      
+
       await gesture.up();
       await tester.pumpAndSettle();
 
-      // Verify reorder happened
-      // Since order is maintained by the queue, the visual positions should be swapped.
+      // Verify reorder happened.
+      // Since order is maintained by the queue, the visual positions should
+      // be swapped.
       final newPos1 = tester.getCenter(notifFinder1);
       final newPos2 = tester.getCenter(notifFinder2);
-      
+
       // Item 2 should now be visually at Item 1's old position
       expect(newPos2.dy, closeTo(targetPos.dy, 1.0));
       // Item 1 should be shifted down
