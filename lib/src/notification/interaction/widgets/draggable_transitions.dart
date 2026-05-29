@@ -37,7 +37,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       ])
       ..sink();
 
-    final dragBehavior = widget.notification.queue.dragBehavior;
+    final dragBehavior = widget.notification.dragBehavior ??
+        widget.notification.queue.dragBehavior;
     final position = widget.notification.queue.position;
     final escapeThreshold = dragBehavior is ReorderAndRelocate
         ? (dragBehavior as ReorderAndRelocate).escapeThresholdInPixels
@@ -303,13 +304,15 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   }
 
   Widget longPressWidget() =>
-      switch (widget.notification.queue.longPressDragBehavior) {
+      switch (widget.notification.longPressDragBehavior ??
+          widget.notification.queue.longPressDragBehavior) {
         Disabled() => draggable(),
         final behavior =>
           _buildDraggable(behavior: behavior, isLongPress: true),
       };
 
-  Widget draggable() => switch (widget.notification.queue.dragBehavior) {
+  Widget draggable() => switch (widget.notification.dragBehavior ??
+      widget.notification.queue.dragBehavior) {
         Disabled() => widget.notification,
         final behavior =>
           _buildDraggable(behavior: behavior, isLongPress: false),

@@ -261,6 +261,31 @@ final _scenarios = [
       );
     },
   ),
+
+  // ── 7. Sticky Alert (Override) ──
+  _Scenario(
+    title: 'Sticky Alert (Override)',
+    subtitle: 'un-swipeable card inside swipeable queue — override demo',
+    icon: Icons.pin_drop_outlined,
+    color: const Color(0xFFF59E0B),
+    onFire: () {
+      NotificationWidget(
+        title: 'CRITICAL SECURITY UPDATE',
+        message: 'This notification has dragBehavior: Disabled override. '
+            'It cannot be swiped away, but other notifications in this queue '
+            'can!',
+        channelName: 'error',
+        dismissDuration: null,
+        dragBehavior: const Disabled(),
+        action: NotificationAction.button(
+          label: 'OK',
+          onPressed: () {
+            debugPrint('[Scenario] Sticky Alert OK tapped');
+          },
+        ),
+      ).show();
+    },
+  ),
 ];
 
 class _ScenarioTile extends StatelessWidget {

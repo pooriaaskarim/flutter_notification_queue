@@ -43,6 +43,8 @@ class NotificationWidget extends StatefulWidget {
     this.backgroundColor,
     this.dismissDuration,
     this.tapBehavior,
+    this.dragBehavior,
+    this.longPressDragBehavior,
     this.builder,
   }) : _key = key;
 
@@ -54,6 +56,8 @@ class NotificationWidget extends StatefulWidget {
     final QueuePosition? position,
     final NotificationAction? action,
     final TapBehavior? tapBehavior,
+    final DragBehavior? dragBehavior,
+    final LongPressDragBehavior? longPressDragBehavior,
     final Widget? icon,
     final Color? color,
     final Color? foregroundColor,
@@ -78,6 +82,8 @@ class NotificationWidget extends StatefulWidget {
       title: title,
       action: action,
       tapBehavior: tapBehavior,
+      dragBehavior: dragBehavior,
+      longPressDragBehavior: longPressDragBehavior,
       icon: icon,
       color: color,
       foregroundColor: foregroundColor,
@@ -136,6 +142,12 @@ class NotificationWidget extends StatefulWidget {
   /// )
   /// ```
   final TapBehavior? tapBehavior;
+
+  /// Per-notification override for the drag behavior.
+  final DragBehavior? dragBehavior;
+
+  /// Per-notification override for the long-press drag behavior.
+  final LongPressDragBehavior? longPressDragBehavior;
 
   /// Notification [Icon] widget
   ///
@@ -216,6 +228,9 @@ class NotificationWidget extends StatefulWidget {
       ' backgroundColor: $backgroundColor,'
       ' color: $color,'
       ' dismissDuration: $dismissDuration,'
+      ' tapBehavior: $tapBehavior,'
+      ' dragBehavior: $dragBehavior,'
+      ' longPressDragBehavior: $longPressDragBehavior,'
       ' builder: $builder,)';
 
   NotificationWidget copyToQueue(
@@ -231,6 +246,8 @@ class NotificationWidget extends StatefulWidget {
         title: title,
         action: action,
         tapBehavior: tapBehavior,
+        dragBehavior: dragBehavior,
+        longPressDragBehavior: longPressDragBehavior,
         icon: icon,
         color: color,
         foregroundColor: foregroundColor,
