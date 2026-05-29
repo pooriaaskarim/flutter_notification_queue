@@ -16,19 +16,7 @@ class _DragStartData {
 
 /// A sophisticated overlay that handles the physical transformation of the
 /// Notification Widget during dismissal and relocation interactions.
-///
-/// This component implements a **Three-Stage Interaction Model**:
-///
-/// 1.  **Proximity Aura**: As the pointer approaches a dismissal edge, the
-///     notification subtly scales down and fades, providing a soft "proximity
-///     hint" (Stage 1).
-/// 2.  **Engagement (The Void)**: Upon passing the threshold, the notification
-///     enters the "Death State", becoming grayscale and slightly blurred to
-///     signal commitment (Stage 2).
-/// 3.  **Magnet Lock**: While engaged, the notification snaps physically to the
-///     outer boundary of the dismissal bar. This "anchors" the action and
-///     prevents the widget from obscuring the active zone (Stage 3).
-class _DismissFeedbackOverlay extends StatelessWidget {
+class _DismissFeedbackOverlay extends StatefulWidget {
   const _DismissFeedbackOverlay({
     required this.passedThreshold,
     required this.dragOffset,
@@ -36,6 +24,7 @@ class _DismissFeedbackOverlay extends StatelessWidget {
     required this.screenSize,
     required this.startData,
     required this.zones,
+    required this.springPhysics,
     required this.child,
   });
 
@@ -45,31 +34,74 @@ class _DismissFeedbackOverlay extends StatelessWidget {
   final Size screenSize;
   final _DragStartData? startData;
   final List<EdgeDropZone> zones;
+  final SpringPhysicsConfiguration springPhysics;
   final Widget child;
+
+  @override
+  State<_DismissFeedbackOverlay> createState() =>
+      _DismissFeedbackOverlayState();
+}
+
+class _DismissFeedbackOverlayState extends State<_DismissFeedbackOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _sinkingController;
+
+  @override
+  void initState() {
+    super.initState();
+    _sinkingController = AnimationController(
+      vsync: this,
+      lowerBound: 0.5,
+      upperBound: 1.5,
+    );
+    _animateToTarget();
+  }
+
+  @override
+  void didUpdateWidget(covariant final _DismissFeedbackOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.passedThreshold != widget.passedThreshold) {
+      _animateToTarget();
+    }
+  }
+
+  void _animateToTarget() {
+    final double targetScale = widget.passedThreshold ? 0.85 : 1.0;
+
+    final simulation = SpringSimulation(
+      widget.springPhysics.toSpringDescription(),
+      _sinkingController.value,
+      targetScale,
+      0.0,
+    );
+
+    _sinkingController.animateWith(simulation);
+  }
+
+  @override
+  void dispose() {
+    _sinkingController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(final BuildContext context) {
     EdgeDropZone? lockedZone;
     double proximityProgress = 0.0;
 
-    if (dragOffset != null) {
+    if (widget.dragOffset != null) {
       final List<double> progressList = [];
       double maxProgress = 0.0;
       EdgeDropZone? maxZone;
 
-      for (final zone in zones) {
-        // Calculate the proximity to each dismissal zone.
+      for (final zone in widget.zones) {
         final progress = zone.calculateProgress(
-          dragOffset!,
-          screenSize,
-          1.0 / thresholdInPixels,
+          widget.dragOffset!,
+          widget.screenSize,
+          1.0 / widget.thresholdInPixels,
         );
         progressList.add(progress);
 
-        // Edge Priority: If multiple zones hit the threshold (1.0),
-        // we pick the one that is "deeper" into its boundary if we could,
-        // but since it's clamped, we keep the FIRST one that hits 1.0
-        // to provide stability, or update if another is clearly dominant.
         if (progress >= 1.0 && (lockedZone == null || progress > maxProgress)) {
           lockedZone = zone;
         }
@@ -79,112 +111,108 @@ class _DismissFeedbackOverlay extends StatelessWidget {
           maxZone = zone;
         }
       }
-      // Use the highest proximity score across all zones to drive visual
-      // feedback.
       proximityProgress = progressList.isEmpty ? 0.0 : progressList.reduce(max);
 
-      // FLICKER FIX: If we passed the threshold (via parent logic), we MUST
-      // enforce a lockedZone even if current progress dipped slightly below 1.0
-      // (hysteresis). We pick the zone with the highest activity.
-      if (passedThreshold && lockedZone == null) {
+      if (widget.passedThreshold && lockedZone == null) {
         lockedZone = maxZone;
       }
     }
 
     Offset correction = Offset.zero;
-    if (dragOffset != null && startData != null) {
+    if (widget.dragOffset != null && widget.startData != null) {
       correction = _calculateMagnetCorrection(
-        dragOffset: dragOffset!,
-        startData: startData!,
+        dragOffset: widget.dragOffset!,
+        startData: widget.startData!,
         lockedZone: lockedZone,
       );
     }
 
     final double opacity = 1.0 - (proximityProgress * 0.5);
     final double baseScale = 1.0 - (proximityProgress * 0.08);
-
-    // Sinking refinement:
-    final double sinkingScale = passedThreshold ? 0.85 : 1.0;
-    final double sinkingBlur = passedThreshold ? 4.0 : 0.0;
+    final double sinkingBlur = widget.passedThreshold ? 4.0 : 0.0;
 
     final themeData = Theme.of(context);
     final onSurface = themeData.colorScheme.onSurface;
 
     final cardContent = ColorFiltered(
-      colorFilter: passedThreshold
+      colorFilter: widget.passedThreshold
           ? ColorUtils.grayscaleFilter
           : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: passedThreshold
+        child: widget.passedThreshold
             ? ImageFiltered(
                 imageFilter: ImageFilter.blur(
                   sigmaX: sinkingBlur,
                   sigmaY: sinkingBlur,
                 ),
-                child: child,
+                child: widget.child,
               )
-            : child,
+            : widget.child,
       ),
     );
 
     return Transform.translate(
       offset: correction,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Opacity(
-            opacity: opacity,
-            child: Transform.scale(
-              scale: baseScale * sinkingScale,
-              alignment: lockedZone?.alignment ?? Alignment.center,
-              child: cardContent,
-            ),
-          ),
-          if (passedThreshold)
-            Positioned.fill(
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                opacity: 1.0,
-                child: AnimatedScale(
-                  duration: const Duration(milliseconds: 100),
-                  curve: Curves.easeOut,
-                  scale: baseScale * sinkingScale,
+      child: AnimatedBuilder(
+        animation: _sinkingController,
+        builder: (final context, final child) {
+          final currentScale = baseScale * _sinkingController.value;
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              Opacity(
+                opacity: opacity,
+                child: Transform.scale(
+                  scale: currentScale,
                   alignment: lockedZone?.alignment ?? Alignment.center,
-                  child: Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(30),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: themeData.colorScheme.surface
-                                .withValues(alpha: 0.8),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: onSurface.withValues(alpha: 0.1),
-                              width: 1.0,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
+                  child: cardContent,
+                ),
+              ),
+              if (widget.passedThreshold)
+                Positioned.fill(
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    opacity: 1.0,
+                    child: Transform.scale(
+                      scale: currentScale,
+                      alignment: lockedZone?.alignment ?? Alignment.center,
+                      child: Center(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(30),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 10,
                               ),
-                            ],
-                          ),
-                          child: Text(
-                            'RELEASE TO DISMISS',
-                            style: TextStyle(
-                              color: onSurface.withValues(alpha: 0.9),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                              letterSpacing: 0.5,
+                              decoration: BoxDecoration(
+                                color: themeData.colorScheme.surface
+                                    .withValues(alpha: 0.8),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: onSurface.withValues(alpha: 0.1),
+                                  width: 1.0,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                'RELEASE TO DISMISS',
+                                style: TextStyle(
+                                  color: onSurface.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -192,18 +220,13 @@ class _DismissFeedbackOverlay extends StatelessWidget {
                     ),
                   ),
                 ),
-              ),
-            ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
 
-  /// Calculates the positional "correction" needed to achieve the Magnet Lock
-  /// effect.
-  ///
-  /// This snaps the notification to the boundary of the dismissal bar when
-  /// [lockedZone] is active, or simply clamps it to screen bounds otherwise.
   Offset _calculateMagnetCorrection({
     required final Offset dragOffset,
     required final _DragStartData startData,
@@ -212,26 +235,25 @@ class _DismissFeedbackOverlay extends StatelessWidget {
     final Offset nominalTopLeft = dragOffset - startData.touchOffset;
 
     double x = nominalTopLeft.dx
-        .clamp(0.0, screenSize.width - startData.widgetSize.width);
+        .clamp(0.0, widget.screenSize.width - startData.widgetSize.width);
     double y = nominalTopLeft.dy
-        .clamp(0.0, screenSize.height - startData.widgetSize.height);
+        .clamp(0.0, widget.screenSize.height - startData.widgetSize.height);
 
-    if (passedThreshold && lockedZone != null) {
-      final double barSize = thresholdInPixels.toDouble();
+    if (widget.passedThreshold && lockedZone != null) {
+      final double barSize = widget.thresholdInPixels.toDouble();
       final Alignment align = lockedZone.alignment;
 
-      // Snap logic based on alignment
       if (align.x == -1.0) {
-        x = barSize; // Left
+        x = barSize;
       }
       if (align.x == 1.0) {
-        x = screenSize.width - startData.widgetSize.width - barSize; // Right
+        x = widget.screenSize.width - startData.widgetSize.width - barSize;
       }
       if (align.y == -1.0) {
-        y = barSize; // Top
+        y = barSize;
       }
       if (align.y == 1.0) {
-        y = screenSize.height - startData.widgetSize.height - barSize; // Bottom
+        y = widget.screenSize.height - startData.widgetSize.height - barSize;
       }
     }
 
@@ -239,19 +261,9 @@ class _DismissFeedbackOverlay extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// _ReorderPlaceholder
-// ---------------------------------------------------------------------------
-
-/// A ghost widget shown in the queue where the dragged notification used to be.
-///
-/// Uses a frosted-glass, dashed-border card to clearly communicate that a
-/// notification has been lifted from this slot and is being repositioned.
 class _ReorderPlaceholder extends StatefulWidget {
   const _ReorderPlaceholder({required this.child});
 
-  /// The original notification widget — used only to measure its layout size
-  /// (invisible, wrapped in `Opacity(0)`).
   final Widget child;
 
   @override
@@ -288,14 +300,11 @@ class _ReorderPlaceholderState extends State<_ReorderPlaceholder>
             opacity: opacity,
             child: Stack(
               children: [
-                // Notification content ghosted at low opacity so the user can
-                // see which card has been lifted from this slot.
                 ExcludeSemantics(
                   child: IgnorePointer(
                     child: Opacity(opacity: 0.35, child: widget.child),
                   ),
                 ),
-                // Ghost overlay.
                 Positioned.fill(
                   child: CustomPaint(
                     painter: _DashedBorderPainter(
@@ -310,7 +319,6 @@ class _ReorderPlaceholderState extends State<_ReorderPlaceholder>
       );
 }
 
-/// Draws a rounded-rect dashed border as the ghost placeholder outline.
 class _DashedBorderPainter extends CustomPainter {
   const _DashedBorderPainter({required this.opacity});
 
@@ -364,101 +372,138 @@ class _DashedBorderPainter extends CustomPainter {
   bool shouldRepaint(final _DashedBorderPainter old) => old.opacity != opacity;
 }
 
-// ---------------------------------------------------------------------------
-// _LiftedFeedback
-// ---------------------------------------------------------------------------
-
-/// Wraps the dragged notification to give it a "lifted" appearance.
-///
-/// Applies elevation shadow, slight scale, and a subtle tilt based on the
-/// drag stage:
-/// - **Stage 1** (idle): scale 1.04, shadow, no tint.
-/// - **Stage 2** (proximity): scale 1.06, stronger shadow, blue border glow.
-/// - **Stage 3** (committed): scale 0.97, green glow, dimmed opacity.
-class _LiftedFeedback extends StatelessWidget {
+/// Wraps the dragged notification to give it a "lifted" appearance
+/// under continuous spring physics.
+class _LiftedFeedback extends StatefulWidget {
   const _LiftedFeedback({
     required this.child,
     required this.passedThreshold,
     required this.nearestProgress,
     required this.widgetSize,
+    required this.springPhysics,
   });
 
   final Widget child;
   final bool passedThreshold;
   final double nearestProgress;
-
-  /// The original on-screen size of the notification widget.
   final Size widgetSize;
+  final SpringPhysicsConfiguration springPhysics;
 
   @override
-  Widget build(final BuildContext context) {
-    final bool engaged = nearestProgress > 0.3;
+  State<_LiftedFeedback> createState() => _LiftedFeedbackState();
+}
 
-    final double scale = passedThreshold
+class _LiftedFeedbackState extends State<_LiftedFeedback>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      lowerBound: 0.5,
+      upperBound: 1.5,
+    );
+    _animateToTarget();
+  }
+
+  @override
+  void didUpdateWidget(covariant final _LiftedFeedback oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.passedThreshold != widget.passedThreshold ||
+        oldWidget.nearestProgress != widget.nearestProgress) {
+      _animateToTarget();
+    }
+  }
+
+  void _animateToTarget() {
+    final bool engaged = widget.nearestProgress > 0.3;
+    final double targetScale = widget.passedThreshold
         ? 0.96
         : engaged
             ? 1.06
             : 1.04;
 
-    final double opacity = passedThreshold ? 0.5 : 1.0;
+    final simulation = SpringSimulation(
+      widget.springPhysics.toSpringDescription(),
+      _controller.value,
+      targetScale,
+      0.0,
+    );
 
-    final Color glowColor = passedThreshold
+    _controller.animateWith(simulation);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(final BuildContext context) {
+    final bool engaged = widget.nearestProgress > 0.3;
+    final double opacity = widget.passedThreshold ? 0.5 : 1.0;
+
+    final Color glowColor = widget.passedThreshold
         ? Colors.green
         : engaged
             ? Colors.blue
             : Colors.transparent;
 
-    final double glowSpread = passedThreshold
+    final double glowSpread = widget.passedThreshold
         ? 4.0
         : engaged
             ? 2.0
             : 0.0;
 
     final Color shadowColor = Colors.black.withValues(alpha: 0.25);
-    final double shadowBlur = passedThreshold ? 4.0 : 20.0;
-    final double shadowSpread = passedThreshold ? 0.0 : 4.0;
+    final double shadowBlur = widget.passedThreshold ? 4.0 : 20.0;
+    final double shadowSpread = widget.passedThreshold ? 0.0 : 4.0;
     final Offset shadowOffset =
-        passedThreshold ? const Offset(0, 2) : const Offset(0, 8);
+        widget.passedThreshold ? const Offset(0, 2) : const Offset(0, 8);
 
-    return AnimatedScale(
-      scale: scale,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      child: AnimatedOpacity(
-        opacity: opacity,
-        duration: const Duration(milliseconds: 200),
-        child: AnimatedContainer(
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (final context, final child) => Transform.scale(
+        scale: _controller.value,
+        child: AnimatedOpacity(
+          opacity: opacity,
           duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          width: widgetSize.width,
-          height: widgetSize.height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: shadowBlur,
-                spreadRadius: shadowSpread,
-                offset: shadowOffset,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            width: widget.widgetSize.width,
+            height: widget.widgetSize.height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: shadowColor,
+                  blurRadius: shadowBlur,
+                  spreadRadius: shadowSpread,
+                  offset: shadowOffset,
+                ),
+                BoxShadow(
+                  color: glowColor.withValues(alpha: engaged ? 0.45 : 0.0),
+                  blurRadius: 24,
+                  spreadRadius: glowSpread,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: ColorFiltered(
+                colorFilter: ColorFilter.matrix(
+                  widget.passedThreshold
+                      ? _kDesatMatrix
+                      : engaged
+                          ? _kSlightDesatMatrix
+                          : _kIdentityMatrix,
+                ),
+                child: widget.child,
               ),
-              BoxShadow(
-                color: glowColor.withValues(alpha: engaged ? 0.45 : 0.0),
-                blurRadius: 24,
-                spreadRadius: glowSpread,
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: ColorFiltered(
-              colorFilter: ColorFilter.matrix(
-                passedThreshold
-                    ? _kDesatMatrix
-                    : engaged
-                        ? _kSlightDesatMatrix
-                        : _kIdentityMatrix,
-              ),
-              child: child,
             ),
           ),
         ),

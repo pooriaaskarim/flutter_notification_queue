@@ -18,10 +18,25 @@ class DartSyntaxHighlighter {
   static const _plain = Color(0xFFCDD6F4); // near-white
 
   static const _keywords = {
-    'const', 'final', 'var', 'void', 'return', 'null',
-    'true', 'false', 'new', 'this', 'super', 'import',
-    'class', 'extends', 'implements', 'abstract', 'static',
-    'required', 'assert',
+    'const',
+    'final',
+    'var',
+    'void',
+    'return',
+    'null',
+    'true',
+    'false',
+    'new',
+    'this',
+    'super',
+    'import',
+    'class',
+    'extends',
+    'implements',
+    'abstract',
+    'static',
+    'required',
+    'assert',
   };
 
   // Identifiers that start with uppercase are treated as types/classes
@@ -50,10 +65,12 @@ class DartSyntaxHighlighter {
       if (i + 1 < src.length && src[i] == '/' && src[i + 1] == '/') {
         final end = src.indexOf('\n', i);
         final comment = end == -1 ? src.substring(i) : src.substring(i, end);
-        children.add(TextSpan(
-          text: comment,
-          style: style.copyWith(color: _comment),
-        ),);
+        children.add(
+          TextSpan(
+            text: comment,
+            style: style.copyWith(color: _comment),
+          ),
+        );
         i += comment.length;
         continue;
       }
@@ -73,10 +90,12 @@ class DartSyntaxHighlighter {
           }
           end++;
         }
-        children.add(TextSpan(
-          text: src.substring(i, end),
-          style: style.copyWith(color: _string),
-        ),);
+        children.add(
+          TextSpan(
+            text: src.substring(i, end),
+            style: style.copyWith(color: _string),
+          ),
+        );
         i = end;
         continue;
       }
@@ -107,29 +126,35 @@ class DartSyntaxHighlighter {
         while (end < src.length && (_isDigit(src[end]) || src[end] == '.')) {
           end++;
         }
-        children.add(TextSpan(
-          text: src.substring(i, end),
-          style: style.copyWith(color: _number),
-        ),);
+        children.add(
+          TextSpan(
+            text: src.substring(i, end),
+            style: style.copyWith(color: _number),
+          ),
+        );
         i = end;
         continue;
       }
 
       // ── Punctuation / operators ──
       if (_isPunct(src[i])) {
-        children.add(TextSpan(
-          text: src[i],
-          style: style.copyWith(color: _punctuation),
-        ),);
+        children.add(
+          TextSpan(
+            text: src[i],
+            style: style.copyWith(color: _punctuation),
+          ),
+        );
         i++;
         continue;
       }
 
       // ── Whitespace / unclassified ──
-      children.add(TextSpan(
-        text: src[i],
-        style: style.copyWith(color: _plain),
-      ),);
+      children.add(
+        TextSpan(
+          text: src[i],
+          style: style.copyWith(color: _plain),
+        ),
+      );
       i++;
     }
 
@@ -142,8 +167,7 @@ class DartSyntaxHighlighter {
       c == '_' ||
       c == r'$';
 
-  static bool _isIdentPart(final String c) =>
-      _isIdentStart(c) || _isDigit(c);
+  static bool _isIdentPart(final String c) => _isIdentStart(c) || _isDigit(c);
 
   static bool _isDigit(final String c) {
     final code = c.codeUnitAt(0);

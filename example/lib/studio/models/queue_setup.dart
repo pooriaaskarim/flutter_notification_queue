@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart' show BorderRadius, EdgeInsets;
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
@@ -23,6 +24,7 @@ class QueueSetup extends Equatable {
     this.longPressDismissZone = DismissZone.sideEdges,
     this.relocateTargets = const {},
     this.closeButtonBehaviorType = AlwaysVisible,
+    this.tapBehaviorType = TapToDismiss,
   });
 
   // ── Style ──
@@ -47,6 +49,9 @@ class QueueSetup extends Equatable {
   final DismissZone longPressDismissZone;
   final Set<QueuePosition> relocateTargets;
   final Type closeButtonBehaviorType;
+
+  // ── Tap ──
+  final Type tapBehaviorType;
 
   /// Whether this queue is in an invalid relocation state (Relocate behavior
   /// selected but no targets chosen). Empty targets cause library crashes.
@@ -73,6 +78,7 @@ class QueueSetup extends Equatable {
     final DismissZone? longPressDismissZone,
     final Set<QueuePosition>? relocateTargets,
     final Type? closeButtonBehaviorType,
+    final Type? tapBehaviorType,
   }) =>
       QueueSetup(
         styleType: styleType ?? this.styleType,
@@ -92,6 +98,7 @@ class QueueSetup extends Equatable {
         relocateTargets: relocateTargets ?? this.relocateTargets,
         closeButtonBehaviorType:
             closeButtonBehaviorType ?? this.closeButtonBehaviorType,
+        tapBehaviorType: tapBehaviorType ?? this.tapBehaviorType,
       );
 
   // ── Library Mapping Helpers ──
@@ -183,6 +190,18 @@ class QueueSetup extends Equatable {
     return const AlwaysVisible();
   }
 
+  /// Builds the [TapBehavior] from [tapBehaviorType].
+  TapBehavior toTapBehavior() {
+    if (tapBehaviorType == TapToExpand) return const TapToExpand();
+    if (tapBehaviorType == TapToAct) {
+      return TapToAct(
+        onTap: () => debugPrint('[Studio] TapToAct fired'),
+      );
+    }
+    if (tapBehaviorType == TapDisabled) return const TapDisabled();
+    return const TapToDismiss();
+  }
+
   /// Builds a [NotificationQueue] at the given [position].
   NotificationQueue toNotificationQueue(final QueuePosition position) =>
       NotificationQueue.defaultQueue(
@@ -198,6 +217,7 @@ class QueueSetup extends Equatable {
         dragBehavior: toDragBehavior(position),
         longPressDragBehavior: toLongPressBehavior(position),
         closeButtonBehavior: toCloseButtonBehavior(),
+        tapBehavior: toTapBehavior(),
       );
 
   BorderRadius get _borderRadius => BorderRadius.circular(borderRadius);
@@ -219,5 +239,6 @@ class QueueSetup extends Equatable {
         longPressDismissZone,
         relocateTargets,
         closeButtonBehaviorType,
+        tapBehaviorType,
       ];
 }

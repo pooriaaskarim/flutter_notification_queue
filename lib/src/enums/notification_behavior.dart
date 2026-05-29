@@ -12,8 +12,10 @@ class OnDrag {}
 class OnLongPress {}
 
 sealed class QueueNotificationBehavior<T> {
-  const QueueNotificationBehavior({required this.thresholdInPixels})
-      : assert(
+  const QueueNotificationBehavior({
+    required this.thresholdInPixels,
+    this.springPhysics = const SpringPhysicsConfiguration.premium(),
+  }) : assert(
           thresholdInPixels >= kDefaultQueueDragBehaviorThreshold,
           'thresholdInPixels must be greater than '
           'kDefaultQueueBehaviorThreshold Pixels',
@@ -21,6 +23,9 @@ sealed class QueueNotificationBehavior<T> {
 
   /// Pixels left from the edge of the screen to trigger the behavior.
   final int thresholdInPixels;
+
+  /// Configuration for physical spring simulations during snap-back.
+  final SpringPhysicsConfiguration springPhysics;
 }
 
 /// Relocates the notification to the specified positions.
@@ -31,9 +36,14 @@ final class Relocate<T> extends QueueNotificationBehavior<T> {
   const Relocate._({
     required this.positions,
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
+    super.springPhysics = const SpringPhysicsConfiguration.premium(),
   });
 
-  factory Relocate.to(final Set<QueuePosition> positions) {
+  factory Relocate.to(
+    final Set<QueuePosition> positions, {
+    final SpringPhysicsConfiguration springPhysics =
+        const SpringPhysicsConfiguration.premium(),
+  }) {
     if (positions.isEmpty) {
       throw ArgumentError.value(
         positions,
@@ -41,7 +51,10 @@ final class Relocate<T> extends QueueNotificationBehavior<T> {
         'positions must not be empty',
       );
     }
-    return Relocate._(positions: positions);
+    return Relocate._(
+      positions: positions,
+      springPhysics: springPhysics,
+    );
   }
 
   final Set<QueuePosition> positions;
@@ -76,6 +89,7 @@ enum DismissZone {
 final class Dismiss<T> extends QueueNotificationBehavior<T> {
   const Dismiss({
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
+    super.springPhysics = const SpringPhysicsConfiguration.premium(),
     this.zones = DismissZone.sideEdges,
   });
 
@@ -93,6 +107,7 @@ final class Dismiss<T> extends QueueNotificationBehavior<T> {
 final class Reorder<T> extends QueueNotificationBehavior<T> {
   const Reorder({
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
+    super.springPhysics = const SpringPhysicsConfiguration.premium(),
   });
 }
 
@@ -100,12 +115,15 @@ final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
   const ReorderAndRelocate._({
     required this.positions,
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
+    super.springPhysics = const SpringPhysicsConfiguration.premium(),
     this.escapeThresholdInPixels = 80.0,
   });
 
   factory ReorderAndRelocate.to({
     required final Set<QueuePosition> positions,
     final double escapeThresholdInPixels = 80.0,
+    final SpringPhysicsConfiguration springPhysics =
+        const SpringPhysicsConfiguration.premium(),
   }) {
     if (positions.isEmpty) {
       throw ArgumentError.value(
@@ -117,6 +135,7 @@ final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
     return ReorderAndRelocate._(
       positions: positions,
       escapeThresholdInPixels: escapeThresholdInPixels,
+      springPhysics: springPhysics,
     );
   }
 
@@ -129,7 +148,10 @@ final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
 
 final class Disabled<T> extends QueueNotificationBehavior<T> {
   const Disabled()
-      : super(thresholdInPixels: kDefaultQueueDragBehaviorThreshold);
+      : super(
+          thresholdInPixels: kDefaultQueueDragBehaviorThreshold,
+          springPhysics: const SpringPhysicsConfiguration(),
+        );
 }
 
 typedef LongPressDragBehavior = QueueNotificationBehavior<OnLongPress>;

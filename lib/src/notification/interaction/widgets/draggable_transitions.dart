@@ -22,6 +22,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
 
   List<SlotDropZone>? _activeReorderZones;
 
+  late final GestureStateMachine _fsm;
+
   static final _logger = Logger.get('fnq.Notification.Draggables');
 
   @override
@@ -34,6 +36,19 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         'State: $this',
       ])
       ..sink();
+
+    final dragBehavior = widget.notification.queue.dragBehavior;
+    final position = widget.notification.queue.position;
+    final escapeThreshold = dragBehavior is ReorderAndRelocate
+        ? (dragBehavior as ReorderAndRelocate).escapeThresholdInPixels
+        : 80.0;
+
+    _fsm = GestureStateMachine(
+      initialBehavior: dragBehavior,
+      initialPosition: position,
+      escapeThreshold: escapeThreshold,
+    );
+
     super.initState();
   }
 
@@ -59,16 +74,133 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       ..sink();
 
     _dragOffsetPairNotifier.dispose();
+    _fsm.dispose();
     super.dispose();
   }
 
+  NotificationGesturePlugin _resolvePlugin(
+    final QueueNotificationBehavior behavior,
+  ) =>
+      switch (behavior) {
+        Dismiss() => DismissGesturePlugin(behavior: behavior),
+        Relocate() => RelocateGesturePlugin(behavior: behavior),
+        Reorder() => ReorderGesturePlugin(behavior: behavior),
+        ReorderAndRelocate() => ReorderRelocateGesturePlugin(
+            behavior: behavior,
+          ),
+        Disabled() => throw UnsupportedError('Disabled behavior has no plugin'),
+      };
+
+  int stateIndexOfThisItem() {
+    final position = widget.notification.queue.position;
+    final queueKey =
+        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+    final queueState = queueKey.currentState;
+    return queueState?.indexOf(widget.notification) ?? 0;
+  }
+
+  Widget _buildDraggable({
+    required final QueueNotificationBehavior behavior,
+    required final bool isLongPress,
+  }) {
+    final plugin = _resolvePlugin(behavior);
+
+    void onDragStarted() {
+      final renderBox = context.findRenderObject() as RenderBox?;
+      final rect = renderBox != null
+          ? (renderBox.localToGlobal(Offset.zero) & renderBox.size)
+          : Rect.zero;
+
+      _fsm.lift(
+        pointerStart: _dragStartData?.pointerPosition ?? Offset.zero,
+        widgetRect: rect,
+      );
+
+      if (widget.hapticFeedbackOnStart) {
+        HapticFeedback.lightImpact();
+      }
+
+      plugin.onDragStart(this);
+    }
+
+    void onDragUpdate(final DragUpdateDetails details) {
+      _fsm.update(
+        delta: details.delta,
+        globalPosition: details.globalPosition,
+      );
+      plugin.onDragUpdate(this, details);
+    }
+
+    void onDragEnd(final DraggableDetails details) {
+      _fsm.settle();
+      plugin.onDragEnd(this, details);
+      _fsm.reset();
+    }
+
+    final feedback = ValueListenableBuilder(
+      valueListenable: _dragOffsetPairNotifier,
+      builder: (final context, final offsetPair, final child) =>
+          plugin.buildFeedback(this, offsetPair),
+    );
+
+    final position = widget.notification.queue.position;
+
+    if (isLongPress) {
+      final Object data = switch (behavior) {
+        Relocate() => position,
+        Dismiss() => position.alignment,
+        Reorder() => stateIndexOfThisItem(),
+        ReorderAndRelocate() => stateIndexOfThisItem(),
+        _ => position,
+      };
+
+      return LongPressDraggable<Object>(
+        data: data,
+        axis: null,
+        onDragStarted: onDragStarted,
+        onDragUpdate: onDragUpdate,
+        onDragEnd: onDragEnd,
+        maxSimultaneousDrags: 1,
+        hapticFeedbackOnStart: widget.hapticFeedbackOnStart,
+        hitTestBehavior: HitTestBehavior.deferToChild,
+        childWhenDragging: behavior is Reorder || behavior is ReorderAndRelocate
+            ? _ReorderPlaceholder(
+                child:
+                    _buildDummyGhost(_dragStartData?.widgetSize ?? Size.zero),
+              )
+            : const SizedBox.shrink(),
+        feedback: feedback,
+        child: draggable(),
+      );
+    }
+
+    final Object data = switch (behavior) {
+      Relocate() => position,
+      Dismiss() => position.alignment,
+      Reorder() => stateIndexOfThisItem(),
+      ReorderAndRelocate() => stateIndexOfThisItem(),
+      _ => position,
+    };
+
+    return Draggable<Object>(
+      data: data,
+      axis: null,
+      onDragStarted: onDragStarted,
+      onDragUpdate: onDragUpdate,
+      onDragEnd: onDragEnd,
+      maxSimultaneousDrags: 1,
+      hitTestBehavior: HitTestBehavior.deferToChild,
+      childWhenDragging: behavior is Reorder || behavior is ReorderAndRelocate
+          ? _ReorderPlaceholder(
+              child: _buildDummyGhost(_dragStartData?.widgetSize ?? Size.zero),
+            )
+          : const SizedBox.shrink(),
+      feedback: feedback,
+      child: widget.notification,
+    );
+  }
+
   // Derives the active drop zones based on the interaction behavior.
-  //
-  // - Dismiss: uses DismissZone policy + current position.
-  // - Relocate: derives zones from the set of target positions.
-  // - Reorder: returns empty — zones are built in the Reorder branch
-  //   directly, since item count and index require QueueWidgetState access.
-  // - Disabled: returns empty (unreachable in practice).
   List<DropZone> _getZones(
     final QueueNotificationBehavior behavior,
     final QueuePosition position,
@@ -100,10 +232,6 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
     return false;
   }
 
-  /// Returns the proximity progress [0.0, 1.0] for the nearest [SlotDropZone].
-  ///
-  /// Used by [_LiftedFeedback] to pick the correct visual stage without
-  /// knowing which specific slot is closest.
   double _nearestZoneProgress(
     final Offset? pointer,
     final List<DropZone> zones,
@@ -140,6 +268,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         },
         child: longPressWidget(),
       );
+
   _DragStartData? _dragStartData;
   int? _activeZoneIndex;
 
@@ -175,28 +304,17 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
 
   Widget longPressWidget() =>
       switch (widget.notification.queue.longPressDragBehavior) {
-        Relocate() => _buildRelocateDraggable(isLongPress: true),
-        Dismiss() => _buildDismissDraggable(isLongPress: true),
-        Reorder() => _buildReorderDraggable(isLongPress: true),
-        ReorderAndRelocate() => _buildUnifiedDraggable(isLongPress: true),
         Disabled() => draggable(),
+        final behavior =>
+          _buildDraggable(behavior: behavior, isLongPress: true),
       };
 
   Widget draggable() => switch (widget.notification.queue.dragBehavior) {
-        Relocate() => _buildRelocateDraggable(isLongPress: false),
-        Dismiss() => _buildDismissDraggable(isLongPress: false),
-        Reorder() => _buildReorderDraggable(isLongPress: false),
-        ReorderAndRelocate() => _buildUnifiedDraggable(isLongPress: false),
         Disabled() => widget.notification,
+        final behavior =>
+          _buildDraggable(behavior: behavior, isLongPress: false),
       };
 
-  /// Creates a visual proxy of the notification card that exactly matches its
-  /// captured dimensions on the screen.
-  ///
-  /// This is critical for Draggable overlay ghosts. Returning the actual
-  /// `widget.notification` causes fatal layout errors (e.g. "Tried to build
-  /// dirty widget in the wrong build scope") because the real widget instance
-  /// possesses a [GlobalObjectKey] that cannot be mounted multiple times.
   Widget _buildDummyGhost(final Size size) => Container(
         width: size.width > 0 ? size.width : null,
         height: size.height > 0 ? size.height : null,

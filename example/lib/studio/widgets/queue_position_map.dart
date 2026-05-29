@@ -82,9 +82,8 @@ class QueuePositionMap extends StatelessWidget {
     final activePositions = queues.keys.toSet();
 
     // Compile relocation targets (slaves)
-    final slavePositions = queues.values
-        .expand((final q) => q.relocateTargets)
-        .toSet();
+    final slavePositions =
+        queues.values.expand((final q) => q.relocateTargets).toSet();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

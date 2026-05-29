@@ -3,6 +3,8 @@ import 'dart:math';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/physics.dart';
+import 'package:flutter/services.dart';
 import 'package:logd/logd.dart';
 
 import '../../flutter_notification_queue.dart';
@@ -15,13 +17,11 @@ part 'interaction/zones/slots.dart';
 part 'interaction/zones/resolvers.dart';
 part 'interaction/overlays/dismissal_targets.dart';
 part 'interaction/widgets/draggable_transitions.dart';
-part 'interaction/widgets/dismiss_behavior.dart';
-part 'interaction/widgets/relocate_behavior.dart';
-part 'interaction/widgets/reorder_behavior.dart';
-part 'interaction/widgets/reorder_relocate_behavior.dart';
 part 'interaction/widgets/feedback_overlays.dart';
 part 'interaction/overlays/relocation_targets.dart';
 part 'interaction/overlays/reorder_targets.dart';
+part 'interaction/gesture_state_machine.dart';
+part 'interaction/gesture_plugins.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
 part 'type_defs.dart';
@@ -42,6 +42,7 @@ class NotificationWidget extends StatefulWidget {
     this.foregroundColor,
     this.backgroundColor,
     this.dismissDuration,
+    this.tapBehavior,
     this.builder,
   }) : _key = key;
 
@@ -52,6 +53,7 @@ class NotificationWidget extends StatefulWidget {
     final String? title,
     final QueuePosition? position,
     final NotificationAction? action,
+    final TapBehavior? tapBehavior,
     final Widget? icon,
     final Color? color,
     final Color? foregroundColor,
@@ -75,6 +77,7 @@ class NotificationWidget extends StatefulWidget {
       queue: resolvedQueue,
       title: title,
       action: action,
+      tapBehavior: tapBehavior,
       icon: icon,
       color: color,
       foregroundColor: foregroundColor,
@@ -113,9 +116,26 @@ class NotificationWidget extends StatefulWidget {
   /// Optional [NotificationAction] provides notification with
   /// an action callback
   ///
-  /// A [NotificationAction] can be create by
+  /// A [NotificationAction] can be created by
   /// [NotificationAction.button] or [NotificationAction.onTap].
   final NotificationAction? action;
+
+  /// Per-notification override for the tap behavior.
+  ///
+  /// When set, this takes precedence over the queue's
+  /// [NotificationQueue.tapBehavior]. When null, the queue-level
+  /// behavior is used.
+  ///
+  /// Example — make a single notification show a detail sheet on tap:
+  /// ```dart
+  /// NotificationWidget(
+  ///   message: 'New message from Alice',
+  ///   tapBehavior: TapToAct(
+  ///     onTap: (n) => showDetailSheet(n),
+  ///   ),
+  /// )
+  /// ```
+  final TapBehavior? tapBehavior;
 
   /// Notification [Icon] widget
   ///
@@ -207,6 +227,7 @@ class NotificationWidget extends StatefulWidget {
         channel: channel,
         title: title,
         action: action,
+        tapBehavior: tapBehavior,
         icon: icon,
         color: color,
         foregroundColor: foregroundColor,
@@ -232,6 +253,22 @@ class NotificationWidgetState extends State<NotificationWidget>
   bool get hasButtonAction =>
       widget.action != null &&
       widget.action!.type == NotificationActionType.button;
+
+  /// Resolves the effective tap behavior for this notification.
+  ///
+  /// The notification's own [NotificationWidget.tapBehavior] takes precedence
+  /// over the queue-level [NotificationQueue.tapBehavior].
+  ///
+  /// Legacy [NotificationAction.onTap] is respected if no explicit
+  /// [TapBehavior] is set, for backward compatibility.
+  TapBehavior get _resolvedTapBehavior {
+    // 1. Per-notification override wins.
+    if (widget.tapBehavior != null) return widget.tapBehavior!;
+    // 2. Legacy NotificationAction.onTap shim — preserve old behavior.
+    if (hasOnTapAction) return const TapToDismiss();
+    // 3. Queue-level default.
+    return widget.queue.tapBehavior;
+  }
 
   /// Whether user expanded the notification.
   ///
@@ -349,12 +386,16 @@ class NotificationWidgetState extends State<NotificationWidget>
                       .queue.closeButtonBehavior
                       .onHover(isHovering: false),
                   child: InkWell(
-                    onTap: !hasOnTapAction
-                        ? null
-                        : () {
-                            widget.action?.onPressed();
-                            dismiss();
-                          },
+                    onTap: switch (_resolvedTapBehavior) {
+                      TapDisabled() => null,
+                      TapToDismiss() => () {
+                          // Legacy onTap action callback respected.
+                          if (hasOnTapAction) widget.action?.onPressed();
+                          dismiss();
+                        },
+                      TapToExpand() => _toggleExpanded,
+                      TapToAct(:final onTap) => onTap,
+                    },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       constraints: Utils.horizontalConstraints(context),
@@ -500,6 +541,15 @@ class NotificationWidgetState extends State<NotificationWidget>
             )
           : const SizedBox.shrink();
 
+  void _toggleExpanded() {
+    if (isExpanded.value) {
+      initDismissTimer();
+    } else {
+      ditchDismissTimer();
+    }
+    isExpanded.value = !isExpanded.value;
+  }
+
   Widget _getExpandButton({required final bool isExpanded}) {
     final expandMoreIcon = (widget.queue is BottomLeftQueue ||
             widget.queue is BottomCenterQueue ||
@@ -522,14 +572,7 @@ class NotificationWidgetState extends State<NotificationWidget>
             color: theme.foregroundColor,
           ),
           visualDensity: VisualDensity.compact,
-          onPressed: () {
-            if (isExpanded) {
-              initDismissTimer();
-            } else {
-              ditchDismissTimer();
-            }
-            this.isExpanded.value = !isExpanded;
-          },
+          onPressed: _toggleExpanded,
         ),
       ),
     );

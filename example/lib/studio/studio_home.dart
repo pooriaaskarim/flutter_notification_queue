@@ -156,8 +156,8 @@ class _StudioBackground extends StatelessWidget {
                 height: 400,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: StudioTheme.colorScheme.primary
-                      .withValues(alpha: 0.08),
+                  color:
+                      StudioTheme.colorScheme.primary.withValues(alpha: 0.08),
                 ),
               ),
             ),

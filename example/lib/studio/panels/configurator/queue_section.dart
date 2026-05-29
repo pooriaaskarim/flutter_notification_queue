@@ -76,8 +76,7 @@ class QueueSection extends StatelessWidget {
           selectedPosition: setupState.activeQueuePosition,
           onSelect: (final pos) =>
               context.read<SetupBloc>().add(SelectActiveQueue(pos)),
-          onAdd: (final pos) =>
-              context.read<SetupBloc>().add(AddQueue(pos)),
+          onAdd: (final pos) => context.read<SetupBloc>().add(AddQueue(pos)),
           onRemove: (final pos) => _showConfirmDeleteDialog(
             context,
             pos,
@@ -157,6 +156,12 @@ class _QueueEditor extends StatelessWidget {
     SlideTransitionStrategy,
     FadeTransitionStrategy,
     ScaleTransitionStrategy,
+  ];
+  static const _tapBehaviorTypes = [
+    TapToDismiss,
+    TapToExpand,
+    TapToAct,
+    TapDisabled,
   ];
 
   String _formatType(final Type t) => t
@@ -252,9 +257,8 @@ class _QueueEditor extends StatelessWidget {
                       context,
                       position,
                       channels,
-                      () => context
-                          .read<SetupBloc>()
-                          .add(RemoveQueue(position)),
+                      () =>
+                          context.read<SetupBloc>().add(RemoveQueue(position)),
                     ),
                     tooltip: 'Remove queue',
                   ),
@@ -430,6 +434,59 @@ class _QueueEditor extends StatelessWidget {
                     ),
                   ),
             ),
+            const SizedBox(height: 12),
+            StudioDropdownTile<Type>(
+              label: 'TAP BEHAVIOR',
+              value: setup.tapBehaviorType,
+              items: _tapBehaviorTypes,
+              itemLabel: (final e) => switch (e) {
+                == TapToDismiss => 'DISMISS',
+                == TapToExpand => 'EXPAND / COLLAPSE',
+                == TapToAct => 'ACT (CALLBACK)',
+                == TapDisabled => 'DISABLED',
+                _ => e.toString().toUpperCase(),
+              },
+              onChanged: (final v) => context.read<SetupBloc>().add(
+                    UpdateQueue(
+                      position,
+                      setup.copyWith(tapBehaviorType: v),
+                    ),
+                  ),
+            ),
+            if (setup.tapBehaviorType == TapToAct) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.code_rounded,
+                      size: 13,
+                      color: colorScheme.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'In production, supply a TapToAct(onTap: fn) '
+                        'callback on the queue or per-notification.',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),

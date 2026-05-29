@@ -32,6 +32,7 @@ sealed class NotificationQueue {
     required this.maxStackSize,
     required this.dragBehavior,
     required this.longPressDragBehavior,
+    required this.tapBehavior,
     required this.closeButtonBehavior,
     required this.spacing,
     required this.margin,
@@ -45,6 +46,7 @@ sealed class NotificationQueue {
     final int maxStackSize = 3,
     final DragBehavior dragBehavior = const Disabled(),
     final LongPressDragBehavior longPressDragBehavior = const Disabled(),
+    final TapBehavior tapBehavior = const TapToDismiss(),
     final QueueCloseButtonBehavior closeButtonBehavior = const AlwaysVisible(),
     final double spacing = 4.0,
     final EdgeInsetsGeometry margin =
@@ -57,6 +59,7 @@ sealed class NotificationQueue {
         maxStackSize: maxStackSize,
         dragBehavior: dragBehavior,
         longPressDragBehavior: longPressDragBehavior,
+        tapBehavior: tapBehavior,
         closeButtonBehavior: closeButtonBehavior,
         spacing: spacing,
         style: style,
@@ -102,6 +105,18 @@ sealed class NotificationQueue {
   ///  + [Dismiss]
   ///  + [Disabled]
   final DragBehavior dragBehavior;
+
+  /// Behavior of notification on tap.
+  ///
+  /// Can be any of
+  ///  + [TapToDismiss] — tapping closes the notification
+  ///  + [TapToExpand]  — tapping toggles expanded/collapsed state
+  ///  + [TapToAct]     — tapping fires a developer callback
+  ///  + [TapDisabled]  — tapping produces no effect
+  ///
+  /// Individual [NotificationWidget]s can override this queue-level default
+  /// by setting their own `tapBehavior` field.
+  final TapBehavior tapBehavior;
 
   /// Spacing between queue notifications.
   final double spacing;
@@ -194,6 +209,7 @@ final class TopLeftQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.topLeft);
@@ -208,6 +224,7 @@ final class TopCenterQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.topCenter);
@@ -222,6 +239,7 @@ final class TopRightQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.topRight);
@@ -236,6 +254,7 @@ final class CenterLeftQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.centerLeft);
@@ -250,6 +269,7 @@ final class CenterRightQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.centerRight);
@@ -264,6 +284,7 @@ final class BottomLeftQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.bottomLeft);
@@ -278,6 +299,7 @@ final class BottomCenterQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.bottomCenter);
@@ -292,6 +314,7 @@ final class BottomRightQueue extends NotificationQueue {
     super.queueIndicatorBuilder,
     super.dragBehavior = const Dismiss(),
     super.longPressDragBehavior = const Disabled(),
+    super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
   }) : super(position: QueuePosition.bottomRight);

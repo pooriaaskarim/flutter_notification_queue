@@ -15,27 +15,27 @@ class ScenariosSection extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const StudioSectionHeader(title: 'SCENARIOS'),
-        const SizedBox(height: 4),
-        Text(
-          'One-click demos — fires into your current configuration.',
-          style: TextStyle(
-            fontSize: 10,
-            fontStyle: FontStyle.italic,
-            color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.45),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const StudioSectionHeader(title: 'SCENARIOS'),
+          const SizedBox(height: 4),
+          Text(
+            'One-click demos — fires into your current configuration.',
+            style: TextStyle(
+              fontSize: 10,
+              fontStyle: FontStyle.italic,
+              color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.45),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        ..._scenarios.map(
-          (final s) => Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: _ScenarioTile(scenario: s),
+          const SizedBox(height: 12),
+          ..._scenarios.map(
+            (final s) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _ScenarioTile(scenario: s),
+            ),
           ),
-        ),
-      ],
-    );
+        ],
+      );
 }
 
 class _Scenario {
@@ -74,8 +74,7 @@ final _scenarios = [
       _stagger([
         NotificationWidget(
           title: 'Service Degraded',
-          message:
-              'Database connection pool exhausted. '
+          message: 'Database connection pool exhausted. '
               'Manual intervention required.',
           channelName: 'error',
           dismissDuration: null, // permanent
@@ -101,30 +100,33 @@ final _scenarios = [
     icon: Icons.people_outline,
     color: const Color(0xFF38BDF8),
     onFire: () {
-      _stagger([
-        NotificationWidget(
-          title: 'Alex liked your post',
-          message: '"Beautiful sunset photo!"',
-          channelName: 'info',
-          dismissDuration: const Duration(seconds: 4),
-        ),
-        NotificationWidget(
-          title: 'Mia commented',
-          message: '"This is stunning, where was this taken?"',
-          channelName: 'info',
-          dismissDuration: const Duration(seconds: 4),
-          action: NotificationAction.button(
-            label: 'REPLY',
-            onPressed: () => debugPrint('[Scenario] Reply tapped'),
+      _stagger(
+        [
+          NotificationWidget(
+            title: 'Alex liked your post',
+            message: '"Beautiful sunset photo!"',
+            channelName: 'info',
+            dismissDuration: const Duration(seconds: 4),
           ),
-        ),
-        NotificationWidget(
-          title: '5 new followers',
-          message: 'Your account is trending in Photography.',
-          channelName: 'info',
-          dismissDuration: const Duration(seconds: 5),
-        ),
-      ], const Duration(milliseconds: 400),);
+          NotificationWidget(
+            title: 'Mia commented',
+            message: '"This is stunning, where was this taken?"',
+            channelName: 'info',
+            dismissDuration: const Duration(seconds: 4),
+            action: NotificationAction.button(
+              label: 'REPLY',
+              onPressed: () => debugPrint('[Scenario] Reply tapped'),
+            ),
+          ),
+          NotificationWidget(
+            title: '5 new followers',
+            message: 'Your account is trending in Photography.',
+            channelName: 'info',
+            dismissDuration: const Duration(seconds: 5),
+          ),
+        ],
+        const Duration(milliseconds: 400),
+      );
     },
   ),
 
@@ -151,18 +153,18 @@ final _scenarios = [
   // ── 4. Security Alert ──
   _Scenario(
     title: 'Security Alert',
-    subtitle: 'Permanent onTap notification — requires manual dismiss',
+    subtitle: 'TapToAct — permanent card, tap to review, manual dismiss',
     icon: Icons.security_outlined,
     color: const Color(0xFFF97316),
     onFire: () {
       NotificationWidget(
-        title: '⚠ Unrecognised Sign-In Attempt',
+        title: '\u26a0 Unrecognised Sign-In Attempt',
         message:
-            'Login from Lagos, Nigeria · Chrome on Windows. Tap to review.',
+            'Login from Lagos, Nigeria \u00b7 Chrome on Windows. Tap to review.',
         channelName: 'warning',
-        dismissDuration: null, // permanent — user must act
-        action: NotificationAction.onTap(
-          onPressed: () => debugPrint('[Scenario] Security alert tapped'),
+        dismissDuration: null,
+        tapBehavior: TapToAct(
+          onTap: () => debugPrint('[Scenario] Security alert tapped'),
         ),
       ).show();
     },
@@ -199,6 +201,61 @@ final _scenarios = [
           ).show();
         });
       }
+    },
+  ),
+
+  // ── 6. TapBehavior Showcase ──
+  _Scenario(
+    title: 'Tap Behavior Showcase',
+    subtitle:
+        'All 4 tap behaviors — dismiss, expand, act, disabled — staggered',
+    icon: Icons.touch_app_outlined,
+    color: const Color(0xFF14B8A6),
+    onFire: () {
+      _stagger(
+        [
+          // 1 — TapToDismiss (explicit, same as default)
+          NotificationWidget(
+            title: 'Tap \u2192 Dismiss',
+            message:
+                'TapToDismiss: tap anywhere on this card to close it immediately.',
+            channelName: 'info',
+            dismissDuration: null,
+            tapBehavior: const TapToDismiss(),
+          ),
+          // 2 — TapToExpand
+          NotificationWidget(
+            title: 'Tap \u2192 Expand',
+            message:
+                'TapToExpand: tap the card surface to toggle the full details '
+                'panel. The entire card is now the expand affordance.',
+            channelName: 'info',
+            dismissDuration: null,
+            tapBehavior: const TapToExpand(),
+          ),
+          // 3 — TapToAct
+          NotificationWidget(
+            title: 'Tap \u2192 Act',
+            message: 'TapToAct: tap fires a callback. '
+                'Check the console for the log output.',
+            channelName: 'success',
+            dismissDuration: null,
+            tapBehavior: TapToAct(
+              onTap: () => debugPrint('[Showcase] TapToAct callback fired!'),
+            ),
+          ),
+          // 4 — TapDisabled
+          NotificationWidget(
+            title: 'Tap \u2192 Disabled',
+            message: 'TapDisabled: tapping this card does nothing. '
+                'Use the close button to dismiss.',
+            channelName: 'warning',
+            dismissDuration: null,
+            tapBehavior: const TapDisabled(),
+          ),
+        ],
+        const Duration(milliseconds: 700),
+      );
     },
   ),
 ];

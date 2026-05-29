@@ -77,9 +77,8 @@ class PreviewSection extends StatelessWidget {
           items: const [null, ...QueuePosition.values],
           itemLabel: (final e) =>
               e == null ? 'CHANNEL DEFAULT' : e.name.toUpperCase(),
-          onChanged: (final v) => context
-              .read<NotificationBloc>()
-              .add(SelectPreviewPosition(v)),
+          onChanged: (final v) =>
+              context.read<NotificationBloc>().add(SelectPreviewPosition(v)),
         ),
         const SizedBox(height: 12),
 
@@ -206,7 +205,7 @@ class PreviewSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        
+
         // ── Programmatic Control ──
         _ProgrammaticControls(setupState: setupState),
       ],
@@ -251,19 +250,19 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
     if (_activeDemo == null) {
       return;
     }
-    
+
     final queues = widget.setupState.setup.queues.keys.toList();
     if (queues.length < 2) {
       return;
     }
-    
+
     // Find a queue that is different from current
     final currentPos = _activeDemo!.queue.position;
     final targetPos = queues.firstWhere(
       (final q) => q != currentPos,
       orElse: () => queues.last,
     );
-    
+
     final updatedDemo = _activeDemo!.relocateTo(targetPos);
     if (updatedDemo != null) {
       setState(() {

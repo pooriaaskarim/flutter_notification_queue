@@ -230,12 +230,10 @@ class _HighlightedCodeView extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final gutterColor = isDark
-        ? const Color(0xFF161B22)
-        : const Color(0xFFEAECEF);
-    final gutterTextColor = isDark
-        ? const Color(0xFF484F58)
-        : const Color(0xFFAFB8C1);
+    final gutterColor =
+        isDark ? const Color(0xFF161B22) : const Color(0xFFEAECEF);
+    final gutterTextColor =
+        isDark ? const Color(0xFF484F58) : const Color(0xFFAFB8C1);
 
     final lines = code.split('\n');
 
