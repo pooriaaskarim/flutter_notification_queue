@@ -46,6 +46,7 @@ class NotificationWidget extends StatefulWidget {
     this.dragBehavior,
     this.longPressDragBehavior,
     this.builder,
+    this.priority,
   }) : _key = key;
 
   factory NotificationWidget({
@@ -64,6 +65,7 @@ class NotificationWidget extends StatefulWidget {
     final Color? backgroundColor,
     final Duration? dismissDuration,
     final NotificationBuilder? builder,
+    final NotificationPriority? priority,
   }) {
     final resolvedId = id ?? DateTime.now().toString();
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
@@ -90,6 +92,7 @@ class NotificationWidget extends StatefulWidget {
       backgroundColor: backgroundColor,
       dismissDuration: dismissDuration,
       builder: builder,
+      priority: priority,
     );
   }
 
@@ -148,6 +151,15 @@ class NotificationWidget extends StatefulWidget {
 
   /// Per-notification override for the long-press drag behavior.
   final LongPressDragBehavior? longPressDragBehavior;
+
+  /// Semantic priority rank override for this notification.
+  ///
+  /// When set, this takes precedence over the channel's default priority.
+  final NotificationPriority? priority;
+
+  /// The resolved priority level, falling back to channel default.
+  NotificationPriority get resolvedPriority =>
+      priority ?? channel.defaultPriority;
 
   /// Notification [Icon] widget
   ///
@@ -231,6 +243,7 @@ class NotificationWidget extends StatefulWidget {
       ' tapBehavior: $tapBehavior,'
       ' dragBehavior: $dragBehavior,'
       ' longPressDragBehavior: $longPressDragBehavior,'
+      ' priority: $priority,'
       ' builder: $builder,)';
 
   NotificationWidget copyToQueue(
@@ -254,6 +267,7 @@ class NotificationWidget extends StatefulWidget {
         backgroundColor: backgroundColor,
         dismissDuration: dismissDuration,
         builder: builder,
+        priority: priority,
       );
 }
 

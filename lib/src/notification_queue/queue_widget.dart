@@ -29,6 +29,7 @@ class QueueWidgetState extends State<QueueWidget>
     for (final item in startupItems) {
       _pendingNotifications.add(item);
     }
+    _sortPending();
     _processPending();
   }
 
@@ -64,12 +65,16 @@ class QueueWidgetState extends State<QueueWidget>
     }
     _pendingNotifications.addAll(tempQueue);
 
+    _sortPending();
+
     if (isPendingUpdate) {
       return;
     }
 
     // 3. Enqueue New
     _pendingNotifications.add(notification);
+    _sortPending();
+    _triagePriorityEviction();
     _processPending();
   }
 
@@ -158,15 +163,8 @@ class QueueWidgetState extends State<QueueWidget>
   }
 
   void _processPending() {
-    if (_pendingNotifications.isEmpty) {
-      return;
-    }
-
     final limit = widget.queue.maxStackSize;
-    // Count only non-exiting items towards the limit?
-    // Or count all? If we count all, we wait for exit to finish.
-    // Let's count all to avoid visual overflow.
-    if (_items.length < limit) {
+    while (_pendingNotifications.isNotEmpty && _items.length < limit) {
       final notification = _pendingNotifications.removeFirst();
       final controller = AnimationController(
         vsync: this,
@@ -184,6 +182,58 @@ class QueueWidgetState extends State<QueueWidget>
       });
 
       controller.forward();
+    }
+  }
+
+  void _sortPending() {
+    final list = _pendingNotifications.toList()
+      ..sort(
+        (final a, final b) =>
+            b.resolvedPriority.index.compareTo(a.resolvedPriority.index),
+      );
+    _pendingNotifications
+      ..clear()
+      ..addAll(list);
+  }
+
+  void _triagePriorityEviction() {
+    if (_items.length < widget.queue.maxStackSize ||
+        _pendingNotifications.isEmpty) {
+      return;
+    }
+    final highestPending = _pendingNotifications.first;
+
+    _NotificationItemState? lowestActiveItem;
+    for (final item in _items) {
+      if (item.status == _ItemStatus.exiting) {
+        continue;
+      }
+      if (lowestActiveItem == null ||
+          item.widget.resolvedPriority <
+              lowestActiveItem.widget.resolvedPriority) {
+        lowestActiveItem = item;
+      }
+    }
+
+    if (lowestActiveItem != null &&
+        highestPending.resolvedPriority >
+            lowestActiveItem.widget.resolvedPriority) {
+      final evictedWidget = lowestActiveItem.widget;
+      lowestActiveItem.status = _ItemStatus.exiting;
+      lowestActiveItem.controller.reverse().then((final _) {
+        if (mounted) {
+          final itemIndex = _items.indexOf(lowestActiveItem!);
+          if (itemIndex != -1) {
+            _removeItemImmediate(itemIndex);
+          }
+
+          _pendingNotifications.add(evictedWidget);
+          _sortPending();
+
+          _processPending();
+          _checkEmpty();
+        }
+      });
     }
   }
 

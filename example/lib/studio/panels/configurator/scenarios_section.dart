@@ -286,6 +286,61 @@ final _scenarios = [
       ).show();
     },
   ),
+
+  // ── 8. Priority Triage Storm ──
+  _Scenario(
+    title: 'Priority Triage Storm',
+    subtitle: 'Showcases priority-aware auto-sorting & preemption eviction',
+    icon: Icons.sort_rounded,
+    color: const Color(0xFFF43F5E),
+    onFire: () {
+      // 1. Enqueue 2 low priority notifications staggered
+      _stagger(
+        [
+          NotificationWidget(
+            title: 'Low Priority: Disk Cleanup',
+            message: 'Background disk cleanup started.',
+            channelName: 'info',
+            priority: NotificationPriority.low,
+            dismissDuration: const Duration(seconds: 10),
+          ),
+          NotificationWidget(
+            title: 'Low Priority: Syncing Logs',
+            message: 'Diagnostic log sync in progress.',
+            channelName: 'info',
+            priority: NotificationPriority.low,
+            dismissDuration: const Duration(seconds: 10),
+          ),
+        ],
+        const Duration(milliseconds: 350),
+      );
+
+      // 2. Enqueue Normal priority notification that will auto-sort and push
+      // to the front of pending queue
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        NotificationWidget(
+          title: 'Normal Priority: Package Update',
+          message: 'System package updates available.',
+          channelName: 'warning',
+          priority: NotificationPriority.normal,
+          dismissDuration: const Duration(seconds: 6),
+        ).show();
+      });
+
+      // 3. Enqueue a Critical notification that will immediately evict the
+      // lowest priority active notification
+      Future.delayed(const Duration(milliseconds: 2000), () {
+        NotificationWidget(
+          title: 'CRITICAL: Database Offline!',
+          message: 'Primary database connection lost! '
+              'Evicting low priority tasks.',
+          channelName: 'error',
+          priority: NotificationPriority.critical,
+          dismissDuration: const Duration(seconds: 6),
+        ).show();
+      });
+    },
+  ),
 ];
 
 class _ScenarioTile extends StatelessWidget {

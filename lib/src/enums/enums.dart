@@ -8,3 +8,4 @@ part './notification_behavior.dart';
 part './queue_positions.dart';
 part './spring_physics.dart';
 part './tap_behavior.dart';
+part './notification_priority.dart';

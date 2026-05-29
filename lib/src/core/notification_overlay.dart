@@ -49,18 +49,20 @@ class NotificationOverlay extends StatefulWidget {
 class _NotificationOverlayState extends State<NotificationOverlay> {
   final OverlayPortalController _overlayPortalController =
       OverlayPortalController();
+  late final QueueCoordinator _attachedCoordinator;
 
   @override
   void initState() {
     super.initState();
 
     // Ensure system is initialized (lazy fallback triggered if needed)
-    FlutterNotificationQueue.coordinator.attach(_overlayPortalController);
+    _attachedCoordinator = FlutterNotificationQueue.coordinator;
+    _attachedCoordinator.attach(_overlayPortalController);
   }
 
   @override
   void dispose() {
-    FlutterNotificationQueue.coordinator.detach();
+    _attachedCoordinator.detach();
     super.dispose();
   }
 

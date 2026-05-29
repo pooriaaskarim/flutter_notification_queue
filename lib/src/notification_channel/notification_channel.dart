@@ -19,6 +19,7 @@ class NotificationChannel {
     final Widget? defaultIcon,
     final bool enabled = true,
     final bool vibrate = false,
+    final NotificationPriority defaultPriority = NotificationPriority.normal,
   }) =>
       NotificationChannel(
         name: 'default',
@@ -31,6 +32,7 @@ class NotificationChannel {
         defaultIcon: defaultIcon,
         position: position,
         vibrate: vibrate,
+        defaultPriority: defaultPriority,
       );
 
   factory NotificationChannel.successChannel({
@@ -43,6 +45,7 @@ class NotificationChannel {
     final Widget? defaultIcon = const Icon(Icons.check_circle),
     final bool enabled = true,
     final bool vibrate = false,
+    final NotificationPriority defaultPriority = NotificationPriority.normal,
   }) =>
       NotificationChannel(
         name: 'success',
@@ -55,6 +58,7 @@ class NotificationChannel {
         defaultIcon: defaultIcon,
         enabled: enabled,
         vibrate: vibrate,
+        defaultPriority: defaultPriority,
       );
 
   factory NotificationChannel.infoChannel({
@@ -67,6 +71,7 @@ class NotificationChannel {
     final Widget? defaultIcon = const Icon(Icons.info),
     final bool enabled = true,
     final bool vibrate = false,
+    final NotificationPriority defaultPriority = NotificationPriority.low,
   }) =>
       NotificationChannel(
         name: 'info',
@@ -79,6 +84,7 @@ class NotificationChannel {
         defaultIcon: defaultIcon,
         enabled: enabled,
         vibrate: vibrate,
+        defaultPriority: defaultPriority,
       );
 
   factory NotificationChannel.errorChannel({
@@ -91,6 +97,7 @@ class NotificationChannel {
     final Widget? defaultIcon = const Icon(Icons.error),
     final bool enabled = true,
     final bool vibrate = false,
+    final NotificationPriority defaultPriority = NotificationPriority.high,
   }) =>
       NotificationChannel(
         name: 'error',
@@ -103,6 +110,7 @@ class NotificationChannel {
         defaultIcon: defaultIcon,
         enabled: enabled,
         vibrate: vibrate,
+        defaultPriority: defaultPriority,
       );
 
   factory NotificationChannel.warningChannel({
@@ -115,6 +123,7 @@ class NotificationChannel {
     final Widget? defaultIcon = const Icon(Icons.warning),
     final bool enabled = true,
     final bool vibrate = false,
+    final NotificationPriority defaultPriority = NotificationPriority.normal,
   }) =>
       NotificationChannel(
         name: 'warning',
@@ -127,6 +136,7 @@ class NotificationChannel {
         defaultIcon: defaultIcon,
         enabled: enabled,
         vibrate: vibrate,
+        defaultPriority: defaultPriority,
       );
   const NotificationChannel({
     required this.name,
@@ -139,6 +149,7 @@ class NotificationChannel {
     this.defaultBackgroundColor,
     this.defaultIcon,
     this.defaultDismissDuration,
+    this.defaultPriority = NotificationPriority.normal,
   });
 
   static Set<NotificationChannel> standardChannels({
@@ -205,6 +216,9 @@ class NotificationChannel {
   /// If set to null, channel [NotificationWidget]s will be permanent.
   final Duration? defaultDismissDuration;
 
+  /// Default priority of channel notifications.
+  final NotificationPriority defaultPriority;
+
   /// Default notification color of the channel.
   ///
   /// Colors icon, borders and filled [QueueStyle]s' background color.
@@ -236,6 +250,7 @@ class NotificationChannel {
   final Widget? defaultIcon;
 
   @override
-  String toString() => 'NotificationChannel{name: $name'
+  String toString() =>
+      'NotificationChannel{name: $name, priority: $defaultPriority'
       '${description != null ? ', description: $description,\n' : ''}}';
 }
