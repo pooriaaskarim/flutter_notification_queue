@@ -1,6 +1,7 @@
 part of '../notification.dart';
 
-/// Defines the operational and rendering contract for all gestural interactions.
+/// Defines the operational and rendering contract for all gestural
+/// interactions.
 abstract class NotificationGesturePlugin {
   const NotificationGesturePlugin();
 
@@ -19,7 +20,8 @@ abstract class NotificationGesturePlugin {
     final DraggableDetails details,
   );
 
-  /// Generates the visual feedback and reactive overlays wrapping the dragged card.
+  /// Generates the visual feedback and reactive overlays wrapping the dragged
+  /// card.
   Widget buildFeedback(
     final DraggableTransitionsState state,
     final OffsetPair? offsetPair,

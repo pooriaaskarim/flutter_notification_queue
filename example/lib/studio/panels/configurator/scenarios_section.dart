@@ -160,11 +160,13 @@ final _scenarios = [
       NotificationWidget(
         title: '\u26a0 Unrecognised Sign-In Attempt',
         message:
-            'Login from Lagos, Nigeria \u00b7 Chrome on Windows. Tap to review.',
+            'Login from Lagos, Nigeria \u00b7 Chrome on Windows. '
+            'Tap to review.',
         channelName: 'warning',
         dismissDuration: null,
         tapBehavior: TapToAct(
           onTap: () => debugPrint('[Scenario] Security alert tapped'),
+          dismissOnAct: false,
         ),
       ).show();
     },
@@ -218,7 +220,8 @@ final _scenarios = [
           NotificationWidget(
             title: 'Tap \u2192 Dismiss',
             message:
-                'TapToDismiss: tap anywhere on this card to close it immediately.',
+                'TapToDismiss: tap anywhere on this card to close it '
+                'immediately.',
             channelName: 'info',
             dismissDuration: null,
             tapBehavior: const TapToDismiss(),

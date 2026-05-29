@@ -127,7 +127,8 @@ class GestureStateMachine extends ValueNotifier<GestureState> {
     _logger.debug('Gesture entering Settle state');
   }
 
-  /// Computes the active stretch scaling factor for visual widgets during drags.
+  /// Computes the active stretch scaling factor for visual widgets during
+  /// drags.
   ///
   /// Provides progressive feedback as the pointer moves.
   double getActiveScale(final double maxScale) {

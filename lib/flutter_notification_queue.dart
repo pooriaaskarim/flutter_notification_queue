@@ -2,14 +2,14 @@ library;
 
 export 'src/core/core.dart'
     show
+        DismissReason,
         FlutterNotificationQueue,
         FnqEvent,
-        DismissReason,
-        NotificationQueued,
         NotificationDismissed,
-        NotificationTapped,
+        NotificationQueued,
         NotificationRelocated,
         NotificationReordered,
+        NotificationTapped,
         QueueOverflowed;
 export 'src/enums/enums.dart' hide OnDrag, OnLongPress;
 

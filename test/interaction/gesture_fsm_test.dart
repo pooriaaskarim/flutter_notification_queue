@@ -1,9 +1,9 @@
+// ignore_for_file: cascade_invocations
+
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_notification_queue/src/enums/enums.dart';
-import 'package:flutter_notification_queue/src/notification/notification.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('SpringPhysicsConfiguration Tests', () {
@@ -38,11 +38,18 @@ void main() {
     });
 
     test('Assertions on negative and invalid bounds', () {
-      expect(() => SpringPhysicsConfiguration(mass: 0.0), throwsAssertionError);
-      expect(() => SpringPhysicsConfiguration(stiffness: -10.0),
-          throwsAssertionError);
-      expect(() => SpringPhysicsConfiguration(damping: -5.0),
-          throwsAssertionError);
+      expect(
+        () => SpringPhysicsConfiguration(mass: 0.0),
+        throwsAssertionError,
+      );
+      expect(
+        () => SpringPhysicsConfiguration(stiffness: -10.0),
+        throwsAssertionError,
+      );
+      expect(
+        () => SpringPhysicsConfiguration(damping: -5.0),
+        throwsAssertionError,
+      );
     });
 
     test('Equality and toString comparison', () {
@@ -78,8 +85,8 @@ void main() {
         initialPosition: QueuePosition.topRight,
       );
 
-      final startPos = const Offset(100.0, 150.0);
-      final bounds = const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0);
+      const startPos = Offset(100.0, 150.0);
+      const bounds = Rect.fromLTWH(80.0, 130.0, 300.0, 80.0);
 
       fsm.lift(pointerStart: startPos, widgetRect: bounds);
 
@@ -94,15 +101,15 @@ void main() {
         initialPosition: QueuePosition.topRight,
       );
 
-      fsm.lift(
-        pointerStart: const Offset(100.0, 150.0),
-        widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
-      );
-
-      fsm.update(
-        delta: const Offset(10.0, 0.0),
-        globalPosition: const Offset(110.0, 150.0),
-      );
+      fsm
+        ..lift(
+          pointerStart: const Offset(100.0, 150.0),
+          widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
+        )
+        ..update(
+          delta: const Offset(10.0, 0.0),
+          globalPosition: const Offset(110.0, 150.0),
+        );
 
       expect(fsm.value, equals(GestureState.reordering));
       expect(fsm.pointerPosition, equals(const Offset(110.0, 150.0)));
@@ -111,20 +118,19 @@ void main() {
 
     test('Relocate behavior FSM updates tracking', () {
       final fsm = GestureStateMachine(
-        initialBehavior:
-            Relocate<OnDrag>.to({QueuePosition.topLeft}),
+        initialBehavior: Relocate<OnDrag>.to({QueuePosition.topLeft}),
         initialPosition: QueuePosition.topRight,
       );
 
-      fsm.lift(
-        pointerStart: const Offset(100.0, 150.0),
-        widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
-      );
-
-      fsm.update(
-        delta: const Offset(10.0, 20.0),
-        globalPosition: const Offset(110.0, 170.0),
-      );
+      fsm
+        ..lift(
+          pointerStart: const Offset(100.0, 150.0),
+          widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
+        )
+        ..update(
+          delta: const Offset(10.0, 20.0),
+          globalPosition: const Offset(110.0, 170.0),
+        );
 
       expect(fsm.value, equals(GestureState.relocating));
       fsm.dispose();
@@ -136,15 +142,15 @@ void main() {
         initialPosition: QueuePosition.topRight,
       );
 
-      fsm.lift(
-        pointerStart: const Offset(100.0, 150.0),
-        widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
-      );
-
-      fsm.update(
-        delta: const Offset(0.0, 20.0),
-        globalPosition: const Offset(100.0, 170.0),
-      );
+      fsm
+        ..lift(
+          pointerStart: const Offset(100.0, 150.0),
+          widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
+        )
+        ..update(
+          delta: const Offset(0.0, 20.0),
+          globalPosition: const Offset(100.0, 170.0),
+        );
 
       expect(fsm.value, equals(GestureState.reordering));
       fsm.dispose();
@@ -162,16 +168,17 @@ void main() {
 
       // Widget is at Rect.fromLTWH(100, 100, 200, 50)
       // Expanded boundary (inflated by 50) is Rect.fromLTWH(50, 50, 300, 150)
-      fsm.lift(
-        pointerStart: const Offset(200.0, 125.0),
-        widgetRect: const Rect.fromLTWH(100.0, 100.0, 200.0, 50.0),
-      );
+      fsm
+        ..lift(
+          pointerStart: const Offset(200.0, 125.0),
+          widgetRect: const Rect.fromLTWH(100.0, 100.0, 200.0, 50.0),
+        )
 
-      // Update inside boundary: stays in reordering
-      fsm.update(
-        delta: const Offset(10.0, 10.0),
-        globalPosition: const Offset(210.0, 135.0),
-      );
+        // Update inside boundary: stays in reordering
+        ..update(
+          delta: const Offset(10.0, 10.0),
+          globalPosition: const Offset(210.0, 135.0),
+        );
       expect(fsm.value, equals(GestureState.reordering));
 
       // Update outside boundary (e.g. globalPosition X = 360, Y = 125)
@@ -197,12 +204,12 @@ void main() {
         initialPosition: QueuePosition.topRight,
       );
 
-      fsm.lift(
-        pointerStart: const Offset(100.0, 150.0),
-        widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
-      );
-
-      fsm.settle();
+      fsm
+        ..lift(
+          pointerStart: const Offset(100.0, 150.0),
+          widgetRect: const Rect.fromLTWH(80.0, 130.0, 300.0, 80.0),
+        )
+        ..settle();
       expect(fsm.value, equals(GestureState.settling));
 
       fsm.reset();

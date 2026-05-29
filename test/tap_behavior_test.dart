@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -10,7 +9,7 @@ import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 void _initFnq() {
   FlutterNotificationQueue.configure(
     queues: {
-      TopCenterQueue(tapBehavior: const TapToDismiss()),
+      const TopCenterQueue(tapBehavior: TapToDismiss()),
     },
     channels: {
       const NotificationChannel(name: 'default'),
@@ -89,7 +88,8 @@ void main() {
 
     test('TapToAct is stored on queue and callback is callable', () {
       var fired = false;
-      final q = TopCenterQueue(tapBehavior: TapToAct(onTap: () => fired = true));
+      final q =
+          TopCenterQueue(tapBehavior: TapToAct(onTap: () => fired = true));
       (q.tapBehavior as TapToAct).onTap();
       expect(fired, isTrue);
     });
@@ -173,7 +173,7 @@ void main() {
 
     testWidgets(
       'per-notification TapToExpand overrides queue TapToDismiss',
-      (tester) async {
+      (final tester) async {
         final n = NotificationWidget(
           message: 'Test',
           tapBehavior: const TapToExpand(),
@@ -187,7 +187,7 @@ void main() {
 
     testWidgets(
       'null per-notification tapBehavior falls through to queue',
-      (tester) async {
+      (final tester) async {
         final n = NotificationWidget(message: 'Test');
         // No per-notification override set.
         expect(n.tapBehavior, isNull);
@@ -200,12 +200,18 @@ void main() {
   // ── TapToAct callback invocation ─────────────────────────────────────────
 
   group('TapToAct callback behavior', () {
-    test('callback is invoked and notification is NOT auto-dismissed', () {
+    test('callback is invoked and stores fields correctly', () {
       var tapCount = 0;
-      final act = TapToAct(onTap: () => tapCount++);
+      final act = TapToAct(onTap: () => tapCount++, dismissOnAct: false);
       act.onTap();
       act.onTap();
       expect(tapCount, equals(2));
+      expect(act.dismissOnAct, isFalse);
+    });
+
+    test('dismissOnAct defaults to true', () {
+      final act = TapToAct(onTap: () {});
+      expect(act.dismissOnAct, isTrue);
     });
 
     test('callback can be replaced via new instance', () {

@@ -2,8 +2,8 @@ part of 'enums.dart';
 
 /// Defines the tap interaction behavior for notifications.
 ///
-/// Set at the [NotificationQueue] level to establish a default for all
-/// notifications in that queue. Individual [NotificationWidget]s can override
+/// Set at the `NotificationQueue` level to establish a default for all
+/// notifications in that queue. Individual `NotificationWidget`s can override
 /// this via their own `tapBehavior` field.
 ///
 /// Available behaviors:
@@ -18,7 +18,7 @@ sealed class TapBehavior {
 /// Tapping the notification dismisses it.
 ///
 /// This is the backward-compatible default, preserving the behavior that
-/// previously existed when using [NotificationAction.onTap].
+/// previously existed when using `NotificationAction.onTap`.
 final class TapToDismiss extends TapBehavior {
   const TapToDismiss();
 }
@@ -54,13 +54,21 @@ final class TapToExpand extends TapBehavior {
 /// )
 /// ```
 final class TapToAct extends TapBehavior {
-  const TapToAct({required this.onTap});
+  const TapToAct({
+    required this.onTap,
+    this.dismissOnAct = true,
+  });
 
   /// Called when the user taps the notification.
-  ///
-  /// The notification is not automatically dismissed. Call
-  /// `notification.dismiss()` explicitly from your outer scope if needed.
   final VoidCallback onTap;
+
+  /// Whether the notification should be dismissed automatically after `onTap`
+  /// fires.
+  ///
+  /// Defaults to `true` to align with standard mobile and desktop operating
+  /// system behavior, where taking action on a notification card dismisses it
+  /// from the screen.
+  final bool dismissOnAct;
 }
 
 /// Tapping the notification produces no effect.

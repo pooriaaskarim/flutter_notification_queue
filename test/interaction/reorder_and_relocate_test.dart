@@ -109,6 +109,10 @@ void main() {
       final gesture = await tester.startGesture(startPos);
       await tester.pump(const Duration(milliseconds: 100));
 
+      // Move slightly to break the drag slop and initiate the drag
+      await gesture.moveBy(const Offset(-20, -20));
+      await tester.pump();
+
       // Move out of queue boundary to the top-left to trigger Relocate to
       // topLeft.
       await gesture.moveTo(const Offset(20, 20)); // Top left corner

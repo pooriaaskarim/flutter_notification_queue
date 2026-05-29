@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/physics.dart';
-import 'package:meta/meta.dart';
 
 import '../core/core.dart';
 import '../notification_queue/notification_queue.dart';

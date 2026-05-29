@@ -52,8 +52,7 @@ final class NotificationQueued extends FnqEvent {
   final NotificationWidget notification;
 
   @override
-  String toString() =>
-      'NotificationQueued(id: ${notification.id}, '
+  String toString() => 'NotificationQueued(id: ${notification.id}, '
       'queue: ${notification.queue.position.name})';
 }
 
@@ -96,12 +95,12 @@ final class NotificationTapped extends FnqEvent {
   final TapBehavior behavior;
 
   @override
-  String toString() =>
-      'NotificationTapped(id: ${notification.id}, '
+  String toString() => 'NotificationTapped(id: ${notification.id}, '
       'behavior: ${behavior.runtimeType})';
 }
 
-/// Emitted when a [NotificationWidget] is successfully relocated to a new queue.
+/// Emitted when a [NotificationWidget] is successfully relocated to a new
+/// queue.
 final class NotificationRelocated extends FnqEvent {
   const NotificationRelocated({
     required this.notification,
@@ -120,8 +119,7 @@ final class NotificationRelocated extends FnqEvent {
   final QueuePosition to;
 
   @override
-  String toString() =>
-      'NotificationRelocated(id: ${notification.id}, '
+  String toString() => 'NotificationRelocated(id: ${notification.id}, '
       'from: ${from.name}, to: ${to.name})';
 }
 
@@ -158,7 +156,6 @@ final class QueueOverflowed extends FnqEvent {
   final NotificationWidget dropped;
 
   @override
-  String toString() =>
-      'QueueOverflowed(position: ${queue.position.name}, '
+  String toString() => 'QueueOverflowed(position: ${queue.position.name}, '
       'dropped: ${dropped.id})';
 }

@@ -266,9 +266,13 @@ class NotificationWidgetState extends State<NotificationWidget>
   /// [TapBehavior] is set, for backward compatibility.
   TapBehavior get _resolvedTapBehavior {
     // 1. Per-notification override wins.
-    if (widget.tapBehavior != null) return widget.tapBehavior!;
+    if (widget.tapBehavior != null) {
+      return widget.tapBehavior!;
+    }
     // 2. Legacy NotificationAction.onTap shim — preserve old behavior.
-    if (hasOnTapAction) return const TapToDismiss();
+    if (hasOnTapAction) {
+      return const TapToDismiss();
+    }
     // 3. Queue-level default.
     return widget.queue.tapBehavior;
   }
@@ -392,14 +396,17 @@ class NotificationWidgetState extends State<NotificationWidget>
                       .onHover(isHovering: false),
                   child: InkWell(
                     onTap: switch (_resolvedTapBehavior) {
-                      TapDisabled() => null,
+                      TapDisabled() =>
+                        () {}, // Intercept tap to prevent drag FSM reset
                       TapToDismiss() => () {
                           FlutterNotificationQueue.coordinator.emitTapped(
                             notification: widget,
                             behavior: _resolvedTapBehavior,
                           );
                           // Legacy onTap action callback respected.
-                          if (hasOnTapAction) widget.action?.onPressed();
+                          if (hasOnTapAction) {
+                            widget.action?.onPressed();
+                          }
                           dismiss(reason: DismissReason.userTap);
                         },
                       TapToExpand() => () {
@@ -409,12 +416,15 @@ class NotificationWidgetState extends State<NotificationWidget>
                           );
                           _toggleExpanded();
                         },
-                      TapToAct(:final onTap) => () {
+                      TapToAct(:final onTap, :final dismissOnAct) => () {
                           FlutterNotificationQueue.coordinator.emitTapped(
                             notification: widget,
                             behavior: _resolvedTapBehavior,
                           );
                           onTap();
+                          if (dismissOnAct) {
+                            dismiss(reason: DismissReason.userTap);
+                          }
                         },
                     },
                     child: AnimatedContainer(

@@ -3,10 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
-import '../studio_theme.dart';
-
 /// A live event log that subscribes to [FlutterNotificationQueue.events] and
-/// displays the last [_maxEvents] lifecycle events in real time.
+/// displays the last `_maxEvents` lifecycle events in real time.
 class EventLogPanel extends StatefulWidget {
   const EventLogPanel({super.key});
 
@@ -37,7 +35,9 @@ class _EventLogPanelState extends State<EventLogPanel> {
   void _onEvent(final FnqEvent event) {
     setState(() {
       _events.insert(0, _LogEntry(event: event, time: DateTime.now()));
-      if (_events.length > _maxEvents) _events.removeLast();
+      if (_events.length > _maxEvents) {
+        _events.removeLast();
+      }
     });
   }
 
@@ -118,7 +118,7 @@ class _EventLogPanelState extends State<EventLogPanel> {
   }
 }
 
-// ── Tile ──────────────────────────────────────────────────────────────────────
+// ── Tile ────────────────────────────────────────────────────────────────────
 
 class _EventTile extends StatelessWidget {
   const _EventTile({required this.entry});
@@ -204,7 +204,7 @@ class _EventTile extends StatelessWidget {
       '${t.second.toString().padLeft(2, '0')}';
 }
 
-// ── Event meta mapping ────────────────────────────────────────────────────────
+// ── Event meta mapping ──────────────────────────────────────────────────────
 
 class _EventMeta {
   const _EventMeta({
@@ -245,7 +245,8 @@ class _EventMeta {
             badge: '${from.name} → ${to.name}',
             subtitle: notification.title ?? notification.message,
           ),
-        NotificationReordered(:final notification, :final toIndex) => _EventMeta(
+        NotificationReordered(:final notification, :final toIndex) =>
+          _EventMeta(
             label: 'Reordered',
             color: const Color(0xFFFBBF24), // amber-400
             badge: 'index $toIndex',
@@ -260,7 +261,7 @@ class _EventMeta {
       };
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ─────────────────────────────────────────────────────────────────
 
 class _Badge extends StatelessWidget {
   const _Badge({required this.label, required this.color});
@@ -324,7 +325,7 @@ class _EmptyState extends StatelessWidget {
       );
 }
 
-// ── Data model ────────────────────────────────────────────────────────────────
+// ── Data model ──────────────────────────────────────────────────────────────
 
 class _LogEntry {
   const _LogEntry({required this.event, required this.time});

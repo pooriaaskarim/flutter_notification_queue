@@ -155,14 +155,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationDraft> {
 
     // Build action
     NotificationAction? action;
+    TapBehavior? tapBehavior;
     if (draft.actionStyle == NotificationActionStyle.button) {
       action = NotificationAction.button(
         label: draft.actionLabel,
         onPressed: () => debugPrint('[NFQ Studio] Button tapped'),
       );
     } else if (draft.actionStyle == NotificationActionStyle.onTap) {
-      action = NotificationAction.onTap(
-        onPressed: () => debugPrint('[NFQ Studio] Notification tapped'),
+      tapBehavior = TapToAct(
+        onTap: () => debugPrint('[NFQ Studio] Notification tapped'),
       );
     }
 
@@ -173,6 +174,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationDraft> {
       channelName: draft.channelName,
       position: draft.positionOverride,
       action: action,
+      tapBehavior: tapBehavior,
       dismissDuration: draft.dismissSeconds != null
           ? Duration(seconds: draft.dismissSeconds!)
           : null,

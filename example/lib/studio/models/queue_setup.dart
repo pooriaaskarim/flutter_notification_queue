@@ -192,13 +192,17 @@ class QueueSetup extends Equatable {
 
   /// Builds the [TapBehavior] from [tapBehaviorType].
   TapBehavior toTapBehavior() {
-    if (tapBehaviorType == TapToExpand) return const TapToExpand();
+    if (tapBehaviorType == TapToExpand) {
+      return const TapToExpand();
+    }
     if (tapBehaviorType == TapToAct) {
       return TapToAct(
         onTap: () => debugPrint('[Studio] TapToAct fired'),
       );
     }
-    if (tapBehaviorType == TapDisabled) return const TapDisabled();
+    if (tapBehaviorType == TapDisabled) {
+      return const TapDisabled();
+    }
     return const TapToDismiss();
   }
 

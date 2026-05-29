@@ -16,7 +16,8 @@ class SpringPhysicsConfiguration {
         assert(stiffness > 0, 'Stiffness must be positive'),
         assert(damping >= 0, 'Damping must be non-negative');
 
-  /// High-fidelity under-damped spring configuration with a premium dynamic feel.
+  /// High-fidelity under-damped spring configuration with a premium dynamic
+  /// feel.
   const SpringPhysicsConfiguration.premium()
       : mass = 1.0,
         stiffness = 220.0,
