@@ -72,7 +72,35 @@ class QueueWidgetState extends State<QueueWidget>
     }
 
     // 3. Enqueue New
-    _pendingNotifications.add(notification);
+    if (widget.queue.maxPendingSize != null &&
+        _pendingNotifications.length >= widget.queue.maxPendingSize!) {
+      if (widget.queue.overflowStrategy ==
+          QueueOverflowStrategy.discardOldest) {
+        var lowestPriority = NotificationPriority.critical;
+        for (final item in _pendingNotifications) {
+          if (item.resolvedPriority.index < lowestPriority.index) {
+            lowestPriority = item.resolvedPriority;
+          }
+        }
+        final oldestOfLowest = _pendingNotifications.firstWhere(
+          (final item) => item.resolvedPriority == lowestPriority,
+        );
+        _pendingNotifications.remove(oldestOfLowest);
+        FlutterNotificationQueue.coordinator.emitOverflowed(
+          queue: widget.queue,
+          dropped: oldestOfLowest,
+        );
+        _pendingNotifications.add(notification);
+      } else {
+        FlutterNotificationQueue.coordinator.emitOverflowed(
+          queue: widget.queue,
+          dropped: notification,
+        );
+        return;
+      }
+    } else {
+      _pendingNotifications.add(notification);
+    }
     _sortPending();
     _triagePriorityEviction();
     _processPending();
