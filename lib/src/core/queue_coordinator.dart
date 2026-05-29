@@ -15,6 +15,25 @@ class QueueCoordinator {
 
   OverlayPortalController? _controller;
 
+  /// Broadcast stream of all notification lifecycle events.
+  final _eventController = StreamController<FnqEvent>.broadcast();
+
+  /// A broadcast stream of all notification lifecycle events.
+  ///
+  /// Subscribe to observe queued, dismissed, tapped, relocated, and reordered
+  /// events without coupling to library internals. Multiple listeners are
+  /// supported simultaneously.
+  ///
+  /// Prefer accessing this via [FlutterNotificationQueue.events].
+  Stream<FnqEvent> get events => _eventController.stream;
+
+  /// Adds [event] directly to the event stream.
+  ///
+  /// Only intended for use in unit tests that need to verify stream consumers
+  /// without spinning up a full widget tree.
+  @visibleForTesting
+  void emitEvent(final FnqEvent event) => _eventController.add(event);
+
   /// Registry of keys to communicate with active queue widgets.
   final _widgetStateKeys = <QueuePosition, GlobalKey<QueueWidgetState>>{};
 
@@ -40,6 +59,7 @@ class QueueCoordinator {
     _widgetStateKeys.clear();
     _initializationQueue.clear();
     _activeQueuesNotifier.value = {};
+    _eventController.close();
   }
 
   /// Retrieves and clears pending initialization items for a queue.
@@ -66,6 +86,8 @@ class QueueCoordinator {
       return;
     }
 
+    _eventController.add(NotificationQueued(notification: notification));
+
     final notificationQueue = notification.queue;
     final key = _widgetStateKeys[notificationQueue.position];
     final isMounted = key?.currentState != null;
@@ -83,8 +105,13 @@ class QueueCoordinator {
   }
 
   void dismiss(
-    final NotificationWidget notification,
-  ) {
+    final NotificationWidget notification, {
+    final DismissReason reason = DismissReason.programmatic,
+  }) {
+    _eventController.add(
+      NotificationDismissed(notification: notification, reason: reason),
+    );
+
     final notificationQueue = notification.queue;
     final key = _widgetStateKeys[notificationQueue.position];
     if (key?.currentState != null) {
@@ -128,11 +155,15 @@ class QueueCoordinator {
     if (removed) {
       final targetQueue = newPosition.generateQueueFrom(notification.queue);
       newNotification = notification.copyToQueue(targetQueue);
+      _eventController.add(
+        NotificationRelocated(
+          notification: newNotification,
+          from: notificationQueue.position,
+          to: newPosition,
+        ),
+      );
       // Defer addition to next frame to avoid Duplicate GlobalKey error
       // if the source queue animates the exit (keeping the key alive).
-      // Note: This effectively unmounts and remounts the widget, resetting
-      // transient state. This is the trade-off for avoiding "Ghost" widgets
-      // while preventing crashes.
       WidgetsBinding.instance.addPostFrameCallback((final _) {
         queue(newNotification!);
       });
@@ -146,6 +177,9 @@ class QueueCoordinator {
     final NotificationWidget notification,
     final int targetIndex,
   ) {
+    _eventController.add(
+      NotificationReordered(notification: notification, toIndex: targetIndex),
+    );
     final key = _widgetStateKeys[notification.queue.position];
     key?.currentState?.reorder(notification, targetIndex);
   }
@@ -196,6 +230,27 @@ class QueueCoordinator {
       _controller?.hide();
     }
   }
+
+  /// Emits a [NotificationTapped] event.
+  ///
+  /// Called by [NotificationWidgetState] which lives in a separate library
+  /// and cannot access the private [_eventController] directly.
+  void emitTapped({
+    required final NotificationWidget notification,
+    required final TapBehavior behavior,
+  }) =>
+      _eventController.add(
+        NotificationTapped(notification: notification, behavior: behavior),
+      );
+
+  /// Emits a [QueueOverflowed] event.
+  ///
+  /// Called by [QueueWidgetState] when a notification is dropped.
+  void emitOverflowed({
+    required final NotificationQueue queue,
+    required final NotificationWidget dropped,
+  }) =>
+      _eventController.add(QueueOverflowed(queue: queue, dropped: dropped));
 
   /// Exposed for overlay.
   /// Note: The overlay builder needs to use the GlobalKey we created.

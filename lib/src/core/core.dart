@@ -12,6 +12,7 @@
 /// [FlutterNotificationQueue] and [NotificationWidget].
 library;
 
+import 'dart:async';
 import 'dart:collection';
 
 import 'package:flutter/foundation.dart';
@@ -25,5 +26,6 @@ import '../notification_queue/notification_queue.dart';
 
 part 'configuration_manager.dart';
 part 'facade.dart';
+part 'fnq_event.dart';
 part 'notification_overlay.dart';
 part 'queue_coordinator.dart';

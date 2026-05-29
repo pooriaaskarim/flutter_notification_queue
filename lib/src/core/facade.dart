@@ -34,6 +34,28 @@ final class FlutterNotificationQueue {
     return _coordinator!;
   }
 
+  /// A broadcast stream of all notification lifecycle events.
+  ///
+  /// Shorthand for `FlutterNotificationQueue.coordinator.events`.
+  ///
+  /// Example:
+  /// ```dart
+  /// FlutterNotificationQueue.events.listen((event) {
+  ///   switch (event) {
+  ///     case NotificationQueued(:final notification):
+  ///       analytics.track('shown', id: notification.id);
+  ///     case NotificationDismissed(:final reason):
+  ///       if (reason == DismissReason.timeout) log('auto-dismissed');
+  ///     case NotificationTapped(:final behavior):
+  ///       log('tapped with ${behavior.runtimeType}');
+  ///     case NotificationRelocated(:final from, :final to):
+  ///     case NotificationReordered(:final toIndex):
+  ///     case QueueOverflowed():
+  ///   }
+  /// });
+  /// ```
+  static Stream<FnqEvent> get events => coordinator.events;
+
   static void _ensureInitialized() {
     if (!isInitialized) {
       _logger.info(

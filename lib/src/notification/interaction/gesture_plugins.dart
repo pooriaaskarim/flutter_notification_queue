@@ -73,7 +73,8 @@ class DismissGesturePlugin extends NotificationGesturePlugin {
       );
       if (isHit) {
         HapticFeedback.mediumImpact();
-        state.widget.notification.key.currentState?.dismiss();
+        state.widget.notification.key.currentState
+            ?.dismiss(reason: DismissReason.userSwipe);
       }
     }
     state._dragOffsetPairNotifier.value = null;

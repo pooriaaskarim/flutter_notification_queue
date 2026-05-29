@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'bloc/studio_bloc.dart';
 import 'panels/code_editor_panel.dart';
 import 'panels/configurator_panel.dart';
+import 'panels/event_log_panel.dart';
 import 'studio_theme.dart';
 
 /// The root layout for NFQ Studio.
@@ -105,6 +106,10 @@ class _StudioShellState extends State<_StudioShell> {
                   icon: Icon(Icons.code),
                   label: 'Code',
                 ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.stream_rounded),
+                  label: 'Events',
+                ),
               ],
             );
           },
@@ -119,6 +124,11 @@ class _StudioShellState extends State<_StudioShell> {
             color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.08),
           ),
           const Expanded(child: CodeEditorPanel()),
+          Container(
+            width: 1,
+            color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.08),
+          ),
+          const SizedBox(width: 280, child: EventLogPanel()),
         ],
       );
 
@@ -127,6 +137,7 @@ class _StudioShellState extends State<_StudioShell> {
         children: const [
           ConfiguratorPanel(),
           CodeEditorPanel(),
+          EventLogPanel(),
         ],
       );
 }

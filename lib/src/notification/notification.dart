@@ -189,9 +189,12 @@ class NotificationWidget extends StatefulWidget {
   Future<void> dismiss() async {
     final state = key.currentState;
     if (state != null) {
-      await state.dismiss();
+      await state.dismiss(reason: DismissReason.programmatic);
     } else {
-      FlutterNotificationQueue.coordinator.dismiss(this);
+      FlutterNotificationQueue.coordinator.dismiss(
+        this,
+        reason: DismissReason.programmatic,
+      );
     }
   }
 
@@ -319,9 +322,11 @@ class NotificationWidgetState extends State<NotificationWidget>
     super.didUpdateWidget(oldWidget);
   }
 
-  Future<void> dismiss() async {
+  Future<void> dismiss({
+    final DismissReason reason = DismissReason.programmatic,
+  }) async {
     await animationController.reverse();
-    FlutterNotificationQueue.coordinator.dismiss(widget);
+    FlutterNotificationQueue.coordinator.dismiss(widget, reason: reason);
     _logger.debugBuffer
       ?..writeAll(['Dismissed.'])
       ..sink();
@@ -343,7 +348,7 @@ class NotificationWidgetState extends State<NotificationWidget>
     if (resolvedDismissDuration != null) {
       dismissTimer = Timer(resolvedDismissDuration!, () {
         if (mounted && !isExpanded.value) {
-          dismiss();
+          dismiss(reason: DismissReason.timeout);
         }
       });
     }
@@ -389,12 +394,28 @@ class NotificationWidgetState extends State<NotificationWidget>
                     onTap: switch (_resolvedTapBehavior) {
                       TapDisabled() => null,
                       TapToDismiss() => () {
+                          FlutterNotificationQueue.coordinator.emitTapped(
+                            notification: widget,
+                            behavior: _resolvedTapBehavior,
+                          );
                           // Legacy onTap action callback respected.
                           if (hasOnTapAction) widget.action?.onPressed();
-                          dismiss();
+                          dismiss(reason: DismissReason.userTap);
                         },
-                      TapToExpand() => _toggleExpanded,
-                      TapToAct(:final onTap) => onTap,
+                      TapToExpand() => () {
+                          FlutterNotificationQueue.coordinator.emitTapped(
+                            notification: widget,
+                            behavior: _resolvedTapBehavior,
+                          );
+                          _toggleExpanded();
+                        },
+                      TapToAct(:final onTap) => () {
+                          FlutterNotificationQueue.coordinator.emitTapped(
+                            notification: widget,
+                            behavior: _resolvedTapBehavior,
+                          );
+                          onTap();
+                        },
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
