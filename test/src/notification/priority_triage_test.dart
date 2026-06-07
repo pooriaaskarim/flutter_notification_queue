@@ -70,16 +70,19 @@ void main() {
             name: 'test',
             position: QueuePosition.topRight,
             defaultPriority: NotificationPriority.normal,
+            defaultDismissDuration: null,
           ),
           const NotificationChannel(
             name: 'high_ch',
             position: QueuePosition.topRight,
             defaultPriority: NotificationPriority.high,
+            defaultDismissDuration: null,
           ),
           const NotificationChannel(
             name: 'low_ch',
             position: QueuePosition.topRight,
             defaultPriority: NotificationPriority.low,
+            defaultDismissDuration: null,
           ),
         },
         queues: {

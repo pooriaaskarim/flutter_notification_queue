@@ -19,6 +19,13 @@ void main() {
   setUp(() {
     FlutterNotificationQueue.reset();
     FlutterNotificationQueue.configure(
+      channels: {
+        const NotificationChannel(
+          name: 'default',
+          position: QueuePosition.topCenter,
+          defaultDismissDuration: null,
+        ),
+      },
       queues: {
         const TopCenterQueue(
           transition: CustomTransition(),
@@ -41,18 +48,19 @@ void main() {
     await tester.pump(); // Frame 1: Queue processing
     await tester.pump(); // Frame 2: Widget build
 
-    // Verify ScaleTransition is present inside NotificationWidget
+    // Verify ScaleTransition is present as an ancestor of NotificationWidget
     expect(
-      find.descendant(
+      find.ancestor(
         of: find.byType(NotificationWidget),
         matching: find.byType(ScaleTransition),
       ),
       findsAtLeastNWidgets(1),
     );
 
-    // Verify SlideTransition is NOT present inside NotificationWidget
+    // Verify SlideTransition is NOT present as an ancestor of
+    // NotificationWidget
     expect(
-      find.descendant(
+      find.ancestor(
         of: find.byType(NotificationWidget),
         matching: find.byType(SlideTransition),
       ),
@@ -66,6 +74,13 @@ void main() {
       (final tester) async {
     FlutterNotificationQueue.reset();
     FlutterNotificationQueue.configure(
+      channels: {
+        const NotificationChannel(
+          name: 'default',
+          position: QueuePosition.bottomCenter,
+          defaultDismissDuration: null,
+        ),
+      },
       queues: {
         const BottomCenterQueue(),
       },
@@ -84,10 +99,10 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    // Verify SlideTransition is present inside NotificationWidget
-    // (default RelativeSlideTransition)
+    // Verify SlideTransition is present as an ancestor of NotificationWidget
+    // (default SlideTransitionStrategy)
     expect(
-      find.descendant(
+      find.ancestor(
         of: find.byType(NotificationWidget),
         matching: find.byType(SlideTransition),
       ),
@@ -99,6 +114,13 @@ void main() {
       (final tester) async {
     FlutterNotificationQueue.reset();
     FlutterNotificationQueue.configure(
+      channels: {
+        const NotificationChannel(
+          name: 'default',
+          position: QueuePosition.topCenter,
+          defaultDismissDuration: null,
+        ),
+      },
       queues: {
         TopCenterQueue(
           transition: BuilderTransitionStrategy(
@@ -122,13 +144,17 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    // Verify RotationTransition is present inside NotificationWidget
+    // Verify RotationTransition is present as an ancestor of NotificationWidget
     expect(
-      find.descendant(
+      find.ancestor(
         of: find.byType(NotificationWidget),
         matching: find.byType(RotationTransition),
       ),
       findsOneWidget,
     );
+  });
+
+  tearDown(() {
+    FlutterNotificationQueue.reset();
   });
 }

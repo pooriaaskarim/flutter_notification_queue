@@ -10,6 +10,7 @@ void main() {
           const NotificationChannel(
             name: 'test',
             position: QueuePosition.topRight,
+            defaultDismissDuration: null,
           ),
         },
         queues: {

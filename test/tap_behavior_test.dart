@@ -12,7 +12,10 @@ void _initFnq() {
       const TopCenterQueue(tapBehavior: TapToDismiss()),
     },
     channels: {
-      const NotificationChannel(name: 'default'),
+      const NotificationChannel(
+        name: 'default',
+        defaultDismissDuration: null,
+      ),
     },
   );
 }

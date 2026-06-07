@@ -1,6 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+Future<void> _driveAnimation(final WidgetTester tester) async {
+  for (int i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
+}
 
 void main() {
   group('Backpressure Strategy Integration Tests', () {
@@ -14,10 +21,19 @@ void main() {
 
     testWidgets(
       'unbounded pending queue by default (no capacity limit)',
+      timeout: const Timeout(Duration(seconds: 3)),
       (final tester) async {
         FlutterNotificationQueue.configure(
+          channels: {
+            const NotificationChannel(
+              name: 'default',
+              position: QueuePosition.topCenter,
+              defaultDismissDuration: null,
+            ),
+          },
           queues: {
             const TopCenterQueue(
+              style: FlatQueueStyle(opacity: 1.0),
               maxStackSize: 1,
               maxPendingSize: null, // default is null
             ),
@@ -46,20 +62,23 @@ void main() {
         n4.show();
         n5.show();
 
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await _driveAnimation(tester);
 
         // 1 active, others pending
         expect(find.text('Item 1'), findsOneWidget);
         expect(find.text('Item 2'), findsNothing);
 
         // Now dismiss Item 1 to let subsequent items flow
-        await n1.dismiss();
-        await tester.pumpAndSettle();
+        unawaited(n1.dismiss()); // DO NOT AWAIT HERE! Deadlock!
+        await tester.pump();
+        await _driveAnimation(tester);
 
         expect(find.text('Item 2'), findsOneWidget);
 
-        await n2.dismiss();
-        await tester.pumpAndSettle();
+        unawaited(n2.dismiss()); // DO NOT AWAIT HERE!
+        await tester.pump();
+        await _driveAnimation(tester);
 
         expect(find.text('Item 3'), findsOneWidget);
       },
@@ -70,8 +89,16 @@ void main() {
       'emits QueueOverflowed event',
       (final tester) async {
         FlutterNotificationQueue.configure(
+          channels: {
+            const NotificationChannel(
+              name: 'default',
+              position: QueuePosition.topCenter,
+              defaultDismissDuration: null,
+            ),
+          },
           queues: {
             const TopCenterQueue(
+              style: FlatQueueStyle(opacity: 1.0),
               maxStackSize: 1,
               maxPendingSize: 2,
               overflowStrategy: QueueOverflowStrategy.discardOldest,
@@ -102,14 +129,16 @@ void main() {
         n2.show();
         n3.show();
 
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await _driveAnimation(tester);
 
         // Pending queue is now full: [n2, n3]
         expect(find.text('Active Item'), findsOneWidget);
 
         // Enqueue n4: should overflow and drop n2 (oldest pending)
         n4.show();
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await _driveAnimation(tester);
 
         // Verify the dropped event was received
         final overflowEvents = events.whereType<QueueOverflowed>().toList();
@@ -117,19 +146,21 @@ void main() {
         expect(overflowEvents.first.dropped.id, 'n2');
 
         // Dismiss n1: should promote n3, not n2
-        await n1.dismiss();
-        await tester.pumpAndSettle();
+        unawaited(n1.dismiss());
+        await tester.pump();
+        await _driveAnimation(tester);
 
         expect(find.text('Pending Item 3'), findsOneWidget);
         expect(find.text('Pending Item 2'), findsNothing);
 
         // Dismiss n3: should promote n4
-        await n3.dismiss();
-        await tester.pumpAndSettle();
+        unawaited(n3.dismiss());
+        await tester.pump();
+        await _driveAnimation(tester);
 
         expect(find.text('Pending Item 4'), findsOneWidget);
 
-        await subscription.cancel();
+        subscription.cancel(); // ignore: unawaited_futures
       },
     );
 
@@ -138,8 +169,16 @@ void main() {
       'emits QueueOverflowed event',
       (final tester) async {
         FlutterNotificationQueue.configure(
+          channels: {
+            const NotificationChannel(
+              name: 'default',
+              position: QueuePosition.topCenter,
+              defaultDismissDuration: null,
+            ),
+          },
           queues: {
             const TopCenterQueue(
+              style: FlatQueueStyle(opacity: 1.0),
               maxStackSize: 1,
               maxPendingSize: 2,
               overflowStrategy: QueueOverflowStrategy.discardNewest,
@@ -170,11 +209,13 @@ void main() {
         n2.show();
         n3.show();
 
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await _driveAnimation(tester);
 
         // Enqueue n4: should overflow and drop n4 itself (newest)
         n4.show();
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await _driveAnimation(tester);
 
         // Verify the dropped event was received for n4
         final overflowEvents = events.whereType<QueueOverflowed>().toList();
@@ -182,19 +223,21 @@ void main() {
         expect(overflowEvents.first.dropped.id, 'n4');
 
         // Dismiss n1: should promote n2
-        await n1.dismiss();
-        await tester.pumpAndSettle();
+        unawaited(n1.dismiss());
+        await tester.pump();
+        await _driveAnimation(tester);
 
         expect(find.text('Pending Item 2'), findsOneWidget);
 
         // Dismiss n2: should promote n3
-        await n2.dismiss();
-        await tester.pumpAndSettle();
+        unawaited(n2.dismiss());
+        await tester.pump();
+        await _driveAnimation(tester);
 
         expect(find.text('Pending Item 3'), findsOneWidget);
         expect(find.text('Pending Item 4'), findsNothing);
 
-        await subscription.cancel();
+        subscription.cancel(); // ignore: unawaited_futures
       },
     );
   });
