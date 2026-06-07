@@ -184,6 +184,75 @@ class QueueCoordinator {
     key?.currentState?.reorder(notification, targetIndex);
   }
 
+  /// Snoozes [notification] for [duration]. Dismisses the current instance
+  /// and automatically schedules it to re-enqueue.
+  void snooze(
+    final NotificationWidget notification,
+    final Duration duration,
+  ) {
+    // 1. Remove from active queue
+    final notificationQueue = notification.queue;
+    final key = _widgetStateKeys[notificationQueue.position];
+    if (key?.currentState != null) {
+      key!.currentState!.remove(notification);
+    } else {
+      _initializationQueue[notificationQueue.position]
+          ?.removeWhere((final n) => n.id == notification.id);
+    }
+
+    // 2. Emit NotificationSnoozed event
+    _eventController.add(
+      NotificationSnoozed(notification: notification, duration: duration),
+    );
+
+    // 3. Schedule auto-re-queue
+    Timer(duration, () {
+      final freshCopy = notification.copyForRequeue(snoozedAt: null);
+      queue(freshCopy);
+    });
+  }
+
+  /// Pins [notification], making it persistent and immune to swipe gestures.
+  void pin(final NotificationWidget notification) {
+    final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
+    final state = stateKey.currentState;
+    if (state != null) {
+      state.widget.isPinned = true;
+    } else {
+      notification.isPinned = true;
+    }
+    _eventController.add(
+      NotificationPinned(notification: state?.widget ?? notification),
+    );
+  }
+
+  /// Unpins [notification], restoring its dismissible/interactive swipe status.
+  void unpin(final NotificationWidget notification) {
+    final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
+    final state = stateKey.currentState;
+    if (state != null) {
+      state.widget.isPinned = false;
+    } else {
+      notification.isPinned = false;
+    }
+    _eventController.add(
+      NotificationUnpinned(notification: state?.widget ?? notification),
+    );
+  }
+
+  /// Triggers a developer-defined custom action on [notification].
+  void triggerCustomAction(
+    final NotificationWidget notification,
+    final String actionName,
+  ) {
+    _eventController.add(
+      NotificationCustomActionTriggered(
+        notification: notification,
+        actionName: actionName,
+      ),
+    );
+  }
+
   void bringToFront(final QueuePosition position) {
     if (!_activeQueuesNotifier.value.containsKey(position)) {
       return;

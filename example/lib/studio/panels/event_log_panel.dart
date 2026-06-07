@@ -258,6 +258,34 @@ class _EventMeta {
             badge: queue.position.name,
             subtitle: dropped.title ?? dropped.message,
           ),
+        NotificationSnoozed(:final notification, :final duration) => _EventMeta(
+            label: 'Snoozed',
+            color: const Color(0xFFFB7185), // rose-400
+            badge: '${duration.inSeconds}s',
+            subtitle: notification.title ?? notification.message,
+          ),
+        NotificationPinned(:final notification) => _EventMeta(
+            label: 'Pinned',
+            color: const Color(0xFFF59E0B), // amber-500
+            badge: 'pinned',
+            subtitle: notification.title ?? notification.message,
+          ),
+        NotificationUnpinned(:final notification) => _EventMeta(
+            label: 'Unpinned',
+            color: const Color(0xFF6B7280), // gray-500
+            badge: 'unpinned',
+            subtitle: notification.title ?? notification.message,
+          ),
+        NotificationCustomActionTriggered(
+          :final notification,
+          :final actionName,
+        ) =>
+            _EventMeta(
+                label: 'Action',
+                color: const Color(0xFF10B981), // emerald-500
+                badge: actionName,
+                subtitle: notification.title ?? notification.message,
+              ),
       };
 }
 

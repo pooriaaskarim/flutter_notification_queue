@@ -89,6 +89,12 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         ReorderAndRelocate() => ReorderRelocateGesturePlugin(
             behavior: behavior,
           ),
+        final Snooze behavior => SnoozeGesturePlugin(behavior: behavior),
+        final Pin behavior => PinGesturePlugin(behavior: behavior),
+        final Archive behavior => ArchiveGesturePlugin(behavior: behavior),
+        final CustomAction behavior => CustomActionGesturePlugin(
+            behavior: behavior,
+          ),
         Disabled() => throw UnsupportedError('Disabled behavior has no plugin'),
       };
 
@@ -152,6 +158,10 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         Dismiss() => position.alignment,
         Reorder() => stateIndexOfThisItem(),
         ReorderAndRelocate() => stateIndexOfThisItem(),
+        Snooze() => position.alignment,
+        Pin() => position.alignment,
+        Archive() => position.alignment,
+        CustomAction() => position.alignment,
         _ => position,
       };
 
@@ -180,6 +190,10 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       Dismiss() => position.alignment,
       Reorder() => stateIndexOfThisItem(),
       ReorderAndRelocate() => stateIndexOfThisItem(),
+      Snooze() => position.alignment,
+      Pin() => position.alignment,
+      Archive() => position.alignment,
+      CustomAction() => position.alignment,
       _ => position,
     };
 
@@ -208,6 +222,14 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   ) {
     if (behavior is Dismiss) {
       return _edgesFromDismissZone(behavior.zones, position);
+    } else if (behavior is Snooze) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+    } else if (behavior is Pin) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+    } else if (behavior is Archive) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+    } else if (behavior is CustomAction) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is Relocate) {
       return _zonesFromPositions(behavior.positions, position);
     } else if (behavior is ReorderAndRelocate) {

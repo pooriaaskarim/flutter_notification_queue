@@ -74,9 +74,13 @@ class DismissGesturePlugin extends NotificationGesturePlugin {
         ),
       );
       if (isHit) {
-        HapticFeedback.mediumImpact();
-        state.widget.notification.key.currentState
-            ?.dismiss(reason: DismissReason.userSwipe);
+        if (state.widget.notification.isPinned) {
+          HapticFeedback.lightImpact();
+        } else {
+          HapticFeedback.mediumImpact();
+          state.widget.notification.key.currentState
+              ?.dismiss(reason: DismissReason.userSwipe);
+        }
       }
     }
     state._dragOffsetPairNotifier.value = null;
@@ -514,5 +518,407 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
         ),
       );
     }
+  }
+}
+
+/// Gesture plugin implementing snooze behavior.
+class SnoozeGesturePlugin extends NotificationGesturePlugin {
+  const SnoozeGesturePlugin({required this.behavior});
+
+  final Snooze behavior;
+
+  @override
+  void onDragStart(final DraggableTransitionsState state) {
+    final position = state.widget.notification.queue.position;
+    FlutterNotificationQueue.coordinator.bringToFront(position);
+    state.widget.notification.key.currentState?.ditchDismissTimer();
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: Offset.zero,
+      global: state._dragStartData?.pointerPosition ?? Offset.zero,
+    );
+    state._overlayPortalController.show();
+  }
+
+  @override
+  void onDragUpdate(
+    final DraggableTransitionsState state,
+    final DragUpdateDetails details,
+  ) {
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: details.delta,
+      global: details.globalPosition,
+    );
+  }
+
+  @override
+  void onDragEnd(
+    final DraggableTransitionsState state,
+    final DraggableDetails details,
+  ) {
+    final pointer = state._dragOffsetPairNotifier.value?.global;
+    final position = state.widget.notification.queue.position;
+    if (pointer != null) {
+      final zones = state._getZones(behavior, position);
+      final isHit = zones.any(
+        (final z) => z.isHit(
+          pointer,
+          state._screenSize,
+          behavior.thresholdInPixels.toDouble(),
+        ),
+      );
+      if (isHit) {
+        HapticFeedback.mediumImpact();
+        FlutterNotificationQueue.coordinator.snooze(
+          state.widget.notification,
+          behavior.duration,
+        );
+      }
+    }
+    state._dragOffsetPairNotifier.value = null;
+    state.widget.notification.key.currentState?.initDismissTimer();
+    state._overlayPortalController.hide();
+  }
+
+  @override
+  Widget buildFeedback(
+    final DraggableTransitionsState state,
+    final OffsetPair? offsetPair,
+  ) {
+    final pointer = offsetPair?.global;
+    final position = state.widget.notification.queue.position;
+    final zones = state._getZones(behavior, position);
+    final passedThreshold = state._passedThreshold(
+      pointer,
+      behavior.thresholdInPixels,
+      zones,
+    );
+
+    return OverlayPortal(
+      controller: state._overlayPortalController,
+      overlayChildBuilder: (final context) => LayoutBuilder(
+        builder: (final context, final constraints) => _SnoozeTargets(
+          screenSize: constraints.biggest,
+          threshold: behavior.thresholdInPixels.toDouble(),
+          zones: zones.cast<EdgeDropZone>(),
+          pointerPositionNotifier: state._dragOffsetPairNotifier,
+        ),
+      ),
+      child: _SnoozeFeedbackOverlay(
+        passedThreshold: passedThreshold,
+        dragOffset: pointer,
+        thresholdInPixels: behavior.thresholdInPixels,
+        screenSize: state._screenSize,
+        startData: state._dragStartData,
+        zones: zones.cast<EdgeDropZone>(),
+        springPhysics: behavior.springPhysics,
+        child: state.widget.notification,
+      ),
+    );
+  }
+}
+
+/// Gesture plugin implementing pin behavior.
+class PinGesturePlugin extends NotificationGesturePlugin {
+  const PinGesturePlugin({required this.behavior});
+
+  final Pin behavior;
+
+  @override
+  void onDragStart(final DraggableTransitionsState state) {
+    final position = state.widget.notification.queue.position;
+    FlutterNotificationQueue.coordinator.bringToFront(position);
+    state.widget.notification.key.currentState?.ditchDismissTimer();
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: Offset.zero,
+      global: state._dragStartData?.pointerPosition ?? Offset.zero,
+    );
+    state._overlayPortalController.show();
+  }
+
+  @override
+  void onDragUpdate(
+    final DraggableTransitionsState state,
+    final DragUpdateDetails details,
+  ) {
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: details.delta,
+      global: details.globalPosition,
+    );
+  }
+
+  @override
+  void onDragEnd(
+    final DraggableTransitionsState state,
+    final DraggableDetails details,
+  ) {
+    final pointer = state._dragOffsetPairNotifier.value?.global;
+    final position = state.widget.notification.queue.position;
+    if (pointer != null) {
+      final zones = state._getZones(behavior, position);
+      final isHit = zones.any(
+        (final z) => z.isHit(
+          pointer,
+          state._screenSize,
+          behavior.thresholdInPixels.toDouble(),
+        ),
+      );
+      if (isHit) {
+        HapticFeedback.mediumImpact();
+        final isCurrentlyPinned = state.widget.notification.isPinned;
+        if (isCurrentlyPinned) {
+          FlutterNotificationQueue.coordinator.unpin(state.widget.notification);
+        } else {
+          FlutterNotificationQueue.coordinator.pin(state.widget.notification);
+        }
+      }
+    }
+    state._dragOffsetPairNotifier.value = null;
+    state.widget.notification.key.currentState?.initDismissTimer();
+    state._overlayPortalController.hide();
+  }
+
+  @override
+  Widget buildFeedback(
+    final DraggableTransitionsState state,
+    final OffsetPair? offsetPair,
+  ) {
+    final pointer = offsetPair?.global;
+    final position = state.widget.notification.queue.position;
+    final zones = state._getZones(behavior, position);
+    final passedThreshold = state._passedThreshold(
+      pointer,
+      behavior.thresholdInPixels,
+      zones,
+    );
+
+    return OverlayPortal(
+      controller: state._overlayPortalController,
+      overlayChildBuilder: (final context) => LayoutBuilder(
+        builder: (final context, final constraints) => _PinTargets(
+          screenSize: constraints.biggest,
+          threshold: behavior.thresholdInPixels.toDouble(),
+          zones: zones.cast<EdgeDropZone>(),
+          pointerPositionNotifier: state._dragOffsetPairNotifier,
+          isPinned: state.widget.notification.isPinned,
+        ),
+      ),
+      child: _PinFeedbackOverlay(
+        passedThreshold: passedThreshold,
+        dragOffset: pointer,
+        thresholdInPixels: behavior.thresholdInPixels,
+        screenSize: state._screenSize,
+        startData: state._dragStartData,
+        zones: zones.cast<EdgeDropZone>(),
+        springPhysics: behavior.springPhysics,
+        isPinned: state.widget.notification.isPinned,
+        child: state.widget.notification,
+      ),
+    );
+  }
+}
+
+/// Gesture plugin implementing archive behavior.
+class ArchiveGesturePlugin extends NotificationGesturePlugin {
+  const ArchiveGesturePlugin({required this.behavior});
+
+  final Archive behavior;
+
+  @override
+  void onDragStart(final DraggableTransitionsState state) {
+    final position = state.widget.notification.queue.position;
+    FlutterNotificationQueue.coordinator.bringToFront(position);
+    state.widget.notification.key.currentState?.ditchDismissTimer();
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: Offset.zero,
+      global: state._dragStartData?.pointerPosition ?? Offset.zero,
+    );
+    state._overlayPortalController.show();
+  }
+
+  @override
+  void onDragUpdate(
+    final DraggableTransitionsState state,
+    final DragUpdateDetails details,
+  ) {
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: details.delta,
+      global: details.globalPosition,
+    );
+  }
+
+  @override
+  void onDragEnd(
+    final DraggableTransitionsState state,
+    final DraggableDetails details,
+  ) {
+    final pointer = state._dragOffsetPairNotifier.value?.global;
+    final position = state.widget.notification.queue.position;
+    if (pointer != null) {
+      final zones = state._getZones(behavior, position);
+      final isHit = zones.any(
+        (final z) => z.isHit(
+          pointer,
+          state._screenSize,
+          behavior.thresholdInPixels.toDouble(),
+        ),
+      );
+      if (isHit) {
+        HapticFeedback.mediumImpact();
+        final notificationQueue = state.widget.notification.queue;
+        final key = FlutterNotificationQueue.coordinator
+            .getWidgetKey(notificationQueue.position);
+        if (key.currentState != null) {
+          key.currentState!.remove(state.widget.notification);
+        }
+        FlutterNotificationQueue.coordinator.triggerCustomAction(
+          state.widget.notification,
+          'archive',
+        );
+      }
+    }
+    state._dragOffsetPairNotifier.value = null;
+    state.widget.notification.key.currentState?.initDismissTimer();
+    state._overlayPortalController.hide();
+  }
+
+  @override
+  Widget buildFeedback(
+    final DraggableTransitionsState state,
+    final OffsetPair? offsetPair,
+  ) {
+    final pointer = offsetPair?.global;
+    final position = state.widget.notification.queue.position;
+    final zones = state._getZones(behavior, position);
+    final passedThreshold = state._passedThreshold(
+      pointer,
+      behavior.thresholdInPixels,
+      zones,
+    );
+
+    return OverlayPortal(
+      controller: state._overlayPortalController,
+      overlayChildBuilder: (final context) => LayoutBuilder(
+        builder: (final context, final constraints) => _ArchiveTargets(
+          screenSize: constraints.biggest,
+          threshold: behavior.thresholdInPixels.toDouble(),
+          zones: zones.cast<EdgeDropZone>(),
+          pointerPositionNotifier: state._dragOffsetPairNotifier,
+        ),
+      ),
+      child: _ArchiveFeedbackOverlay(
+        passedThreshold: passedThreshold,
+        dragOffset: pointer,
+        thresholdInPixels: behavior.thresholdInPixels,
+        screenSize: state._screenSize,
+        startData: state._dragStartData,
+        zones: zones.cast<EdgeDropZone>(),
+        springPhysics: behavior.springPhysics,
+        child: state.widget.notification,
+      ),
+    );
+  }
+}
+
+/// Gesture plugin implementing custom action behavior.
+class CustomActionGesturePlugin extends NotificationGesturePlugin {
+  const CustomActionGesturePlugin({required this.behavior});
+
+  final CustomAction behavior;
+
+  @override
+  void onDragStart(final DraggableTransitionsState state) {
+    final position = state.widget.notification.queue.position;
+    FlutterNotificationQueue.coordinator.bringToFront(position);
+    state.widget.notification.key.currentState?.ditchDismissTimer();
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: Offset.zero,
+      global: state._dragStartData?.pointerPosition ?? Offset.zero,
+    );
+    state._overlayPortalController.show();
+  }
+
+  @override
+  void onDragUpdate(
+    final DraggableTransitionsState state,
+    final DragUpdateDetails details,
+  ) {
+    state._dragOffsetPairNotifier.value = OffsetPair(
+      local: details.delta,
+      global: details.globalPosition,
+    );
+  }
+
+  @override
+  void onDragEnd(
+    final DraggableTransitionsState state,
+    final DraggableDetails details,
+  ) {
+    final pointer = state._dragOffsetPairNotifier.value?.global;
+    final position = state.widget.notification.queue.position;
+    if (pointer != null) {
+      final zones = state._getZones(behavior, position);
+      final isHit = zones.any(
+        (final z) => z.isHit(
+          pointer,
+          state._screenSize,
+          behavior.thresholdInPixels.toDouble(),
+        ),
+      );
+      if (isHit) {
+        HapticFeedback.mediumImpact();
+        final notificationQueue = state.widget.notification.queue;
+        final key = FlutterNotificationQueue.coordinator
+            .getWidgetKey(notificationQueue.position);
+        if (key.currentState != null) {
+          key.currentState!.remove(state.widget.notification);
+        }
+        FlutterNotificationQueue.coordinator.triggerCustomAction(
+          state.widget.notification,
+          behavior.actionName,
+        );
+      }
+    }
+    state._dragOffsetPairNotifier.value = null;
+    state.widget.notification.key.currentState?.initDismissTimer();
+    state._overlayPortalController.hide();
+  }
+
+  @override
+  Widget buildFeedback(
+    final DraggableTransitionsState state,
+    final OffsetPair? offsetPair,
+  ) {
+    final pointer = offsetPair?.global;
+    final position = state.widget.notification.queue.position;
+    final zones = state._getZones(behavior, position);
+    final passedThreshold = state._passedThreshold(
+      pointer,
+      behavior.thresholdInPixels,
+      zones,
+    );
+
+    return OverlayPortal(
+      controller: state._overlayPortalController,
+      overlayChildBuilder: (final context) => LayoutBuilder(
+        builder: (final context, final constraints) => _CustomActionTargets(
+          screenSize: constraints.biggest,
+          threshold: behavior.thresholdInPixels.toDouble(),
+          zones: zones.cast<EdgeDropZone>(),
+          pointerPositionNotifier: state._dragOffsetPairNotifier,
+          actionName: behavior.actionName,
+        ),
+      ),
+      child: _CustomActionFeedbackOverlay(
+        passedThreshold: passedThreshold,
+        dragOffset: pointer,
+        thresholdInPixels: behavior.thresholdInPixels,
+        screenSize: state._screenSize,
+        startData: state._dragStartData,
+        zones: zones.cast<EdgeDropZone>(),
+        springPhysics: behavior.springPhysics,
+        actionName: behavior.actionName,
+        child: state.widget.notification,
+      ),
+    );
   }
 }

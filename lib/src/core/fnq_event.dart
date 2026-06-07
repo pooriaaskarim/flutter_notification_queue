@@ -159,3 +159,62 @@ final class QueueOverflowed extends FnqEvent {
   String toString() => 'QueueOverflowed(position: ${queue.position.name}, '
       'dropped: ${dropped.id})';
 }
+
+/// Emitted when a [NotificationWidget] is successfully snoozed.
+final class NotificationSnoozed extends FnqEvent {
+  const NotificationSnoozed({
+    required this.notification,
+    required this.duration,
+  });
+
+  /// The notification that was snoozed.
+  final NotificationWidget notification;
+
+  /// The duration for which the notification was snoozed.
+  final Duration duration;
+
+  @override
+  String toString() => 'NotificationSnoozed(id: ${notification.id}, '
+      'duration: ${duration.inSeconds}s)';
+}
+
+/// Emitted when a [NotificationWidget] is pinned.
+final class NotificationPinned extends FnqEvent {
+  const NotificationPinned({required this.notification});
+
+  /// The notification that was pinned.
+  final NotificationWidget notification;
+
+  @override
+  String toString() => 'NotificationPinned(id: ${notification.id})';
+}
+
+/// Emitted when a [NotificationWidget] is unpinned.
+final class NotificationUnpinned extends FnqEvent {
+  const NotificationUnpinned({required this.notification});
+
+  /// The notification that was unpinned.
+  final NotificationWidget notification;
+
+  @override
+  String toString() => 'NotificationUnpinned(id: ${notification.id})';
+}
+
+/// Emitted when a custom action is triggered on a [NotificationWidget].
+final class NotificationCustomActionTriggered extends FnqEvent {
+  const NotificationCustomActionTriggered({
+    required this.notification,
+    required this.actionName,
+  });
+
+  /// The notification on which the action was triggered.
+  final NotificationWidget notification;
+
+  /// The name of the custom action that was triggered.
+  final String actionName;
+
+  @override
+  String toString() =>
+      'NotificationCustomActionTriggered(id: ${notification.id}, '
+      'actionName: $actionName)';
+}
