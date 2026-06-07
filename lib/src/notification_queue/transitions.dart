@@ -81,25 +81,51 @@ class SlideTransitionStrategy extends NotificationTransition {
     final Animation<double> animation,
     final QueuePosition position,
     final Widget child,
-  ) {
-    final begin = slideOffset ?? position.defaultSlideOffset;
+  ) =>
+      _SlideAndFadeTransition(
+        animation: animation,
+        slideOffset: slideOffset ?? position.defaultSlideOffset,
+        curve: curve,
+        reverseCurve: reverseCurve,
+        child: child,
+      );
+}
+
+/// Internal [AnimatedWidget] that drives the slide + fade transition.
+///
+/// By extending [AnimatedWidget], the [CurvedAnimation] is created once
+/// and stored in [listenable], completely eliminating the build-time listener
+/// accumulation that would otherwise cause pumpAndSettle deadlocks.
+class _SlideAndFadeTransition extends AnimatedWidget {
+  _SlideAndFadeTransition({
+    required final Animation<double> animation,
+    required this.slideOffset,
+    required this.curve,
+    required this.reverseCurve,
+    required this.child,
+  }) : super(
+          listenable: CurvedAnimation(
+            parent: animation,
+            curve: curve,
+            reverseCurve: reverseCurve,
+          ),
+        );
+
+  final Offset slideOffset;
+  final Curve curve;
+  final Curve reverseCurve;
+  final Widget child;
+
+  @override
+  Widget build(final BuildContext context) {
+    final curvedAnimation = listenable as Animation<double>;
     return SlideTransition(
       position: Tween<Offset>(
-        begin: begin,
+        begin: slideOffset,
         end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: animation,
-          curve: curve,
-          reverseCurve: reverseCurve,
-        ),
-      ),
+      ).animate(curvedAnimation),
       child: FadeTransition(
-        opacity: CurvedAnimation(
-          parent: animation,
-          curve: curve,
-          reverseCurve: reverseCurve,
-        ),
+        opacity: curvedAnimation,
         child: child,
       ),
     );
@@ -126,12 +152,34 @@ class FadeTransitionStrategy extends NotificationTransition {
     final QueuePosition position,
     final Widget child,
   ) =>
-      FadeTransition(
-        opacity: CurvedAnimation(
-          parent: animation,
-          curve: curve,
-          reverseCurve: reverseCurve,
-        ),
+      _FadeTransitionWidget(
+        animation: animation,
+        curve: curve,
+        reverseCurve: reverseCurve,
+        child: child,
+      );
+}
+
+/// Internal [AnimatedWidget] for the fade-only transition.
+class _FadeTransitionWidget extends AnimatedWidget {
+  _FadeTransitionWidget({
+    required final Animation<double> animation,
+    required final Curve curve,
+    required final Curve reverseCurve,
+    required this.child,
+  }) : super(
+          listenable: CurvedAnimation(
+            parent: animation,
+            curve: curve,
+            reverseCurve: reverseCurve,
+          ),
+        );
+
+  final Widget child;
+
+  @override
+  Widget build(final BuildContext context) => FadeTransition(
+        opacity: listenable as Animation<double>,
         child: child,
       );
 }
@@ -168,26 +216,51 @@ class ScaleTransitionStrategy extends NotificationTransition {
     final QueuePosition position,
     final Widget child,
   ) =>
-      ScaleTransition(
-        scale: Tween<double>(
-          begin: initialScale,
-          end: 1.0,
-        ).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: curve,
-            reverseCurve: reverseCurve,
-          ),
-        ),
+      _ScaleAndFadeTransition(
+        animation: animation,
+        initialScale: initialScale,
         alignment: alignment ??
             position.alignment.resolve(Directionality.maybeOf(context)),
-        child: FadeTransition(
-          opacity: CurvedAnimation(
+        curve: curve,
+        reverseCurve: reverseCurve,
+        child: child,
+      );
+}
+
+/// Internal [AnimatedWidget] for the scale + fade transition.
+class _ScaleAndFadeTransition extends AnimatedWidget {
+  _ScaleAndFadeTransition({
+    required final Animation<double> animation,
+    required this.initialScale,
+    required this.alignment,
+    required final Curve curve,
+    required final Curve reverseCurve,
+    required this.child,
+  }) : super(
+          listenable: CurvedAnimation(
             parent: animation,
             curve: curve,
             reverseCurve: reverseCurve,
           ),
-          child: child,
-        ),
-      );
+        );
+
+  final double initialScale;
+  final Alignment? alignment;
+  final Widget child;
+
+  @override
+  Widget build(final BuildContext context) {
+    final curvedAnimation = listenable as Animation<double>;
+    return ScaleTransition(
+      scale: Tween<double>(
+        begin: initialScale,
+        end: 1.0,
+      ).animate(curvedAnimation),
+      alignment: alignment ?? Alignment.center,
+      child: FadeTransition(
+        opacity: curvedAnimation,
+        child: child,
+      ),
+    );
+  }
 }
