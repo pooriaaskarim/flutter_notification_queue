@@ -22,6 +22,8 @@ enum QueuePosition {
         closeButtonBehavior: anotherQueue.closeButtonBehavior,
         queueIndicatorBuilder: anotherQueue.queueIndicatorBuilder,
         transition: anotherQueue.transition,
+        maxPendingSize: anotherQueue.maxPendingSize,
+        overflowStrategy: anotherQueue.overflowStrategy,
       );
 
   NotificationQueue generateQueue({
@@ -35,6 +37,9 @@ enum QueuePosition {
     required final QueueCloseButtonBehavior closeButtonBehavior,
     required final QueueIndicatorBuilder? queueIndicatorBuilder,
     required final NotificationTransition? transition,
+    final int? maxPendingSize,
+    final QueueOverflowStrategy overflowStrategy =
+        QueueOverflowStrategy.discardOldest,
   }) {
     switch (this) {
       case topLeft:
@@ -49,6 +54,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
       case topCenter:
         return TopCenterQueue(
@@ -62,6 +69,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
       case topRight:
         return TopRightQueue(
@@ -75,6 +84,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
       case centerLeft:
         return CenterLeftQueue(
@@ -88,6 +99,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
       case centerRight:
         return CenterRightQueue(
@@ -101,6 +114,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
       case bottomLeft:
         return BottomLeftQueue(
@@ -114,6 +129,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
       case bottomCenter:
         return BottomCenterQueue(
@@ -127,6 +144,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
       case bottomRight:
         return BottomRightQueue(
@@ -140,6 +159,8 @@ enum QueuePosition {
           closeButtonBehavior: closeButtonBehavior,
           queueIndicatorBuilder: queueIndicatorBuilder,
           transition: transition ?? const SlideTransitionStrategy(),
+          maxPendingSize: maxPendingSize,
+          overflowStrategy: overflowStrategy,
         );
     }
   }

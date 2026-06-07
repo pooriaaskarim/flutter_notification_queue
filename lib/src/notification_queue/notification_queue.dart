@@ -39,7 +39,13 @@ sealed class NotificationQueue {
     required this.style,
     required this.queueIndicatorBuilder,
     required this.transition,
-  }) : assert(maxStackSize > 0, 'maxStackSize must be greater than 0');
+    this.maxPendingSize,
+    this.overflowStrategy = QueueOverflowStrategy.discardOldest,
+  }) : assert(maxStackSize > 0, 'maxStackSize must be greater than 0'),
+       assert(
+         maxPendingSize == null || maxPendingSize > 0,
+         'maxPendingSize must be greater than 0',
+       );
 
   factory NotificationQueue.defaultQueue({
     final QueuePosition position = QueuePosition.topCenter,
@@ -54,6 +60,9 @@ sealed class NotificationQueue {
     final QueueStyle style = const FilledQueueStyle(),
     final QueueIndicatorBuilder? queueIndicatorBuilder,
     final NotificationTransition? transition,
+    final int? maxPendingSize,
+    final QueueOverflowStrategy overflowStrategy =
+        QueueOverflowStrategy.discardOldest,
   }) =>
       position.generateQueue(
         maxStackSize: maxStackSize,
@@ -66,6 +75,8 @@ sealed class NotificationQueue {
         margin: margin,
         queueIndicatorBuilder: queueIndicatorBuilder,
         transition: transition,
+        maxPendingSize: maxPendingSize,
+        overflowStrategy: overflowStrategy,
       );
 
   // NOTE: Assertions that depend on runtime checks of concrete types or complex
@@ -135,6 +146,13 @@ sealed class NotificationQueue {
 
   /// Entrance/Exit animation strategy.
   final NotificationTransition transition;
+
+  /// Maximum size of the pending notifications queue.
+  /// If null, the pending queue is unbounded.
+  final int? maxPendingSize;
+
+  /// Strategy for handling queue overflow when [maxPendingSize] is reached.
+  final QueueOverflowStrategy overflowStrategy;
 
   //
   // /// The widget that renders this queue's notifications.
@@ -212,6 +230,8 @@ final class TopLeftQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.topLeft);
 }
 
@@ -227,6 +247,8 @@ final class TopCenterQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.topCenter);
 }
 
@@ -242,6 +264,8 @@ final class TopRightQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.topRight);
 }
 
@@ -257,6 +281,8 @@ final class CenterLeftQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.centerLeft);
 }
 
@@ -272,6 +298,8 @@ final class CenterRightQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.centerRight);
 }
 
@@ -287,6 +315,8 @@ final class BottomLeftQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.bottomLeft);
 }
 
@@ -302,6 +332,8 @@ final class BottomCenterQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.bottomCenter);
 }
 
@@ -317,5 +349,7 @@ final class BottomRightQueue extends NotificationQueue {
     super.tapBehavior = const TapToDismiss(),
     super.closeButtonBehavior = const AlwaysVisible(),
     super.transition = const SlideTransitionStrategy(),
+    super.maxPendingSize,
+    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
   }) : super(position: QueuePosition.bottomRight);
 }

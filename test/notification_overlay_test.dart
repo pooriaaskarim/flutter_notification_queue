@@ -11,6 +11,7 @@ void main() {
             name: 'test_channel',
             position: QueuePosition.topRight,
             defaultIcon: Icon(Icons.check),
+            defaultDismissDuration: null,
           ),
         },
         queues: {

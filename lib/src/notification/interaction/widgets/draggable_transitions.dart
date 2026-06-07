@@ -37,7 +37,8 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       ])
       ..sink();
 
-    final dragBehavior = widget.notification.queue.dragBehavior;
+    final dragBehavior = widget.notification.dragBehavior ??
+        widget.notification.queue.dragBehavior;
     final position = widget.notification.queue.position;
     final escapeThreshold = dragBehavior is ReorderAndRelocate
         ? (dragBehavior as ReorderAndRelocate).escapeThresholdInPixels
@@ -86,6 +87,12 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         Relocate() => RelocateGesturePlugin(behavior: behavior),
         Reorder() => ReorderGesturePlugin(behavior: behavior),
         ReorderAndRelocate() => ReorderRelocateGesturePlugin(
+            behavior: behavior,
+          ),
+        final Snooze behavior => SnoozeGesturePlugin(behavior: behavior),
+        final Pin behavior => PinGesturePlugin(behavior: behavior),
+        final Archive behavior => ArchiveGesturePlugin(behavior: behavior),
+        final CustomAction behavior => CustomActionGesturePlugin(
             behavior: behavior,
           ),
         Disabled() => throw UnsupportedError('Disabled behavior has no plugin'),
@@ -151,6 +158,10 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         Dismiss() => position.alignment,
         Reorder() => stateIndexOfThisItem(),
         ReorderAndRelocate() => stateIndexOfThisItem(),
+        Snooze() => position.alignment,
+        Pin() => position.alignment,
+        Archive() => position.alignment,
+        CustomAction() => position.alignment,
         _ => position,
       };
 
@@ -179,6 +190,10 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       Dismiss() => position.alignment,
       Reorder() => stateIndexOfThisItem(),
       ReorderAndRelocate() => stateIndexOfThisItem(),
+      Snooze() => position.alignment,
+      Pin() => position.alignment,
+      Archive() => position.alignment,
+      CustomAction() => position.alignment,
       _ => position,
     };
 
@@ -207,6 +222,14 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   ) {
     if (behavior is Dismiss) {
       return _edgesFromDismissZone(behavior.zones, position);
+    } else if (behavior is Snooze) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+    } else if (behavior is Pin) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+    } else if (behavior is Archive) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+    } else if (behavior is CustomAction) {
+      return _edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is Relocate) {
       return _zonesFromPositions(behavior.positions, position);
     } else if (behavior is ReorderAndRelocate) {
@@ -303,13 +326,15 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   }
 
   Widget longPressWidget() =>
-      switch (widget.notification.queue.longPressDragBehavior) {
+      switch (widget.notification.longPressDragBehavior ??
+          widget.notification.queue.longPressDragBehavior) {
         Disabled() => draggable(),
         final behavior =>
           _buildDraggable(behavior: behavior, isLongPress: true),
       };
 
-  Widget draggable() => switch (widget.notification.queue.dragBehavior) {
+  Widget draggable() => switch (widget.notification.dragBehavior ??
+      widget.notification.queue.dragBehavior) {
         Disabled() => widget.notification,
         final behavior =>
           _buildDraggable(behavior: behavior, isLongPress: false),

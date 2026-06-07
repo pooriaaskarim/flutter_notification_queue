@@ -99,11 +99,9 @@ final class FlutterNotificationQueue {
       ..sink();
   }
 
-  /// Resets the notification queue system.
-  ///
-  /// This is intended for testing purposes only.
   @visibleForTesting
   static void reset() {
+    _coordinator?.detach();
     _configuration = null;
     _coordinator = null;
   }

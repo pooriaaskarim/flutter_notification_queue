@@ -37,7 +37,7 @@ void main() {
 
       expect(events, hasLength(1));
       expect(events.first, isA<NotificationQueued>());
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
 
     test('does NOT emit when channel is disabled', () async {
@@ -56,7 +56,7 @@ void main() {
       await Future.delayed(Duration.zero);
 
       expect(events, isEmpty);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
 
     test('carries correct notification reference', () async {
@@ -69,7 +69,7 @@ void main() {
 
       final queued = events.first as NotificationQueued;
       expect(queued.notification.id, equals(n.id));
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
   });
 
@@ -93,7 +93,7 @@ void main() {
 
       final dismissed = events.whereType<NotificationDismissed>().first;
       expect(dismissed.reason, DismissReason.programmatic);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
 
     test('emits with reason=timeout', () async {
@@ -111,7 +111,7 @@ void main() {
 
       final dismissed = events.whereType<NotificationDismissed>().first;
       expect(dismissed.reason, DismissReason.timeout);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
 
     test('emits with reason=userSwipe', () async {
@@ -129,7 +129,7 @@ void main() {
 
       final dismissed = events.whereType<NotificationDismissed>().first;
       expect(dismissed.reason, DismissReason.userSwipe);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
 
     test('emits with reason=userTap', () async {
@@ -147,7 +147,7 @@ void main() {
 
       final dismissed = events.whereType<NotificationDismissed>().first;
       expect(dismissed.reason, DismissReason.userTap);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
   });
 
@@ -187,7 +187,7 @@ void main() {
       final r = relocated.first;
       expect(r.from, QueuePosition.topLeft);
       expect(r.to, QueuePosition.topRight);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
   });
 
@@ -206,7 +206,7 @@ void main() {
       final reordered = events.whereType<NotificationReordered>().first;
       expect(reordered.toIndex, 2);
       expect(reordered.notification.id, n.id);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
   });
 
@@ -224,8 +224,8 @@ void main() {
 
       expect(a, hasLength(1));
       expect(b, hasLength(1));
-      await subA.cancel();
-      await subB.cancel();
+      subA.cancel(); // ignore: unawaited_futures
+      subB.cancel(); // ignore: unawaited_futures
     });
 
     test('FlutterNotificationQueue.events is a broadcast stream', () {
@@ -253,7 +253,7 @@ void main() {
       final tapped = events.first as NotificationTapped;
       expect(tapped.behavior, isA<TapToExpand>());
       expect(tapped.notification.id, n.id);
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
 
     test('emitTapped emits for TapToAct with correct behavior', () async {
@@ -269,7 +269,7 @@ void main() {
 
       final tapped = events.whereType<NotificationTapped>().first;
       expect(tapped.behavior, isA<TapToAct>());
-      await sub.cancel();
+      sub.cancel(); // ignore: unawaited_futures
     });
   });
 }

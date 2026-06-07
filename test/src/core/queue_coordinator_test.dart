@@ -23,6 +23,7 @@ void main() {
           const NotificationChannel(
             name: 'default',
             description: 'Default channel',
+            defaultDismissDuration: null,
           ),
         },
       );
