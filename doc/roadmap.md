@@ -84,17 +84,17 @@ Solving complex rendering problems.
  
 Ensuring the UI library doesn't regress visually.
  
-### 🟡 P1: Visual Regression (Golden) Tests
+### 🟡 P1: Visual Regression (Golden) Tests (Completed)
  
 **Issue**: Current tests cover logic (`ConfigurationManager`), but FNQ is a UI library. We have no protection against CSS-like regressions (e.g., shadow clipping, border radius failures).
  
 **TODO**:
-- [ ] Integrate `golden_toolkit` or `flutter_test` goldens
-- [ ] Create Golden tests for all standard `QueueStyle`s:
-  - [ ] `FilledQueueStyle`
-  - [ ] `FlatQueueStyle`
-  - [ ] `OutlinedQueueStyle`
-- [ ] Create Golden tests for all `QueuePosition`s (ensure correct anchoring)
+- [x] Integrate `golden_toolkit` or `flutter_test` goldens
+- [x] Create Golden tests for all standard `QueueStyle`s:
+  - [x] `FilledQueueStyle`
+  - [x] `FlatQueueStyle`
+  - [x] `OutlinedQueueStyle`
+- [x] Create Golden tests for all `QueuePosition`s (ensure correct anchoring)
 
 ---
  
@@ -106,7 +106,7 @@ Ensuring the UI library doesn't regress visually.
  
 **TODO**:
 - [ ] **Keyboard Navigation**: Focus traversal for notifications
-- [ ] **Shortcuts**: `Esc` to dismiss top, `Shift+Esc` to dismiss all
+- [x] **Shortcuts**: `Esc` to dismiss top, `Shift+Esc` to dismiss all
 - [ ] **Mouse Support**: Right-click context menus (optional)
 
 ---
@@ -122,6 +122,8 @@ Ensuring the UI library doesn't regress visually.
 | Decoupled Animations | v0.4.2 | Introduced `NotificationTransition` strategy pattern with Slide, Scale, Fade, and Builder support |
 | Relocation Maturity | v0.4.3 | Automated group expansion, validation, and characteristic inheritance for relocation |
 | Adaptive Close Button | v0.4.4 | Opacity-based model with progressive enhancement for touch/mouse adaptation |
+| Visual Regression Goldens | v0.5.0 | Added native flutter_test golden tests for Flat, Filled, and Outlined styles, and queue anchoring |
+| Keyboard Shortcuts | v0.5.0 | Implemented Esc and Shift+Esc keys to dismiss newest/all notifications |
 
 ---
 

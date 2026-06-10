@@ -329,4 +329,36 @@ class QueueCoordinator {
 
   ValueListenable<Map<QueuePosition, NotificationQueue>> get activeQueues =>
       _activeQueuesNotifier;
+
+  /// Returns a list of all currently active notifications across all active
+  /// queues.
+  List<NotificationWidget> get activeNotifications {
+    final list = <NotificationWidget>[];
+    for (final key in _widgetStateKeys.values) {
+      final state = key.currentState;
+      if (state != null) {
+        list.addAll(state.activeNotifications);
+      }
+    }
+    return list;
+  }
+
+  /// Dismisses the newest active notification across all active queues.
+  void dismissNewest() {
+    final active = activeNotifications;
+    if (active.isEmpty) {
+      return;
+    }
+    // Sort by createdAt descending to find the newest
+    active.sort((final a, final b) => b.createdAt.compareTo(a.createdAt));
+    dismiss(active.first, reason: DismissReason.programmatic);
+  }
+
+  /// Dismisses all active notifications across all active queues.
+  void dismissAll() {
+    final active = activeNotifications;
+    for (final notification in active) {
+      dismiss(notification, reason: DismissReason.programmatic);
+    }
+  }
 }

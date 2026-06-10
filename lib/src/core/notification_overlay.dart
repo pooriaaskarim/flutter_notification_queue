@@ -110,23 +110,73 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 /// set of active queues changes. Each active queue provides its own
 /// [QueueWidget] which handles positioning, spacing, and notification
 /// rendering.
-class _NotificationQueueStack extends StatelessWidget {
+class _NotificationQueueStack extends StatefulWidget {
   const _NotificationQueueStack();
+
+  @override
+  State<_NotificationQueueStack> createState() =>
+      _NotificationQueueStackState();
+}
+
+class _NotificationQueueStackState extends State<_NotificationQueueStack> {
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(final BuildContext context) =>
       ValueListenableBuilder<Map<QueuePosition, NotificationQueue>>(
         valueListenable: FlutterNotificationQueue.coordinator.activeQueues,
-        builder: (final context, final activeQueues, final child) => Stack(
-          children: activeQueues.values
-              .map(
-                (final queue) => QueueWidget(
-                  key: FlutterNotificationQueue.coordinator
-                      .getWidgetKey(queue.position),
-                  queue: queue,
-                ),
-              )
-              .toList(),
-        ),
+        builder: (final context, final activeQueues, final child) {
+          final hasActive = activeQueues.isNotEmpty;
+          if (hasActive) {
+            WidgetsBinding.instance.addPostFrameCallback((final _) {
+              if (_focusNode.canRequestFocus && !_focusNode.hasFocus) {
+                _focusNode.requestFocus();
+              }
+            });
+          }
+
+          final stack = Stack(
+            children: activeQueues.values
+                .map(
+                  (final queue) => QueueWidget(
+                    key: FlutterNotificationQueue.coordinator
+                        .getWidgetKey(queue.position),
+                    queue: queue,
+                  ),
+                )
+                .toList(),
+          );
+
+          if (!hasActive) {
+            return stack;
+          }
+
+          return Focus(
+            focusNode: _focusNode,
+            autofocus: true,
+            onKeyEvent: (final node, final event) {
+              if (event is KeyDownEvent) {
+                if (event.logicalKey == LogicalKeyboardKey.escape) {
+                  final isShiftPressed =
+                      HardwareKeyboard.instance.isShiftPressed;
+                  if (isShiftPressed) {
+                    FlutterNotificationQueue.coordinator.dismissAll();
+                  } else {
+                    FlutterNotificationQueue.coordinator.dismissNewest();
+                  }
+                  return KeyEventResult.handled;
+                }
+              }
+              return KeyEventResult.ignored;
+            },
+            child: stack,
+          );
+        },
       );
 }

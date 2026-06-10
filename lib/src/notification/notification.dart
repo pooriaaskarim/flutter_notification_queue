@@ -50,8 +50,10 @@ class NotificationWidget extends StatefulWidget {
     this.priority,
     final bool initialIsPinned = false,
     this.snoozedAt,
+    final DateTime? createdAt,
   }) : _key = key,
-       isPinnedNotifier = ValueNotifier<bool>(initialIsPinned);
+       isPinnedNotifier = ValueNotifier<bool>(initialIsPinned),
+       createdAt = createdAt ?? DateTime.now();
 
   factory NotificationWidget({
     required final String message,
@@ -118,6 +120,9 @@ class NotificationWidget extends StatefulWidget {
 
   /// The timestamp when this notification was snoozed, if any.
   final DateTime? snoozedAt;
+
+  /// The timestamp when this notification was created.
+  final DateTime createdAt;
 
   /// Optional Notification ID
   ///
@@ -288,6 +293,7 @@ class NotificationWidget extends StatefulWidget {
         priority: priority,
         initialIsPinned: isPinned,
         snoozedAt: snoozedAt,
+        createdAt: createdAt,
       );
 
   NotificationWidget copyForRequeue({
@@ -314,6 +320,7 @@ class NotificationWidget extends StatefulWidget {
         priority: priority,
         initialIsPinned: isPinned,
         snoozedAt: snoozedAt,
+        createdAt: createdAt,
       );
 }
 

@@ -168,6 +168,10 @@ class QueueWidgetState extends State<QueueWidget>
   /// The number of currently active (non-pending) notifications.
   int get itemCount => _items.length;
 
+  /// The list of currently active notifications in this queue.
+  List<NotificationWidget> get activeNotifications =>
+      _items.map((final item) => item.widget).toList();
+
   /// The active-list index of [notification], or -1 if not found.
   int indexOf(final NotificationWidget notification) =>
       _indexOf(notification.id);
