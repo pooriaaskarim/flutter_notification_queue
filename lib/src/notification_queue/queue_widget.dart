@@ -442,27 +442,27 @@ class QueueWidgetState extends State<QueueWidget>
     final index = _items.indexOf(item);
     final translationY = getTranslationY(index);
 
-    return SizeTransition(
-      sizeFactor: CurvedAnimation(
-        parent: item.controller,
-        curve: Curves.fastOutSlowIn,
-      ),
-      alignment: Alignment(-1.0, alignment),
-      child: Align(
-        alignment: widget.queue.position.alignment,
-        child: Padding(
-          padding: EdgeInsets.only(
-            bottom: widget.queue.verticalDirection == VerticalDirection.down
-                ? spacing
-                : 0,
-            top: widget.queue.verticalDirection == VerticalDirection.up
-                ? spacing
-                : 0,
-          ),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            transform: Matrix4.translationValues(0, translationY, 0),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
+      transform: Matrix4.translationValues(0, translationY, 0),
+      child: SizeTransition(
+        sizeFactor: CurvedAnimation(
+          parent: item.controller,
+          curve: Curves.fastOutSlowIn,
+        ),
+        alignment: Alignment(-1.0, alignment),
+        child: Align(
+          alignment: widget.queue.position.alignment,
+          child: Padding(
+            padding: EdgeInsets.only(
+              bottom: widget.queue.verticalDirection == VerticalDirection.down
+                  ? spacing
+                  : 0,
+              top: widget.queue.verticalDirection == VerticalDirection.up
+                  ? spacing
+                  : 0,
+            ),
             child: widget.queue.transition.build(
               context,
               item.controller,
