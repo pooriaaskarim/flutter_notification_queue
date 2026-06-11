@@ -3,10 +3,12 @@ part of 'notification_queue.dart';
 class QueueWidget extends StatefulWidget {
   const QueueWidget({
     required this.queue,
+    this.isEmbeddedInLayout = false,
     super.key,
   });
 
   final NotificationQueue queue;
+  final bool isEmbeddedInLayout;
 
   @override
   State<QueueWidget> createState() => QueueWidgetState();
@@ -311,28 +313,34 @@ class QueueWidgetState extends State<QueueWidget>
   @override
   Widget build(final BuildContext context) {
     final pendingCount = _pendingNotifications.length;
+    final content = ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
+      ),
+      child: Column(
+        key: _listKey,
+        spacing: 0, // We handle spacing in the wrapper
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: widget.queue.mainAxisAlignment,
+        crossAxisAlignment: widget.queue.crossAxisAlignment,
+        verticalDirection: widget.queue.verticalDirection,
+        children: [
+          widget.queue.queueIndicatorBuilder?.call(pendingCount) ??
+              const SizedBox.shrink(),
+          for (final item in _items) _buildItem(item),
+        ],
+      ),
+    );
+
+    if (widget.isEmbeddedInLayout) {
+      return content;
+    }
+
     return SafeArea(
       child: Container(
         alignment: widget.queue.position.alignment,
         margin: widget.queue.margin,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.6,
-          ),
-          child: Column(
-            key: _listKey,
-            spacing: 0, // We handle spacing in the wrapper
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: widget.queue.mainAxisAlignment,
-            crossAxisAlignment: widget.queue.crossAxisAlignment,
-            verticalDirection: widget.queue.verticalDirection,
-            children: [
-              widget.queue.queueIndicatorBuilder?.call(pendingCount) ??
-                  const SizedBox.shrink(),
-              for (final item in _items) _buildItem(item),
-            ],
-          ),
-        ),
+        child: content,
       ),
     );
   }

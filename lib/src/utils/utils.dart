@@ -86,14 +86,30 @@ class Utils {
     name: tablet,
   );
 
-  static BoxConstraints horizontalConstraints(final BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
+  static BoxConstraints horizontalConstraints(
+    final BuildContext context, [
+    final double? customMaxWidth,
+  ]) =>
+      horizontalConstraintsForWidth(
+        MediaQuery.of(context).size.width,
+        customMaxWidth,
+      );
+
+  static BoxConstraints horizontalConstraintsForWidth(
+    final double width, [
+    final double? customMaxWidth,
+  ]) {
+    final maxW = customMaxWidth ?? 360.0;
     return BoxConstraints(
       maxWidth: (width <= _phoneBreakPoint.end)
-          ? width / 1.3
+          ? (customMaxWidth != null
+              ? customMaxWidth.clamp(0.0, width / 1.3)
+              : width / 1.3)
           : (width <= _tabletBreakPoint.end)
-              ? width / 2
-              : 500,
+              ? (customMaxWidth != null
+                  ? customMaxWidth.clamp(0.0, width / 2)
+                  : width / 2)
+              : maxW,
     );
   }
 }

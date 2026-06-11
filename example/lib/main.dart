@@ -40,7 +40,6 @@ class NFQStudioApp extends StatelessWidget {
           themeMode: state.themeMode,
           builder: (final context, final child) {
             StudioTheme.update(context);
-            StudioTheme.rebuildDescendantChildren(context);
             return FlutterNotificationQueue.builder(context, child);
           },
           home: const StudioHome(),

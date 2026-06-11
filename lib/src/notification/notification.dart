@@ -512,7 +512,10 @@ class NotificationWidgetState extends State<NotificationWidget>
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
-                    constraints: Utils.horizontalConstraints(context),
+                    constraints: Utils.horizontalConstraints(
+                      context,
+                      widget.queue.maxWidth,
+                    ),
                     curve: Curves.easeOut,
                     decoration: BoxDecoration(
                       border: theme.border,

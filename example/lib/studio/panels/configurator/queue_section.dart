@@ -10,6 +10,7 @@ import '../../widgets/queue_position_map.dart';
 import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_section_header.dart';
 import '../../widgets/studio_slider_tile.dart';
+import '../../widgets/studio_toggle_tile.dart';
 import 'relocation_selector.dart';
 
 /// A section that manages the creation, deletion, and configuration of
@@ -278,6 +279,38 @@ class _QueueEditor extends StatelessWidget {
                     ),
                   ),
             ),
+            const SizedBox(height: 12),
+            StudioToggleTile(
+              label: 'CUSTOM MAX WIDTH',
+              value: setup.maxWidth != null,
+              onChanged: (final enable) {
+                context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(
+                          maxWidth: enable ? 360.0 : null,
+                          clearMaxWidth: !enable,
+                        ),
+                      ),
+                    );
+              },
+            ),
+            if (setup.maxWidth != null) ...[
+              const SizedBox(height: 12),
+              StudioSliderTile(
+                label: 'MAX CARD WIDTH (PX)',
+                value: setup.maxWidth!,
+                min: 200,
+                max: 600,
+                divisions: 40,
+                onChanged: (final v) => context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(maxWidth: v),
+                      ),
+                    ),
+              ),
+            ],
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'VISUAL STYLE',

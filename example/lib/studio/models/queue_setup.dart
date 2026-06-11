@@ -25,6 +25,7 @@ class QueueSetup extends Equatable {
     this.relocateTargets = const {},
     this.closeButtonBehaviorType = AlwaysVisible,
     this.tapBehaviorType = TapToDismiss,
+    this.maxWidth,
   });
 
   // ── Style ──
@@ -41,6 +42,7 @@ class QueueSetup extends Equatable {
   final double spacing;
   final double verticalMargin;
   final double horizontalMargin;
+  final double? maxWidth;
 
   // ── Gestures ──
   final Type dragBehaviorType;
@@ -79,6 +81,8 @@ class QueueSetup extends Equatable {
     final Set<QueuePosition>? relocateTargets,
     final Type? closeButtonBehaviorType,
     final Type? tapBehaviorType,
+    final double? maxWidth,
+    final bool clearMaxWidth = false,
   }) =>
       QueueSetup(
         styleType: styleType ?? this.styleType,
@@ -99,6 +103,7 @@ class QueueSetup extends Equatable {
         closeButtonBehaviorType:
             closeButtonBehaviorType ?? this.closeButtonBehaviorType,
         tapBehaviorType: tapBehaviorType ?? this.tapBehaviorType,
+        maxWidth: clearMaxWidth ? null : (maxWidth ?? this.maxWidth),
       );
 
   // ── Library Mapping Helpers ──
@@ -222,6 +227,7 @@ class QueueSetup extends Equatable {
         longPressDragBehavior: toLongPressBehavior(position),
         closeButtonBehavior: toCloseButtonBehavior(),
         tapBehavior: toTapBehavior(),
+        maxWidth: maxWidth,
       );
 
   BorderRadius get _borderRadius => BorderRadius.circular(borderRadius);
@@ -244,5 +250,6 @@ class QueueSetup extends Equatable {
         relocateTargets,
         closeButtonBehaviorType,
         tapBehaviorType,
+        maxWidth,
       ];
 }

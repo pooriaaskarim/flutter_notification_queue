@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
+import '../../bloc/setup_bloc.dart';
 import '../../studio_theme.dart';
 import '../../widgets/studio_section_header.dart';
 
@@ -50,7 +52,7 @@ class _Scenario {
   final String subtitle;
   final IconData icon;
   final Color color;
-  final VoidCallback onFire;
+  final void Function(BuildContext context) onFire;
 }
 
 // Fires with a short stagger to show stacking behaviour
@@ -70,7 +72,7 @@ final _scenarios = [
     subtitle: 'Permanent error + timed warning — multi-position demo',
     icon: Icons.monitor_heart_outlined,
     color: const Color(0xFFEF4444),
-    onFire: () {
+    onFire: (final _) {
       _stagger([
         NotificationWidget(
           title: 'Service Degraded',
@@ -99,7 +101,7 @@ final _scenarios = [
     subtitle: '3 staggered notifications — tests maxStackSize overflow',
     icon: Icons.people_outline,
     color: const Color(0xFF38BDF8),
-    onFire: () {
+    onFire: (final _) {
       _stagger(
         [
           NotificationWidget(
@@ -136,7 +138,7 @@ final _scenarios = [
     subtitle: 'Success with action button — bottomCenter queue',
     icon: Icons.cloud_done_outlined,
     color: const Color(0xFF22C55E),
-    onFire: () {
+    onFire: (final _) {
       NotificationWidget(
         title: 'Sync Complete',
         message: '142 files synced to cloud. 2.3 GB transferred.',
@@ -156,7 +158,7 @@ final _scenarios = [
     subtitle: 'TapToAct — permanent card, tap to review, manual dismiss',
     icon: Icons.security_outlined,
     color: const Color(0xFFF97316),
-    onFire: () {
+    onFire: (final _) {
       NotificationWidget(
         title: '\u26a0 Unrecognised Sign-In Attempt',
         message:
@@ -178,7 +180,7 @@ final _scenarios = [
     subtitle: '10 rapid notifications — stress tests queue overflow',
     icon: Icons.bolt_outlined,
     color: const Color(0xFFA855F7),
-    onFire: () {
+    onFire: (final _) {
       final channels = ['info', 'success', 'warning', 'error'];
       final messages = [
         ('Build #47 passed', 'All 312 tests green in 4.2s.'),
@@ -213,7 +215,7 @@ final _scenarios = [
         'All 4 tap behaviors — dismiss, expand, act, disabled — staggered',
     icon: Icons.touch_app_outlined,
     color: const Color(0xFF14B8A6),
-    onFire: () {
+    onFire: (final _) {
       _stagger(
         [
           // 1 — TapToDismiss (explicit, same as default)
@@ -268,7 +270,7 @@ final _scenarios = [
     subtitle: 'un-swipeable card inside swipeable queue — override demo',
     icon: Icons.pin_drop_outlined,
     color: const Color(0xFFF59E0B),
-    onFire: () {
+    onFire: (final _) {
       NotificationWidget(
         title: 'CRITICAL SECURITY UPDATE',
         message: 'This notification has dragBehavior: Disabled override. '
@@ -293,7 +295,7 @@ final _scenarios = [
     subtitle: 'Showcases priority-aware auto-sorting & preemption eviction',
     icon: Icons.sort_rounded,
     color: const Color(0xFFF43F5E),
-    onFire: () {
+    onFire: (final _) {
       // 1. Enqueue 2 low priority notifications staggered
       _stagger(
         [
@@ -341,6 +343,52 @@ final _scenarios = [
       });
     },
   ),
+
+  // ── 9. Queue Collision Storm ──
+  _Scenario(
+    title: 'Queue Collision Storm',
+    subtitle: 'Fires to topLeft, topCenter, & topRight. Stacks them '
+        'vertically to avoid overlap on narrow screens.',
+    icon: Icons.grid_view_rounded,
+    color: const Color(0xFF6366F1),
+    onFire: (final context) {
+      final setupBloc = context.read<SetupBloc>();
+      // Activate the three queues if not already configured
+      if (!setupBloc.state.setup.queues.containsKey(QueuePosition.topLeft)) {
+        setupBloc.add(const AddQueue(QueuePosition.topLeft));
+      }
+      if (!setupBloc.state.setup.queues.containsKey(QueuePosition.topCenter)) {
+        setupBloc.add(const AddQueue(QueuePosition.topCenter));
+      }
+      if (!setupBloc.state.setup.queues.containsKey(QueuePosition.topRight)) {
+        setupBloc.add(const AddQueue(QueuePosition.topRight));
+      }
+
+      _stagger([
+        NotificationWidget(
+          title: 'Top Left Queue',
+          message: 'Fired into topLeft queue.',
+          channelName: 'info',
+          position: QueuePosition.topLeft,
+          dismissDuration: const Duration(seconds: 12),
+        ),
+        NotificationWidget(
+          title: 'Top Center Queue',
+          message: 'Fired into topCenter queue.',
+          channelName: 'warning',
+          position: QueuePosition.topCenter,
+          dismissDuration: const Duration(seconds: 12),
+        ),
+        NotificationWidget(
+          title: 'Top Right Queue',
+          message: 'Fired into topRight queue.',
+          channelName: 'error',
+          position: QueuePosition.topRight,
+          dismissDuration: const Duration(seconds: 12),
+        ),
+      ], const Duration(milliseconds: 200),);
+    },
+  ),
 ];
 
 class _ScenarioTile extends StatelessWidget {
@@ -354,7 +402,7 @@ class _ScenarioTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: scenario.onFire,
+        onTap: () => scenario.onFire(context),
         borderRadius: BorderRadius.circular(10),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
