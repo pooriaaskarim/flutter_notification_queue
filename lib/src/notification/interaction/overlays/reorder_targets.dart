@@ -86,13 +86,17 @@ class _ReorderTargetsState extends State<_ReorderTargets> {
     WidgetsBinding.instance.addPostFrameCallback((final _) {
       bool boundsChanged = false;
       for (var i = 0; i < widget.zones.length; i++) {
-        Rect? bounds;
+        // Cache the static, unshifted boundaries exactly once.
+        if (widget.zones[i].targetBounds != null) {
+          continue;
+        }
 
+        Rect? bounds;
         if (i < widget.itemKeys.length) {
           bounds = _boundsOf(widget.itemKeys[i]);
         }
 
-        if (bounds != null && widget.zones[i].targetBounds != bounds) {
+        if (bounds != null) {
           widget.zones[i].setTargetBounds(bounds);
           boundsChanged = true;
         }
@@ -162,91 +166,7 @@ class _SlotReticle extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) {
-    final targetBounds = zone.targetBounds;
-    if (targetBounds == null) {
-      return const SizedBox.shrink();
-    }
-
-    // Self-slot: completely invisible, no interaction target needed.
-    if (isSelfSlot) {
-      return Positioned.fromRect(
-        rect: targetBounds,
-        child: const SizedBox.shrink(),
-      );
-    }
-
-    final double progress = pointer == null || !isNearest
-        ? 0.0
-        : zone.calculateProgress(pointer!, 1.0 / 120.0);
-
-    final bool engaged = isNearest && progress > 0.15;
-    final bool committed = passedThreshold && engaged;
-
-    // Reticle/Recess styling
-    final Color borderColor = committed
-        ? Colors.green.withValues(alpha: 0.8)
-        : engaged
-            ? Colors.blue.withValues(alpha: 0.6)
-            : Colors.transparent;
-
-    final Color recessColor = committed
-        ? Colors.black.withValues(alpha: 0.4)
-        : engaged
-            ? Colors.black.withValues(alpha: 0.2)
-            : Colors.transparent;
-
-    return Positioned.fromRect(
-      rect: targetBounds,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // ── Reticle & Recess ──────────────────────────────────────────
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutCubic,
-            decoration: BoxDecoration(
-              color: engaged ? recessColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: engaged ? borderColor : Colors.transparent,
-                width: engaged ? 2.0 : 0.0,
-                strokeAlign: BorderSide.strokeAlignOutside,
-              ),
-              boxShadow: [
-                if (committed)
-                  BoxShadow(
-                    color: Colors.green.withValues(alpha: 0.25),
-                    blurRadius: 15,
-                    spreadRadius: 2,
-                  )
-                else if (engaged)
-                  BoxShadow(
-                    color: Colors.blue.withValues(alpha: 0.15),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-              ],
-            ),
-          ),
-          // ── Magnetic Lock Ghost ───────────────────────────────────────
-          // When locked in, show a ghost of the notification card exactly
-          // filling the bounds of the target slot.
-          if (committed)
-            Center(
-              child: Opacity(
-                opacity: 0.55,
-                child: ColorFiltered(
-                  colorFilter: const ColorFilter.matrix(_kDesatMatrix),
-                  child: ExcludeSemantics(
-                    child: IgnorePointer(
-                      child: ghostChild,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+    // Reticles are now rendered live inside the sliding QueueWidget itself!
+    return const SizedBox.shrink();
   }
 }

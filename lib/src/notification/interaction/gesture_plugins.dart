@@ -237,6 +237,7 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
 
     FlutterNotificationQueue.coordinator.bringToFront(position);
     state.widget.notification.key.currentState?.ditchDismissTimer();
+    queueState?.startDragReorder(state.widget.notification.id, currentIndex);
     state
       .._activeZoneIndex = null
       .._activeReorderZones = _zonesFromSlots(itemCount, currentIndex)
@@ -256,6 +257,16 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
       local: details.delta,
       global: details.globalPosition,
     );
+    final pointer = details.globalPosition;
+    final zones = state._activeReorderZones ?? [];
+    final nearestIndex = state._nearestZoneIndexWithHysteresis(pointer, zones);
+    if (nearestIndex != null) {
+      final targetIdx = zones[nearestIndex].targetIndex;
+      final position = state.widget.notification.queue.position;
+      final queueKey =
+          FlutterNotificationQueue.coordinator.getWidgetKey(position);
+      queueKey.currentState?.updateDragTarget(targetIdx);
+    }
   }
 
   @override
@@ -263,6 +274,11 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
     final DraggableTransitionsState state,
     final DraggableDetails details,
   ) {
+    final position = state.widget.notification.queue.position;
+    final queueKey =
+        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+    queueKey.currentState?.endDragReorder();
+
     final pointer = state._dragOffsetPairNotifier.value?.global;
     if (pointer != null) {
       final zones = state._activeReorderZones ?? [];
@@ -354,6 +370,7 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
 
     FlutterNotificationQueue.coordinator.bringToFront(position);
     state.widget.notification.key.currentState?.ditchDismissTimer();
+    queueState?.startDragReorder(state.widget.notification.id, currentIndex);
     state
       .._activeZoneIndex = null
       .._activeReorderZones = _zonesFromSlots(itemCount, currentIndex)
@@ -373,6 +390,33 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
       local: details.delta,
       global: details.globalPosition,
     );
+
+    final pointer = details.globalPosition;
+    final position = state.widget.notification.queue.position;
+    final queueKey =
+        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+    final queueState = queueKey.currentState;
+
+    if (queueState != null) {
+      final box = queueState.listRenderBox;
+      bool isEscaped = false;
+      if (box != null) {
+        final rect = box.localToGlobal(Offset.zero) & box.size;
+        final inflatedRect = rect.inflate(behavior.escapeThresholdInPixels);
+        isEscaped = !inflatedRect.contains(pointer);
+      }
+
+      if (isEscaped) {
+        queueState.clearDragTarget();
+      } else {
+        final zones = state._activeReorderZones ?? [];
+        final nearestIndex = state._nearestZoneIndexWithHysteresis(pointer, zones);
+        if (nearestIndex != null) {
+          final targetIdx = zones[nearestIndex].targetIndex;
+          queueState.updateDragTarget(targetIdx);
+        }
+      }
+    }
   }
 
   @override
@@ -380,8 +424,12 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
     final DraggableTransitionsState state,
     final DraggableDetails details,
   ) {
-    final pointer = state._dragOffsetPairNotifier.value?.global;
     final position = state.widget.notification.queue.position;
+    final queueKey =
+        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+    queueKey.currentState?.endDragReorder();
+
+    final pointer = state._dragOffsetPairNotifier.value?.global;
     if (pointer != null) {
       final reorderZones = state._activeReorderZones ?? [];
       final passedThreshold = state._passedThreshold(

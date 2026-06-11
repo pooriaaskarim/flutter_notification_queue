@@ -23,6 +23,93 @@ class QueueWidgetState extends State<QueueWidget>
   /// bounds.
   final GlobalKey _listKey = GlobalKey();
 
+  String? _draggedItemId;
+  int? _draggedTargetIndex;
+  int? _draggedItemOriginIndex;
+
+  void startDragReorder(final String itemId, final int originIndex) {
+    setState(() {
+      _draggedItemId = itemId;
+      _draggedItemOriginIndex = originIndex;
+      _draggedTargetIndex = originIndex;
+    });
+  }
+
+  void updateDragTarget(final int targetIndex) {
+    if (_draggedTargetIndex != targetIndex) {
+      setState(() {
+        _draggedTargetIndex = targetIndex;
+      });
+    }
+  }
+
+  void clearDragTarget() {
+    if (_draggedTargetIndex != null) {
+      setState(() {
+        _draggedTargetIndex = null;
+      });
+    }
+  }
+
+  void endDragReorder() {
+    setState(() {
+      _draggedItemId = null;
+      _draggedItemOriginIndex = null;
+      _draggedTargetIndex = null;
+    });
+  }
+
+  double _getItemHeight(final int index) {
+    if (index < 0 || index >= _items.length) {
+      return 0.0;
+    }
+    final key = _items[index].globalKey;
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null && box.hasSize) {
+      return box.size.height;
+    }
+    return 80.0;
+  }
+
+  double getTranslationY(final int i) {
+    final origin = _draggedItemOriginIndex;
+    final target = _draggedTargetIndex;
+    if (origin == null || target == null || origin == target) {
+      return 0.0;
+    }
+
+    final spacing = widget.queue.spacing;
+    final directionMultiplier =
+        widget.queue.verticalDirection == VerticalDirection.down ? 1.0 : -1.0;
+
+    if (target < origin) {
+      if (i >= target && i < origin) {
+        final draggedHeight = _getItemHeight(origin) + spacing;
+        return draggedHeight * directionMultiplier;
+      }
+      if (i == origin) {
+        double totalOffset = 0.0;
+        for (int k = target; k < origin; k++) {
+          totalOffset += _getItemHeight(k) + spacing;
+        }
+        return -totalOffset * directionMultiplier;
+      }
+    } else if (target > origin) {
+      if (i > origin && i <= target) {
+        final draggedHeight = _getItemHeight(origin) + spacing;
+        return -draggedHeight * directionMultiplier;
+      }
+      if (i == origin) {
+        double totalOffset = 0.0;
+        for (int k = origin + 1; k <= target; k++) {
+          totalOffset += _getItemHeight(k) + spacing;
+        }
+        return totalOffset * directionMultiplier;
+      }
+    }
+    return 0.0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -352,6 +439,9 @@ class QueueWidgetState extends State<QueueWidget>
     final isLast = item == _items.last;
     final spacing = isLast ? 0.0 : widget.queue.spacing;
 
+    final index = _items.indexOf(item);
+    final translationY = getTranslationY(index);
+
     return SizeTransition(
       sizeFactor: CurvedAnimation(
         parent: item.controller,
@@ -369,14 +459,19 @@ class QueueWidgetState extends State<QueueWidget>
                 ? spacing
                 : 0,
           ),
-          child: widget.queue.transition.build(
-            context,
-            item.controller,
-            widget.queue.position,
-            KeyedSubtree(
-              key: item.globalKey,
-              child: DraggableTransitions(
-                notification: item.widget,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            transform: Matrix4.translationValues(0, translationY, 0),
+            child: widget.queue.transition.build(
+              context,
+              item.controller,
+              widget.queue.position,
+              KeyedSubtree(
+                key: item.globalKey,
+                child: DraggableTransitions(
+                  notification: item.widget,
+                ),
               ),
             ),
           ),

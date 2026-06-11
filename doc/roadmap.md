@@ -23,7 +23,7 @@ Complexity Tiers:
 
 | ID | Feature / Job Name | Phase | Priority | Complexity | Status | Target Files |
 |---|---|---|---|---|---|---|
-| **F-01** | Drag-to-Reorder within Queue | Phase 2 | 🟡 P1 | 🔴 High | 📅 Pending | `lib/src/notification_queue/queue_widget.dart` |
+| **F-01** | Drag-to-Reorder within Queue | Phase 2 | *Completed* | 🔴 High | ✅ Completed | `lib/src/notification_queue/queue_widget.dart` |
 | **F-02** | Pin-to-Edge Interaction (Pinning) | Phase 2 | 🟡 P1 | 🟡 Medium | 📅 Pending | `lib/src/notification/notification.dart` |
 | **F-03** | Desktop Parking & Runtime Config | Phase 2 | 🟢 P2 | 🟡 Medium | 📅 Pending | `lib/src/core/queue_coordinator.dart` |
 | **F-04** | Notification Grouping (Bundling) | Phase 3 | 🟡 P1 | 🔴 High | 📅 Pending | `lib/src/notification_queue/queue_widget.dart` |
@@ -39,7 +39,7 @@ Complexity Tiers:
 
 ## 🛠️ Feature Deep Dive: Implementation Blueprints
 
-### F-01: Drag-to-Reorder / Arbitrary Index Insertion
+### F-01: Drag-to-Reorder / Arbitrary Index Insertion (Completed)
 * **Category**: Phase 2 (UX & Interaction Polish)
 * **Complexity**: 🔴 High
 * **Technical Challenges**:
@@ -134,6 +134,7 @@ Complexity Tiers:
 
 | Item | Version | Summary | Target Files |
 |------|---------|---------|---|
+| **F-01: Drag-to-Reorder** | v0.5.2 | Premium live-shifting layout during drag. Neighboring items translate in real-time to open up a target slot, with unshifted bounds cached during the gesture lifecycle. | `lib/src/notification_queue/queue_widget.dart` |
 | **F-09: Smart Layout** | v0.5.1 | Custom `_QueueOverlayLayoutDelegate` dynamically shifts adjacent colliding queues under layout space constraints (using `CustomMultiChildLayout`). | `lib/src/core/notification_overlay.dart` |
 | **F-10: Keyboard Shortcuts** | v0.5.0 | Global overlay-level keyboard listeners to dismiss individual or all active cards programmatically (`Esc` / `Shift+Esc`). | `lib/src/core/notification_overlay.dart` |
 | **F-11: Visual Golden Tests** | v0.5.0 | Added native `flutter_test` golden tests for Flat, Filled, and Outlined styles, and queue anchoring. | `test/golden/visual_regression_test.dart` |
