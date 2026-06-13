@@ -161,8 +161,7 @@ final _scenarios = [
     onFire: (final _) {
       NotificationWidget(
         title: '\u26a0 Unrecognised Sign-In Attempt',
-        message:
-            'Login from Lagos, Nigeria \u00b7 Chrome on Windows. '
+        message: 'Login from Lagos, Nigeria \u00b7 Chrome on Windows. '
             'Tap to review.',
         channelName: 'warning',
         dismissDuration: null,
@@ -221,8 +220,7 @@ final _scenarios = [
           // 1 — TapToDismiss (explicit, same as default)
           NotificationWidget(
             title: 'Tap \u2192 Dismiss',
-            message:
-                'TapToDismiss: tap anywhere on this card to close it '
+            message: 'TapToDismiss: tap anywhere on this card to close it '
                 'immediately.',
             channelName: 'info',
             dismissDuration: null,
@@ -364,29 +362,32 @@ final _scenarios = [
         setupBloc.add(const AddQueue(QueuePosition.topRight));
       }
 
-      _stagger([
-        NotificationWidget(
-          title: 'Top Left Queue',
-          message: 'Fired into topLeft queue.',
-          channelName: 'info',
-          position: QueuePosition.topLeft,
-          dismissDuration: const Duration(seconds: 12),
-        ),
-        NotificationWidget(
-          title: 'Top Center Queue',
-          message: 'Fired into topCenter queue.',
-          channelName: 'warning',
-          position: QueuePosition.topCenter,
-          dismissDuration: const Duration(seconds: 12),
-        ),
-        NotificationWidget(
-          title: 'Top Right Queue',
-          message: 'Fired into topRight queue.',
-          channelName: 'error',
-          position: QueuePosition.topRight,
-          dismissDuration: const Duration(seconds: 12),
-        ),
-      ], const Duration(milliseconds: 200),);
+      _stagger(
+        [
+          NotificationWidget(
+            title: 'Top Left Queue',
+            message: 'Fired into topLeft queue.',
+            channelName: 'info',
+            position: QueuePosition.topLeft,
+            dismissDuration: const Duration(seconds: 12),
+          ),
+          NotificationWidget(
+            title: 'Top Center Queue',
+            message: 'Fired into topCenter queue.',
+            channelName: 'warning',
+            position: QueuePosition.topCenter,
+            dismissDuration: const Duration(seconds: 12),
+          ),
+          NotificationWidget(
+            title: 'Top Right Queue',
+            message: 'Fired into topRight queue.',
+            channelName: 'error',
+            position: QueuePosition.topRight,
+            dismissDuration: const Duration(seconds: 12),
+          ),
+        ],
+        const Duration(milliseconds: 200),
+      );
     },
   ),
 ];

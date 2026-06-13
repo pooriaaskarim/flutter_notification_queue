@@ -42,15 +42,16 @@ sealed class NotificationQueue {
     this.maxPendingSize,
     this.overflowStrategy = QueueOverflowStrategy.discardOldest,
     this.maxWidth,
-  }) : assert(maxStackSize > 0, 'maxStackSize must be greater than 0'),
-       assert(
-         maxPendingSize == null || maxPendingSize > 0,
-         'maxPendingSize must be greater than 0',
-       ),
-       assert(
-         maxWidth == null || maxWidth > 0,
-         'maxWidth must be greater than 0',
-       );
+    this.groupingBehavior = const QueueGroupingBehavior(),
+  })  : assert(maxStackSize > 0, 'maxStackSize must be greater than 0'),
+        assert(
+          maxPendingSize == null || maxPendingSize > 0,
+          'maxPendingSize must be greater than 0',
+        ),
+        assert(
+          maxWidth == null || maxWidth > 0,
+          'maxWidth must be greater than 0',
+        );
 
   factory NotificationQueue.defaultQueue({
     final QueuePosition position = QueuePosition.topCenter,
@@ -69,6 +70,8 @@ sealed class NotificationQueue {
     final QueueOverflowStrategy overflowStrategy =
         QueueOverflowStrategy.discardOldest,
     final double? maxWidth,
+    final QueueGroupingBehavior groupingBehavior =
+        const QueueGroupingBehavior(),
   }) =>
       position.generateQueue(
         maxStackSize: maxStackSize,
@@ -84,6 +87,7 @@ sealed class NotificationQueue {
         maxPendingSize: maxPendingSize,
         overflowStrategy: overflowStrategy,
         maxWidth: maxWidth,
+        groupingBehavior: groupingBehavior,
       );
 
   // NOTE: Assertions that depend on runtime checks of concrete types or complex
@@ -165,6 +169,9 @@ sealed class NotificationQueue {
   /// If null, falls back to the default responsive width constraints.
   final double? maxWidth;
 
+  /// Configuration for notification grouping/bundling.
+  final QueueGroupingBehavior groupingBehavior;
+
   //
   // /// The widget that renders this queue's notifications.
   // // The widget is now managed by the Coordinator via QueueState/builder?
@@ -244,6 +251,7 @@ final class TopLeftQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.topLeft);
 }
 
@@ -262,6 +270,7 @@ final class TopCenterQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.topCenter);
 }
 
@@ -280,6 +289,7 @@ final class TopRightQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.topRight);
 }
 
@@ -298,6 +308,7 @@ final class CenterLeftQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.centerLeft);
 }
 
@@ -316,6 +327,7 @@ final class CenterRightQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.centerRight);
 }
 
@@ -334,6 +346,7 @@ final class BottomLeftQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.bottomLeft);
 }
 
@@ -352,6 +365,7 @@ final class BottomCenterQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.bottomCenter);
 }
 
@@ -370,5 +384,6 @@ final class BottomRightQueue extends NotificationQueue {
     super.maxPendingSize,
     super.overflowStrategy = QueueOverflowStrategy.discardOldest,
     super.maxWidth,
+    super.groupingBehavior = const QueueGroupingBehavior(),
   }) : super(position: QueuePosition.bottomRight);
 }

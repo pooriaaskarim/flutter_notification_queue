@@ -229,8 +229,8 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
     final id = 'demo_${DateTime.now().millisecondsSinceEpoch}';
     final channelName = widget.setupState.setup.channels.keys.first;
     final channelSetup = widget.setupState.setup.channels[channelName];
-    final resolvedPosition = channelSetup?.position ??
-        widget.setupState.activeQueuePosition;
+    final resolvedPosition =
+        channelSetup?.position ?? widget.setupState.activeQueuePosition;
     final n = NotificationWidget(
       id: id,
       title: 'Programmatic Demo',

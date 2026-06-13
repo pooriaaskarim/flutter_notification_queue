@@ -97,7 +97,8 @@ void main() {
       expect(newPos1.dy, closeTo(startPos.dy, 1.0));
     });
 
-    testWidgets('Shifts items visually during drag before drop', (final tester) async {
+    testWidgets('Shifts items visually during drag before drop',
+        (final tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           builder: FlutterNotificationQueue.builder,
@@ -142,7 +143,8 @@ void main() {
       // Wait for AnimatedContainer shift duration
       await tester.pump(const Duration(milliseconds: 300));
 
-      // Measure Item 1's position. It should have shifted down into Item 2's space.
+      // Measure Item 1's position. It should have shifted down into
+      // Item 2's space.
       final shiftedPos1 = tester.getCenter(notifFinder1);
       expect(shiftedPos1.dy, closeTo(startPos.dy, 5.0));
 

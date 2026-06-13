@@ -257,8 +257,7 @@ void main() {
 
     testWidgets(
         'Overlapping adjacent bottom queues are shifted upward to '
-        'avoid collision',
-        (final tester) async {
+        'avoid collision', (final tester) async {
       tester.view.physicalSize = const Size(300, 600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -324,8 +323,7 @@ void main() {
 
     testWidgets(
         'Non-overlapping adjacent bottom queues with custom maxWidth '
-        'are not shifted upward',
-        (final tester) async {
+        'are not shifted upward', (final tester) async {
       tester.view.physicalSize = const Size(800, 600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -393,8 +391,7 @@ void main() {
 
     testWidgets(
         'Overlapping adjacent center queues are shifted downward to '
-        'avoid collision',
-        (final tester) async {
+        'avoid collision', (final tester) async {
       tester.view.physicalSize = const Size(300, 600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -461,8 +458,7 @@ void main() {
 
     testWidgets(
         'Non-overlapping adjacent center queues with custom maxWidth '
-        'are not shifted',
-        (final tester) async {
+        'are not shifted', (final tester) async {
       tester.view.physicalSize = const Size(800, 600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);

@@ -475,7 +475,8 @@ class _LiftedFeedbackState extends State<_LiftedFeedback>
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOut,
             width: widget.widgetSize.width > 0 ? widget.widgetSize.width : null,
-            height: widget.widgetSize.height > 0 ? widget.widgetSize.height : null,
+            height:
+                widget.widgetSize.height > 0 ? widget.widgetSize.height : null,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               boxShadow: [

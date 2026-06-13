@@ -25,6 +25,7 @@ enum QueuePosition {
         maxPendingSize: anotherQueue.maxPendingSize,
         overflowStrategy: anotherQueue.overflowStrategy,
         maxWidth: anotherQueue.maxWidth,
+        groupingBehavior: anotherQueue.groupingBehavior,
       );
 
   NotificationQueue generateQueue({
@@ -42,6 +43,8 @@ enum QueuePosition {
     final QueueOverflowStrategy overflowStrategy =
         QueueOverflowStrategy.discardOldest,
     final double? maxWidth,
+    final QueueGroupingBehavior groupingBehavior =
+        const QueueGroupingBehavior(),
   }) {
     switch (this) {
       case topLeft:
@@ -59,6 +62,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case topCenter:
         return TopCenterQueue(
@@ -75,6 +79,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case topRight:
         return TopRightQueue(
@@ -91,6 +96,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case centerLeft:
         return CenterLeftQueue(
@@ -107,6 +113,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case centerRight:
         return CenterRightQueue(
@@ -123,6 +130,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case bottomLeft:
         return BottomLeftQueue(
@@ -139,6 +147,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case bottomCenter:
         return BottomCenterQueue(
@@ -155,6 +164,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case bottomRight:
         return BottomRightQueue(
@@ -171,6 +181,7 @@ enum QueuePosition {
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
           maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
     }
   }

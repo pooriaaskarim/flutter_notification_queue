@@ -410,7 +410,8 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
         queueState.clearDragTarget();
       } else {
         final zones = state._activeReorderZones ?? [];
-        final nearestIndex = state._nearestZoneIndexWithHysteresis(pointer, zones);
+        final nearestIndex =
+            state._nearestZoneIndexWithHysteresis(pointer, zones);
         if (nearestIndex != null) {
           final targetIdx = zones[nearestIndex].targetIndex;
           queueState.updateDragTarget(targetIdx);

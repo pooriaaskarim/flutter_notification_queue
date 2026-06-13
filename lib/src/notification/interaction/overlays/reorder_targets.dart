@@ -165,8 +165,7 @@ class _SlotReticle extends StatelessWidget {
   final Widget ghostChild;
 
   @override
-  Widget build(final BuildContext context) {
-    // Reticles are now rendered live inside the sliding QueueWidget itself!
-    return const SizedBox.shrink();
-  }
+  Widget build(final BuildContext context) =>
+      // Reticles are now rendered live inside the sliding QueueWidget itself!
+      const SizedBox.shrink();
 }

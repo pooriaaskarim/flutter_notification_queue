@@ -42,10 +42,8 @@ class _StudioShellState extends State<_StudioShell> {
             ),
           ),
           centerTitle: true,
-          backgroundColor: Theme.of(context)
-              .colorScheme
-              .surface
-              .withValues(alpha: 0.85),
+          backgroundColor:
+              Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
           elevation: 0,
           actions: [
             BlocBuilder<StudioBloc, StudioState>(
