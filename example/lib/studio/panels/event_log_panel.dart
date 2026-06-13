@@ -280,12 +280,12 @@ class _EventMeta {
           :final notification,
           :final actionName,
         ) =>
-            _EventMeta(
-                label: 'Action',
-                color: const Color(0xFF10B981), // emerald-500
-                badge: actionName,
-                subtitle: notification.title ?? notification.message,
-              ),
+          _EventMeta(
+            label: 'Action',
+            color: const Color(0xFF10B981), // emerald-500
+            badge: actionName,
+            subtitle: notification.title ?? notification.message,
+          ),
       };
 }
 

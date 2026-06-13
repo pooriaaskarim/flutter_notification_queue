@@ -24,6 +24,8 @@ enum QueuePosition {
         transition: anotherQueue.transition,
         maxPendingSize: anotherQueue.maxPendingSize,
         overflowStrategy: anotherQueue.overflowStrategy,
+        maxWidth: anotherQueue.maxWidth,
+        groupingBehavior: anotherQueue.groupingBehavior,
       );
 
   NotificationQueue generateQueue({
@@ -40,6 +42,9 @@ enum QueuePosition {
     final int? maxPendingSize,
     final QueueOverflowStrategy overflowStrategy =
         QueueOverflowStrategy.discardOldest,
+    final double? maxWidth,
+    final QueueGroupingBehavior groupingBehavior =
+        const QueueGroupingBehavior(),
   }) {
     switch (this) {
       case topLeft:
@@ -56,6 +61,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case topCenter:
         return TopCenterQueue(
@@ -71,6 +78,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case topRight:
         return TopRightQueue(
@@ -86,6 +95,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case centerLeft:
         return CenterLeftQueue(
@@ -101,6 +112,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case centerRight:
         return CenterRightQueue(
@@ -116,6 +129,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case bottomLeft:
         return BottomLeftQueue(
@@ -131,6 +146,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case bottomCenter:
         return BottomCenterQueue(
@@ -146,6 +163,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
       case bottomRight:
         return BottomRightQueue(
@@ -161,6 +180,8 @@ enum QueuePosition {
           transition: transition ?? const SlideTransitionStrategy(),
           maxPendingSize: maxPendingSize,
           overflowStrategy: overflowStrategy,
+          maxWidth: maxWidth,
+          groupingBehavior: groupingBehavior,
         );
     }
   }

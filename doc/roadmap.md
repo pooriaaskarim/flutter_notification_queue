@@ -1,134 +1,146 @@
-# FNQ Roadmap
+# FNQ Unified Development Roadmap & Tracking Board
 
-This document tracks planned improvements, known issues, and TODO items for `flutter_notification_queue`, organized by priority and phased for dependency-aware implementation.
-
----
-
-## Priority System
-
-- 🔴 **P0 (Critical)**: Blocks maturity, must fix before v1.0
-- 🟡 **P1 (High)**: Important for production use, correctness issues
-- 🟢 **P2 (Medium)**: Nice-to-have, quality-of-life improvements
-- 🔵 **P3 (Low)**: Future considerations, micro-optimizations
+This document tracks planned improvements, technical blueprints, and completion statuses for `flutter_notification_queue`, organized by priority phases and complexity tiers.
 
 ---
 
-## Phase 1 — Architectural Maturity
+## 📊 Status Board & Complexity Matrix
 
-Refining the "Unified Core" to be fully agnostic of visual implementation.
+```
+Priority Tiers:
+🔴 P0 (Critical) : Blocks library maturity or correctness; must fix before release.
+🟡 P1 (High)     : High-value features, crucial for standard production use.
+🟢 P2 (Medium)   : Nice-to-have features or major quality-of-life adjustments.
+🔵 P3 (Low)      : Future considerations or micro-optimizations.
 
-### 🟡 P1: Decoupled Animation Strategy (Completed)
+Complexity Tiers:
+🟢 Low    : Styling, minor parameter additions, or basic unit tests.
+🟡 Medium : State machine updates, layout mathematics, or local file integrations.
+🔴 High   : Canvas rendering, cross-boundary gesture tracking, or custom multi-child positioning.
+```
 
-*Moved to Completed section.*
+### 🧭 Active Feature Tracking Matrix
 
----
-
-## Phase 2 — UX & Interaction Polish
- 
-Focusing on the "Feel" and "Value" of interactions.
- 
-### 🟡 P1: Relocation & Interaction Maturity
- 
-**Issue**: Relocation feels "immature" and lacks clear utility (especially on Desktop). Dismiss/Relocate UI is incomplete.
- 
-**TODO**:
-- [x] **Relocation Engine & Validation**:
-  - [x] **Self-Inclusion**: Auto-add source to target set.
-  - [x] **Expansion**: Auto-generate sibling queues.
-  - [x] **Cross-Group Validation**: Prevent position conflicts at init.
-  - [x] **Characteristic Inheritance**: Clones style, transition, and constraints.
-- [ ] **Interaction Refinement**:
-  - [x] **Corner Interaction**: Independent edge hit detection and distinct axis feedback.
-  - [ ] **Unified Corner Bars**: Cohesive L-shaped visual for adjacent dismissal zones (Future Consideration).
-- [ ] **Relocation Purpose**:
-  - [ ] Research/Define Desktop value (e.g., "Park" notification in a corner).
-  - [ ] **Pinning**: "Pin to Edge" functionality for deferred action.
-  - [ ] **Runtime Config**: Drag-to-move permanently updates channel config?
-- [ ] **Sorting & Reordering**:
-  - [ ] Implement drag-to-reorder within the same queue.
-  - [ ] **Structural Enhancements**: data structures to support arbitrary index insertion.
-- [ ] **Target UI**:
-  - [ ] Replace "Placeholder" Drop Zones with production-grade UI (blur, scale, icons).
-- [x] **Input Resilience** (Zombie Prevention):
-  - [x] Handle `CloseButtonBehavior.never` + Touch Screen (adaptive opacity fallback).
-  - [x] Ensure no notification becomes "undismissable" due to config/platform mismatch.
-  - [x] **Progressive Enhancement**: Evidence-based mouse detection for hybrid devices.
- 
-### 🟡 P1: Animation Harmony (Completed)
- 
-*Moved to Completed section.*
- 
----
- 
-## Phase 3 — Advanced Layout Engine
- 
-Solving complex rendering problems.
- 
-### 🟢 P2: Smart Layout & Collision
- 
-**Issue**: On small screens, neighbor positions (e.g., `TopCenter` vs `TopRight`) collide/overlap.
- 
-**TODO**:
-- [ ] **Collision Detection**: Calculate screen width vs Widget width to detect overlaps.
-- [ ] **Responsive Constraints**: Dynamic `maxWidth` allocation based on available screen real estate and active neighbors.
- 
-### 🟢 P2: Notification Bundling (Grouping)
-- [ ] "Gmail-style" bundling for high-frequency channels.
- 
-### 🟢 P2: Persistent History
-- [ ] In-app notification log/history viewer.
-
----
- 
-## Phase 4 — Robustness & Verification
- 
-Ensuring the UI library doesn't regress visually.
- 
-### 🟡 P1: Visual Regression (Golden) Tests
- 
-**Issue**: Current tests cover logic (`ConfigurationManager`), but FNQ is a UI library. We have no protection against CSS-like regressions (e.g., shadow clipping, border radius failures).
- 
-**TODO**:
-- [ ] Integrate `golden_toolkit` or `flutter_test` goldens
-- [ ] Create Golden tests for all standard `QueueStyle`s:
-  - [ ] `FilledQueueStyle`
-  - [ ] `FlatQueueStyle`
-  - [ ] `OutlinedQueueStyle`
-- [ ] Create Golden tests for all `QueuePosition`s (ensure correct anchoring)
-
----
- 
-## Phase 5 — Platform Perfection
- 
-### 🔵 P3: Desktop & Web Polish
- 
-**Issue**: Native feel on non-mobile platforms.
- 
-**TODO**:
-- [ ] **Keyboard Navigation**: Focus traversal for notifications
-- [ ] **Shortcuts**: `Esc` to dismiss top, `Shift+Esc` to dismiss all
-- [ ] **Mouse Support**: Right-click context menus (optional)
+| ID | Feature / Job Name | Phase | Priority | Complexity | Status | Target Files |
+|---|---|---|---|---|---|---|
+| **F-01** | Drag-to-Reorder within Queue | Phase 2 | *Completed* | 🔴 High | ✅ Completed | `lib/src/notification_queue/queue_widget.dart` |
+| **F-02** | Pin-to-Edge Interaction (Pinning) | Phase 2 | 🟡 P1 | 🟡 Medium | 📅 Pending | `lib/src/notification/notification.dart` |
+| **F-03** | Desktop Parking & Runtime Config | Phase 2 | 🟢 P2 | 🟡 Medium | 📅 Pending | `lib/src/core/queue_coordinator.dart` |
+| **F-04** | Notification Grouping (Bundling) | Phase 3 | 🟡 P1 | 🔴 High | 📅 Pending | `lib/src/notification_queue/queue_widget.dart` |
+| **F-05** | Persistent History Log Database | Phase 3 | 🟢 P2 | 🟡 Medium | 📅 Pending | `lib/src/core/history_logger.dart` |
+| **F-06** | Focus Traversal & Accessibility | Phase 5 | 🟢 P2 | 🟢 Low | 📅 Pending | `lib/src/core/notification_overlay.dart` |
+| **F-07** | Context Menu Support (Right-click) | Phase 5 | 🔵 P3 | 🟢 Low | 📅 Pending | `lib/src/notification/notification.dart` |
+| **F-08** | L-Shaped Unified Corner Bars | Phase 2 | 🔵 P3 | 🟡 Medium | 📅 Pending | `lib/src/notification/interaction/overlays/dismissal_targets.dart` |
+| **F-09** | Smart Layout & Overlap Avoidance | Phase 3 | *Completed* | 🔴 High | ✅ Completed | `lib/src/core/notification_overlay.dart` |
+| **F-10** | Keyboard Shortcuts (`Esc` / `Shift+Esc`)| Phase 5 | *Completed* | 🟡 Medium | ✅ Completed | `lib/src/core/notification_overlay.dart` |
+| **F-11** | Visual Golden Verification Suite | Phase 4 | *Completed* | 🟡 Medium | ✅ Completed | `test/golden/visual_regression_test.dart` |
 
 ---
 
-## Completed ✅
+## 🛠️ Feature Deep Dive: Implementation Blueprints
 
-| Item | Version | Summary |
-|------|---------|---------|
-| Unified Core Engine | v0.4.0 | Replaced `NotificationManager` singleton with `QueueCoordinator` |
-| Stateless Queues | v0.4.0 | Moved queue state out of configuration objects |
-| Documentation Overhaul | v0.4.2 | Refined tone, added API reference and concrete examples |
-| Animation Harmony | v0.4.2 | Refactored `QueueWidget` to Managed State for synchronized layout animations |
-| Decoupled Animations | v0.4.2 | Introduced `NotificationTransition` strategy pattern with Slide, Scale, Fade, and Builder support |
-| Relocation Maturity | v0.4.3 | Automated group expansion, validation, and characteristic inheritance for relocation |
-| Adaptive Close Button | v0.4.4 | Opacity-based model with progressive enhancement for touch/mouse adaptation |
+### F-01: Drag-to-Reorder / Arbitrary Index Insertion (Completed)
+* **Category**: Phase 2 (UX & Interaction Polish)
+* **Complexity**: 🔴 High
+* **Technical Challenges**:
+  * Switching `QueueWidget` items from a sequential list animation to a coordinate-based drag detection.
+  * Intercepting active index position during standard drag moves inside `GestureStateMachine`.
+  * Dynamically shifting neighboring items up/down to show visual insertion gaps.
+* **Verification Criteria**:
+  * Widget tests dragging index 2 to index 0, asserting correct list updates.
+  * Verifying animations resolve stably without list rebuild glitches.
 
 ---
 
-## How to Contribute
+### F-02: Pin-to-Edge Interaction (Pinning)
+* **Category**: Phase 2 (UX & Interaction Polish)
+* **Complexity**: 🟡 Medium
+* **Technical Challenges**:
+  * Extending `NotificationWidget` parameters to hold an active `isPinned` state.
+  * Inhibiting standard drag-to-dismiss behavior when pinned.
+  * Modifying the dismissal layout delegate to skip auto-dismissal timers for pinned notifications.
+* **Verification Criteria**:
+  * Verify pinned notifications do not dismiss when auto-timer expires.
+  * Assert `dismiss()` calls are ignored or trigger warning callbacks unless unpinned.
 
-1. **Claim**: Comment on GitHub issue
-2. **Branch**: `feat/<item-name>`
-3. **Test**: Add tests before implementation
-4. **Document**: Update docs alongside code
-5. **Update**: Check off item and move to Completed
+---
+
+### F-03: Desktop Relocation (Parking & Runtime Config)
+* **Category**: Phase 2 (UX & Interaction Polish)
+* **Complexity**: 🟡 Medium
+* **Technical Challenges**:
+  * Storing channel-to-position mappings in a runtime configuration register.
+  * Dynamically updating `ConfigurationManager` bindings on drag release into target zones.
+* **Verification Criteria**:
+  * Verify that dragging a channel `A` notification from `topLeft` to `topRight` causes subsequent channel `A` notifications to pop up directly at `topRight`.
+
+---
+
+### F-04: Gmail-Style Notification Grouping (Bundling)
+* **Category**: Phase 3 (Advanced Layout Engine)
+* **Complexity**: 🔴 High
+* **Technical Challenges**:
+  * Decoupling the visual presentation of a "Group Header" from standard notification cards.
+  * Tracking maximum active count per group before collapsing cards behind a stack profile.
+  * Managing hover/tap expansion transitions to lay out member cards within the viewport.
+* **Verification Criteria**:
+  * Integration test sending 5 messages under group `"auth_alerts"`, verifying only 1 header is visible with a "+4" badge.
+
+---
+
+### F-05: Persistent Notification Log (In-App History)
+* **Category**: Phase 3 (Advanced Layout Engine)
+* **Complexity**: 🟡 Medium
+* **Technical Challenges**:
+  * Intercepting all coordinator lifecycle events and dumping them into a local ring-buffer or file system database.
+  * Designing a queryable controller to retrieve dismissed cards.
+* **Verification Criteria**:
+  * Verify querying history after 10 dismissals yields the exact matching entries.
+
+---
+
+### F-06: Focus Traversal & Semantic Keyboard Support
+* **Category**: Phase 5 (Platform Perfection)
+* **Complexity**: 🟢 Low
+* **Technical Challenges**:
+  * Ensuring focus remains accessible to screen readers when overlays display.
+  * Integrating standard tab focus behavior through `FocusNode` chains.
+* **Verification Criteria**:
+  * Verify screen reader accessibility focus tree traversal via semantic tester logs.
+
+---
+
+### F-07: Context Menu Support (Right-Click Actions)
+* **Category**: Phase 5 (Platform Perfection)
+* **Complexity**: 🟢 Low
+* **Technical Challenges**:
+  * Intercepting right-clicks or long presses to spawn a native desktop popup menu containing quick dismiss, snooze, or priority triage options.
+* **Verification Criteria**:
+  * Verify clicking menu options correctly dispatches actions to target items.
+
+---
+
+### F-08: L-Shaped Unified Corner Bars (Dismissal UI)
+* **Category**: Phase 2 (UX & Interaction Polish)
+* **Complexity**: 🟡 Medium
+* **Technical Challenges**:
+  * Determining when neighboring edge dismissal targets are visible and drawing a seamless, unified border/overlay that covers both screen edges.
+* **Verification Criteria**:
+  * Render verification via golden tests on desktop sizes.
+
+---
+
+## ✅ Completed Milestones
+
+| Item | Version | Summary | Target Files |
+|------|---------|---------|---|
+| **F-01: Drag-to-Reorder** | v0.5.2 | Premium live-shifting layout during drag. Neighboring items translate in real-time to open up a target slot, with unshifted bounds cached during the gesture lifecycle. | `lib/src/notification_queue/queue_widget.dart` |
+| **F-09: Smart Layout** | v0.5.1 | Custom `_QueueOverlayLayoutDelegate` dynamically shifts adjacent colliding queues under layout space constraints (using `CustomMultiChildLayout`). | `lib/src/core/notification_overlay.dart` |
+| **F-10: Keyboard Shortcuts** | v0.5.0 | Global overlay-level keyboard listeners to dismiss individual or all active cards programmatically (`Esc` / `Shift+Esc`). | `lib/src/core/notification_overlay.dart` |
+| **F-11: Visual Golden Tests** | v0.5.0 | Added native `flutter_test` golden tests for Flat, Filled, and Outlined styles, and queue anchoring. | `test/golden/visual_regression_test.dart` |
+| **Adaptive Close Button** | v0.4.4 | Opacity-based close model with progressive enhancement for touch/mouse adaptation. | `lib/src/notification/notification.dart` |
+| **Relocation Maturity** | v0.4.3 | Automated group expansion, validation, and characteristic inheritance for relocation. | `lib/src/core/queue_coordinator.dart` |
+| **Decoupled Animations** | v0.4.2 | Introduced `NotificationTransition` strategy pattern with Slide, Scale, Fade, and Builder support. | `lib/src/notification/animation/` |
+| **Animation Harmony** | v0.4.2 | Refactored `QueueWidget` to Managed State for synchronized layout animations. | `lib/src/notification_queue/queue_widget.dart` |
+| **Stateless Queues** | v0.4.0 | Moved queue state out of configuration objects. | `lib/src/notification_queue/notification_queue.dart` |
+| **Unified Core Engine** | v0.4.0 | Replaced `NotificationManager` singleton with `QueueCoordinator`. | `lib/src/core/queue_coordinator.dart` |

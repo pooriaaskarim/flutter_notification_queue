@@ -14,12 +14,23 @@ class StudioTheme {
   static ColorScheme get colorScheme => _colorScheme;
   static bool get isDark => _isDark;
 
+  static bool? _lastIsDark;
+
   /// Updates the global static theme state.
   /// Should be called at the root of the app (e.g. in MaterialApp.builder).
   static void update(final BuildContext context) {
     _theme = Theme.of(context);
     _colorScheme = _theme.colorScheme;
-    _isDark = _theme.brightness == Brightness.dark;
+    final isDarkNew = _theme.brightness == Brightness.dark;
+    final changed = _lastIsDark != null && _lastIsDark != isDarkNew;
+    _isDark = isDarkNew;
+    _lastIsDark = isDarkNew;
+
+    if (changed) {
+      WidgetsBinding.instance.addPostFrameCallback((final _) {
+        rebuildDescendantChildren(context);
+      });
+    }
   }
 
   /// Force-rebuilds all descendants of the given context.
@@ -33,7 +44,9 @@ class StudioTheme {
         ..visitChildren(rebuild);
     }
 
-    (context as Element).visitChildren(rebuild);
+    if (context is Element) {
+      context.visitChildren(rebuild);
+    }
   }
 
   static const primaryColor = Color(0xFF0F172A);

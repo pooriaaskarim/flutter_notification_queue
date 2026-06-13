@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -44,14 +42,9 @@ class _StudioShellState extends State<_StudioShell> {
             ),
           ),
           centerTitle: true,
-          backgroundColor: Colors.transparent,
+          backgroundColor:
+              Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
           elevation: 0,
-          flexibleSpace: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(color: Colors.transparent),
-            ),
-          ),
           actions: [
             BlocBuilder<StudioBloc, StudioState>(
               builder: (final context, final state) => IconButton(
@@ -76,7 +69,7 @@ class _StudioShellState extends State<_StudioShell> {
             SafeArea(
               child: LayoutBuilder(
                 builder: (final context, final constraints) {
-                  if (constraints.maxWidth > 800) {
+                  if (constraints.maxWidth > 1000) {
                     return _wideLayout();
                   }
                   return _narrowLayout();
@@ -87,7 +80,7 @@ class _StudioShellState extends State<_StudioShell> {
         ),
         bottomNavigationBar: LayoutBuilder(
           builder: (final context, final constraints) {
-            if (constraints.maxWidth > 800) {
+            if (constraints.maxWidth > 1000) {
               return const SizedBox.shrink();
             }
             return BottomNavigationBar(

@@ -223,19 +223,48 @@ class CodeEditorPanel extends StatelessWidget {
 }
 
 /// Renders [code] with a line-number gutter and Dart syntax highlighting.
-class _HighlightedCodeView extends StatelessWidget {
+class _HighlightedCodeView extends StatefulWidget {
   const _HighlightedCodeView({required this.code});
   final String code;
 
   @override
+  State<_HighlightedCodeView> createState() => _HighlightedCodeViewState();
+}
+
+class _HighlightedCodeViewState extends State<_HighlightedCodeView> {
+  late TextSpan _highlightedCode;
+  late List<String> _lines;
+  String? _lastCode;
+
+  void _updateHighlight() {
+    if (_lastCode == widget.code) {
+      return;
+    }
+    _lastCode = widget.code;
+    _highlightedCode = DartSyntaxHighlighter.highlight(widget.code);
+    _lines = widget.code.split('\n');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _updateHighlight();
+  }
+
+  @override
+  void didUpdateWidget(covariant final _HighlightedCodeView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateHighlight();
+  }
+
+  @override
   Widget build(final BuildContext context) {
+    _updateHighlight();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final gutterColor =
         isDark ? const Color(0xFF161B22) : const Color(0xFFEAECEF);
     final gutterTextColor =
         isDark ? const Color(0xFF484F58) : const Color(0xFFAFB8C1);
-
-    final lines = code.split('\n');
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +276,7 @@ class _HighlightedCodeView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: List.generate(
-              lines.length,
+              _lines.length,
               (final i) => SizedBox(
                 height: 20.8, // ~13px * 1.6 line-height
                 child: Text(
@@ -268,7 +297,7 @@ class _HighlightedCodeView extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(left: 16),
             child: SelectableText.rich(
-              DartSyntaxHighlighter.highlight(code),
+              _highlightedCode,
             ),
           ),
         ),

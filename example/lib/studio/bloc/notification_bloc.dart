@@ -167,12 +167,17 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationDraft> {
       );
     }
 
+    final channelSetup = setupBloc.state.setup.channels[draft.channelName];
+    final resolvedPosition = draft.positionOverride ??
+        channelSetup?.position ??
+        setupBloc.state.activeQueuePosition;
+
     // Fire notification
     NotificationWidget(
       title: draft.title,
       message: draft.message,
       channelName: draft.channelName,
-      position: draft.positionOverride,
+      position: resolvedPosition,
       action: action,
       tapBehavior: tapBehavior,
       dismissDuration: draft.dismissSeconds != null

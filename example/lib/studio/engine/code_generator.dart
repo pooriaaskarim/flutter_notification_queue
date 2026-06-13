@@ -89,7 +89,13 @@ void _writeQueue(
       '      transition: ${_transitionSnippet(q.transitionType)},',
     )
     ..writeln('      maxStackSize: ${q.maxStackSize},')
-    ..writeln('      spacing: ${q.spacing},')
+    ..writeln('      spacing: ${q.spacing},');
+
+  if (q.maxWidth != null) {
+    buf.writeln('      maxWidth: ${q.maxWidth},');
+  }
+
+  buf
     ..writeln(
       '      dragBehavior: ${_behaviorSnippet(q.dragBehaviorType, q, true)},',
     )

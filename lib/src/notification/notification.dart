@@ -50,8 +50,11 @@ class NotificationWidget extends StatefulWidget {
     this.priority,
     final bool initialIsPinned = false,
     this.snoozedAt,
-  }) : _key = key,
-       isPinnedNotifier = ValueNotifier<bool>(initialIsPinned);
+    final DateTime? createdAt,
+    this.groupKey,
+  })  : _key = key,
+        isPinnedNotifier = ValueNotifier<bool>(initialIsPinned),
+        createdAt = createdAt ?? DateTime.now();
 
   factory NotificationWidget({
     required final String message,
@@ -72,6 +75,7 @@ class NotificationWidget extends StatefulWidget {
     final NotificationPriority? priority,
     final bool initialIsPinned = false,
     final DateTime? snoozedAt,
+    final String? groupKey,
   }) {
     final resolvedId = id ?? DateTime.now().toString();
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
@@ -101,6 +105,7 @@ class NotificationWidget extends StatefulWidget {
       priority: priority,
       initialIsPinned: initialIsPinned,
       snoozedAt: snoozedAt,
+      groupKey: groupKey,
     );
   }
 
@@ -119,6 +124,9 @@ class NotificationWidget extends StatefulWidget {
   /// The timestamp when this notification was snoozed, if any.
   final DateTime? snoozedAt;
 
+  /// The timestamp when this notification was created.
+  final DateTime createdAt;
+
   /// Optional Notification ID
   ///
   /// A unique [GlobalKey] will be provided for [NotificationWidget]
@@ -133,6 +141,13 @@ class NotificationWidget extends StatefulWidget {
   /// [channelName] is not registered.
   ///
   final String channelName;
+
+  /// Optional group key for bundling notifications. If null, falls back to
+  /// [channelName].
+  final String? groupKey;
+
+  /// The resolved group key, falling back to [channelName] if null.
+  String get resolvedGroupKey => groupKey ?? channelName;
 
   /// Notification title
   final String? title;
@@ -288,6 +303,7 @@ class NotificationWidget extends StatefulWidget {
         priority: priority,
         initialIsPinned: isPinned,
         snoozedAt: snoozedAt,
+        createdAt: createdAt,
       );
 
   NotificationWidget copyForRequeue({
@@ -314,6 +330,7 @@ class NotificationWidget extends StatefulWidget {
         priority: priority,
         initialIsPinned: isPinned,
         snoozedAt: snoozedAt,
+        createdAt: createdAt,
       );
 }
 
@@ -446,6 +463,7 @@ class NotificationWidgetState extends State<NotificationWidget>
     dismissTimer?.cancel();
     dismissTimer = null;
   }
+
   @override
   // The transition animation is already applied by QueueWidget._buildItem using
   // the queue-level item AnimationController. Applying it again here would
@@ -505,7 +523,10 @@ class NotificationWidgetState extends State<NotificationWidget>
                   },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 220),
-                    constraints: Utils.horizontalConstraints(context),
+                    constraints: Utils.horizontalConstraints(
+                      context,
+                      widget.queue.maxWidth,
+                    ),
                     curve: Curves.easeOut,
                     decoration: BoxDecoration(
                       border: theme.border,

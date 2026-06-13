@@ -334,7 +334,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       };
 
   Widget draggable() => switch (widget.notification.dragBehavior ??
-      widget.notification.queue.dragBehavior) {
+          widget.notification.queue.dragBehavior) {
         Disabled() => widget.notification,
         final behavior =>
           _buildDraggable(behavior: behavior, isLongPress: false),

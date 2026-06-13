@@ -182,7 +182,6 @@ class _IntentFeedbackZone extends StatelessWidget {
                       ),
                     ),
                   ),
-
                 Opacity(
                   opacity: isHit ? 1.0 : barOpacity,
                   child: ClipRRect(
@@ -226,7 +225,6 @@ class _IntentFeedbackZone extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 if (progress > 0.05)
                   Positioned(
                     left: isVertical

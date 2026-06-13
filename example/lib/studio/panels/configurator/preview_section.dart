@@ -227,11 +227,16 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
 
   void _fireDemo() {
     final id = 'demo_${DateTime.now().millisecondsSinceEpoch}';
+    final channelName = widget.setupState.setup.channels.keys.first;
+    final channelSetup = widget.setupState.setup.channels[channelName];
+    final resolvedPosition =
+        channelSetup?.position ?? widget.setupState.activeQueuePosition;
     final n = NotificationWidget(
       id: id,
       title: 'Programmatic Demo',
       message: 'Keep an eye on me! I can be controlled programmatically.',
-      channelName: widget.setupState.setup.channels.keys.first,
+      channelName: channelName,
+      position: resolvedPosition,
       dismissDuration: const Duration(seconds: 15),
     )..show();
     setState(() {
