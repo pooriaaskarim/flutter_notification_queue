@@ -227,10 +227,10 @@ packages:
     dependency: transitive
     description:
       name: logd
-      sha256: eb014295cb8d4b23f2020ff39fde15c368c451577b4379b94e5c1b8e24473dfd
+      sha256: f8a68627e4470dae94438ae2daa6a4658c0b7593feaf496c347bf3033d4678e4
       url: "https://pub.dev"
     source: hosted
-    version: "0.7.1"
+    version: "0.8.2"
   matcher:
     dependency: transitive
     description:

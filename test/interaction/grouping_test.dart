@@ -73,7 +73,7 @@ void main() {
       // Grouping behavior requires 2 notifications. Since we only have 1,
       // it should be rendered individually (no _GroupBundleWidget).
       expect(find.text('Msg 1'), findsOneWidget);
-      expect(find.text('+2 More'), findsNothing);
+      expect(find.text('+1'), findsNothing);
 
       // Add second notification to the same group
       NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
@@ -86,8 +86,8 @@ void main() {
       expect(find.text('Msg 2'), findsOneWidget);
       expect(find.text('Msg 1'), findsNothing);
 
-      // Verify toggle button "+2 More" is visible
-      expect(find.text('+2 More'), findsOneWidget);
+      // Verify toggle button "+1" is visible (1 item hidden)
+      expect(find.text('+1'), findsOneWidget);
     });
 
     testWidgets('Expand and collapse group via toggle button',
@@ -108,7 +108,7 @@ void main() {
       expect(find.text('Msg 1'), findsNothing);
 
       // Tap the expand button
-      await tester.tap(find.text('+2 More'));
+      await tester.tap(find.text('+1'));
       await tester.pumpAndSettle();
 
       // Expanded: both Msg 1 and Msg 2 are visible
@@ -126,7 +126,7 @@ void main() {
     });
 
     testWidgets(
-        'Dismissing collapsed group header dismisses all items in group',
+        'Dismissing collapsed group representative surfaces next item',
         (final tester) async {
       await tester.pumpWidget(
         const MaterialApp(
@@ -141,15 +141,46 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Msg 2'), findsOneWidget);
+      expect(find.text('Msg 1'), findsNothing);
 
-      // Dismiss the header programmatically via n2
+      // Dismiss the representative programmatically via n2
       final dismissFuture = n2.dismiss();
       await tester.pumpAndSettle();
       await dismissFuture;
 
-      // Verify both are gone from the queue
-      expect(find.text('Msg 1'), findsNothing);
+      // Verify that n2 (Msg 2) is gone, but n1 (Msg 1) has surfaced
+      // and is now visible
       expect(find.text('Msg 2'), findsNothing);
+      expect(find.text('Msg 1'), findsOneWidget);
+    });
+
+    testWidgets(
+        'dismissGroup dismisses all items in the group',
+        (final tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          builder: FlutterNotificationQueue.builder,
+          home: Scaffold(body: Center(child: Text('App Home'))),
+        ),
+      );
+
+      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
+      NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Msg 2'), findsOneWidget);
+      expect(find.text('Msg 1'), findsNothing);
+
+      // Dismiss the entire group
+      FlutterNotificationQueue.coordinator.dismissGroup(
+        QueuePosition.topRight,
+        'chat',
+      );
+      await tester.pumpAndSettle();
+
+      // Verify both items are gone
+      expect(find.text('Msg 2'), findsNothing);
+      expect(find.text('Msg 1'), findsNothing);
     });
   });
 }

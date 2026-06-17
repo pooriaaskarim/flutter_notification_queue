@@ -286,6 +286,25 @@ class _EventMeta {
             badge: actionName,
             subtitle: notification.title ?? notification.message,
           ),
+        NotificationGroupExpanded(:final groupKey, :final count) => _EventMeta(
+            label: 'Group Expanded',
+            color: const Color(0xFF22D3EE), // cyan-400
+            badge: '$count cards',
+            subtitle: groupKey,
+          ),
+        NotificationGroupCollapsed(:final groupKey, :final count) =>
+          _EventMeta(
+            label: 'Group Collapsed',
+            color: const Color(0xFF67E8F9), // cyan-300
+            badge: '$count cards',
+            subtitle: groupKey,
+          ),
+        NotificationGroupDismissed(:final groupKey) => _EventMeta(
+            label: 'Group Dismissed',
+            color: const Color(0xFF06B6D4), // cyan-500
+            badge: 'all',
+            subtitle: groupKey,
+          ),
       };
 }
 

@@ -321,6 +321,48 @@ class QueueCoordinator {
   }) =>
       _eventController.add(QueueOverflowed(queue: queue, dropped: dropped));
 
+  /// Emits a [NotificationGroupExpanded] or [NotificationGroupCollapsed]
+  /// event depending on [expanded].
+  ///
+  /// Called by [QueueWidgetState] when the bundle pill is toggled.
+  void emitGroupToggled({
+    required final String groupKey,
+    required final QueuePosition position,
+    required final bool expanded,
+    required final int count,
+  }) =>
+      _eventController.add(
+        expanded
+            ? NotificationGroupExpanded(
+                groupKey: groupKey,
+                position: position,
+                count: count,
+              )
+            : NotificationGroupCollapsed(
+                groupKey: groupKey,
+                position: position,
+                count: count,
+              ),
+      );
+
+  /// Dismisses all notifications that share [groupKey] in the queue at
+  /// [position] with an animated exit.
+  ///
+  /// Emits a [NotificationGroupDismissed] event before triggering removal.
+  /// Prefer this over calling [dismiss] in a loop — it guarantees atomic
+  /// group semantics and correct event emission.
+  void dismissGroup(
+    final QueuePosition position,
+    final String groupKey, {
+    final DismissReason reason = DismissReason.programmatic,
+  }) {
+    _eventController.add(
+      NotificationGroupDismissed(groupKey: groupKey, position: position),
+    );
+    final key = _widgetStateKeys[position];
+    key?.currentState?.dismissGroup(groupKey, reason: reason);
+  }
+
   /// Exposed for overlay.
   /// Note: The overlay builder needs to use the GlobalKey we created.
   /// We need a way to look it up.

@@ -304,6 +304,7 @@ class NotificationWidget extends StatefulWidget {
         initialIsPinned: isPinned,
         snoozedAt: snoozedAt,
         createdAt: createdAt,
+        groupKey: groupKey,
       );
 
   NotificationWidget copyForRequeue({
@@ -331,6 +332,7 @@ class NotificationWidget extends StatefulWidget {
         initialIsPinned: isPinned,
         snoozedAt: snoozedAt,
         createdAt: createdAt,
+        groupKey: groupKey,
       );
 }
 

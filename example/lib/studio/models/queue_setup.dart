@@ -26,6 +26,8 @@ class QueueSetup extends Equatable {
     this.closeButtonBehaviorType = AlwaysVisible,
     this.tapBehaviorType = TapToDismiss,
     this.maxWidth,
+    this.groupingEnabled = false,
+    this.groupingThreshold = 2,
   });
 
   // ── Style ──
@@ -55,6 +57,10 @@ class QueueSetup extends Equatable {
   // ── Tap ──
   final Type tapBehaviorType;
 
+  // ── Grouping ──
+  final bool groupingEnabled;
+  final int groupingThreshold;
+
   /// Whether this queue is in an invalid relocation state (Relocate behavior
   /// selected but no targets chosen). Empty targets cause library crashes.
   bool get hasRelocationError =>
@@ -83,6 +89,8 @@ class QueueSetup extends Equatable {
     final Type? tapBehaviorType,
     final double? maxWidth,
     final bool clearMaxWidth = false,
+    final bool? groupingEnabled,
+    final int? groupingThreshold,
   }) =>
       QueueSetup(
         styleType: styleType ?? this.styleType,
@@ -104,6 +112,8 @@ class QueueSetup extends Equatable {
             closeButtonBehaviorType ?? this.closeButtonBehaviorType,
         tapBehaviorType: tapBehaviorType ?? this.tapBehaviorType,
         maxWidth: clearMaxWidth ? null : (maxWidth ?? this.maxWidth),
+        groupingEnabled: groupingEnabled ?? this.groupingEnabled,
+        groupingThreshold: groupingThreshold ?? this.groupingThreshold,
       );
 
   // ── Library Mapping Helpers ──
@@ -228,6 +238,10 @@ class QueueSetup extends Equatable {
         closeButtonBehavior: toCloseButtonBehavior(),
         tapBehavior: toTapBehavior(),
         maxWidth: maxWidth,
+        groupingBehavior: QueueGroupingBehavior(
+          enabled: groupingEnabled,
+          maxBeforeGrouping: groupingThreshold,
+        ),
       );
 
   BorderRadius get _borderRadius => BorderRadius.circular(borderRadius);
@@ -251,5 +265,7 @@ class QueueSetup extends Equatable {
         closeButtonBehaviorType,
         tapBehaviorType,
         maxWidth,
+        groupingEnabled,
+        groupingThreshold,
       ];
 }

@@ -520,11 +520,131 @@ class _QueueEditor extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 16),
+            const StudioSectionHeader(title: 'GROUPING'),
+            StudioToggleTile(
+              label: 'ENABLE BUNDLING',
+              value: setup.groupingEnabled,
+              onChanged: (final enable) => context.read<SetupBloc>().add(
+                    UpdateQueue(
+                      position,
+                      setup.copyWith(groupingEnabled: enable),
+                    ),
+                  ),
+            ),
+            if (setup.groupingEnabled) ...[
+              const SizedBox(height: 12),
+              StudioSliderTile(
+                label: 'BUNDLE AFTER (N CARDS)',
+                value: setup.groupingThreshold.toDouble(),
+                min: 2,
+                max: 10,
+                divisions: 8,
+                onChanged: (final v) => context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(groupingThreshold: v.round()),
+                      ),
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.secondaryContainer.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: colorScheme.secondary.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Icon(
+                        Icons.layers_outlined,
+                        size: 13,
+                        color: colorScheme.secondary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Cards sharing the same channelName (or groupKey) '
+                        'collapse into a bundle once their count reaches the '
+                        'threshold. Swipe the visible card — only that one '
+                        'exits. Hidden members’ timers are suspended while '
+                        'off-screen.',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: colorScheme.secondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              _DismissGroupButton(position: position),
+            ],
           ],
         ),
       ),
     );
   }
+}
+
+/// A compact action button in the GROUPING section that calls
+/// [QueueCoordinator.dismissGroup] for the ‘chat’ channel group key.
+///
+/// Demonstrates the explicit bulk-dismiss API introduced in G-03.
+class _DismissGroupButton extends StatelessWidget {
+  const _DismissGroupButton({required this.position});
+
+  final QueuePosition position;
+
+  /// The group key used by the Chat Burst / Group Dismiss scenarios.
+  static const _defaultGroupKey = 'chat';
+
+  @override
+  Widget build(final BuildContext context) => SizedBox(
+        width: double.infinity,
+        child: Tooltip(
+          message: "Calls coordinator.dismissGroup('$_defaultGroupKey') — "
+              'clears the entire bundle atomically.',
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF06B6D4),
+              side: const BorderSide(color: Color(0xFF06B6D4), width: 1),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              textStyle: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.4,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              backgroundColor:
+                  const Color(0xFF06B6D4).withValues(alpha: 0.06),
+            ),
+            icon: const Icon(Icons.layers_clear_outlined, size: 14),
+            label: const Text('DISMISS ACTIVE GROUP'),
+            onPressed: () =>
+                FlutterNotificationQueue.coordinator.dismissGroup(
+                  position,
+                  _defaultGroupKey,
+                ),
+          ),
+        ),
+      );
 }
 
 /// A validation dialog to confirm removal of a queue position, warning about
