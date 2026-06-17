@@ -218,3 +218,73 @@ final class NotificationCustomActionTriggered extends FnqEvent {
       'NotificationCustomActionTriggered(id: ${notification.id}, '
       'actionName: $actionName)';
 }
+
+// ── Group events ────────────────────────────────────────────────────────────
+
+/// Emitted when the user expands a collapsed notification group
+/// (i.e., taps the bundle pill to reveal all members).
+final class NotificationGroupExpanded extends FnqEvent {
+  const NotificationGroupExpanded({
+    required this.groupKey,
+    required this.position,
+    required this.count,
+  });
+
+  /// The shared group key of the expanded bundle.
+  final String groupKey;
+
+  /// The queue position the bundle belongs to.
+  final QueuePosition position;
+
+  /// The number of notifications in the group at the time of expansion.
+  final int count;
+
+  @override
+  String toString() =>
+      'NotificationGroupExpanded(key: $groupKey, '
+      'position: ${position.name}, count: $count)';
+}
+
+/// Emitted when the user collapses an expanded notification group
+/// (i.e., taps the bundle pill to hide excess members).
+final class NotificationGroupCollapsed extends FnqEvent {
+  const NotificationGroupCollapsed({
+    required this.groupKey,
+    required this.position,
+    required this.count,
+  });
+
+  /// The shared group key of the collapsed bundle.
+  final String groupKey;
+
+  /// The queue position the bundle belongs to.
+  final QueuePosition position;
+
+  /// The number of notifications in the group at the time of collapse.
+  final int count;
+
+  @override
+  String toString() =>
+      'NotificationGroupCollapsed(key: $groupKey, '
+      'position: ${position.name}, count: $count)';
+}
+
+/// Emitted when all members of a notification group are dismissed at once
+/// via [QueueCoordinator.dismissGroup].
+final class NotificationGroupDismissed extends FnqEvent {
+  const NotificationGroupDismissed({
+    required this.groupKey,
+    required this.position,
+  });
+
+  /// The shared group key of the dismissed bundle.
+  final String groupKey;
+
+  /// The queue position the bundle belonged to.
+  final QueuePosition position;
+
+  @override
+  String toString() =>
+      'NotificationGroupDismissed(key: $groupKey, '
+      'position: ${position.name})';
+}
