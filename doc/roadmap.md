@@ -26,7 +26,7 @@ Complexity Tiers:
 | **F-01** | Drag-to-Reorder within Queue | Phase 2 | *Completed* | 🔴 High | ✅ Completed | `lib/src/notification_queue/queue_widget.dart` |
 | **F-02** | Pin-to-Edge Interaction (Pinning) | Phase 2 | 🟡 P1 | 🟡 Medium | 📅 Pending | `lib/src/notification/notification.dart` |
 | **F-03** | Desktop Parking & Runtime Config | Phase 2 | 🟢 P2 | 🟡 Medium | 📅 Pending | `lib/src/core/queue_coordinator.dart` |
-| **F-04** | Notification Grouping (Bundling) | Phase 3 | 🟡 P1 | 🔴 High | 📅 Pending | `lib/src/notification_queue/queue_widget.dart` |
+| **F-04** | Notification Grouping (Bundling) | Phase 3 | *Completed* | 🔴 High | ✅ Completed | `lib/src/notification_queue/queue_widget.dart` |
 | **F-05** | Persistent History Log Database | Phase 3 | 🟢 P2 | 🟡 Medium | 📅 Pending | `lib/src/core/history_logger.dart` |
 | **F-06** | Focus Traversal & Accessibility | Phase 5 | 🟢 P2 | 🟢 Low | 📅 Pending | `lib/src/core/notification_overlay.dart` |
 | **F-07** | Context Menu Support (Right-click) | Phase 5 | 🔵 P3 | 🟢 Low | 📅 Pending | `lib/src/notification/notification.dart` |
@@ -76,7 +76,7 @@ Complexity Tiers:
 
 ---
 
-### F-04: Gmail-Style Notification Grouping (Bundling)
+### F-04: Gmail-Style Notification Grouping (Bundling) (Completed)
 * **Category**: Phase 3 (Advanced Layout Engine)
 * **Complexity**: 🔴 High
 * **Technical Challenges**:
@@ -134,6 +134,7 @@ Complexity Tiers:
 
 | Item | Version | Summary | Target Files |
 |------|---------|---------|---|
+| **F-04: Notification Grouping** | v0.6.0 | Gmail-style grouping with custom/channel keys, representative pill/stacks, collapse/expand toggle, and bulk swipe-to-dismiss behavior. | `lib/src/notification_queue/queue_widget.dart` |
 | **F-01: Drag-to-Reorder** | v0.5.2 | Premium live-shifting layout during drag. Neighboring items translate in real-time to open up a target slot, with unshifted bounds cached during the gesture lifecycle. | `lib/src/notification_queue/queue_widget.dart` |
 | **F-09: Smart Layout** | v0.5.1 | Custom `_QueueOverlayLayoutDelegate` dynamically shifts adjacent colliding queues under layout space constraints (using `CustomMultiChildLayout`). | `lib/src/core/notification_overlay.dart` |
 | **F-10: Keyboard Shortcuts** | v0.5.0 | Global overlay-level keyboard listeners to dismiss individual or all active cards programmatically (`Esc` / `Shift+Esc`). | `lib/src/core/notification_overlay.dart` |

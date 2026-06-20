@@ -238,10 +238,6 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
     FlutterNotificationQueue.coordinator.bringToFront(position);
     state.widget.notification.key.currentState?.ditchDismissTimer();
     queueState?.startDragReorder(state.widget.notification.id, currentIndex);
-    // UX-01: reveal the peek card for the group being dragged.
-    queueState?.setActiveDragGroup(
-      state.widget.notification.resolvedGroupKey,
-    );
     state
       .._activeZoneIndex = null
       .._activeReorderZones = _zonesFromSlots(itemCount, currentIndex)
@@ -283,8 +279,6 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
         FlutterNotificationQueue.coordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     queueState?.endDragReorder();
-    // UX-01: clear the peek card now that the drag is resolved.
-    queueState?.setActiveDragGroup(null);
 
     final pointer = state._dragOffsetPairNotifier.value?.global;
     if (pointer != null) {
@@ -378,10 +372,6 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
     FlutterNotificationQueue.coordinator.bringToFront(position);
     state.widget.notification.key.currentState?.ditchDismissTimer();
     queueState?.startDragReorder(state.widget.notification.id, currentIndex);
-    // UX-01: reveal the peek card for the group being dragged.
-    queueState?.setActiveDragGroup(
-      state.widget.notification.resolvedGroupKey,
-    );
     state
       .._activeZoneIndex = null
       .._activeReorderZones = _zonesFromSlots(itemCount, currentIndex)
@@ -489,10 +479,6 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
     state._activeReorderZones = null;
     state._dragOffsetPairNotifier.value = null;
     state._activeZoneIndex = null;
-    // UX-01: clear the peek card.
-    final queueKeyEnd =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
-    queueKeyEnd.currentState?.setActiveDragGroup(null);
     state.widget.notification.key.currentState?.initDismissTimer();
     state._overlayPortalController.hide();
   }

@@ -127,6 +127,13 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
         HapticFeedback.lightImpact();
       }
 
+      final position = widget.notification.queue.position;
+      final queueKey =
+          FlutterNotificationQueue.coordinator.getWidgetKey(position);
+      queueKey.currentState?.setActiveDragGroup(
+        widget.notification.resolvedGroupKey,
+      );
+
       plugin.onDragStart(this);
     }
 
@@ -142,6 +149,11 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       _fsm.settle();
       plugin.onDragEnd(this, details);
       _fsm.reset();
+
+      final position = widget.notification.queue.position;
+      final queueKey =
+          FlutterNotificationQueue.coordinator.getWidgetKey(position);
+      queueKey.currentState?.setActiveDragGroup(null);
     }
 
     final feedback = ValueListenableBuilder(

@@ -115,7 +115,7 @@ class QueueCoordinator {
     final notificationQueue = notification.queue;
     final key = _widgetStateKeys[notificationQueue.position];
     if (key?.currentState != null) {
-      key!.currentState!.dismiss(notification);
+      key!.currentState!.dismiss(notification, reason: reason);
     } else {
       // If not mounted, check initialization queue (rare race condition where
       // we dismiss before mount?)

@@ -632,16 +632,14 @@ class _DismissGroupButton extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              backgroundColor:
-                  const Color(0xFF06B6D4).withValues(alpha: 0.06),
+              backgroundColor: const Color(0xFF06B6D4).withValues(alpha: 0.06),
             ),
             icon: const Icon(Icons.layers_clear_outlined, size: 14),
             label: const Text('DISMISS ACTIVE GROUP'),
-            onPressed: () =>
-                FlutterNotificationQueue.coordinator.dismissGroup(
-                  position,
-                  _defaultGroupKey,
-                ),
+            onPressed: () => FlutterNotificationQueue.coordinator.dismissGroup(
+              position,
+              _defaultGroupKey,
+            ),
           ),
         ),
       );
