@@ -953,8 +953,7 @@ class _GroupBundleWidget extends AnimatedWidget {
     final stepOffset = behavior.stackStepOffset;
     final scaleMultiplier = behavior.stackScaleMultiplier;
 
-    final directionMultiplier =
-        verticalDirection == VerticalDirection.down ? 1.0 : -1.0;
+    final extraSpace = 24.0 + (maxLayers * stepOffset) * (1.0 - progress);
 
     final backgroundLayers = <Widget>[];
     if (progress < 1.0) {
@@ -965,42 +964,59 @@ class _GroupBundleWidget extends AnimatedWidget {
         final layerScale = 1.0 - (i * scaleMultiplier) * (1.0 - progress);
         final layerOpacity =
             (0.9 - i * 0.25).clamp(0.0, 1.0) * (1.0 - progress);
-        final layerOffset =
-            i * stepOffset * directionMultiplier * (1.0 - progress);
+        final currentShift = i * stepOffset * (1.0 - progress);
+
+        final double? top;
+        final double? bottom;
+        if (verticalDirection == VerticalDirection.down) {
+          top = currentShift;
+          bottom = extraSpace - currentShift;
+        } else {
+          top = extraSpace - currentShift;
+          bottom = currentShift;
+        }
 
         backgroundLayers.add(
           Positioned(
             left: i * 8.0 * (1.0 - progress),
             right: i * 8.0 * (1.0 - progress),
-            top: layerOffset,
-            bottom: -layerOffset,
-            child: _buildLayer(context, layerScale, layerOpacity),
+            top: top,
+            bottom: bottom,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onToggle,
+                behavior: HitTestBehavior.opaque,
+                child: _buildLayer(context, layerScale, layerOpacity),
+              ),
+            ),
           ),
         );
       }
     }
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: verticalDirection == VerticalDirection.down
-            ? (12.0 * (1.0 - progress))
-            : 0,
-        top: verticalDirection == VerticalDirection.up
-            ? (12.0 * (1.0 - progress))
-            : 0,
-      ),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        clipBehavior: Clip.none,
-        children: [
-          ...backgroundLayers,
-          child,
-          Positioned(
-            bottom: -10,
-            child: _buildTogglePill(context, progress),
+    return Stack(
+      alignment: verticalDirection == VerticalDirection.down
+          ? Alignment.topCenter
+          : Alignment.bottomCenter,
+      clipBehavior: Clip.none,
+      children: [
+        ...backgroundLayers,
+        Padding(
+          padding: EdgeInsets.only(
+            bottom: verticalDirection == VerticalDirection.down
+                ? extraSpace
+                : 0,
+            top: verticalDirection == VerticalDirection.up ? extraSpace : 0,
           ),
-        ],
-      ),
+          child: child,
+        ),
+        Positioned(
+          bottom: verticalDirection == VerticalDirection.down ? 4.0 : null,
+          top: verticalDirection == VerticalDirection.up ? 4.0 : null,
+          child: _buildTogglePill(context, progress),
+        ),
+      ],
     );
   }
 
@@ -1024,7 +1040,9 @@ class _GroupBundleWidget extends AnimatedWidget {
     return Transform.scale(
       scaleX: scale,
       scaleY: 1.0,
-      alignment: Alignment.topCenter,
+      alignment: verticalDirection == VerticalDirection.down
+          ? Alignment.topCenter
+          : Alignment.bottomCenter,
       child: container,
     );
   }
@@ -1053,13 +1071,17 @@ class _GroupBundleWidget extends AnimatedWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: resolvedTheme.color,
+            color: resolvedTheme.backgroundColor,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: resolvedTheme.color.withValues(alpha: 0.35),
+              width: 1.0,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -1135,8 +1157,14 @@ class _GroupBundleWidget extends AnimatedWidget {
               ),
               const SizedBox(width: 4),
               RotationTransition(
-                turns: Tween<double>(begin: 0.0, end: 0.5)
-                    .animate(expansionProgress),
+                turns: Tween<double>(
+                  begin: verticalDirection == VerticalDirection.down
+                      ? 0.0
+                      : 0.5,
+                  end: verticalDirection == VerticalDirection.down
+                      ? 0.5
+                      : 0.0,
+                ).animate(expansionProgress),
                 child: Icon(
                   Icons.keyboard_arrow_down,
                   size: 14,
