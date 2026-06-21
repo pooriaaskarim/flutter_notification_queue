@@ -36,3 +36,6 @@ migrate_working_dir/
 /example/linux/flutter/generated_plugin_registrant.cc
 /example/linux/flutter/generated_plugin_registrant.h
 /example/linux/flutter/generated_plugins.cmake
+/example/windows/flutter/generated_plugin_registrant.cc
+/example/windows/flutter/generated_plugin_registrant.h
+/example/windows/flutter/generated_plugins.cmake
