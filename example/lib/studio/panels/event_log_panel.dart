@@ -292,8 +292,7 @@ class _EventMeta {
             badge: '$count cards',
             subtitle: groupKey,
           ),
-        NotificationGroupCollapsed(:final groupKey, :final count) =>
-          _EventMeta(
+        NotificationGroupCollapsed(:final groupKey, :final count) => _EventMeta(
             label: 'Group Collapsed',
             color: const Color(0xFF67E8F9), // cyan-300
             badge: '$count cards',

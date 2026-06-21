@@ -1,0 +1,75 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Windows (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "windows",
+        "--release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Web (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "web",
+        "--release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Android APK (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "apk",
+        "--release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Android AppBundle (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "appbundle",
+        "--release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Linux (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": [
+        "build",
+        "linux",
+        "--release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

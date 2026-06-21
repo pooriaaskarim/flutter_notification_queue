@@ -19,6 +19,22 @@ class QueueWidgetState extends State<QueueWidget>
   final _pendingNotifications = Queue<NotificationWidget>();
   final List<_NotificationItemState> _items = [];
   final Set<String> _expandedGroups = {};
+  final Map<String, AnimationController> _groupExpansionControllers = {};
+
+  AnimationController _getGroupExpansionController(final String groupKey) =>
+      _groupExpansionControllers.putIfAbsent(
+        groupKey,
+        () => AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 300),
+        )
+          ..addStatusListener((final status) {
+            if (status == AnimationStatus.dismissed) {
+              setState(() {});
+            }
+          })
+          ..value = _expandedGroups.contains(groupKey) ? 1.0 : 0.0,
+      );
 
   /// The resolved group key of the group whose representative is currently
   /// being dragged. While non-null, the item immediately behind the
@@ -146,6 +162,9 @@ class QueueWidgetState extends State<QueueWidget>
     for (final item in _items) {
       item.controller.dispose();
     }
+    for (final controller in _groupExpansionControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
@@ -265,7 +284,10 @@ class QueueWidgetState extends State<QueueWidget>
         widget.queue.groupingBehavior.maxBeforeGrouping) {
       return true;
     }
-    if (_expandedGroups.contains(key)) {
+    final controller = _groupExpansionControllers[key];
+    final isAnimatingOrExpanded = _expandedGroups.contains(key) ||
+        (controller != null && controller.value > 0.0);
+    if (isAnimatingOrExpanded) {
       return true;
     }
     // Peek card: while the representative is being dragged, also show the
@@ -334,12 +356,17 @@ class QueueWidgetState extends State<QueueWidget>
   void dismissGroup(
     final String groupKey, {
     final DismissReason reason = DismissReason.programmatic,
+    final bool isGroupDismissal = false,
   }) {
     final groupItems = _items
         .where((final i) => i.widget.resolvedGroupKey == groupKey)
         .toList();
     for (final item in groupItems) {
-      _animateExit(item, reason: reason);
+      _animateExit(
+        item,
+        reason: reason,
+        isGroupDismissal: isGroupDismissal || reason == DismissReason.userSwipe,
+      );
     }
   }
 
@@ -506,12 +533,24 @@ class QueueWidgetState extends State<QueueWidget>
   void _animateExit(
     final _NotificationItemState item, {
     final DismissReason reason = DismissReason.timeout,
+    final bool isGroupDismissal = false,
   }) {
     if (item.status == _ItemStatus.exiting) {
       return;
     }
 
     final groupKey = item.widget.resolvedGroupKey;
+
+    final groupingBehavior = widget.queue.groupingBehavior;
+    final isCollapsed = !_expandedGroups.contains(groupKey);
+    if (!isGroupDismissal &&
+        groupingBehavior.enabled &&
+        isCollapsed &&
+        groupingBehavior.enableGroupSwipeDismiss &&
+        reason == DismissReason.userSwipe) {
+      dismissGroup(groupKey, reason: reason, isGroupDismissal: true);
+      return;
+    }
 
     // ── Collapsed-group representative: instant content swap ──────────────
     // When the visible representative of a *collapsed* group is dismissed,
@@ -525,7 +564,8 @@ class QueueWidgetState extends State<QueueWidget>
     // same setState that reveals the new representative, so the column sees
     // one clean swap in a single frame. The swipe gesture already delivered
     // the exit feedback; no height animation is needed here.
-    if (_isCollapsedGroupRepresentative(item, groupKey)) {
+    if (_isCollapsedGroupRepresentative(item, groupKey) ||
+        (isGroupDismissal && isCollapsed)) {
       setState(() {
         item.status = _ItemStatus.exiting;
         final index = _items.indexOf(item);
@@ -620,19 +660,19 @@ class QueueWidgetState extends State<QueueWidget>
     }
   }
 
-  /// Removes [groupKey] from [_expandedGroups] if no item in [_items]
-  /// still belongs to that group. Must be called *after* the departing
-  /// item has been removed from [_items].
+  /// Removes [groupKey] from [_expandedGroups] and disposes its expansion
+  /// controller if no item in [_items] still belongs to that group. Must be
+  /// called *after* the departing item has been removed from [_items].
   void _pruneExpandedGroup(final String groupKey) {
-    if (_expandedGroups.contains(groupKey)) {
-      final stillExists = _items.any(
-        (final i) => i.widget.resolvedGroupKey == groupKey,
-      );
-      if (!stillExists) {
-        setState(() {
-          _expandedGroups.remove(groupKey);
-        });
-      }
+    final stillExists = _items.any(
+      (final i) => i.widget.resolvedGroupKey == groupKey,
+    );
+    if (!stillExists) {
+      setState(() {
+        _expandedGroups.remove(groupKey);
+        final controller = _groupExpansionControllers.remove(groupKey);
+        controller?.dispose();
+      });
     }
   }
 
@@ -741,6 +781,7 @@ class QueueWidgetState extends State<QueueWidget>
           .toList();
       if (groupItems.length >=
           widget.queue.groupingBehavior.maxBeforeGrouping) {
+        final controller = _getGroupExpansionController(key);
         final isExpanded = _expandedGroups.contains(key);
         final representative = _groupRepresentative(groupItems);
 
@@ -779,21 +820,22 @@ class QueueWidgetState extends State<QueueWidget>
 
           // Hidden items = all group members except the representative,
           // sorted so the "next in line" is first.
-          final hiddenItems = groupItems
-              .where((final i) => i != representative)
-              .toList();
+          final hiddenItems =
+              groupItems.where((final i) => i != representative).toList();
 
           itemWidget = _GroupBundleWidget(
             notification: item.widget,
             count: groupItems.length,
-            isExpanded: isExpanded,
+            expansionProgress: controller,
             hiddenItems: hiddenItems,
             onToggle: () {
               setState(() {
                 if (isExpanded) {
                   _expandedGroups.remove(key);
+                  controller.reverse();
                 } else {
                   _expandedGroups.add(key);
+                  controller.forward();
                 }
               });
               // Sync timers after toggling so newly-hidden members stop their
@@ -809,6 +851,23 @@ class QueueWidgetState extends State<QueueWidget>
             style: widget.queue.style,
             verticalDirection: widget.queue.verticalDirection,
             child: itemWidget,
+          );
+        } else if (!_isPeekItem(item, key, groupItems)) {
+          // Non-representative: wrap with an extra SizeTransition and
+          // FadeTransition driven by group expansion
+          itemWidget = SizeTransition(
+            sizeFactor: CurvedAnimation(
+              parent: controller,
+              curve: Curves.fastOutSlowIn,
+            ),
+            alignment: Alignment(-1.0, alignment),
+            child: FadeTransition(
+              opacity: CurvedAnimation(
+                parent: controller,
+                curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
+              ),
+              child: itemWidget,
+            ),
           );
         }
       }
@@ -861,21 +920,23 @@ class _NotificationItemState {
   Key entranceKey = UniqueKey();
 }
 
-class _GroupBundleWidget extends StatelessWidget {
+class _GroupBundleWidget extends AnimatedWidget {
   const _GroupBundleWidget({
+    required final Animation<double> expansionProgress,
     required this.child,
     required this.count,
-    required this.isExpanded,
     required this.hiddenItems,
     required this.onToggle,
     required this.style,
     required this.verticalDirection,
     required this.notification,
-  });
+  }) : super(listenable: expansionProgress);
+
+  Animation<double> get expansionProgress => listenable as Animation<double>;
 
   final Widget child;
   final int count;
-  final bool isExpanded;
+
   /// All group members that are NOT the current representative,
   /// ordered so `hiddenItems.first` is next in line to surface.
   final List<_NotificationItemState> hiddenItems;
@@ -886,55 +947,76 @@ class _GroupBundleWidget extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) {
-    if (isExpanded) {
-      return Stack(
-        alignment: Alignment.bottomCenter,
-        clipBehavior: Clip.none,
-        children: [
-          child,
+    final progress = expansionProgress.value;
+    final behavior = notification.queue.groupingBehavior;
+    final maxLayers = behavior.maxStackedLayers;
+    final stepOffset = behavior.stackStepOffset;
+    final scaleMultiplier = behavior.stackScaleMultiplier;
+
+    final extraSpace = 24.0 + (maxLayers * stepOffset) * (1.0 - progress);
+
+    final backgroundLayers = <Widget>[];
+    if (progress < 1.0) {
+      final availableCount = count - 1; // number of hidden items
+      final layersToRender = min(availableCount, maxLayers);
+
+      for (int i = layersToRender; i > 0; i--) {
+        final layerScale = 1.0 - (i * scaleMultiplier) * (1.0 - progress);
+        final layerOpacity =
+            (0.9 - i * 0.25).clamp(0.0, 1.0) * (1.0 - progress);
+        final currentShift = i * stepOffset * (1.0 - progress);
+
+        final double? top;
+        final double? bottom;
+        if (verticalDirection == VerticalDirection.down) {
+          top = currentShift;
+          bottom = extraSpace - currentShift;
+        } else {
+          top = extraSpace - currentShift;
+          bottom = currentShift;
+        }
+
+        backgroundLayers.add(
           Positioned(
-            bottom: -10,
-            child: _buildTogglePill(context),
+            left: i * 8.0 * (1.0 - progress),
+            right: i * 8.0 * (1.0 - progress),
+            top: top,
+            bottom: bottom,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onToggle,
+                behavior: HitTestBehavior.opaque,
+                child: _buildLayer(context, layerScale, layerOpacity),
+              ),
+            ),
           ),
-        ],
-      );
+        );
+      }
     }
 
-    final directionMultiplier =
-        verticalDirection == VerticalDirection.down ? 1.0 : -1.0;
-
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: verticalDirection == VerticalDirection.down ? 12.0 : 0,
-        top: verticalDirection == VerticalDirection.up ? 12.0 : 0,
-      ),
-      child: Stack(
-        alignment: Alignment.topCenter,
-        clipBehavior: Clip.none,
-        children: [
-          if (count > 2)
-            Positioned(
-              left: 16,
-              right: 16,
-              top: 12 * directionMultiplier,
-              bottom: -12 * directionMultiplier,
-              child: _buildLayer(context, 0.90, 0.4),
-            ),
-          if (count > 1)
-            Positioned(
-              left: 8,
-              right: 8,
-              top: 6 * directionMultiplier,
-              bottom: -6 * directionMultiplier,
-              child: _buildLayer(context, 0.95, 0.7),
-            ),
-          child,
-          Positioned(
-            bottom: -10,
-            child: _buildTogglePill(context),
+    return Stack(
+      alignment: verticalDirection == VerticalDirection.down
+          ? Alignment.topCenter
+          : Alignment.bottomCenter,
+      clipBehavior: Clip.none,
+      children: [
+        ...backgroundLayers,
+        Padding(
+          padding: EdgeInsets.only(
+            bottom: verticalDirection == VerticalDirection.down
+                ? extraSpace
+                : 0,
+            top: verticalDirection == VerticalDirection.up ? extraSpace : 0,
           ),
-        ],
-      ),
+          child: child,
+        ),
+        Positioned(
+          bottom: verticalDirection == VerticalDirection.down ? 4.0 : null,
+          top: verticalDirection == VerticalDirection.up ? 4.0 : null,
+          child: _buildTogglePill(context, progress),
+        ),
+      ],
     );
   }
 
@@ -958,12 +1040,14 @@ class _GroupBundleWidget extends StatelessWidget {
     return Transform.scale(
       scaleX: scale,
       scaleY: 1.0,
-      alignment: Alignment.topCenter,
+      alignment: verticalDirection == VerticalDirection.down
+          ? Alignment.topCenter
+          : Alignment.bottomCenter,
       child: container,
     );
   }
 
-  Widget _buildTogglePill(final BuildContext context) {
+  Widget _buildTogglePill(final BuildContext context, final double progress) {
     final resolvedTheme =
         NotificationTheme.resolveWith(context, style, notification);
     final theme = Theme.of(context);
@@ -975,6 +1059,9 @@ class _GroupBundleWidget extends StatelessWidget {
     final nextMessage = nextItem?.widget.message;
     final hiddenCount = count - 1; // excludes the visible representative
 
+    final collapsedOpacity = (1.0 - progress * 2.0).clamp(0.0, 1.0);
+    final expandedOpacity = (progress * 2.0 - 1.0).clamp(0.0, 1.0);
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -984,13 +1071,17 @@ class _GroupBundleWidget extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: resolvedTheme.color,
+            color: resolvedTheme.backgroundColor,
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: resolvedTheme.color.withValues(alpha: 0.35),
+              width: 1.0,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.12),
-                blurRadius: 3,
-                offset: const Offset(0, 1),
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -998,59 +1089,87 @@ class _GroupBundleWidget extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // ── Sender + preview (collapsed only) ──
-              if (!isExpanded && nextTitle != null) ...[
-                Text(
-                  nextTitle,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (nextMessage != null) ...[
-                  Text(
-                    '  ·  ',
-                    style: theme.textTheme.labelSmall
-                        ?.copyWith(color: fg.withValues(alpha: 0.5)),
-                  ),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 120),
-                    child: Text(
-                      nextMessage,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: fg.withValues(alpha: 0.7),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Opacity(
+                    opacity: collapsedOpacity,
+                    child: IgnorePointer(
+                      ignoring: collapsedOpacity < 0.5,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (nextTitle != null) ...[
+                            Text(
+                              nextTitle,
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: fg,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            if (nextMessage != null) ...[
+                              Text(
+                                '  ·  ',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: fg.withValues(alpha: 0.5),
+                                ),
+                              ),
+                              ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 120),
+                                child: Text(
+                                  nextMessage,
+                                  style: theme.textTheme.labelSmall?.copyWith(
+                                    color: fg.withValues(alpha: 0.7),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(width: 6),
+                          ],
+                          Text(
+                            '+$hiddenCount',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: fg,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Opacity(
+                    opacity: expandedOpacity,
+                    child: IgnorePointer(
+                      ignoring: expandedOpacity < 0.5,
+                      child: Text(
+                        'Collapse',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: fg,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
-                const SizedBox(width: 6),
-              ],
-              // ── Count badge ──
-              if (!isExpanded)
-                Text(
-                  '+$hiddenCount',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              if (isExpanded)
-                Text(
-                  'Collapse',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: fg,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              ),
               const SizedBox(width: 4),
-              Icon(
-                isExpanded
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-                size: 14,
-                color: fg,
+              RotationTransition(
+                turns: Tween<double>(
+                  begin: verticalDirection == VerticalDirection.down
+                      ? 0.0
+                      : 0.5,
+                  end: verticalDirection == VerticalDirection.down
+                      ? 0.5
+                      : 0.0,
+                ).animate(expansionProgress),
+                child: Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 14,
+                  color: fg,
+                ),
               ),
             ],
           ),

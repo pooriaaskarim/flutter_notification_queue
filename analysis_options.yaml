@@ -1,5 +1,13 @@
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  exclude:
+    - "build/**"
+    - ".dart_tool/**"
+    - "example/build/**"
+    - "example/.dart_tool/**"
+
+
 linter:
   rules:
     avoid_dynamic_calls: true

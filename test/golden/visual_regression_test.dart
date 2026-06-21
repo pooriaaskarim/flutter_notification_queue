@@ -228,5 +228,67 @@ void main() {
         );
       },
     );
+
+    testWidgets(
+      'Notification Grouping Bundle Golden Test',
+      (final tester) async {
+      FlutterNotificationQueue.configure(
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            position: QueuePosition.topCenter,
+            defaultDismissDuration: null,
+            defaultColor: Colors.blue,
+          ),
+        },
+        queues: {
+          const TopCenterQueue(
+            groupingBehavior: QueueGroupingBehavior(
+              enabled: true,
+              maxBeforeGrouping: 2,
+            ),
+          ),
+        },
+      );
+
+      tester.view.physicalSize = const Size(800, 600);
+      tester.view.devicePixelRatio = 1.0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(useMaterial3: true),
+          builder: FlutterNotificationQueue.builder,
+          home: const Scaffold(
+            body: Center(
+              child: Text('App Content'),
+            ),
+          ),
+        ),
+      );
+
+      NotificationWidget(
+        id: 'n1',
+        title: 'First Notification',
+        message: 'This is the first notification in the group.',
+      ).show();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      NotificationWidget(
+        id: 'n2',
+        title: 'Second Notification',
+        message: 'This is the second notification in the group.',
+      ).show();
+
+      await tester.pump();
+      for (int i = 0; i < 15; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      await expectLater(
+        find.byType(NotificationOverlay),
+        matchesGoldenFile('goldens/grouped_notification_bundle.png'),
+      );
+    });
   });
 }

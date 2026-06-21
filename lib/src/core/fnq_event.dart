@@ -240,8 +240,7 @@ final class NotificationGroupExpanded extends FnqEvent {
   final int count;
 
   @override
-  String toString() =>
-      'NotificationGroupExpanded(key: $groupKey, '
+  String toString() => 'NotificationGroupExpanded(key: $groupKey, '
       'position: ${position.name}, count: $count)';
 }
 
@@ -264,8 +263,7 @@ final class NotificationGroupCollapsed extends FnqEvent {
   final int count;
 
   @override
-  String toString() =>
-      'NotificationGroupCollapsed(key: $groupKey, '
+  String toString() => 'NotificationGroupCollapsed(key: $groupKey, '
       'position: ${position.name}, count: $count)';
 }
 
@@ -284,7 +282,6 @@ final class NotificationGroupDismissed extends FnqEvent {
   final QueuePosition position;
 
   @override
-  String toString() =>
-      'NotificationGroupDismissed(key: $groupKey, '
+  String toString() => 'NotificationGroupDismissed(key: $groupKey, '
       'position: ${position.name})';
 }

@@ -474,7 +474,7 @@ final _scenarios = [
       // across async gaps lint.
       final position =
           context.read<SetupBloc>().state.setup.queues.keys.firstOrNull ??
-          QueuePosition.topRight;
+              QueuePosition.topRight;
       // After the burst has settled, dismiss the whole bundle at once.
       Future.delayed(const Duration(seconds: 3), () {
         FlutterNotificationQueue.coordinator.dismissGroup(
