@@ -77,7 +77,8 @@ class NotificationWidget extends StatefulWidget {
     final DateTime? snoozedAt,
     final String? groupKey,
   }) {
-    final resolvedId = id ?? DateTime.now().toString();
+    final resolvedId = id ??
+        'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
     final resolveChannel =
         FlutterNotificationQueue.configuration.getChannel(channelName);
@@ -108,6 +109,8 @@ class NotificationWidget extends StatefulWidget {
       groupKey: groupKey,
     );
   }
+
+  static int _idCounter = 0;
 
   final GlobalKey<NotificationWidgetState> _key;
 

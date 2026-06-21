@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
 import '../../bloc/setup_bloc.dart';
+import '../../models/channel_setup.dart';
+import '../../models/queue_setup.dart';
 import '../../studio_theme.dart';
 import '../../widgets/studio_section_header.dart';
 
@@ -398,89 +400,152 @@ final _scenarios = [
         'only that one exits. The next hidden message surfaces automatically.',
     icon: Icons.mark_chat_unread_outlined,
     color: const Color(0xFF0EA5E9),
-    onFire: (final _) {
-      _stagger(
-        [
-          NotificationWidget(
-            title: 'Alice',
-            message: 'Hey, are you free this afternoon?',
-            channelName: 'chat',
-            dismissDuration: const Duration(seconds: 30),
+    onFire: (final context) {
+      final setupBloc = context.read<SetupBloc>();
+      // Automatically configure topRight queue to have groupingEnabled = true
+      final existingQueue =
+          setupBloc.state.setup.queues[QueuePosition.topRight] ??
+              const QueueSetup();
+      setupBloc
+        ..add(
+          AddQueue(
+            QueuePosition.topRight,
+            existingQueue.copyWith(
+              groupingEnabled: true,
+              groupingThreshold: 2,
+            ),
           ),
-          NotificationWidget(
-            title: 'Alice',
-            message: 'I have some updates on the design sprint.',
-            channelName: 'chat',
-            dismissDuration: const Duration(seconds: 30),
+        )
+        // Ensure 'chat' channel maps to topRight and is enabled
+        ..add(
+          const AddChannel(
+            ChannelSetup(
+              name: 'chat',
+              description: 'Social Chat Messages',
+              color: Color(0xFF0EA5E9),
+              position: QueuePosition.topRight,
+              dismissSeconds: 30,
+              iconPreset: ChannelIconPreset.notification,
+            ),
           ),
-          NotificationWidget(
-            title: 'Alice',
-            message: 'The stakeholders moved the review to Friday!',
-            channelName: 'chat',
-            dismissDuration: const Duration(seconds: 30),
-          ),
-          NotificationWidget(
-            title: 'Alice',
-            message: 'Let me know if you need the deck beforehand.',
-            channelName: 'chat',
-            dismissDuration: const Duration(seconds: 30),
-          ),
-        ],
-        const Duration(milliseconds: 500),
-      );
+        );
+
+      // Delay to ensure SetupBloc state is applied before
+      // NotificationWidgets are built
+      Future.delayed(const Duration(milliseconds: 50), () {
+        _stagger(
+          [
+            NotificationWidget(
+              title: 'Alice',
+              message: 'Hey, are you free this afternoon?',
+              channelName: 'chat',
+              dismissDuration: const Duration(seconds: 30),
+            ),
+            NotificationWidget(
+              title: 'Alice',
+              message: 'I have some updates on the design sprint.',
+              channelName: 'chat',
+              dismissDuration: const Duration(seconds: 30),
+            ),
+            NotificationWidget(
+              title: 'Alice',
+              message: 'The stakeholders moved the review to Friday!',
+              channelName: 'chat',
+              dismissDuration: const Duration(seconds: 30),
+            ),
+            NotificationWidget(
+              title: 'Alice',
+              message: 'Let me know if you need the deck beforehand.',
+              channelName: 'chat',
+              dismissDuration: const Duration(seconds: 30),
+            ),
+          ],
+          const Duration(milliseconds: 500),
+        );
+      });
     },
   ),
 
   // ── 11. Group Dismiss ──
   _Scenario(
     title: 'Group Dismiss',
-    subtitle: 'Fires a chat burst, then calls dismissGroup() after 3 s '
-        'to clear the entire bundle at once via the explicit API.',
+    subtitle:
+        'Fires a build logs burst to bottomLeft, then calls dismissGroup() '
+        'after 3 s to clear the entire bundle at once via the explicit API.',
     icon: Icons.layers_clear_outlined,
     color: const Color(0xFF06B6D4),
     onFire: (final context) {
-      // Fire the same chat burst as scenario #10.
-      const groupKey = 'chat';
-      _stagger(
-        [
-          NotificationWidget(
-            title: 'Bob',
-            message: 'Build pipeline started.',
-            channelName: groupKey,
-            dismissDuration: const Duration(seconds: 60),
+      final setupBloc = context.read<SetupBloc>();
+      // Automatically configure bottomLeft queue to have groupingEnabled = true
+      final existingQueue =
+          setupBloc.state.setup.queues[QueuePosition.bottomLeft] ??
+              const QueueSetup();
+      setupBloc
+        ..add(
+          AddQueue(
+            QueuePosition.bottomLeft,
+            existingQueue.copyWith(
+              groupingEnabled: true,
+              groupingThreshold: 2,
+            ),
           ),
-          NotificationWidget(
-            title: 'Bob',
-            message: 'Unit tests: all 312 passed.',
-            channelName: groupKey,
-            dismissDuration: const Duration(seconds: 60),
+        )
+        // Ensure 'system_tasks' channel maps to bottomLeft and is enabled
+        ..add(
+          const AddChannel(
+            ChannelSetup(
+              name: 'system_tasks',
+              description: 'System Build Logs',
+              color: Color(0xFF06B6D4),
+              position: QueuePosition.bottomLeft,
+              dismissSeconds: 60,
+              iconPreset: ChannelIconPreset.info,
+            ),
           ),
-          NotificationWidget(
-            title: 'Bob',
-            message: 'Integration tests: passed.',
-            channelName: groupKey,
-            dismissDuration: const Duration(seconds: 60),
-          ),
-          NotificationWidget(
-            title: 'Bob',
-            message: '🚀 Deploy to staging complete.',
-            channelName: groupKey,
-            dismissDuration: const Duration(seconds: 60),
-          ),
-        ],
-        const Duration(milliseconds: 400),
-      );
-      // Snapshot position *before* the async gap to avoid BuildContext
-      // across async gaps lint.
-      final position =
-          context.read<SetupBloc>().state.setup.queues.keys.firstOrNull ??
-              QueuePosition.topRight;
-      // After the burst has settled, dismiss the whole bundle at once.
-      Future.delayed(const Duration(seconds: 3), () {
-        FlutterNotificationQueue.coordinator.dismissGroup(
-          position,
-          groupKey,
         );
+
+      const groupKey = 'system_tasks';
+
+      // Delay to ensure SetupBloc state is applied before
+      // NotificationWidgets are built
+      Future.delayed(const Duration(milliseconds: 50), () {
+        _stagger(
+          [
+            NotificationWidget(
+              title: 'Bob',
+              message: 'Build pipeline started.',
+              channelName: groupKey,
+              dismissDuration: const Duration(seconds: 60),
+            ),
+            NotificationWidget(
+              title: 'Bob',
+              message: 'Unit tests: all 312 passed.',
+              channelName: groupKey,
+              dismissDuration: const Duration(seconds: 60),
+            ),
+            NotificationWidget(
+              title: 'Bob',
+              message: 'Integration tests: passed.',
+              channelName: groupKey,
+              dismissDuration: const Duration(seconds: 60),
+            ),
+            NotificationWidget(
+              title: 'Bob',
+              message: '🚀 Deploy to staging complete.',
+              channelName: groupKey,
+              dismissDuration: const Duration(seconds: 60),
+            ),
+          ],
+          const Duration(milliseconds: 400),
+        );
+
+        // After the burst has settled, dismiss the whole bundle at once.
+        Future.delayed(const Duration(seconds: 3), () {
+          FlutterNotificationQueue.coordinator.dismissGroup(
+            QueuePosition.bottomLeft,
+            groupKey,
+          );
+        });
       });
     },
   ),
