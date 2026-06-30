@@ -1367,11 +1367,19 @@ class _GroupBundleWidget extends AnimatedWidget {
         NotificationTheme.resolveWith(context, style, notification);
     final cardColor = resolvedTheme.backgroundColor;
 
-    final container = Material(
-      shape: resolvedTheme.shape,
-      color: cardColor.withValues(alpha: resolvedTheme.opacity * opacity),
-      elevation: resolvedTheme.elevation * opacity,
-      type: MaterialType.canvas,
+    final container = Container(
+      decoration: BoxDecoration(
+        color: cardColor.withValues(alpha: resolvedTheme.opacity * opacity),
+        borderRadius: resolvedTheme.borderRadius,
+        border: resolvedTheme.border,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08 * opacity),
+            blurRadius: resolvedTheme.elevation * opacity,
+            offset: Offset(0, resolvedTheme.elevation * 0.5 * opacity),
+          ),
+        ],
+      ),
       child: const SizedBox.expand(),
     );
 

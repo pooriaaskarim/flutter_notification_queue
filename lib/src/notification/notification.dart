@@ -77,8 +77,8 @@ class NotificationWidget extends StatefulWidget {
     final DateTime? snoozedAt,
     final String? groupKey,
   }) {
-    final resolvedId = id ??
-        'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
+    final resolvedId =
+        id ?? 'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
     final resolveChannel =
         FlutterNotificationQueue.configuration.getChannel(channelName);
@@ -381,7 +381,11 @@ class NotificationWidgetState extends State<NotificationWidget>
   /// An expanded notification will not be dismissed using [dismissTimer].
   final ValueNotifier<bool> isExpanded = ValueNotifier(false);
 
-  Timer? dismissTimer;
+  AnimationController? _dismissProgressController;
+  bool _isMouseHovering = false;
+  static final Timer _dummyTimer = Timer(Duration.zero, () {});
+  Timer? get dismissTimer =>
+      _dismissProgressController != null ? _dummyTimer : null;
 
   late final AnimationController animationController;
 
@@ -445,7 +449,7 @@ class NotificationWidgetState extends State<NotificationWidget>
   @override
   void dispose() {
     animationController.dispose();
-    ditchDismissTimer();
+    _dismissProgressController?.dispose();
     isExpanded.dispose();
     _logger.debugBuffer
       ?..writeln('Disposed')
@@ -456,17 +460,30 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   void initDismissTimer() {
     if (resolvedDismissDuration != null) {
-      dismissTimer = Timer(resolvedDismissDuration!, () {
-        if (mounted && !isExpanded.value) {
-          dismiss(reason: DismissReason.timeout);
-        }
-      });
+      if (_dismissProgressController == null) {
+        _dismissProgressController = AnimationController(
+          vsync: this,
+          duration: resolvedDismissDuration,
+        );
+        _dismissProgressController!.addStatusListener((final status) {
+          if (status == AnimationStatus.completed) {
+            if (mounted && !isExpanded.value) {
+              dismiss(reason: DismissReason.timeout);
+            }
+          }
+        });
+      } else {
+        _dismissProgressController!.duration = resolvedDismissDuration;
+      }
+      _dismissProgressController!.reset();
+      _dismissProgressController!.forward();
     }
   }
 
   void ditchDismissTimer() {
-    dismissTimer?.cancel();
-    dismissTimer = null;
+    _dismissProgressController?.stop(canceled: false);
+    _dismissProgressController?.dispose();
+    _dismissProgressController = null;
   }
 
   @override
@@ -488,107 +505,127 @@ class NotificationWidgetState extends State<NotificationWidget>
               borderOnForeground: true,
               type: MaterialType.canvas,
               color: theme.backgroundColor.withValues(alpha: theme.opacity),
-              child: MouseRegion(
-                onEnter: (final _) => _showCloseButton.value =
-                    widget.queue.closeButtonBehavior.onHover(isHovering: true),
-                onExit: (final _) => _showCloseButton.value =
-                    widget.queue.closeButtonBehavior.onHover(isHovering: false),
-                child: InkWell(
-                  onTap: switch (_resolvedTapBehavior) {
-                    TapDisabled() =>
-                      () {}, // Intercept tap to prevent drag FSM reset
-                    TapToDismiss() => () {
-                        FlutterNotificationQueue.coordinator.emitTapped(
-                          notification: widget,
-                          behavior: _resolvedTapBehavior,
-                        );
-                        // Legacy onTap action callback respected.
-                        if (hasOnTapAction) {
-                          widget.action?.onPressed();
-                        }
-                        dismiss(reason: DismissReason.userTap);
-                      },
-                    TapToExpand() => () {
-                        FlutterNotificationQueue.coordinator.emitTapped(
-                          notification: widget,
-                          behavior: _resolvedTapBehavior,
-                        );
-                        _toggleExpanded();
-                      },
-                    TapToAct(:final onTap, :final dismissOnAct) => () {
-                        FlutterNotificationQueue.coordinator.emitTapped(
-                          notification: widget,
-                          behavior: _resolvedTapBehavior,
-                        );
-                        onTap();
-                        if (dismissOnAct) {
-                          dismiss(reason: DismissReason.userTap);
-                        }
-                      },
+              child: Listener(
+                onPointerDown: (final _) {
+                  _dismissProgressController?.stop(canceled: false);
+                },
+                onPointerUp: (final _) {
+                  if (!_isMouseHovering && !isExpanded) {
+                    _dismissProgressController?.forward();
+                  }
+                },
+                child: MouseRegion(
+                  onEnter: (final _) {
+                    _isMouseHovering = true;
+                    _showCloseButton.value = widget.queue.closeButtonBehavior
+                        .onHover(isHovering: true);
+                    _dismissProgressController?.stop(canceled: false);
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    constraints: Utils.horizontalConstraints(
-                      context,
-                      widget.queue.maxWidth,
-                    ),
-                    curve: Curves.easeOut,
-                    decoration: BoxDecoration(
-                      border: theme.border,
-                    ),
-                    padding: EdgeInsetsDirectional.symmetric(
-                      vertical: isExpanded ? 8 : 4,
-                      horizontal: 4,
-                    ),
-                    // padding: EdgeInsets.all(8),
-                    child: Column(
-                      spacing: 4,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          spacing: 4,
-                          children: [
-                            _getExpandButton(isExpanded: isExpanded),
-                            Expanded(
-                              child: _getTitle(isExpanded: isExpanded),
-                            ),
-                            _getCloseButton(isExpanded: true),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsetsGeometry.symmetric(
-                            horizontal: 12,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            spacing: 8,
+                  onExit: (final _) {
+                    _isMouseHovering = false;
+                    _showCloseButton.value = widget.queue.closeButtonBehavior
+                        .onHover(isHovering: false);
+                    if (!isExpanded) {
+                      _dismissProgressController?.forward();
+                    }
+                  },
+                  child: InkWell(
+                    onTap: switch (_resolvedTapBehavior) {
+                      TapDisabled() =>
+                        () {}, // Intercept tap to prevent drag FSM reset
+                      TapToDismiss() => () {
+                          FlutterNotificationQueue.coordinator.emitTapped(
+                            notification: widget,
+                            behavior: _resolvedTapBehavior,
+                          );
+                          // Legacy onTap action callback respected.
+                          if (hasOnTapAction) {
+                            widget.action?.onPressed();
+                          }
+                          dismiss(reason: DismissReason.userTap);
+                        },
+                      TapToExpand() => () {
+                          FlutterNotificationQueue.coordinator.emitTapped(
+                            notification: widget,
+                            behavior: _resolvedTapBehavior,
+                          );
+                          _toggleExpanded();
+                        },
+                      TapToAct(:final onTap, :final dismissOnAct) => () {
+                          FlutterNotificationQueue.coordinator.emitTapped(
+                            notification: widget,
+                            behavior: _resolvedTapBehavior,
+                          );
+                          onTap();
+                          if (dismissOnAct) {
+                            dismiss(reason: DismissReason.userTap);
+                          }
+                        },
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      constraints: Utils.horizontalConstraints(
+                        context,
+                        widget.queue.maxWidth,
+                      ),
+                      curve: Curves.easeOut,
+                      decoration: BoxDecoration(
+                        border: theme.border,
+                      ),
+                      padding: EdgeInsetsDirectional.symmetric(
+                        vertical: isExpanded ? 8 : 4,
+                        horizontal: 4,
+                      ),
+                      // padding: EdgeInsets.all(8),
+                      child: Column(
+                        spacing: 4,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            spacing: 4,
                             children: [
-                              IconTheme(
-                                data: IconThemeData(
-                                  color: theme.color,
-                                  size: 24,
-                                ),
-                                child: widget.icon ??
-                                    widget.channel.defaultIcon ??
-                                    const SizedBox.shrink(),
-                              ),
+                              _getExpandButton(isExpanded: isExpanded),
                               Expanded(
-                                child: Text(
-                                  widget.message,
-                                  style: theme.themeData.textTheme.bodyMedium
-                                      ?.copyWith(
-                                    color: theme.foregroundColor,
-                                  ),
-                                  maxLines: isExpanded ? 10 : 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                child: _getTitle(isExpanded: isExpanded),
                               ),
+                              _getCloseButton(isExpanded: true),
                             ],
                           ),
-                        ),
-                        _getActionButton(),
-                        _timerIndicator(isExpanded: isExpanded),
-                      ],
+                          Padding(
+                            padding: const EdgeInsetsGeometry.symmetric(
+                              horizontal: 12,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              spacing: 8,
+                              children: [
+                                IconTheme(
+                                  data: IconThemeData(
+                                    color: theme.color,
+                                    size: 24,
+                                  ),
+                                  child: widget.icon ??
+                                      widget.channel.defaultIcon ??
+                                      const SizedBox.shrink(),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    widget.message,
+                                    style: theme.themeData.textTheme.bodyMedium
+                                        ?.copyWith(
+                                      color: theme.foregroundColor,
+                                    ),
+                                    maxLines: isExpanded ? 10 : 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _getActionButton(),
+                          _timerIndicator(isExpanded: isExpanded),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -601,12 +638,16 @@ class NotificationWidgetState extends State<NotificationWidget>
             // blocking pumpAndSettle().
             return ClipRRect(
               borderRadius: theme.borderRadius,
-              child: useBlur
-                  ? BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-                      child: content,
-                    )
-                  : content,
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOutCubic,
+                child: useBlur
+                    ? BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+                        child: content,
+                      )
+                    : content,
+              ),
             );
           },
         ),
@@ -655,33 +696,21 @@ class NotificationWidgetState extends State<NotificationWidget>
       : const SizedBox.shrink();
 
   Widget _timerIndicator({required final bool isExpanded}) =>
-      dismissTimer != null && !isExpanded
-          ? TweenAnimationBuilder(
-              duration: resolvedDismissDuration!,
-              tween: Tween<double>(begin: 0.0, end: 1.0),
-              curve: Curves.easeInOut,
-              builder: (final context, final animation, final child) => Padding(
+      _dismissProgressController != null && !isExpanded
+          ? AnimatedBuilder(
+              animation: _dismissProgressController!,
+              builder: (final context, final child) => Padding(
                 padding: const EdgeInsetsGeometry.only(
                   right: 4,
                   left: 4,
                 ),
                 child: LinearProgressIndicator(
                   minHeight: 2,
-                  valueColor: ColorTween(
-                    begin: theme.foregroundColor.withValues(
-                      alpha: 0.5,
-                    ),
-                    end: theme.foregroundColor.withValues(
-                      alpha: 0.5,
-                    ),
-                  ).animate(
-                    CurvedAnimation(
-                      parent: AlwaysStoppedAnimation(animation),
-                      curve: Curves.easeInOut,
-                    ),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    theme.foregroundColor.withValues(alpha: 0.5),
                   ),
                   backgroundColor: theme.backgroundColor,
-                  value: animation,
+                  value: _dismissProgressController!.value,
                 ),
               ),
             )
