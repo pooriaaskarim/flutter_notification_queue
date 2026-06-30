@@ -14,12 +14,18 @@ void main() {
           ),
           const NotificationChannel(
             name: 'system',
-            position: QueuePosition.topRight,
+            position: QueuePosition.bottomLeft,
             defaultDismissDuration: null,
           ),
         },
         queues: {
           const TopRightQueue(
+            groupingBehavior: QueueGroupingBehavior(
+              enabled: true,
+              maxBeforeGrouping: 2,
+            ),
+          ),
+          const BottomLeftQueue(
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
               maxBeforeGrouping: 2,
@@ -75,133 +81,12 @@ void main() {
       expect(n2.resolvedGroupKey, equals('custom_group'));
     });
 
-    testWidgets('Notifications are grouped when count >= maxBeforeGrouping',
-        (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
-        ),
-      );
-
-      // Add first notification
-      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
-      await tester.pumpAndSettle();
-
-      // Grouping behavior requires 2 notifications. Since we only have 1,
-      // it should be rendered individually (no _GroupBundleWidget).
-      expect(find.text('Msg 1'), findsOneWidget);
-      expect(find.text('+1'), findsNothing);
-
-      // Add second notification to the same group
-      NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
-      await tester.pumpAndSettle();
-
-      // Now we have 2 notifications in group 'chat'.
-      // Since maxBeforeGrouping is 2, they should be grouped/bundled.
-      // Collapsed by default, so only the latest notification (Msg 2)
-      // is visible.
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
-
-      // Verify toggle button "+1" is visible (1 item hidden)
-      expect(find.text('+1'), findsOneWidget);
-    });
-
-    testWidgets('Expand and collapse group via toggle button',
-        (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
-        ),
-      );
-
-      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
-      NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
-      await tester.pumpAndSettle();
-
-      // Collapsed: only Msg 2 is visible
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
-
-      // Tap the expand button
-      await tester.tap(find.text('+1'));
-      await tester.pumpAndSettle();
-
-      // Expanded: both Msg 1 and Msg 2 are visible
-      expect(find.text('Msg 1'), findsOneWidget);
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Collapse'), findsOneWidget);
-
-      // Tap the collapse button
-      await tester.tap(find.text('Collapse'));
-      await tester.pumpAndSettle();
-
-      // Collapsed again: only Msg 2 is visible
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
-    });
-
-    testWidgets('Dismissing collapsed group representative surfaces next item',
-        (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
-        ),
-      );
-
-      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
-      final n2 = NotificationWidget(message: 'Msg 2', channelName: 'chat')
-        ..show();
-      await tester.pumpAndSettle();
-
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
-
-      // Dismiss the representative programmatically via n2
-      final dismissFuture = n2.dismiss();
-      await tester.pumpAndSettle();
-      await dismissFuture;
-
-      // Verify that n2 (Msg 2) is gone, but n1 (Msg 1) has surfaced
-      // and is now visible
-      expect(find.text('Msg 2'), findsNothing);
-      expect(find.text('Msg 1'), findsOneWidget);
-    });
-
-    testWidgets('dismissGroup dismisses all items in the group',
-        (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
-        ),
-      );
-
-      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
-      NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
-      await tester.pumpAndSettle();
-
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
-
-      // Dismiss the entire group
-      FlutterNotificationQueue.coordinator.dismissGroup(
-        QueuePosition.topRight,
-        'chat',
-      );
-      await tester.pumpAndSettle();
-
-      // Verify both items are gone
-      expect(find.text('Msg 2'), findsNothing);
-      expect(find.text('Msg 1'), findsNothing);
-    });
-
     testWidgets(
-        'Swiping collapsed group representative dismisses all items '
-        'when enableGroupSwipeDismiss is true', (final tester) async {
+        'Scenario 1: Multi-Group Lifecycle - Grouping, Isolated '
+        'Expansion/Collapse, Priority Triage/Overflow, and Programmatic '
+        'Dismissal', (final tester) async {
+      // Configure with different positions and maxStackSize constraints to
+      // test multiple layout settings
       FlutterNotificationQueue.configure(
         channels: {
           const NotificationChannel(
@@ -209,9 +94,207 @@ void main() {
             position: QueuePosition.topRight,
             defaultDismissDuration: null,
           ),
+          const NotificationChannel(
+            name: 'system',
+            position: QueuePosition.bottomLeft,
+            defaultDismissDuration: null,
+          ),
         },
         queues: {
           const TopRightQueue(
+            groupingBehavior: QueueGroupingBehavior(
+              enabled: true,
+              maxBeforeGrouping: 2,
+            ),
+            maxStackSize: 2,
+          ),
+          const BottomLeftQueue(
+            groupingBehavior: QueueGroupingBehavior(
+              enabled: true,
+              maxBeforeGrouping: 2,
+            ),
+            maxStackSize: 2,
+          ),
+        },
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          builder: FlutterNotificationQueue.builder,
+          home: Scaffold(body: Center(child: Text('App Home'))),
+        ),
+      );
+
+      // 1. Enqueue single 'chat' notification (c1) to Top Right
+      NotificationWidget(
+        id: 'c1',
+        message: 'Chat 1',
+        channelName: 'chat',
+        priority: NotificationPriority.low,
+      ).show();
+      await tester.pumpAndSettle();
+
+      // Verify c1 is active and visible as standard individual item.
+      expect(find.text('Chat 1'), findsOneWidget);
+      expect(find.text('+1'), findsNothing);
+
+      // 2. Enqueue second 'chat' notification (c2) -> should activate
+      // grouping automatically
+      NotificationWidget(
+        id: 'c2',
+        message: 'Chat 2',
+        channelName: 'chat',
+      ).show();
+      await tester.pumpAndSettle();
+
+      // Grouping activates itself once threshold (2) is met.
+      // Chat 2 is the representative. Chat 1 is hidden. Badge
+      // indication '+1' is visible.
+      expect(find.text('Chat 2'), findsOneWidget);
+      expect(find.text('Chat 1'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('chat')),
+          matching: find.text('+1'),
+        ),
+        findsOneWidget,
+      );
+
+      // 3. Enqueue first 'system' notification (s1) to Bottom Left
+      NotificationWidget(
+        id: 's1',
+        message: 'System 1',
+        channelName: 'system',
+      ).show();
+      await tester.pumpAndSettle();
+
+      // Both queues are active concurrently. Sys 1 is visible at
+      // bottom left; Chat 2 at top right.
+      expect(find.text('Chat 2'), findsOneWidget);
+      expect(find.text('System 1'), findsOneWidget);
+
+      // 4. Enqueue second 'system' notification (s2) -> should activate
+      // system grouping automatically
+      NotificationWidget(
+        id: 's2',
+        message: 'System 2',
+        channelName: 'system',
+      ).show();
+      await tester.pumpAndSettle();
+
+      // System grouping is activated.
+      // Since bottomLeft is bottom-anchored, the oldest card (System 1)
+      // is the representative.
+      // System 1 is visible, System 2 is hidden. Badge '+1' is visible
+      // at Bottom Left.
+      expect(find.text('Chat 2'), findsOneWidget);
+      expect(find.text('System 1'), findsOneWidget);
+      expect(find.text('Chat 1'), findsNothing);
+      expect(find.text('System 2'), findsNothing);
+      expect(find.text('+1'), findsNWidgets(2));
+
+      // 5. Expand 'chat' group at Top Right
+      final chatGroupFinder = find.byKey(const ValueKey('chat'));
+      await tester
+          .tap(find.descendant(of: chatGroupFinder, matching: find.text('+1')));
+      await tester.pumpAndSettle();
+
+      // 'chat' group expanded: Chat 2, Chat 1 and Collapse button are visible.
+      expect(find.text('Chat 2'), findsOneWidget);
+      expect(find.text('Chat 1'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: chatGroupFinder,
+          matching: find.text('Collapse'),
+        ),
+        findsOneWidget,
+      );
+
+      // 'system' group remains collapsed at Bottom Left: System 2 is
+      // hidden, System 1 + badge is visible
+      final systemGroupFinder = find.byKey(const ValueKey('system'));
+      expect(find.text('System 1'), findsOneWidget);
+      expect(find.text('System 2'), findsNothing);
+      expect(
+        find.descendant(
+          of: systemGroupFinder,
+          matching: find.text('+1'),
+        ),
+        findsOneWidget,
+      );
+
+      // 6. Enqueue critical 'chat' notification (c3) to trigger
+      // TopRightQueue overflow (maxStackSize: 2)
+      // Since queue has c1 (low) and c2 (normal), adding c3 (high)
+      // should evict c1.
+      NotificationWidget(
+        id: 'c3',
+        message: 'Chat 3',
+        channelName: 'chat',
+        priority: NotificationPriority.high,
+      ).show();
+      await tester.pumpAndSettle();
+
+      // Verify Chat 3 is visible, Chat 1 is evicted
+      expect(find.text('Chat 3'), findsOneWidget);
+      expect(find.text('Chat 1'), findsNothing);
+
+      // 7. Collapse 'chat' group at Top Right
+      await tester.tap(
+        find.descendant(
+          of: chatGroupFinder,
+          matching: find.text('Collapse'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Chat 3 is representative, Chat 2 is underneath
+      expect(find.text('Chat 3'), findsOneWidget);
+      expect(find.text('Chat 2'), findsNothing);
+
+      // 8. Programmatic group dismissal for 'chat' queue
+      FlutterNotificationQueue.coordinator.dismissGroup(
+        QueuePosition.topRight,
+        'chat',
+      );
+      await tester.pumpAndSettle();
+
+      // Chat notifications are gone, system group remains at Bottom Left
+      expect(find.text('Chat 3'), findsNothing);
+      expect(find.text('Chat 2'), findsNothing);
+      expect(find.text('System 1'), findsOneWidget);
+
+      // 9. Programmatic item dismissal on System 1 representative
+      final s1Widget = NotificationWidget(
+        id: 's1',
+        message: 'System 1',
+        channelName: 'system',
+      );
+      final dismissFuture = s1Widget.dismiss();
+      await tester.pumpAndSettle();
+      await dismissFuture;
+
+      // System 1 is gone, System 2 has surfaced and is now visible
+      // at Bottom Left
+      expect(find.text('System 1'), findsNothing);
+      expect(find.text('System 2'), findsOneWidget);
+    });
+
+    testWidgets(
+        'Scenario 2: Advanced Interactive Gestures - Drag-to-Peek, '
+        'Swipe-to-Dismiss Config, and Expanded Swipe', (final tester) async {
+      // Configuration with enableGroupSwipeDismiss = true on
+      // Bottom Right Position
+      FlutterNotificationQueue.configure(
+        channels: {
+          const NotificationChannel(
+            name: 'chat',
+            position: QueuePosition.bottomRight,
+            defaultDismissDuration: null,
+          ),
+        },
+        queues: {
+          const BottomRightQueue(
             dragBehavior: Dismiss(),
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
@@ -229,35 +312,51 @@ void main() {
         ),
       );
 
-      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
-      NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
+      // Enqueue 2 notifications to bundle automatically on Bottom Right
+      NotificationWidget(id: 'c1', message: 'Chat 1', channelName: 'chat')
+          .show();
+      NotificationWidget(id: 'c2', message: 'Chat 2', channelName: 'chat')
+          .show();
       await tester.pumpAndSettle();
 
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
+      // Bottom Right is bottom-anchored: oldest (Chat 1) is the representative
+      expect(find.text('Chat 1'), findsOneWidget);
+      expect(find.text('Chat 2'), findsNothing);
 
-      // Swipe to dismiss Msg 2 (the representative)
-      await tester.drag(find.text('Msg 2'), const Offset(300, 0));
+      // 1. Drag representative slightly to peek underneath
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('Chat 1')));
+      await gesture.moveBy(const Offset(50, 0));
+      await tester.pump();
+
+      // During drag: both Chat 1 and Chat 2 (peeked) are visible
+      expect(find.text('Chat 2'), findsOneWidget);
+
+      // Cancel drag
+      await gesture.moveBy(const Offset(-50, 0));
+      await gesture.up();
       await tester.pumpAndSettle();
 
-      // Since enableGroupSwipeDismiss is true, the entire group is dismissed
-      expect(find.text('Msg 2'), findsNothing);
-      expect(find.text('Msg 1'), findsNothing);
-    });
+      // 2. Swipe to dismiss entire group (enableGroupSwipeDismiss = true)
+      await tester.drag(find.text('Chat 1'), const Offset(300, 0));
+      await tester.pumpAndSettle();
 
-    testWidgets(
-        'Swiping collapsed group representative dismisses only representative '
-        'when enableGroupSwipeDismiss is false', (final tester) async {
+      // Both chat notifications dismissed
+      expect(find.text('Chat 2'), findsNothing);
+      expect(find.text('Chat 1'), findsNothing);
+
+      // 3. Reconfigure with enableGroupSwipeDismiss = false on
+      // Top Left Position
       FlutterNotificationQueue.configure(
         channels: {
           const NotificationChannel(
             name: 'chat',
-            position: QueuePosition.topRight,
+            position: QueuePosition.topLeft,
             defaultDismissDuration: null,
           ),
         },
         queues: {
-          const TopRightQueue(
+          const TopLeftQueue(
             dragBehavior: Dismiss(),
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
@@ -268,80 +367,59 @@ void main() {
         },
       );
 
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
+      // Enqueue 3 notifications
+      NotificationWidget(id: 'c1', message: 'Chat 1', channelName: 'chat')
+          .show();
+      NotificationWidget(id: 'c2', message: 'Chat 2', channelName: 'chat')
+          .show();
+      NotificationWidget(id: 'c3', message: 'Chat 3', channelName: 'chat')
+          .show();
+      await tester.pumpAndSettle();
+
+      // Top Left is top-anchored: newest (Chat 3) is the representative
+      expect(find.text('Chat 3'), findsOneWidget);
+      expect(find.text('Chat 2'), findsNothing);
+
+      // 4. Swipe to dismiss representative (enableGroupSwipeDismiss = false)
+      // Since it is topLeft, we swipe left (negative X offset) to dismiss
+      await tester.drag(find.text('Chat 3'), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+
+      // Chat 3 is gone, Chat 2 surfaces, +1 badge visible
+      // (Chat 2 & Chat 1 remain)
+      expect(find.text('Chat 3'), findsNothing);
+      expect(find.text('Chat 2'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('chat')),
+          matching: find.text('+1'),
+        ),
+        findsOneWidget,
+      );
+
+      // 5. Expand remaining group
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('chat')),
+          matching: find.text('+1'),
         ),
       );
-
-      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
-      NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
       await tester.pumpAndSettle();
 
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
+      expect(find.text('Chat 2'), findsOneWidget);
+      expect(find.text('Chat 1'), findsOneWidget);
 
-      // Swipe to dismiss Msg 2
-      await tester.drag(find.text('Msg 2'), const Offset(300, 0));
+      // 6. Swipe to dismiss one item in the expanded list (Chat 2)
+      // Since it is topLeft, we swipe left (negative X offset) to dismiss
+      await tester.drag(find.text('Chat 2'), const Offset(-300, 0));
       await tester.pumpAndSettle();
 
-      // Since enableGroupSwipeDismiss is false, only Msg 2 is dismissed and
-      // Msg 1 surfaces
-      expect(find.text('Msg 2'), findsNothing);
-      expect(find.text('Msg 1'), findsOneWidget);
-    });
-
-    testWidgets(
-        'Dragging collapsed group representative reveals the peek card '
-        '(underneath notification) during drag', (final tester) async {
-      FlutterNotificationQueue.configure(
-        channels: {
-          const NotificationChannel(
-            name: 'chat',
-            position: QueuePosition.topRight,
-            defaultDismissDuration: null,
-          ),
-        },
-        queues: {
-          const TopRightQueue(
-            dragBehavior: Dismiss(),
-            groupingBehavior: QueueGroupingBehavior(
-              enabled: true,
-              maxBeforeGrouping: 2,
-            ),
-          ),
-        },
-      );
-
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
-        ),
-      );
-
-      NotificationWidget(message: 'Msg 1', channelName: 'chat').show();
-      NotificationWidget(message: 'Msg 2', channelName: 'chat').show();
-      await tester.pumpAndSettle();
-
-      // Before drag, Msg 2 is visible, Msg 1 is hidden
-      expect(find.text('Msg 2'), findsOneWidget);
-      expect(find.text('Msg 1'), findsNothing);
-
-      // Start dragging Msg 2
-      final gesture =
-          await tester.startGesture(tester.getCenter(find.text('Msg 2')));
-      await gesture.moveBy(const Offset(50, 0));
-      await tester.pump();
-
-      // During drag: both Msg 2 (in feedback/drag) and Msg 1
-      // (revealed underneath) should be visible!
-      expect(find.text('Msg 1'), findsOneWidget);
-
-      // Finish drag
-      await gesture.up();
-      await tester.pumpAndSettle();
+      // Chat 2 is dismissed, Chat 1 remains visible.
+      // Since only 1 notification remains, grouping controls are removed.
+      expect(find.text('Chat 2'), findsNothing);
+      expect(find.text('Chat 1'), findsOneWidget);
+      expect(find.text('Collapse'), findsNothing);
+      expect(find.text('+1'), findsNothing);
     });
   });
 }

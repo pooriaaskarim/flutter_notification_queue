@@ -19,22 +19,6 @@ class QueueWidgetState extends State<QueueWidget>
   final _pendingNotifications = Queue<NotificationWidget>();
   final List<_NotificationItemState> _items = [];
   final Set<String> _expandedGroups = {};
-  final Map<String, AnimationController> _groupExpansionControllers = {};
-
-  AnimationController _getGroupExpansionController(final String groupKey) =>
-      _groupExpansionControllers.putIfAbsent(
-        groupKey,
-        () => AnimationController(
-          vsync: this,
-          duration: const Duration(milliseconds: 300),
-        )
-          ..addStatusListener((final status) {
-            if (status == AnimationStatus.dismissed) {
-              setState(() {});
-            }
-          })
-          ..value = _expandedGroups.contains(groupKey) ? 1.0 : 0.0,
-      );
 
   /// The resolved group key of the group whose representative is currently
   /// being dragged. While non-null, the item immediately behind the
@@ -162,9 +146,6 @@ class QueueWidgetState extends State<QueueWidget>
     for (final item in _items) {
       item.controller.dispose();
     }
-    for (final controller in _groupExpansionControllers.values) {
-      controller.dispose();
-    }
     super.dispose();
   }
 
@@ -284,10 +265,7 @@ class QueueWidgetState extends State<QueueWidget>
         widget.queue.groupingBehavior.maxBeforeGrouping) {
       return true;
     }
-    final controller = _groupExpansionControllers[key];
-    final isAnimatingOrExpanded = _expandedGroups.contains(key) ||
-        (controller != null && controller.value > 0.0);
-    if (isAnimatingOrExpanded) {
+    if (_expandedGroups.contains(key)) {
       return true;
     }
     // Peek card: while the representative is being dragged, also show the
@@ -660,9 +638,9 @@ class QueueWidgetState extends State<QueueWidget>
     }
   }
 
-  /// Removes [groupKey] from [_expandedGroups] and disposes its expansion
-  /// controller if no item in [_items] still belongs to that group. Must be
-  /// called *after* the departing item has been removed from [_items].
+  /// Removes [groupKey] from [_expandedGroups] if no item in [_items]
+  /// still belongs to that group.
+  /// Must be called *after* the departing item has been removed from [_items].
   void _pruneExpandedGroup(final String groupKey) {
     final stillExists = _items.any(
       (final i) => i.widget.resolvedGroupKey == groupKey,
@@ -670,8 +648,6 @@ class QueueWidgetState extends State<QueueWidget>
     if (!stillExists) {
       setState(() {
         _expandedGroups.remove(groupKey);
-        final controller = _groupExpansionControllers.remove(groupKey);
-        controller?.dispose();
       });
     }
   }
@@ -709,6 +685,8 @@ class QueueWidgetState extends State<QueueWidget>
   @override
   Widget build(final BuildContext context) {
     final pendingCount = _pendingNotifications.length;
+    final blocks = _partitionItems();
+
     final content = ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -723,7 +701,7 @@ class QueueWidgetState extends State<QueueWidget>
         children: [
           widget.queue.queueIndicatorBuilder?.call(pendingCount) ??
               const SizedBox.shrink(),
-          for (final item in _items) _buildItem(item),
+          for (final block in blocks) _buildBlock(block, blocks),
         ],
       ),
     );
@@ -741,24 +719,103 @@ class QueueWidgetState extends State<QueueWidget>
     );
   }
 
-  Widget _buildItem(final _NotificationItemState item) {
-    final isVisible = _isItemVisible(item);
+  List<_QueueRenderBlock> _partitionItems() {
+    final List<_QueueRenderBlock> blocks = [];
+    final Set<String> processedGroupKeys = {};
 
-    if (!isVisible) {
-      return const SizedBox.shrink();
+    for (final item in _items) {
+      if (item.status == _ItemStatus.exiting) {
+        blocks.add(_SingleItemBlock(item));
+        continue;
+      }
+
+      final key = item.widget.resolvedGroupKey;
+      if (!widget.queue.groupingBehavior.enabled) {
+        blocks.add(_SingleItemBlock(item));
+        continue;
+      }
+
+      final groupItems = _items
+          .where(
+            (final i) =>
+                i.widget.resolvedGroupKey == key &&
+                i.status != _ItemStatus.exiting,
+          )
+          .toList();
+
+      if (groupItems.length < widget.queue.groupingBehavior.maxBeforeGrouping) {
+        blocks.add(_SingleItemBlock(item));
+        continue;
+      }
+
+      if (processedGroupKeys.contains(key)) {
+        continue;
+      }
+
+      blocks.add(_GroupBlock(key, groupItems));
+      processedGroupKeys.add(key);
     }
 
+    return blocks;
+  }
+
+  Widget _buildBlock(
+    final _QueueRenderBlock block,
+    final List<_QueueRenderBlock> blocks,
+  ) {
+    final isLastBlock = block == blocks.last;
+
+    switch (block) {
+      case _SingleItemBlock(:final item):
+        final visible = _visibleItems;
+        final isLastItem = item == visible.last;
+        final spacing = isLastItem ? 0.0 : widget.queue.spacing;
+        final visibleIndex = visible.indexOf(item);
+        final translationY = getTranslationY(visibleIndex);
+
+        return _buildSingleNotificationCard(
+          item: item,
+          spacing: spacing,
+          translationY: translationY,
+        );
+
+      case _GroupBlock(:final groupKey, :final items):
+        return _GroupWidget(
+          key: ValueKey(groupKey),
+          queueWidgetState: this,
+          groupKey: groupKey,
+          items: items,
+          isExpanded: _expandedGroups.contains(groupKey),
+          isLastBlock: isLastBlock,
+          onToggle: () {
+            setState(() {
+              if (_expandedGroups.contains(groupKey)) {
+                _expandedGroups.remove(groupKey);
+              } else {
+                _expandedGroups.add(groupKey);
+              }
+            });
+            _syncGroupTimers(groupKey);
+            FlutterNotificationQueue.coordinator.emitGroupToggled(
+              groupKey: groupKey,
+              position: widget.queue.position,
+              expanded: _expandedGroups.contains(groupKey),
+              count: items.length,
+            );
+          },
+        );
+    }
+  }
+
+  Widget _buildSingleNotificationCard({
+    required final _NotificationItemState item,
+    required final double spacing,
+    required final double translationY,
+  }) {
     final alignment =
         widget.queue.verticalDirection == VerticalDirection.down ? -1.0 : 1.0;
 
-    final visible = _visibleItems;
-    final isLast = item == visible.last;
-    final spacing = isLast ? 0.0 : widget.queue.spacing;
-
-    final visibleIndex = visible.indexOf(item);
-    final translationY = getTranslationY(visibleIndex);
-
-    Widget itemWidget = widget.queue.transition.build(
+    final Widget itemWidget = widget.queue.transition.build(
       context,
       item.controller,
       widget.queue.position,
@@ -769,109 +826,6 @@ class QueueWidgetState extends State<QueueWidget>
         ),
       ),
     );
-
-    if (widget.queue.groupingBehavior.enabled) {
-      final key = item.widget.resolvedGroupKey;
-      final groupItems = _items
-          .where(
-            (final i) =>
-                i.widget.resolvedGroupKey == key &&
-                i.status != _ItemStatus.exiting,
-          )
-          .toList();
-      if (groupItems.length >=
-          widget.queue.groupingBehavior.maxBeforeGrouping) {
-        final controller = _getGroupExpansionController(key);
-        final isExpanded = _expandedGroups.contains(key);
-        final representative = _groupRepresentative(groupItems);
-
-        // UX-01: Peek card — rendered dimmed/scaled behind the dragged rep.
-        if (_isPeekItem(item, key, groupItems)) {
-          itemWidget = IgnorePointer(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              builder: (final ctx, final t, final child) => Opacity(
-                opacity: 0.55 * t,
-                child: Transform.scale(
-                  scale: 0.94 + 0.06 * t,
-                  alignment: Alignment.topCenter,
-                  child: child,
-                ),
-              ),
-              child: itemWidget,
-            ),
-          );
-        }
-
-        if (item == representative) {
-          // UX-02: Entrance micro-animation — replays whenever entranceKey
-          // changes (i.e. after an instant-swap).
-          itemWidget = TweenAnimationBuilder<double>(
-            key: item.entranceKey,
-            tween: Tween(begin: 0.96, end: 1.0),
-            duration: const Duration(milliseconds: 130),
-            curve: Curves.easeOut,
-            builder: (final ctx, final scale, final child) =>
-                Transform.scale(scale: scale, child: child),
-            child: itemWidget,
-          );
-
-          // Hidden items = all group members except the representative,
-          // sorted so the "next in line" is first.
-          final hiddenItems =
-              groupItems.where((final i) => i != representative).toList();
-
-          itemWidget = _GroupBundleWidget(
-            notification: item.widget,
-            count: groupItems.length,
-            expansionProgress: controller,
-            hiddenItems: hiddenItems,
-            onToggle: () {
-              setState(() {
-                if (isExpanded) {
-                  _expandedGroups.remove(key);
-                  controller.reverse();
-                } else {
-                  _expandedGroups.add(key);
-                  controller.forward();
-                }
-              });
-              // Sync timers after toggling so newly-hidden members stop their
-              // countdown and newly-visible members resume it.
-              _syncGroupTimers(key);
-              FlutterNotificationQueue.coordinator.emitGroupToggled(
-                groupKey: key,
-                position: widget.queue.position,
-                expanded: !isExpanded,
-                count: groupItems.length,
-              );
-            },
-            style: widget.queue.style,
-            verticalDirection: widget.queue.verticalDirection,
-            child: itemWidget,
-          );
-        } else if (!_isPeekItem(item, key, groupItems)) {
-          // Non-representative: wrap with an extra SizeTransition and
-          // FadeTransition driven by group expansion
-          itemWidget = SizeTransition(
-            sizeFactor: CurvedAnimation(
-              parent: controller,
-              curve: Curves.fastOutSlowIn,
-            ),
-            alignment: Alignment(-1.0, alignment),
-            child: FadeTransition(
-              opacity: CurvedAnimation(
-                parent: controller,
-                curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
-              ),
-              child: itemWidget,
-            ),
-          );
-        }
-      }
-    }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
@@ -902,154 +856,87 @@ class QueueWidgetState extends State<QueueWidget>
   }
 }
 
-enum _ItemStatus { entering, exiting }
-
-class _NotificationItemState {
-  _NotificationItemState({
-    required this.widget,
-    required this.controller,
-  });
-
-  NotificationWidget widget;
-  final AnimationController controller;
-  final GlobalKey globalKey = GlobalKey();
-  _ItemStatus status = _ItemStatus.entering;
-
-  /// Regenerated on each instant-swap so the representative's
-  /// TweenAnimationBuilder re-triggers its entrance micro-animation.
-  Key entranceKey = UniqueKey();
+sealed class _QueueRenderBlock {
+  const _QueueRenderBlock();
 }
 
-class _GroupBundleWidget extends AnimatedWidget {
-  const _GroupBundleWidget({
-    required final Animation<double> expansionProgress,
-    required this.child,
-    required this.count,
-    required this.hiddenItems,
+class _SingleItemBlock extends _QueueRenderBlock {
+  const _SingleItemBlock(this.item);
+  final _NotificationItemState item;
+}
+
+class _GroupBlock extends _QueueRenderBlock {
+  const _GroupBlock(this.groupKey, this.items);
+  final String groupKey;
+  final List<_NotificationItemState> items;
+}
+
+class _GroupWidget extends StatefulWidget {
+  const _GroupWidget({
+    required this.queueWidgetState,
+    required this.groupKey,
+    required this.items,
+    required this.isExpanded,
+    required this.isLastBlock,
     required this.onToggle,
-    required this.style,
-    required this.verticalDirection,
-    required this.notification,
-  }) : super(listenable: expansionProgress);
+    super.key,
+  });
 
-  Animation<double> get expansionProgress => listenable as Animation<double>;
-
-  final Widget child;
-  final int count;
-
-  /// All group members that are NOT the current representative,
-  /// ordered so `hiddenItems.first` is next in line to surface.
-  final List<_NotificationItemState> hiddenItems;
+  final QueueWidgetState queueWidgetState;
+  final String groupKey;
+  final List<_NotificationItemState> items;
+  final bool isExpanded;
+  final bool isLastBlock;
   final VoidCallback onToggle;
-  final QueueStyle style;
-  final VerticalDirection verticalDirection;
-  final NotificationWidget notification;
 
   @override
-  Widget build(final BuildContext context) {
-    final progress = expansionProgress.value;
-    final behavior = notification.queue.groupingBehavior;
-    final maxLayers = behavior.maxStackedLayers;
-    final stepOffset = behavior.stackStepOffset;
-    final scaleMultiplier = behavior.stackScaleMultiplier;
+  State<_GroupWidget> createState() => _GroupWidgetState();
+}
 
-    final extraSpace = 24.0 + (maxLayers * stepOffset) * (1.0 - progress);
+class _GroupWidgetState extends State<_GroupWidget>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _expansionController;
 
-    final backgroundLayers = <Widget>[];
-    if (progress < 1.0) {
-      final availableCount = count - 1; // number of hidden items
-      final layersToRender = min(availableCount, maxLayers);
+  _NotificationItemState get representative =>
+      widget.queueWidgetState._groupRepresentative(widget.items);
 
-      for (int i = layersToRender; i > 0; i--) {
-        final layerScale = 1.0 - (i * scaleMultiplier) * (1.0 - progress);
-        final layerOpacity =
-            (0.9 - i * 0.25).clamp(0.0, 1.0) * (1.0 - progress);
-        final currentShift = i * stepOffset * (1.0 - progress);
-
-        final double? top;
-        final double? bottom;
-        if (verticalDirection == VerticalDirection.down) {
-          top = currentShift;
-          bottom = extraSpace - currentShift;
-        } else {
-          top = extraSpace - currentShift;
-          bottom = currentShift;
-        }
-
-        backgroundLayers.add(
-          Positioned(
-            left: i * 8.0 * (1.0 - progress),
-            right: i * 8.0 * (1.0 - progress),
-            top: top,
-            bottom: bottom,
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: onToggle,
-                behavior: HitTestBehavior.opaque,
-                child: _buildLayer(context, layerScale, layerOpacity),
-              ),
-            ),
-          ),
-        );
-      }
-    }
-
-    return Stack(
-      alignment: verticalDirection == VerticalDirection.down
-          ? Alignment.topCenter
-          : Alignment.bottomCenter,
-      clipBehavior: Clip.none,
-      children: [
-        ...backgroundLayers,
-        Padding(
-          padding: EdgeInsets.only(
-            bottom: verticalDirection == VerticalDirection.down
-                ? extraSpace
-                : 0,
-            top: verticalDirection == VerticalDirection.up ? extraSpace : 0,
-          ),
-          child: child,
-        ),
-        Positioned(
-          bottom: verticalDirection == VerticalDirection.down ? 4.0 : null,
-          top: verticalDirection == VerticalDirection.up ? 4.0 : null,
-          child: _buildTogglePill(context, progress),
-        ),
-      ],
+  @override
+  void initState() {
+    super.initState();
+    _expansionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+      value: widget.isExpanded ? 1.0 : 0.0,
     );
   }
 
-  Widget _buildLayer(
-    final BuildContext context,
-    final double scale,
-    final double opacity,
-  ) {
-    final resolvedTheme =
-        NotificationTheme.resolveWith(context, style, notification);
-    final cardColor = resolvedTheme.backgroundColor;
+  @override
+  void didUpdateWidget(covariant final _GroupWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isExpanded != oldWidget.isExpanded) {
+      if (widget.isExpanded) {
+        _expansionController.forward();
+      } else {
+        _expansionController.reverse();
+      }
+    }
+  }
 
-    final container = Material(
-      shape: resolvedTheme.shape,
-      color: cardColor.withValues(alpha: resolvedTheme.opacity * opacity),
-      elevation: resolvedTheme.elevation * opacity,
-      type: MaterialType.canvas,
-      child: const SizedBox.expand(),
-    );
-
-    return Transform.scale(
-      scaleX: scale,
-      scaleY: 1.0,
-      alignment: verticalDirection == VerticalDirection.down
-          ? Alignment.topCenter
-          : Alignment.bottomCenter,
-      child: container,
-    );
+  @override
+  void dispose() {
+    _expansionController.dispose();
+    super.dispose();
   }
 
   Widget _buildTogglePill(final BuildContext context, final double progress) {
+    final rep = representative;
+    final hiddenItems = widget.items.where((final i) => i != rep).toList();
+    final count = widget.items.length;
+    final queue = widget.queueWidgetState.widget.queue;
+    final verticalDirection = queue.verticalDirection;
+
     final resolvedTheme =
-        NotificationTheme.resolveWith(context, style, notification);
+        NotificationTheme.resolveWith(context, queue.style, rep.widget);
     final theme = Theme.of(context);
     final fg = resolvedTheme.foregroundColor;
 
@@ -1065,8 +952,8 @@ class _GroupBundleWidget extends AnimatedWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onToggle,
-        onLongPress: onToggle, // accessibility: long-press also toggles
+        onTap: widget.onToggle,
+        onLongPress: widget.onToggle, // accessibility: long-press also toggles
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1158,13 +1045,10 @@ class _GroupBundleWidget extends AnimatedWidget {
               const SizedBox(width: 4),
               RotationTransition(
                 turns: Tween<double>(
-                  begin: verticalDirection == VerticalDirection.down
-                      ? 0.0
-                      : 0.5,
-                  end: verticalDirection == VerticalDirection.down
-                      ? 0.5
-                      : 0.0,
-                ).animate(expansionProgress),
+                  begin:
+                      verticalDirection == VerticalDirection.down ? 0.0 : 0.5,
+                  end: verticalDirection == VerticalDirection.down ? 0.5 : 0.0,
+                ).animate(_expansionController),
                 child: Icon(
                   Icons.keyboard_arrow_down,
                   size: 14,
@@ -1175,6 +1059,337 @@ class _GroupBundleWidget extends AnimatedWidget {
           ),
         ),
       ),
+    );
+  }
+
+  @override
+  Widget build(final BuildContext context) {
+    final queue = widget.queueWidgetState.widget.queue;
+    final alignment =
+        queue.verticalDirection == VerticalDirection.down ? -1.0 : 1.0;
+
+    return AnimatedBuilder(
+      animation: _expansionController,
+      builder: (final context, final child) {
+        final visibleItems = widget.items.where((final item) {
+          if (item.status == _ItemStatus.exiting) {
+            return true;
+          }
+          if (widget.isExpanded || _expansionController.value > 0.0) {
+            return true;
+          }
+          final rep = representative;
+          if (item == rep) {
+            return true;
+          }
+          if (widget.queueWidgetState._activeDragGroupKey == widget.groupKey) {
+            final repIdx = widget.items.indexOf(rep);
+            final peekIdx = queue.verticalDirection == VerticalDirection.up
+                ? repIdx + 1
+                : repIdx - 1;
+            if (peekIdx >= 0 && peekIdx < widget.items.length) {
+              return item == widget.items[peekIdx];
+            }
+          }
+          return false;
+        }).toList();
+
+        final outerSpacing = widget.isLastBlock ? 0.0 : queue.spacing;
+
+        final progress = _expansionController.value;
+
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: queue.verticalDirection == VerticalDirection.down
+                ? outerSpacing
+                : 0,
+            top: queue.verticalDirection == VerticalDirection.up
+                ? outerSpacing
+                : 0,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            verticalDirection: queue.verticalDirection,
+            mainAxisAlignment: queue.mainAxisAlignment,
+            crossAxisAlignment: queue.crossAxisAlignment,
+            children: [
+              for (final item in visibleItems)
+                _buildGroupItem(context, item, visibleItems, alignment, queue),
+              if (progress > 0.0)
+                SizeTransition(
+                  sizeFactor: _expansionController,
+                  axis: Axis.vertical,
+                  child: FadeTransition(
+                    opacity: _expansionController,
+                    child: Padding(
+                      padding: queue.verticalDirection == VerticalDirection.down
+                          ? const EdgeInsets.only(top: 12.0, bottom: 4.0)
+                          : const EdgeInsets.only(bottom: 12.0, top: 4.0),
+                      child: Center(
+                        child: _buildTogglePill(context, progress),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupItem(
+    final BuildContext context,
+    final _NotificationItemState item,
+    final List<_NotificationItemState> visibleItems,
+    final double alignment,
+    final NotificationQueue queue,
+  ) {
+    final isLast = item == visibleItems.last;
+    final spacing = (widget.isExpanded && !isLast) ? queue.spacing : 0.0;
+
+    final globalVisibleIndex =
+        widget.queueWidgetState._visibleItems.indexOf(item);
+    final translationY =
+        widget.queueWidgetState.getTranslationY(globalVisibleIndex);
+
+    Widget itemWidget = widget.queueWidgetState._buildSingleNotificationCard(
+      item: item,
+      spacing: spacing,
+      translationY: translationY,
+    );
+
+    final rep = representative;
+    if (item == rep) {
+      itemWidget = TweenAnimationBuilder<double>(
+        key: item.entranceKey,
+        tween: Tween(begin: 0.96, end: 1.0),
+        duration: const Duration(milliseconds: 130),
+        curve: Curves.easeOut,
+        builder: (final ctx, final scale, final child) =>
+            Transform.scale(scale: scale, child: child),
+        child: itemWidget,
+      );
+
+      final hiddenItems = widget.items.where((final i) => i != rep).toList();
+
+      final progress = _expansionController.value;
+      final showTogglePill = progress == 0.0;
+
+      final behavior = queue.groupingBehavior;
+      final maxLayers = behavior.maxStackedLayers;
+      final stepOffset = behavior.stackStepOffset;
+      // Increased base collapsed space to 32.0 to prevent the
+      // expanded pill from covering bottom notification
+      final collapsedExtraSpace = 32.0 + (maxLayers * stepOffset);
+      final extraSpace = collapsedExtraSpace * (1.0 - progress);
+
+      itemWidget = _GroupBundleWidget(
+        notification: item.widget,
+        count: widget.items.length,
+        expansionProgress: _expansionController,
+        hiddenItems: hiddenItems,
+        onToggle: widget.onToggle,
+        style: queue.style,
+        verticalDirection: queue.verticalDirection,
+        togglePill: showTogglePill ? _buildTogglePill(context, progress) : null,
+        extraSpace: extraSpace,
+        child: itemWidget,
+      );
+    } else {
+      final isPeek = widget.queueWidgetState
+          ._isPeekItem(item, widget.groupKey, widget.items);
+      if (isPeek) {
+        itemWidget = IgnorePointer(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOut,
+            builder: (final ctx, final t, final child) => Opacity(
+              opacity: 0.55 * t,
+              child: Transform.scale(
+                scale: 0.94 + 0.06 * t,
+                alignment: Alignment.topCenter,
+                child: child,
+              ),
+            ),
+            child: itemWidget,
+          ),
+        );
+      } else {
+        itemWidget = SizeTransition(
+          sizeFactor: CurvedAnimation(
+            parent: _expansionController,
+            curve: Curves.fastOutSlowIn,
+          ),
+          alignment: Alignment(-1.0, alignment),
+          child: FadeTransition(
+            opacity: CurvedAnimation(
+              parent: _expansionController,
+              curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
+            ),
+            child: itemWidget,
+          ),
+        );
+      }
+    }
+
+    return itemWidget;
+  }
+}
+
+enum _ItemStatus { entering, exiting }
+
+class _NotificationItemState {
+  _NotificationItemState({
+    required this.widget,
+    required this.controller,
+  });
+
+  NotificationWidget widget;
+  final AnimationController controller;
+  final GlobalKey globalKey = GlobalKey();
+  _ItemStatus status = _ItemStatus.entering;
+
+  /// Regenerated on each instant-swap so the representative's
+  /// TweenAnimationBuilder re-triggers its entrance micro-animation.
+  Key entranceKey = UniqueKey();
+}
+
+class _GroupBundleWidget extends AnimatedWidget {
+  const _GroupBundleWidget({
+    required final Animation<double> expansionProgress,
+    required this.child,
+    required this.count,
+    required this.hiddenItems,
+    required this.onToggle,
+    required this.style,
+    required this.verticalDirection,
+    required this.notification,
+    required this.togglePill,
+    required this.extraSpace,
+  }) : super(listenable: expansionProgress);
+
+  Animation<double> get expansionProgress => listenable as Animation<double>;
+
+  final Widget child;
+  final int count;
+
+  /// All group members that are NOT the current representative,
+  /// ordered so `hiddenItems.first` is next in line to surface.
+  final List<_NotificationItemState> hiddenItems;
+  final VoidCallback onToggle;
+  final QueueStyle style;
+  final VerticalDirection verticalDirection;
+  final NotificationWidget notification;
+  final Widget? togglePill;
+  final double extraSpace;
+
+  @override
+  Widget build(final BuildContext context) {
+    final progress = expansionProgress.value;
+    final behavior = notification.queue.groupingBehavior;
+    final maxLayers = behavior.maxStackedLayers;
+    final stepOffset = behavior.stackStepOffset;
+    final scaleMultiplier = behavior.stackScaleMultiplier;
+
+    final backgroundLayers = <Widget>[];
+    if (progress < 1.0) {
+      final availableCount = count - 1; // number of hidden items
+      final layersToRender = min(availableCount, maxLayers);
+
+      for (int i = layersToRender; i > 0; i--) {
+        final layerScale = 1.0 - (i * scaleMultiplier) * (1.0 - progress);
+        final layerOpacity =
+            (0.9 - i * 0.25).clamp(0.0, 1.0) * (1.0 - progress);
+        final currentShift = i * stepOffset * (1.0 - progress);
+
+        final double? top;
+        final double? bottom;
+        if (verticalDirection == VerticalDirection.down) {
+          top = currentShift;
+          bottom = extraSpace - currentShift;
+        } else {
+          top = extraSpace - currentShift;
+          bottom = currentShift;
+        }
+
+        backgroundLayers.add(
+          Positioned(
+            left: i * 8.0 * (1.0 - progress),
+            right: i * 8.0 * (1.0 - progress),
+            top: top,
+            bottom: bottom,
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onToggle,
+                behavior: HitTestBehavior.opaque,
+                child: _buildLayer(context, layerScale, layerOpacity),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return Stack(
+      alignment: verticalDirection == VerticalDirection.down
+          ? Alignment.topCenter
+          : Alignment.bottomCenter,
+      clipBehavior: Clip.none,
+      children: [
+        ...backgroundLayers,
+        Padding(
+          padding: EdgeInsets.only(
+            bottom:
+                verticalDirection == VerticalDirection.down ? extraSpace : 0,
+            top: verticalDirection == VerticalDirection.up ? extraSpace : 0,
+          ),
+          child: child,
+        ),
+        if (togglePill != null)
+          Positioned(
+            bottom: verticalDirection == VerticalDirection.down ? 4.0 : null,
+            top: verticalDirection == VerticalDirection.up ? 4.0 : null,
+            child: togglePill!,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLayer(
+    final BuildContext context,
+    final double scale,
+    final double opacity,
+  ) {
+    final resolvedTheme =
+        NotificationTheme.resolveWith(context, style, notification);
+    final cardColor = resolvedTheme.backgroundColor;
+
+    final container = Container(
+      decoration: BoxDecoration(
+        color: cardColor.withValues(alpha: resolvedTheme.opacity * opacity),
+        borderRadius: resolvedTheme.borderRadius,
+        border: resolvedTheme.border,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08 * opacity),
+            blurRadius: resolvedTheme.elevation * opacity,
+            offset: Offset(0, resolvedTheme.elevation * 0.5 * opacity),
+          ),
+        ],
+      ),
+      child: const SizedBox.expand(),
+    );
+
+    return Transform.scale(
+      scaleX: scale,
+      scaleY: 1.0,
+      alignment: verticalDirection == VerticalDirection.down
+          ? Alignment.topCenter
+          : Alignment.bottomCenter,
+      child: container,
     );
   }
 }

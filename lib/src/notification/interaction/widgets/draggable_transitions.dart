@@ -14,7 +14,8 @@ class DraggableTransitions extends StatefulWidget {
   State<DraggableTransitions> createState() => DraggableTransitionsState();
 }
 
-class DraggableTransitionsState extends State<DraggableTransitions> {
+class DraggableTransitionsState extends State<DraggableTransitions>
+    with SingleTickerProviderStateMixin {
   late Size _screenSize;
 
   final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
@@ -23,6 +24,10 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
   List<SlotDropZone>? _activeReorderZones;
 
   late final GestureStateMachine _fsm;
+
+  late final AnimationController _snapBackController;
+  Animation<Offset>? _snapBackAnimation;
+  bool _isSnapBackAnimating = false;
 
   static final _logger = Logger.get('fnq.Notification.Draggables');
 
@@ -48,6 +53,10 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
       initialBehavior: dragBehavior,
       initialPosition: position,
       escapeThreshold: escapeThreshold,
+    );
+
+    _snapBackController = AnimationController(
+      vsync: this,
     );
 
     super.initState();
@@ -76,6 +85,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
 
     _dragOffsetPairNotifier.dispose();
     _fsm.dispose();
+    _snapBackController.dispose();
     super.dispose();
   }
 
@@ -106,13 +116,85 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
     return queueState?.indexOf(widget.notification) ?? 0;
   }
 
+  Widget _buildCardChild() => AnimatedBuilder(
+        animation: _snapBackController,
+        builder: (final context, final child) {
+          final offset = _isSnapBackAnimating && _snapBackAnimation != null
+              ? _snapBackAnimation!.value
+              : Offset.zero;
+
+          return ValueListenableBuilder<GestureState>(
+            valueListenable: _fsm,
+            builder: (final context, final fsmState, final child) {
+              final cursor = fsmState == GestureState.idle
+                  ? SystemMouseCursors.grab
+                  : SystemMouseCursors.grabbing;
+
+              return MouseRegion(
+                cursor: cursor,
+                child: Transform.translate(
+                  offset: offset,
+                  child: widget.notification,
+                ),
+              );
+            },
+          );
+        },
+      );
+
+  void _startSnapBack(final Offset releaseOffset) {
+    final originalPosition = _dragStartData?.widgetPosition ?? Offset.zero;
+    final finalRelativeOffset = releaseOffset - originalPosition;
+
+    setState(() {
+      _isSnapBackAnimating = true;
+    });
+
+    final dragBehavior = widget.notification.dragBehavior ??
+        widget.notification.queue.dragBehavior;
+    final physics = dragBehavior.springPhysics;
+
+    final simulation = SpringSimulation(
+      physics.toSpringDescription(),
+      1.0,
+      0.0,
+      0.0,
+    );
+
+    _snapBackAnimation = Tween<Offset>(
+      begin: finalRelativeOffset,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _snapBackController,
+      curve: Curves.linear,
+    ),);
+
+    _snapBackController.animateWith(simulation).then((final _) {
+      if (mounted) {
+        setState(() {
+          _isSnapBackAnimating = false;
+          _fsm.reset();
+        });
+      }
+    });
+  }
+
   Widget _buildDraggable({
     required final QueueNotificationBehavior behavior,
     required final bool isLongPress,
   }) {
     final plugin = _resolvePlugin(behavior);
 
+    int? originalIndex;
+
     void onDragStarted() {
+      if (_isSnapBackAnimating) {
+        _snapBackController.stop();
+        _isSnapBackAnimating = false;
+      }
+
+      originalIndex = stateIndexOfThisItem();
+
       final renderBox = context.findRenderObject() as RenderBox?;
       final rect = renderBox != null
           ? (renderBox.localToGlobal(Offset.zero) & renderBox.size)
@@ -148,7 +230,30 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
     void onDragEnd(final DraggableDetails details) {
       _fsm.settle();
       plugin.onDragEnd(this, details);
-      _fsm.reset();
+
+      final currentQueuePosition = widget.notification.queue.position;
+      final isExiting =
+          widget.notification.key.currentState?.animationController.status ==
+              AnimationStatus.reverse;
+      final isRelocated = currentQueuePosition != _fsm.initialPosition;
+      final isReordered =
+          originalIndex != null && stateIndexOfThisItem() != originalIndex;
+
+      if (!isExiting &&
+          !isRelocated &&
+          !isReordered &&
+          _dragStartData != null) {
+        final originalPosition = _dragStartData!.widgetPosition;
+        final releaseOffset = details.offset;
+        final distance = (releaseOffset - originalPosition).distance;
+        if (distance > 1.0) {
+          _startSnapBack(releaseOffset);
+        } else {
+          _fsm.reset();
+        }
+      } else {
+        _fsm.reset();
+      }
 
       final position = widget.notification.queue.position;
       final queueKey =
@@ -158,8 +263,10 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
 
     final feedback = ValueListenableBuilder(
       valueListenable: _dragOffsetPairNotifier,
-      builder: (final context, final offsetPair, final child) =>
-          plugin.buildFeedback(this, offsetPair),
+      builder: (final context, final offsetPair, final child) => MouseRegion(
+        cursor: SystemMouseCursors.grabbing,
+        child: plugin.buildFeedback(this, offsetPair),
+      ),
     );
 
     final position = widget.notification.queue.position;
@@ -223,7 +330,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
             )
           : const SizedBox.shrink(),
       feedback: feedback,
-      child: widget.notification,
+      child: _buildCardChild(),
     );
   }
 
@@ -347,7 +454,7 @@ class DraggableTransitionsState extends State<DraggableTransitions> {
 
   Widget draggable() => switch (widget.notification.dragBehavior ??
           widget.notification.queue.dragBehavior) {
-        Disabled() => widget.notification,
+        Disabled() => _buildCardChild(),
         final behavior =>
           _buildDraggable(behavior: behavior, isLongPress: false),
       };
