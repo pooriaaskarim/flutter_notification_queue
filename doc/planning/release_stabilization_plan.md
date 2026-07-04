@@ -366,10 +366,11 @@ Before publishing v1.0:
 - [ ] `FnqEvent` stream subscription cleanup documented and verified
 
 ### pub.dev Quality
-- [ ] `flutter pub publish --dry-run` passes with no issues
+- [x] `flutter pub publish --dry-run` passes with no issues
 - [ ] `pana` score ≥ 140/160 (aim for 160)
 - [ ] Example app compiles and runs on all primary platforms
 - [ ] Topics, description, repository, license all set in `pubspec.yaml`
+
 
 ---
 
