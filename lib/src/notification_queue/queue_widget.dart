@@ -44,37 +44,32 @@ class QueueWidgetState extends State<QueueWidget>
   /// bounds.
   final GlobalKey _listKey = GlobalKey();
 
-  int? _draggedTargetIndex;
+  final ValueNotifier<int?> _dragTargetIndexNotifier =
+      ValueNotifier<int?>(null);
   int? _draggedItemOriginIndex;
 
   void startDragReorder(final String itemId, final int originIndex) {
-    setState(() {
-      _draggedItemOriginIndex = originIndex;
-      _draggedTargetIndex = originIndex;
-    });
+    _draggedItemOriginIndex = originIndex;
+    _dragTargetIndexNotifier.value = originIndex;
+    setState(() {});
   }
 
   void updateDragTarget(final int targetIndex) {
-    if (_draggedTargetIndex != targetIndex) {
-      setState(() {
-        _draggedTargetIndex = targetIndex;
-      });
+    if (_dragTargetIndexNotifier.value != targetIndex) {
+      _dragTargetIndexNotifier.value = targetIndex;
     }
   }
 
   void clearDragTarget() {
-    if (_draggedTargetIndex != null) {
-      setState(() {
-        _draggedTargetIndex = null;
-      });
+    if (_dragTargetIndexNotifier.value != null) {
+      _dragTargetIndexNotifier.value = null;
     }
   }
 
   void endDragReorder() {
-    setState(() {
-      _draggedItemOriginIndex = null;
-      _draggedTargetIndex = null;
-    });
+    _draggedItemOriginIndex = null;
+    _dragTargetIndexNotifier.value = null;
+    setState(() {});
   }
 
   double _getItemHeight(final int visibleIndex) {
@@ -90,9 +85,8 @@ class QueueWidgetState extends State<QueueWidget>
     return 80.0;
   }
 
-  double getTranslationY(final int i) {
+  double getTranslationY(final int i, final int? target) {
     final origin = _draggedItemOriginIndex;
-    final target = _draggedTargetIndex;
     if (origin == null || target == null || origin == target) {
       return 0.0;
     }
@@ -143,6 +137,7 @@ class QueueWidgetState extends State<QueueWidget>
 
   @override
   void dispose() {
+    _dragTargetIndexNotifier.dispose();
     for (final item in _items) {
       item.controller.dispose();
     }
@@ -786,12 +781,11 @@ class QueueWidgetState extends State<QueueWidget>
         final isLastItem = item == visible.last;
         final spacing = isLastItem ? 0.0 : widget.queue.spacing;
         final visibleIndex = visible.indexOf(item);
-        final translationY = getTranslationY(visibleIndex);
 
         return _buildSingleNotificationCard(
           item: item,
           spacing: spacing,
-          translationY: translationY,
+          visibleIndex: visibleIndex,
         );
 
       case _GroupBlock(:final groupKey, :final items):
@@ -825,7 +819,7 @@ class QueueWidgetState extends State<QueueWidget>
   Widget _buildSingleNotificationCard({
     required final _NotificationItemState item,
     required final double spacing,
-    required final double translationY,
+    required final int visibleIndex,
   }) {
     final alignment =
         widget.queue.verticalDirection == VerticalDirection.down ? -1.0 : 1.0;
@@ -842,10 +836,17 @@ class QueueWidgetState extends State<QueueWidget>
       ),
     );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-      transform: Matrix4.translationValues(0, translationY, 0),
+    return ValueListenableBuilder<int?>(
+      valueListenable: _dragTargetIndexNotifier,
+      builder: (final context, final targetIndex, final child) {
+        final translationY = getTranslationY(visibleIndex, targetIndex);
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.translationValues(0, translationY, 0),
+          child: child,
+        );
+      },
       child: SizeTransition(
         sizeFactor: CurvedAnimation(
           parent: item.controller,
@@ -1168,13 +1169,11 @@ class _GroupWidgetState extends State<_GroupWidget>
 
     final globalVisibleIndex =
         widget.queueWidgetState._visibleItems.indexOf(item);
-    final translationY =
-        widget.queueWidgetState.getTranslationY(globalVisibleIndex);
 
     Widget itemWidget = widget.queueWidgetState._buildSingleNotificationCard(
       item: item,
       spacing: spacing,
-      translationY: translationY,
+      visibleIndex: globalVisibleIndex,
     );
 
     final rep = representative;
