@@ -325,11 +325,12 @@ Phase A4 (Docs Audit)       Phase B3 (Risk Fixes)
 | Sprint | Work | Status |
 |---|---|---|
 | **Sprint 1** | A1 use-case research + A2 onboarding & API audit + A3 lifecycle audit + A4 docs audit + B1–B3 perf analysis | ✅ Done |
-| **Sprint 2** | Implement all 🔴 CRITICAL fixes (5 items) | 🔲 Next |
-| **Sprint 3** | Implement all 🔸 IMPORTANT fixes + perf fixes Risk-1/2 | 🔲 Queued |
-| **Sprint 4** | Documentation overhaul (README rewrite + new sections) | 🔲 Queued |
-| **Sprint 5** | B4 platform-specific testing (Android device + Chrome + Linux) | 🔲 Queued |
+| **Sprint 2** | Implement all 🔴 CRITICAL fixes (5 items) | ✅ Done |
+| **Sprint 3** | Implement all 🔸 IMPORTANT fixes + perf fixes Risk-1/2 | ✅ Done |
+| **Sprint 4** | Documentation overhaul (README rewrite + new sections) | ✅ Done |
+| **Sprint 5** | B4 platform-specific testing (Android device + Chrome + Linux) | 🔄 In Progress |
 | **Sprint 6** | Changelog, version bump to 1.0.0, `pana` score check, publish | 🔲 Queued |
+
 
 ---
 
@@ -338,22 +339,22 @@ Phase A4 (Docs Audit)       Phase B3 (Risk Fixes)
 Before publishing v1.0:
 
 ### API Stability
-- [ ] Public API frozen (no breaking changes after this point without major version bump)
-- [ ] All exported symbols are intentional and documented
-- [ ] `QueueCoordinator` export decision made
-- [ ] `channelName` string validation improved (assert + clear error)
+- [x] Public API frozen (no breaking changes after this point without major version bump)
+- [x] All exported symbols are intentional and documented
+- [x] `QueueCoordinator` export decision made
+- [x] `channelName` string validation improved (assert + clear error)
 
 ### Documentation
-- [ ] README uses correct API names (`configure`, not `initialize`)
-- [ ] README has "Architecture" section explaining Channel vs Queue mental model
-- [ ] README documents `FnqEvent` observability
-- [ ] README documents backpressure / overflow
+- [x] README uses correct API names (`configure`, not `initialize`)
+- [x] README has "Architecture" section explaining Channel vs Queue mental model
+- [x] README documents `FnqEvent` observability
+- [x] README documents backpressure / overflow
 - [ ] Migration guide updated (0.4→0.5, and 0.5→1.0 if breaking)
 - [ ] All public classes have complete dartdoc
 
 ### Testing
-- [ ] `dart analyze` reports zero warnings/errors
-- [ ] All existing tests pass (`flutter test`)
+- [x] `dart analyze` reports zero warnings/errors
+- [x] All existing tests pass (`flutter test`)
 - [ ] New tests added for: `reset()` mid-display, `channelName` not found, `maxStackSize: 0`, duplicate IDs
 - [ ] Integration tests pass on Android and Chrome
 - [ ] No `AnimationController` leak warnings in debug console during burst test
