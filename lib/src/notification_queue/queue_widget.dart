@@ -432,24 +432,33 @@ class QueueWidgetState extends State<QueueWidget>
 
   void _processPending() {
     final limit = widget.queue.maxStackSize;
-    while (_pendingNotifications.isNotEmpty && _items.length < limit) {
+    final toAdd = <_NotificationItemState>[];
+
+    while (
+      _pendingNotifications.isNotEmpty &&
+      _items.length + toAdd.length < limit
+    ) {
       final notification = _pendingNotifications.removeFirst();
       final controller = AnimationController(
         vsync: this,
         duration: const Duration(milliseconds: 300),
         reverseDuration: const Duration(milliseconds: 200),
       );
-
-      final item = _NotificationItemState(
-        widget: notification,
-        controller: controller,
+      toAdd.add(
+        _NotificationItemState(
+          widget: notification,
+          controller: controller,
+        ),
       );
+    }
 
+    if (toAdd.isNotEmpty) {
       setState(() {
-        _items.add(item);
+        _items.addAll(toAdd);
       });
-
-      controller.forward();
+      for (final item in toAdd) {
+        item.controller.forward();
+      }
     }
   }
 
@@ -490,6 +499,12 @@ class QueueWidgetState extends State<QueueWidget>
       lowestActiveItem.status = _ItemStatus.exiting;
       lowestActiveItem.controller.reverse().then((final _) {
         if (mounted) {
+          // Emit a programmatic dismiss for the evicted card so that the
+          // coordinator's event stream carries the correct reason.
+          FlutterNotificationQueue.coordinator.dismiss(
+            evictedWidget,
+            reason: DismissReason.evicted,
+          );
           final itemIndex = _items.indexOf(lowestActiveItem!);
           if (itemIndex != -1) {
             _removeItemImmediate(itemIndex);
@@ -848,7 +863,10 @@ class QueueWidgetState extends State<QueueWidget>
                   ? spacing
                   : 0,
             ),
-            child: itemWidget,
+            // RepaintBoundary isolates each card's rasterisation layer so
+            // drag-state setStates (reorder slot shifts, group peek reveals)
+            // do not force an expensive repaint of unaffected sibling cards.
+            child: RepaintBoundary(child: itemWidget),
           ),
         ),
       ),

@@ -69,6 +69,10 @@ class ConfigurationManager {
             final alreadyRegistered =
                 expanded.any((final q) => q.position == targetPosition);
             if (!alreadyRegistered) {
+              _logger.debug(
+                'Auto-generating sibling queue at $targetPosition '
+                'from relocation group defined on ${queue.position}.',
+              );
               expanded.add(targetPosition.generateQueueFrom(queue));
             }
           }
@@ -161,8 +165,10 @@ class ConfigurationManager {
     );
 
     if (!registeredChannel) {
-      _logger.debug(
-        'Channel "$channelName" not found. Falling back to default.',
+      _logger.warning(
+        'Channel "$channelName" is not registered. '
+        'Falling back to the default channel. '
+        'Register it via FlutterNotificationQueue.configure(channels: {...}).',
       );
     }
 

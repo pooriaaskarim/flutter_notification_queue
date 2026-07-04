@@ -599,7 +599,8 @@ class _QueueEditor extends StatelessWidget {
 }
 
 /// A compact action button in the GROUPING section that calls
-/// [QueueCoordinator.dismissGroup] for the ‘chat’ channel group key.
+/// [FlutterNotificationQueue] coordinator's dismissGroup for the 'chat'
+/// channel group key.
 ///
 /// Demonstrates the explicit bulk-dismiss API introduced in G-03.
 class _DismissGroupButton extends StatelessWidget {

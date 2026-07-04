@@ -71,12 +71,18 @@ class NotificationWidget extends StatefulWidget {
     final Color? foregroundColor,
     final Color? backgroundColor,
     final Duration? dismissDuration,
+    final bool permanent = false,
     final NotificationBuilder? builder,
     final NotificationPriority? priority,
     final bool initialIsPinned = false,
     final DateTime? snoozedAt,
     final String? groupKey,
   }) {
+    assert(
+      dismissDuration == null || dismissDuration > Duration.zero,
+      'dismissDuration must be positive or null. '
+      'Use permanent: true to keep a notification on screen indefinitely.',
+    );
     final resolvedId =
         id ?? 'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
@@ -84,6 +90,9 @@ class NotificationWidget extends StatefulWidget {
         FlutterNotificationQueue.configuration.getChannel(channelName);
     final resolvedQueue = FlutterNotificationQueue.configuration
         .getQueue(position ?? resolveChannel.position);
+    // permanent: true forces null dismiss duration regardless of channel
+    // default, allowing a single notification to opt out of auto-dismiss.
+    final resolvedDismissDuration = permanent ? null : dismissDuration;
 
     return NotificationWidget._(
       id: resolvedId,
@@ -101,7 +110,7 @@ class NotificationWidget extends StatefulWidget {
       color: color,
       foregroundColor: foregroundColor,
       backgroundColor: backgroundColor,
-      dismissDuration: dismissDuration,
+      dismissDuration: resolvedDismissDuration,
       builder: builder,
       priority: priority,
       initialIsPinned: initialIsPinned,

@@ -17,6 +17,13 @@ enum DismissReason {
   /// The notification was dismissed programmatically via
   /// [NotificationWidget.dismiss].
   programmatic,
+
+  /// The notification was evicted by the priority triage engine to make room
+  /// for a higher-priority notification.
+  ///
+  /// The evicted notification is re-queued in the pending list and may
+  /// reappear when the higher-priority notifications clear.
+  evicted,
 }
 
 // ── Event hierarchy ────────────────────────────────────────────────────────

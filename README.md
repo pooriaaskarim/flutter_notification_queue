@@ -78,7 +78,7 @@ Initialize the system and integrate the `NotificationOverlay` into your `Materia
 ```dart
 void main() {
   // 1. Initialize configuration
-  FlutterNotificationQueue.initialize(
+  FlutterNotificationQueue.configure(
     channels: {
       const NotificationChannel(
         name: 'success',
@@ -266,6 +266,89 @@ const VisibleOnHover() // Adaptive visibility (touch-safe)
 const Hidden() // Never show (gesture-only)
 ```
 
+### Architecture Concepts: Channels vs. Queues
+
+FNQ decouples the **what** (styling and intent defaults) from the **where** (spatial layout and gestures):
+
+*   **`NotificationQueue`**: A spatial layout container fixed to a specific `QueuePosition` (e.g. `topLeft`, `bottomCenter`). It governs **behavior and constraints**: entrance/exit animations, max stack sizes, drag-to-relocate destinations, drag-to-dismiss behavior, and stack overflow strategies.
+*   **`NotificationChannel`**: A logical category for messages (e.g. `success`, `chat_burst`). It governs **visual defaults**: colors, icons, default priority, and default dismiss durations. Each channel routes to a specific `QueuePosition`.
+
+> [!NOTE]
+> When a notification is shown, it maps to a channel. The channel's `position` decides which queue it goes to. If the queue configuration specifies an override for styling/gestures, the queue's configuration takes precedence.
+
+### Notification Grouping (Bundling)
+
+To prevent visual clutter when multiple notifications from the same source arrive rapidly, FNQ supports automatic stacking and group collapse/expansion:
+
+```dart
+// Configure queue with grouping behavior
+TopCenterQueue(
+  groupingBehavior: QueueGroupingBehavior(
+    enabled: true,
+    maxBeforeGrouping: 3, // Group after 3 notifications
+    enableGroupSwipeDismiss: true, // Dismiss whole group on swipe
+  ),
+)
+```
+
+Notifications sharing a `groupKey` (which defaults to the `channelName`) will automatically bundle. The user can tap the bundle indicator to expand or collapse it.
+
+### Priority Triage
+
+FNQ evaluates notifications using semantic priorities:
+
+*   `NotificationPriority.low`
+*   `NotificationPriority.normal`
+*   `NotificationPriority.high`
+*   `NotificationPriority.critical`
+
+If a queue is full (exceeds `maxStackSize`) and a higher-priority notification arrives, the priority triage engine automatically evicts the lowest-priority active notification (triggering a `DismissReason.evicted` event) and places the incoming card immediately. Evicted notifications are pushed back to the pending queue to be re-displayed when higher-priority ones clear.
+
+### Backpressure & Overflow Strategy
+
+Configure how a queue handles backpressure when the pending queue limit is reached:
+
+```dart
+TopCenterQueue(
+  maxStackSize: 3,
+  maxPendingSize: 10,
+  overflowStrategy: QueueOverflowStrategy.discardOldest, // or discardNewest
+)
+```
+
+*   `QueueOverflowStrategy.discardOldest`: Drops the oldest notification of the lowest priority in the pending queue.
+*   `QueueOverflowStrategy.discardNewest`: Rejects the incoming notification immediately if the pending list is full.
+
+### Observability (FnqEvent Stream)
+
+Observe the lifecycle of all notifications in real-time by subscribing to the global event stream. This stream is stable across reconfiguration calls:
+
+```dart
+FlutterNotificationQueue.events.listen((event) {
+  switch (event) {
+    case NotificationQueued(:final notification):
+      analytics.track('notif_displayed', id: notification.id);
+    case NotificationDismissed(:final notification, :final reason):
+      if (reason == DismissReason.timeout) {
+        analytics.track('notif_timeout', id: notification.id);
+      }
+    case NotificationTapped(:final notification, :final behavior):
+      analytics.track('notif_tapped', id: notification.id);
+    case NotificationRelocated(:final notification, :final from, :final to):
+      analytics.track('notif_relocated', from: from.name, to: to.name);
+    case NotificationReordered(:final notification, :final toIndex):
+    case QueueOverflowed(:final queue, :final dropped):
+    // Group-specific events:
+    case NotificationGroupExpanded():
+    case NotificationGroupCollapsed():
+    case NotificationGroupDismissed():
+    default:
+      break;
+  }
+});
+```
+
+
 ## 🌍 Multi-language Support
 
 FlutterNotificationQueue automatically detects text direction and supports RTL languages:
@@ -369,28 +452,32 @@ NotificationWidget(
 ).show();
 ```
 
-### Permanent Notifications
+### Permanent & Pinned Notifications
+
+By default, the notification's auto-dismiss timer is determined by the channel default. You can override it to be permanent (staying on screen indefinitely) in two ways:
+
+1.  **Setting `permanent: true`**: Keep a notification on screen even if the channel has an auto-dismiss duration.
+2.  **Setting `dismissDuration: null`**: Backward-compatible way to mark a notification as permanent.
 
 ```dart
+// Keep a notification on screen indefinitely
 NotificationWidget(
-  message: 'Important system maintenance scheduled for tonight.',
-  title: 'Maintenance Notice',
-  dismissDuration: null, // Permanent until dismissed
-  action: NotificationAction.button(
-    label: 'Dismiss',
-    onPressed: () => dismissNotification(),
-  ),
+  message: 'Ongoing file sync in progress...',
+  permanent: true,
 ).show();
 ```
+
 
 ## API Reference
 
 ### Core Components
 
 - **`FlutterNotificationQueue`**: The primary entry point.
-    - `initialize()`: Configures global queues and channels.
+    - `configure()`: Configures global queues and channels.
     - `builder`: Integration hook for `MaterialApp.builder`.
+    - `events`: The stable global broadcast stream of lifecycle events.
 - **`NotificationWidget`**: The main configuration for individual notifications.
+    - `permanent`: Keep notification on screen regardless of channel defaults.
 - **`NotificationChannel`**: Defines shared behavior and styling for groups of notifications.
     - `standardChannels()`: Returns a set of standard channels (success, error, info, warning).
     - `successChannel()`, `errorChannel()`, etc.: Factory methods for common channel types.
@@ -504,7 +591,7 @@ Version 0.4.0 introduces a unified core engine, replacing the legacy context bas
 **Key Changes:**
 
 - `NotificationManager` has been removed.
-- Initialization is now explicitly required via `FlutterNotificationQueue.initialize()`.
+- Initialization is now explicitly required via `FlutterNotificationQueue.configure()`.
 - Integration is now handled via the `builder` pattern in `MaterialApp`.
 
 **Old Pattern (Singleton-based):**
@@ -519,7 +606,7 @@ NotificationManager.instance.show(...);
 ```dart
 void main() {
   // 1. Initialize configuration
-  FlutterNotificationQueue.initialize(
+  FlutterNotificationQueue.configure(
     channels: {...},
     queues: {...},
   );

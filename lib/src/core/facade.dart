@@ -17,6 +17,16 @@ final class FlutterNotificationQueue {
   static QueueCoordinator? _coordinator;
   static bool _isFlutterErrorHooked = false;
 
+  // Stable broadcast proxy that re-routes to the current coordinator's stream.
+  // Listeners attached before a reset()+configure() cycle continue to receive
+  // events from the new coordinator without needing to re-subscribe.
+  // Using sync: true ensures that event propagation has zero microtask delay
+  // when forwarding from the coordinator's stream, preserving test
+  // compatibility.
+  static final _proxyController =
+      StreamController<FnqEvent>.broadcast(sync: true);
+  static StreamSubscription<FnqEvent>? _coordinatorEventSub;
+
   static final _logger = Logger.get('fnq.Core');
 
   /// Access the global configuration.
@@ -37,7 +47,8 @@ final class FlutterNotificationQueue {
 
   /// A broadcast stream of all notification lifecycle events.
   ///
-  /// Shorthand for `FlutterNotificationQueue.coordinator.events`.
+  /// This stream is **stable across `configure()` calls**. Listeners attached
+  /// once survive `reset()` + `configure()` cycles without re-subscribing.
   ///
   /// Example:
   /// ```dart
@@ -55,12 +66,14 @@ final class FlutterNotificationQueue {
   ///   }
   /// });
   /// ```
-  static Stream<FnqEvent> get events => coordinator.events;
+  static Stream<FnqEvent> get events => _proxyController.stream;
 
   static void _ensureInitialized() {
     if (!isInitialized) {
-      _logger.info(
-        'NFQ: Lazy configuration triggered (accessed before configure())',
+      _logger.warning(
+        'FNQ: configure() was not called before first use. '
+        'Applying defaults (topCenter queue + standard channels). '
+        'Call FlutterNotificationQueue.configure() in main() to customise.',
       );
       configure();
     }
@@ -95,6 +108,10 @@ final class FlutterNotificationQueue {
     final wasNew = _coordinator == null;
     _coordinator ??= QueueCoordinator();
 
+    // Re-wire the proxy stream to the (potentially new) coordinator.
+    _coordinatorEventSub?.cancel();
+    _coordinatorEventSub = _coordinator!.events.listen(_proxyController.add);
+
     final mode = isReconfig ? 'Re-configured' : 'Configured';
     final strategy = wasNew ? 'Initial Lifecycle' : 'Preserved Coordinator';
 
@@ -109,9 +126,14 @@ final class FlutterNotificationQueue {
 
   @visibleForTesting
   static void reset() {
+    _coordinatorEventSub?.cancel();
+    _coordinatorEventSub = null;
     _coordinator?.detach();
     _configuration = null;
     _coordinator = null;
+    // Reset input-device detection so tests that fire hover events do not
+    // affect subsequent tests that run in the same process.
+    VisibleOnHover.resetMouseDetection();
   }
 
   /// Configure the logger hierarchy for the package.

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:meta/meta.dart';
 
 import '../../flutter_notification_queue.dart';
 
@@ -191,12 +192,19 @@ class NotificationChannel {
   /// A brief description of Channel Intention
   final String? description;
 
-  /// Whether [NotificationWidget]s from this channel should  be shown.
-  //Todo: UnderDevelop
+  /// Whether [NotificationWidget]s from this channel should be shown.
+  ///
+  /// When `false`, calls to [NotificationWidget.show] for notifications
+  /// belonging to this channel are silently dropped by the coordinator.
   final bool enabled;
 
-  /// Whether [NotificationWidget]s from this channel should vibrate.
-  //Todo: UnderDevelop
+  /// Whether [NotificationWidget]s from this channel should trigger haptic
+  /// feedback when they appear.
+  ///
+  /// > **Note**: Haptic feedback is currently driven at the gesture level
+  /// > (on drag-start, slot-enter, and confirm). Per-channel vibration on
+  /// > entry is planned. Setting this to `true` has no effect yet.
+  @experimental
   final bool vibrate;
 
   /// [NotificationChannel]'s default [NotificationQueue].

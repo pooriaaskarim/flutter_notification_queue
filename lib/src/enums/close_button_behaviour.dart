@@ -101,6 +101,12 @@ final class VisibleOnHover extends QueueCloseButtonBehavior {
   /// Global across all [VisibleOnHover] instances.
   static bool _mouseDetected = false;
 
+  /// Resets the mouse-detection flag.
+  ///
+  /// Called by [FlutterNotificationQueue.reset] to prevent test pollution
+  /// between test runs that exercise hover interactions.
+  static void resetMouseDetection() => _mouseDetected = false;
+
   @override
   double get initialOpacity => _mouseDetected ? 0.0 : 0.3;
 

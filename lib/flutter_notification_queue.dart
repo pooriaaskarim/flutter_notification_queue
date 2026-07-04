@@ -17,7 +17,6 @@ export 'src/core/core.dart'
         NotificationSnoozed,
         NotificationTapped,
         NotificationUnpinned,
-        QueueCoordinator,
         QueueOverflowed;
 export 'src/enums/enums.dart' hide OnDrag, OnLongPress;
 
