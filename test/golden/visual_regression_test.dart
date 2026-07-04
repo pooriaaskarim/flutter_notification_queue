@@ -229,9 +229,8 @@ void main() {
       },
     );
 
-    testWidgets(
-      'Notification Grouping Bundle Golden Test',
-      (final tester) async {
+    testWidgets('Notification Grouping Bundle Golden Test',
+        (final tester) async {
       FlutterNotificationQueue.configure(
         channels: {
           const NotificationChannel(

@@ -1367,11 +1367,24 @@ class _GroupBundleWidget extends AnimatedWidget {
         NotificationTheme.resolveWith(context, style, notification);
     final cardColor = resolvedTheme.backgroundColor;
 
+    final border = resolvedTheme.border;
+    final isUniform = border == null || border.isUniform;
+
+    Widget child = const SizedBox.expand();
+    if (border != null && !isUniform) {
+      child = Container(
+        decoration: BoxDecoration(
+          border: border,
+        ),
+        child: child,
+      );
+    }
+
     final container = Container(
       decoration: BoxDecoration(
         color: cardColor.withValues(alpha: resolvedTheme.opacity * opacity),
         borderRadius: resolvedTheme.borderRadius,
-        border: resolvedTheme.border,
+        border: isUniform ? border : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.08 * opacity),
@@ -1380,7 +1393,12 @@ class _GroupBundleWidget extends AnimatedWidget {
           ),
         ],
       ),
-      child: const SizedBox.expand(),
+      child: isUniform
+          ? child
+          : ClipRRect(
+              borderRadius: resolvedTheme.borderRadius,
+              child: child,
+            ),
     );
 
     return Transform.scale(

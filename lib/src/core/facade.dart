@@ -126,7 +126,14 @@ final class FlutterNotificationQueue {
         LogLevel.warning: 10,
       },
     );
-    Logger.attachToFlutterErrors();
+    final originalOnError = FlutterError.onError;
+    FlutterError.onError = (final details) {
+      Logger.get('flutter').error(
+        details.exceptionAsString(),
+        stackTrace: details.stack,
+      );
+      originalOnError?.call(details);
+    };
   }
 
   /// Static builder method for use in [MaterialApp.builder].

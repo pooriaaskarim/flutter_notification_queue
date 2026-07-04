@@ -340,7 +340,7 @@ class NotificationWidget extends StatefulWidget {
 }
 
 class NotificationWidgetState extends State<NotificationWidget>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late NotificationTheme theme;
 
   Duration? get resolvedDismissDuration =>

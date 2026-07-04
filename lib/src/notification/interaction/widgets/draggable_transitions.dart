@@ -164,10 +164,12 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     _snapBackAnimation = Tween<Offset>(
       begin: finalRelativeOffset,
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _snapBackController,
-      curve: Curves.linear,
-    ),);
+    ).animate(
+      CurvedAnimation(
+        parent: _snapBackController,
+        curve: Curves.linear,
+      ),
+    );
 
     _snapBackController.animateWith(simulation).then((final _) {
       if (mounted) {
