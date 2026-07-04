@@ -15,6 +15,7 @@ final class FlutterNotificationQueue {
 
   static ConfigurationManager? _configuration;
   static QueueCoordinator? _coordinator;
+  static bool _isFlutterErrorHooked = false;
 
   static final _logger = Logger.get('fnq.Core');
 
@@ -75,10 +76,17 @@ final class FlutterNotificationQueue {
   static void configure({
     final Set<NotificationQueue>? queues,
     final Set<NotificationChannel>? channels,
+    final LogLevel? logLevel,
+    final List<Handler>? logHandlers,
+    final bool captureFlutterErrors = false,
   }) {
     final isReconfig = isInitialized;
 
-    _configureLogger();
+    _configureLogger(
+      customLevel: logLevel,
+      customHandlers: logHandlers,
+      captureFlutterErrors: captureFlutterErrors,
+    );
     _configuration = ConfigurationManager(
       queues: queues ?? {NotificationQueue.defaultQueue()},
       channels: channels ?? NotificationChannel.standardChannels(),
@@ -107,33 +115,50 @@ final class FlutterNotificationQueue {
   }
 
   /// Configure the logger hierarchy for the package.
-  static void _configureLogger() {
+  static void _configureLogger({
+    final LogLevel? customLevel,
+    final List<Handler>? customHandlers,
+    final bool captureFlutterErrors = false,
+  }) {
+    const bool isDebug = kDebugMode;
+    final LogLevel resolvedLevel =
+        customLevel ?? (isDebug ? LogLevel.debug : LogLevel.warning);
+
+    final List<Handler> resolvedHandlers = customHandlers ??
+        (isDebug
+            ? [
+                const Handler(
+                  formatter: StructuredFormatter(),
+                  decorators: [
+                    BoxDecorator(),
+                    HierarchyDepthPrefixDecorator(),
+                  ],
+                  sink: ConsoleSink(),
+                ),
+              ]
+            : const []);
+
     Logger.configure(
-      'global',
-      logLevel: LogLevel.debug,
-      handlers: [
-        const Handler(
-          formatter: StructuredFormatter(),
-          decorators: [
-            BoxDecorator(),
-            HierarchyDepthPrefixDecorator(),
-          ],
-          sink: ConsoleSink(),
-        ),
-      ],
+      'fnq',
+      logLevel: resolvedLevel,
+      handlers: resolvedHandlers,
       stackMethodCount: {
         LogLevel.error: 20,
         LogLevel.warning: 10,
       },
     );
-    final originalOnError = FlutterError.onError;
-    FlutterError.onError = (final details) {
-      Logger.get('flutter').error(
-        details.exceptionAsString(),
-        stackTrace: details.stack,
-      );
-      originalOnError?.call(details);
-    };
+
+    if (captureFlutterErrors && !_isFlutterErrorHooked) {
+      final originalOnError = FlutterError.onError;
+      FlutterError.onError = (final details) {
+        Logger.get('fnq.flutter.error').error(
+          details.exceptionAsString(),
+          stackTrace: details.stack,
+        );
+        originalOnError?.call(details);
+      };
+      _isFlutterErrorHooked = true;
+    }
   }
 
   /// Static builder method for use in [MaterialApp.builder].
