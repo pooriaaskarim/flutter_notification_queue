@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.0.0] - 2026-07-05
+## [0.6.0] - 2026-07-05
 
 ### Features & UX Enhancements
 - **Notification Grouping & Bundling**: Introduced dynamic stack configuration parameters (custom layer count, offsets, scales), recursive-safe swipe dismissals with reason propagation, and non-overlapping indicators with direction-aware tap-to-expand.

@@ -1,7 +1,7 @@
 # FNQ Release Stabilization Plan
 
 > **Target**: `flutter_notification_queue` v1.0 public release on pub.dev
-> **Current version**: 0.5.0
+> **Current version**: 0.6.0
 > **Scope**: UX/DX critique, real-world use case validation, and platform performance hardening.
 > **Baseline**: `dart analyze` — no issues. `flutter test` — 177/177 passed.
 
@@ -329,7 +329,7 @@ Phase A4 (Docs Audit)       Phase B3 (Risk Fixes)
 | **Sprint 3** | Implement all 🔸 IMPORTANT fixes + perf fixes Risk-1/2 | ✅ Done |
 | **Sprint 4** | Documentation overhaul (README rewrite + new sections) | ✅ Done |
 | **Sprint 5** | B4 platform-specific testing (Android device + Chrome + Linux) | ✅ Done |
-| **Sprint 6** | Changelog, version bump to 1.0.0, `pana` score check, publish | ✅ Done |
+| **Sprint 6** | Changelog, version bump to 0.6.0, `pana` score check, publish | ✅ Done |
 
 
 ---
