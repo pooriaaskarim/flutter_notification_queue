@@ -27,6 +27,19 @@ part 'notification_action.dart';
 part 'theme/notification_theme.dart';
 part 'type_defs.dart';
 
+/// A widget representing an individual notification card in a queue.
+///
+/// [NotificationWidget] encapsulates the content (title, message, icon),
+/// visual style overrides (colors), behavior overrides (tap, drag), and
+/// metadata (priority, groupKey) for a single notification.
+///
+/// To display a notification, construct a [NotificationWidget] and call [show]:
+/// ```dart
+/// NotificationWidget(
+///   message: 'Successfully saved settings',
+///   channelName: 'success',
+/// ).show();
+/// ```
 @immutable
 class NotificationWidget extends StatefulWidget {
   NotificationWidget._({
@@ -56,6 +69,17 @@ class NotificationWidget extends StatefulWidget {
         isPinnedNotifier = ValueNotifier<bool>(initialIsPinned),
         createdAt = createdAt ?? DateTime.now();
 
+  /// Creates a new [NotificationWidget] with the specified content and style overrides.
+  ///
+  /// The [message] is required and represents the main text of the notification.
+  ///
+  /// Use [channelName] to apply defaults from a registered [NotificationChannel].
+  ///
+  /// Override settings like [tapBehavior], [dragBehavior], [dismissDuration],
+  /// [color], [backgroundColor], and [foregroundColor] to customize the card's
+  /// appearance and behavior.
+  ///
+  /// Set [permanent] to true to prevent the card from auto-dismissing.
   factory NotificationWidget({
     required final String message,
     final String? id,
@@ -348,6 +372,10 @@ class NotificationWidget extends StatefulWidget {
       );
 }
 
+/// The active state of a [NotificationWidget].
+///
+/// This state manages the notification's lifecycle, gesture detection, timers,
+/// and entrance/exit transitions.
 class NotificationWidgetState extends State<NotificationWidget>
     with TickerProviderStateMixin {
   late NotificationTheme theme;

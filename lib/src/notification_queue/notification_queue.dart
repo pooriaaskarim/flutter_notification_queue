@@ -237,6 +237,7 @@ sealed class NotificationQueue {
   String toString() => '${position.toString().capitalize}Queue';
 }
 
+/// A notification queue located at the top-left corner of the screen.
 final class TopLeftQueue extends NotificationQueue {
   const TopLeftQueue({
     super.style = const FlatQueueStyle(),
@@ -256,6 +257,7 @@ final class TopLeftQueue extends NotificationQueue {
   }) : super(position: QueuePosition.topLeft);
 }
 
+/// A notification queue located at the top-center of the screen.
 final class TopCenterQueue extends NotificationQueue {
   const TopCenterQueue({
     super.style = const FlatQueueStyle(),
@@ -275,6 +277,7 @@ final class TopCenterQueue extends NotificationQueue {
   }) : super(position: QueuePosition.topCenter);
 }
 
+/// A notification queue located at the top-right corner of the screen.
 final class TopRightQueue extends NotificationQueue {
   const TopRightQueue({
     super.style = const FlatQueueStyle(),
@@ -294,6 +297,7 @@ final class TopRightQueue extends NotificationQueue {
   }) : super(position: QueuePosition.topRight);
 }
 
+/// A notification queue located at the center-left side of the screen.
 final class CenterLeftQueue extends NotificationQueue {
   const CenterLeftQueue({
     super.style = const FlatQueueStyle(),
@@ -313,6 +317,7 @@ final class CenterLeftQueue extends NotificationQueue {
   }) : super(position: QueuePosition.centerLeft);
 }
 
+/// A notification queue located at the center-right side of the screen.
 final class CenterRightQueue extends NotificationQueue {
   const CenterRightQueue({
     super.style = const FlatQueueStyle(),
@@ -332,6 +337,7 @@ final class CenterRightQueue extends NotificationQueue {
   }) : super(position: QueuePosition.centerRight);
 }
 
+/// A notification queue located at the bottom-left corner of the screen.
 final class BottomLeftQueue extends NotificationQueue {
   const BottomLeftQueue({
     super.style = const FlatQueueStyle(),
@@ -351,6 +357,7 @@ final class BottomLeftQueue extends NotificationQueue {
   }) : super(position: QueuePosition.bottomLeft);
 }
 
+/// A notification queue located at the bottom-center of the screen.
 final class BottomCenterQueue extends NotificationQueue {
   const BottomCenterQueue({
     super.style = const FlatQueueStyle(),
@@ -370,6 +377,7 @@ final class BottomCenterQueue extends NotificationQueue {
   }) : super(position: QueuePosition.bottomCenter);
 }
 
+/// A notification queue located at the bottom-right corner of the screen.
 final class BottomRightQueue extends NotificationQueue {
   const BottomRightQueue({
     super.style = const FlatQueueStyle(),

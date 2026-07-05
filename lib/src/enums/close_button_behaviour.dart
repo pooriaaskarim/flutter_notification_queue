@@ -14,7 +14,7 @@ part of 'enums.dart';
 /// | [VisibleOnHover] | `0.3`*  | `1.0`    | Subtly visible (0.3)   |
 /// | [Hidden]         | `0.0`   | `0.0`    | Invisible, untappable  |
 ///
-/// *`VisibleOnHover` uses [progressive enhancement]: it starts at `0.3`
+/// *`VisibleOnHover` uses progressive enhancement: it starts at `0.3`
 /// (safe for touch), then upgrades to true hide/reveal (`0.0`/`1.0`)
 /// once a mouse hover event is detected.
 ///

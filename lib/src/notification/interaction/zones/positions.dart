@@ -33,7 +33,7 @@ final class PositionDropZone extends DropZone {
     );
   }
 
-  /// Returns a normalized proximity value in [0.0, 1.0].
+  /// Returns a normalized proximity value in `[0.0, 1.0]`.
   ///
   /// `0.0` = pointer is farther than `threshold` from the anchor.
   /// `1.0` = pointer is exactly on the anchor.

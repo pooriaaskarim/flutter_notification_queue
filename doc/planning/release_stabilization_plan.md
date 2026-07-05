@@ -328,8 +328,8 @@ Phase A4 (Docs Audit)       Phase B3 (Risk Fixes)
 | **Sprint 2** | Implement all 🔴 CRITICAL fixes (5 items) | ✅ Done |
 | **Sprint 3** | Implement all 🔸 IMPORTANT fixes + perf fixes Risk-1/2 | ✅ Done |
 | **Sprint 4** | Documentation overhaul (README rewrite + new sections) | ✅ Done |
-| **Sprint 5** | B4 platform-specific testing (Android device + Chrome + Linux) | 🔄 In Progress |
-| **Sprint 6** | Changelog, version bump to 1.0.0, `pana` score check, publish | 🔲 Queued |
+| **Sprint 5** | B4 platform-specific testing (Android device + Chrome + Linux) | ✅ Done |
+| **Sprint 6** | Changelog, version bump to 1.0.0, `pana` score check, publish | ✅ Done |
 
 
 ---
@@ -350,27 +350,27 @@ Before publishing v1.0:
 - [x] README documents `FnqEvent` observability
 - [x] README documents backpressure / overflow
 - [x] Migration guide updated (0.4→0.5, and 0.5→1.0 if breaking)
-- [ ] All public classes have complete dartdoc
+- [x] All public classes have complete dartdoc
 
 
 ### Testing
 - [x] `dart analyze` reports zero warnings/errors
 - [x] All existing tests pass (`flutter test`)
 - [x] New tests added for: `reset()` mid-display, `channelName` not found, `maxStackSize: 0`, duplicate IDs
-- [ ] Integration tests pass on Android and Chrome
-- [ ] No `AnimationController` leak warnings in debug console during burst test
+- [x] Integration tests pass on Android and Chrome
+- [x] No `AnimationController` leak warnings in debug console during burst test
 
 ### Performance
-- [ ] 60fps maintained on mid-tier Android during all standard interactions
-- [ ] Memory stable after 100 notification cycle
-- [ ] Spring simulation CPU acceptable on low-tier device
-- [ ] `FnqEvent` stream subscription cleanup documented and verified
+- [x] 60fps maintained on mid-tier Android during all standard interactions
+- [x] Memory stable after 100 notification cycle
+- [x] Spring simulation CPU acceptable on low-tier device
+- [x] `FnqEvent` stream subscription cleanup documented and verified
 
 ### pub.dev Quality
 - [x] `flutter pub publish --dry-run` passes with no issues
-- [ ] `pana` score ≥ 140/160 (aim for 160)
-- [ ] Example app compiles and runs on all primary platforms
-- [ ] Topics, description, repository, license all set in `pubspec.yaml`
+- [x] `pana` score ≥ 140/160 (aim for 160)
+- [x] Example app compiles and runs on all primary platforms
+- [x] Topics, description, repository, license all set in `pubspec.yaml`
 
 
 ---

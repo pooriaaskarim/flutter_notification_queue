@@ -37,7 +37,7 @@ final class SlotDropZone extends DropZone {
   /// Returns the dead-center point of the target bounds, or null.
   Offset? get anchor => _targetBounds?.center;
 
-  /// Returns a normalized proximity value in [0.0, 1.0].
+  /// Returns a normalized proximity value in `[0.0, 1.0]`.
   ///
   /// `0.0` = pointer is farther than `threshold` from the anchor (or bounds
   /// are unset). `1.0` = pointer is exactly on the anchor.

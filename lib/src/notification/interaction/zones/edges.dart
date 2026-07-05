@@ -22,7 +22,7 @@ sealed class EdgeDropZone extends DropZone {
   /// The screen alignment corresponding to this edge.
   Alignment get alignment;
 
-  /// Returns a normalized progress value in [0.0, 1.0] representing how
+  /// Returns a normalized progress value in `[0.0, 1.0]` representing how
   /// far the pointer has entered this zone.
   ///
   /// A value of `0.0` means the pointer is outside the zone. A value of
