@@ -12,6 +12,7 @@ class ConfigurationManager {
   ConfigurationManager({
     final Set<NotificationQueue> queues = const {},
     this.channels = const {},
+    this.strictChannelLookup = false,
   }) : queues = _initQueues(queues);
 
   static Set<NotificationQueue> _initQueues(
@@ -24,6 +25,7 @@ class ConfigurationManager {
 
   final Set<NotificationQueue> queues;
   final Set<NotificationChannel> channels;
+  final bool strictChannelLookup;
 
   /// Returns a concise summary of the configuration.
   String get summary => '${queues.length} Queues '
@@ -165,6 +167,12 @@ class ConfigurationManager {
     );
 
     if (!registeredChannel) {
+      if (strictChannelLookup) {
+        throw ArgumentError(
+          'Channel "$channelName" is not registered. '
+          'To disable this check and fallback to defaults, set strictChannelLookup to false.',
+        );
+      }
       _logger.warning(
         'Channel "$channelName" is not registered. '
         'Falling back to the default channel. '

@@ -248,5 +248,69 @@ void main() {
       expect(find.text('Pending 1'), findsNothing);
       expect(find.text('Pending 2'), findsOneWidget);
     });
+
+    testWidgets('strictChannelLookup: true throws ArgumentError for unregistered channelName', (final tester) async {
+      FlutterNotificationQueue.reset();
+      FlutterNotificationQueue.configure(
+        strictChannelLookup: true,
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          builder: FlutterNotificationQueue.builder,
+          home: Scaffold(body: SizedBox.expand()),
+        ),
+      );
+
+      expect(
+        () => NotificationWidget(
+          message: 'Strict test',
+          channelName: 'non_existent_channel',
+        ),
+        throwsArgumentError,
+      );
+    });
+
+    testWidgets('FlutterNotificationQueue.show creates and displays notification', (final tester) async {
+      FlutterNotificationQueue.reset();
+      FlutterNotificationQueue.configure();
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          builder: FlutterNotificationQueue.builder,
+          home: Scaffold(body: SizedBox.expand()),
+        ),
+      );
+
+      FlutterNotificationQueue.show(
+        message: 'Static helper message',
+      );
+
+      await tester.pump();
+      await tester.pump();
+
+      expect(find.text('Static helper message'), findsOneWidget);
+    });
+
+    testWidgets('nextEvent resolves with the first event of type T', (final tester) async {
+      FlutterNotificationQueue.reset();
+      FlutterNotificationQueue.configure();
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          builder: FlutterNotificationQueue.builder,
+          home: Scaffold(body: SizedBox.expand()),
+        ),
+      );
+
+      final nextQueuedFuture = FlutterNotificationQueue.nextEvent<NotificationQueued>();
+
+      FlutterNotificationQueue.show(
+        message: 'Event test',
+      );
+
+      final event = await nextQueuedFuture;
+      expect(event.notification.message, equals('Event test'));
+    });
   });
 }
