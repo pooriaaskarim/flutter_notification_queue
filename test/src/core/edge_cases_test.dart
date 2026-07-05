@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
-import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:logd/logd.dart';
 import 'package:logd/testing.dart';
@@ -50,21 +48,24 @@ void main() {
         ),
       );
 
-      final notif = NotificationWidget(
+      NotificationWidget(
         id: 'fallback_id',
         message: 'Hello Fallback',
         channelName: 'non_existent_channel',
-      );
+      ).show();
 
-      notif.show();
       await tester.pump();
       await tester.pump();
 
       // Verify the warning was logged
       expect(
-        sink.logs.any((log) =>
-            log.level == LogLevel.warning &&
-            log.message.contains('Channel "non_existent_channel" is not registered')),
+        sink.logs.any(
+          (final log) =>
+              log.level == LogLevel.warning &&
+              log.message.contains(
+                'Channel "non_existent_channel" is not registered',
+              ),
+        ),
         isTrue,
       );
 
@@ -91,12 +92,11 @@ void main() {
         ),
       );
 
-      final notif = NotificationWidget(
+      NotificationWidget(
         id: 'reset_mid_id',
         message: 'Active Notif',
-      );
+      ).show();
 
-      notif.show();
       await tester.pump();
       await tester.pump();
 
@@ -130,11 +130,11 @@ void main() {
         ),
       );
 
-      final newNotif = NotificationWidget(
+      NotificationWidget(
         id: 'new_id',
         message: 'New Notif',
-      );
-      newNotif.show();
+      ).show();
+
       await tester.pump();
       await tester.pump();
 
@@ -160,23 +160,21 @@ void main() {
         ),
       );
 
-      final notif1 = NotificationWidget(
+      NotificationWidget(
         id: 'duplicate_id',
         message: 'First Message',
-      );
+      ).show();
 
-      notif1.show();
       await tester.pump();
       await tester.pump();
 
       expect(find.text('First Message'), findsOneWidget);
 
-      final notif2 = NotificationWidget(
+      NotificationWidget(
         id: 'duplicate_id',
         message: 'Second Message',
-      );
+      ).show();
 
-      notif2.show();
       await tester.pump();
 
       // The message should be updated in-place without spawning a second card
@@ -212,40 +210,43 @@ void main() {
         id: 'visible_id',
         message: 'Visible',
       );
-      first.show();
+      FlutterNotificationQueue.coordinator.queue(first);
+
       await tester.pump();
       await tester.pump();
 
-      final pending1 = NotificationWidget(
+      NotificationWidget(
         id: 'pending_id',
         message: 'Pending 1',
-      );
-      pending1.show();
+      ).show();
+
       await tester.pump();
 
-      final pending2 = NotificationWidget(
+      NotificationWidget(
         id: 'pending_id',
         message: 'Pending 2',
-      );
-      pending2.show();
+      ).show();
+
       await tester.pump();
 
       // Now trigger dismiss of the visible one.
-      // Do not await the future directly as it blocks the FakeAsync zone until pumped.
+      // Do not await the future directly as it blocks the FakeAsync zone
+      // until pumped.
       final Future<void> dismissFuture = first.dismiss();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       await dismissFuture;
 
-      // Pump exit size transition (200ms) and entry size/slide transitions (300ms)
+      // Pump exit size transition (200ms) and entry size/slide transitions
+      // (300ms)
       for (int i = 0; i < 5; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
-      // The pending notification should show "Pending 2" because it was updated in-place
+      // The pending notification should show "Pending 2" because it was
+      // updated in-place
       expect(find.text('Pending 1'), findsNothing);
       expect(find.text('Pending 2'), findsOneWidget);
     });
   });
 }
-
