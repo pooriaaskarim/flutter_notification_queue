@@ -123,21 +123,9 @@ class DraggableTransitionsState extends State<DraggableTransitions>
               ? _snapBackAnimation!.value
               : Offset.zero;
 
-          return ValueListenableBuilder<GestureState>(
-            valueListenable: _fsm,
-            builder: (final context, final fsmState, final child) {
-              final cursor = fsmState == GestureState.idle
-                  ? SystemMouseCursors.grab
-                  : SystemMouseCursors.grabbing;
-
-              return MouseRegion(
-                cursor: cursor,
-                child: Transform.translate(
-                  offset: offset,
-                  child: widget.notification,
-                ),
-              );
-            },
+          return Transform.translate(
+            offset: offset,
+            child: widget.notification,
           );
         },
       );
@@ -265,10 +253,8 @@ class DraggableTransitionsState extends State<DraggableTransitions>
 
     final feedback = ValueListenableBuilder(
       valueListenable: _dragOffsetPairNotifier,
-      builder: (final context, final offsetPair, final child) => MouseRegion(
-        cursor: SystemMouseCursors.grabbing,
-        child: plugin.buildFeedback(this, offsetPair),
-      ),
+      builder: (final context, final offsetPair, final child) =>
+          plugin.buildFeedback(this, offsetPair),
     );
 
     final position = widget.notification.queue.position;
