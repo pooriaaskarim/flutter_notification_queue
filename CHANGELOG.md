@@ -1,6 +1,32 @@
 # Changelog
 
+## [Unreleased]
+
+### Features & UX Enhancements
+- **Notification Grouping & Bundling**: Introduced dynamic stack configuration parameters (custom layer count, offsets, scales), recursive-safe swipe dismissals with reason propagation, and non-overlapping indicators with direction-aware tap-to-expand.
+- **Hover-to-Pause Dismissal**: Hovering over a notification card pauses its auto-dismiss timer, which resumes smoothly when the pointer leaves.
+- **Smooth Height & Spring Snapbacks**: Added dynamic height transitions when notifications expand or collapse, and physical spring snapback physics for aborted cancel drags.
+- **Visual Grab Cursors**: Added grab and grabbing cursor states on draggable cards to improve desktop UX.
+- **Visual Boundaries**: Added per-queue `maxWidth` constraints and layout collision delegate resolution.
+- **Logd Core Integration**: Upgraded logging package to `logd` version `^0.8.6` and integrated package-wide structured log handlers.
+
+### API Cleanup & DX Stability
+- **Facade Reconfiguration**: Renamed `initialize()` to `configure()` on `FlutterNotificationQueue` to accurately reflect system reconfiguration.
+- **Decoupled Exports**: Removed internal `QueueCoordinator` class from public barrel file exports.
+- **Stable Event Proxy**: Replaced transient event streams with a persistent broadcast proxy stream to prevent zombie listeners across configure/reset cycles.
+- **Per-Notification Permanence**: Added `permanent: true` flag to individual `NotificationWidget`s to bypass channel-level default dismiss durations.
+
+### Performance Optimizations
+- **Reorder Target Index Isolation**: Moved reorder target index tracking to a localized `ValueNotifier` and `ValueListenableBuilder` to avoid full-queue rebuilds during 120Hz drag operations.
+- **Repaint Boundary Isolation**: Wrapped individual notification cards in `RepaintBoundary` to isolate repaints during dragging and hovering.
+- **Batch State Updates**: Batched enqueued item transitions in a single `setState` block inside `_processPending`.
+
+### Testing & Quality
+- **Edge Case Coverage**: Added robust widget tests for `maxStackSize: 0` constraints, unregistered channel warnings, clean `reset()` mid-display recovery, and duplicate ID in-place updates.
+- **Visual Regression Tests**: Integrated golden tests for various queue positioning, styles, and grouping stacks.
+
 ## [0.5.0] - 2026-02-23
+
 
 ### The Interaction Engine Overhaul (Reorder & Physics)
 - **Reorder Behavior**: Introduced the highly requested `Reorder` drag-and-drop behavior. Users can now pick up notifications and seamlessly rearrange them within their queue, empowering sophisticated inbox management.
