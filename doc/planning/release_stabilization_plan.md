@@ -349,8 +349,9 @@ Before publishing v1.0:
 - [x] README has "Architecture" section explaining Channel vs Queue mental model
 - [x] README documents `FnqEvent` observability
 - [x] README documents backpressure / overflow
-- [ ] Migration guide updated (0.4→0.5, and 0.5→1.0 if breaking)
+- [x] Migration guide updated (0.4→0.5, and 0.5→1.0 if breaking)
 - [ ] All public classes have complete dartdoc
+
 
 ### Testing
 - [x] `dart analyze` reports zero warnings/errors
