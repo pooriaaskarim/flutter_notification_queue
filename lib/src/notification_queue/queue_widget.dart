@@ -429,10 +429,8 @@ class QueueWidgetState extends State<QueueWidget>
     final limit = widget.queue.maxStackSize;
     final toAdd = <_NotificationItemState>[];
 
-    while (
-      _pendingNotifications.isNotEmpty &&
-      _items.length + toAdd.length < limit
-    ) {
+    while (_pendingNotifications.isNotEmpty &&
+        _items.length + toAdd.length < limit) {
       final notification = _pendingNotifications.removeFirst();
       final controller = AnimationController(
         vsync: this,

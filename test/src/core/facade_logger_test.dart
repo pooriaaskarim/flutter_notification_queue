@@ -25,7 +25,7 @@ void main() {
       final hierarchy = Logger.exportHierarchy();
       final fnqConfig = hierarchy['fnq'];
       expect(fnqConfig, isA<Map<String, dynamic>>());
-      
+
       final fnqConfigMap = fnqConfig as Map<String, dynamic>;
       final effective = fnqConfigMap['effective'] as Map<String, dynamic>;
       final Object? logLevelVal = effective['logLevel'];
