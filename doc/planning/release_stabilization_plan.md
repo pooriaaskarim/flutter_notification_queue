@@ -355,7 +355,7 @@ Before publishing v1.0:
 ### Testing
 - [x] `dart analyze` reports zero warnings/errors
 - [x] All existing tests pass (`flutter test`)
-- [ ] New tests added for: `reset()` mid-display, `channelName` not found, `maxStackSize: 0`, duplicate IDs
+- [x] New tests added for: `reset()` mid-display, `channelName` not found, `maxStackSize: 0`, duplicate IDs
 - [ ] Integration tests pass on Android and Chrome
 - [ ] No `AnimationController` leak warnings in debug console during burst test
 
