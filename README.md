@@ -583,6 +583,17 @@ TopCenterQueue(
 
 ## 📈 Migration Guide
 
+### From 0.4.x to 0.5.0
+
+Version 0.5.0 stabilizes the API surface for the v1.0 release, introducing robustness fixes for reconfiguration and removing internal-only classes from public exports.
+
+**Key Changes:**
+
+- **Renamed `initialize()` to `configure()`**: Update all `FlutterNotificationQueue.initialize(...)` calls to `FlutterNotificationQueue.configure(...)`.
+- **Removed `QueueCoordinator` Export**: The internal `QueueCoordinator` is no longer exported from `package:flutter_notification_queue/flutter_notification_queue.dart`. Use `FlutterNotificationQueue` static facade APIs.
+- **Stable Events Stream**: The `FlutterNotificationQueue.events` stream is now a stable broadcast proxy. You no longer need to cancel and re-subscribe to `events` when calling `configure()` or `reset()`.
+- **Explicit `permanent` Property**: Added `permanent: true` to `NotificationWidget` factory as the official way to make a single notification permanent, overriding channel-level default dismiss durations.
+
 ### From 0.3.x to 0.4.0
 
 Version 0.4.0 introduces a unified core engine, replacing the legacy context based
