@@ -69,11 +69,14 @@ class NotificationWidget extends StatefulWidget {
         isPinnedNotifier = ValueNotifier<bool>(initialIsPinned),
         createdAt = createdAt ?? DateTime.now();
 
-  /// Creates a new [NotificationWidget] with the specified content and style overrides.
+  /// Creates a new [NotificationWidget] with the specified content and style
+  /// overrides.
   ///
-  /// The [message] is required and represents the main text of the notification.
+  /// The [message] is required and represents the main text of the
+  /// notification.
   ///
-  /// Use [channelName] to apply defaults from a registered [NotificationChannel].
+  /// Use [channelName] to apply defaults from a registered
+  /// [NotificationChannel].
   ///
   /// Override settings like [tapBehavior], [dragBehavior], [dismissDuration],
   /// [color], [backgroundColor], and [foregroundColor] to customize the card's
@@ -112,8 +115,12 @@ class NotificationWidget extends StatefulWidget {
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
     final resolveChannel =
         FlutterNotificationQueue.configuration.getChannel(channelName);
-    final resolvedQueue = FlutterNotificationQueue.configuration
-        .getQueue(position ?? resolveChannel.position);
+    final effectivePosition = position ??
+        FlutterNotificationQueue.configuration
+            .getEffectiveChannelPosition(channelName);
+    final resolvedQueue =
+        FlutterNotificationQueue.configuration.getQueue(effectivePosition);
+
     // permanent: true forces null dismiss duration regardless of channel
     // default, allowing a single notification to opt out of auto-dismiss.
     final resolvedDismissDuration = permanent ? null : dismissDuration;
@@ -380,8 +387,9 @@ class NotificationWidgetState extends State<NotificationWidget>
     with TickerProviderStateMixin {
   late NotificationTheme theme;
 
-  Duration? get resolvedDismissDuration =>
-      widget.dismissDuration ?? widget.channel.defaultDismissDuration;
+  Duration? get resolvedDismissDuration => widget.isPinned
+      ? null
+      : (widget.dismissDuration ?? widget.channel.defaultDismissDuration);
 
   bool get hasTitle => widget.title != null;
 
@@ -449,6 +457,7 @@ class NotificationWidgetState extends State<NotificationWidget>
       reverseDuration: const Duration(milliseconds: 240),
     )..value = 1.0;
 
+    widget.isPinnedNotifier.addListener(_handlePinChanged);
     initDismissTimer();
   }
 
@@ -471,6 +480,18 @@ class NotificationWidgetState extends State<NotificationWidget>
       ?..writeAll(['oldWidget: $oldWidget', 'newWidget: $widget'])
       ..sink();
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.isPinnedNotifier != widget.isPinnedNotifier) {
+      oldWidget.isPinnedNotifier.removeListener(_handlePinChanged);
+      widget.isPinnedNotifier.addListener(_handlePinChanged);
+    }
+  }
+
+  void _handlePinChanged() {
+    if (widget.isPinned) {
+      ditchDismissTimer();
+    } else {
+      initDismissTimer();
+    }
   }
 
   Future<void> dismiss({
@@ -485,6 +506,7 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   @override
   void dispose() {
+    widget.isPinnedNotifier.removeListener(_handlePinChanged);
     animationController.dispose();
     _dismissProgressController?.dispose();
     isExpanded.dispose();

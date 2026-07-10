@@ -5,6 +5,7 @@ export 'src/core/core.dart'
         DismissReason,
         FlutterNotificationQueue,
         FnqEvent,
+        NotificationChannelRouteUpdated,
         NotificationCustomActionTriggered,
         NotificationDismissed,
         NotificationGroupCollapsed,

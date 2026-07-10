@@ -292,3 +292,26 @@ final class NotificationGroupDismissed extends FnqEvent {
   String toString() => 'NotificationGroupDismissed(key: $groupKey, '
       'position: ${position.name})';
 }
+
+/// Emitted when a channel's default queue route is updated at runtime
+/// (Desktop Parking).
+final class NotificationChannelRouteUpdated extends FnqEvent {
+  const NotificationChannelRouteUpdated({
+    required this.channelName,
+    required this.oldPosition,
+    required this.newPosition,
+  });
+
+  /// The name of the channel whose route was updated.
+  final String channelName;
+
+  /// The original queue position before updates.
+  final QueuePosition oldPosition;
+
+  /// The new queue position route.
+  final QueuePosition newPosition;
+
+  @override
+  String toString() => 'NotificationChannelRouteUpdated(channel: $channelName, '
+      'from: ${oldPosition.name}, to: ${newPosition.name})';
+}

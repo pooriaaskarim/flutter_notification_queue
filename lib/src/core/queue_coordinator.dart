@@ -9,7 +9,14 @@ part of 'core.dart';
 /// [GlobalKey]s, using a "startup mailbox" pattern to pass initial data to
 /// newly mounting widgets.
 class QueueCoordinator {
-  QueueCoordinator();
+  QueueCoordinator({final int maxHistoryEntries = 0}) {
+    _historyLogger = HistoryLogger(
+      maxEntries: maxHistoryEntries,
+    )..startListening(events);
+  }
+
+  late final HistoryLogger _historyLogger;
+  HistoryLogger get historyLogger => _historyLogger;
 
   static final _logger = Logger.get('fnq.Core.Coordinator');
 
@@ -60,6 +67,7 @@ class QueueCoordinator {
     _initializationQueue.clear();
     _activeQueuesNotifier.value = {};
     _eventController.close();
+    _historyLogger.dispose();
   }
 
   /// Retrieves and clears pending initialization items for a queue.
@@ -155,6 +163,20 @@ class QueueCoordinator {
     if (removed) {
       final targetQueue = newPosition.generateQueueFrom(notification.queue);
       newNotification = notification.copyToQueue(targetQueue);
+
+      final config = FlutterNotificationQueue.configuration;
+      if (config.enableDynamicChannelParking) {
+        final oldPosition = notificationQueue.position;
+        config.updateChannelRoute(notification.channelName, newPosition);
+        _eventController.add(
+          NotificationChannelRouteUpdated(
+            channelName: notification.channelName,
+            oldPosition: oldPosition,
+            newPosition: newPosition,
+          ),
+        );
+      }
+
       _eventController.add(
         NotificationRelocated(
           notification: newNotification,

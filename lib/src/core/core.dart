@@ -29,5 +29,6 @@ import '../utils/utils.dart';
 part 'configuration_manager.dart';
 part 'facade.dart';
 part 'fnq_event.dart';
+part 'history_logger.dart';
 part 'notification_overlay.dart';
 part 'queue_coordinator.dart';

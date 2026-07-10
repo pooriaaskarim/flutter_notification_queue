@@ -1,0 +1,135 @@
+part of 'core.dart';
+
+/// A wrapper that stores a [FnqEvent] along with its emission timestamp.
+@internal
+class HistoryEntry {
+  HistoryEntry(this.event, {final DateTime? timestamp})
+      : timestamp = timestamp ?? DateTime.now();
+
+  /// The emitted event.
+  final FnqEvent event;
+
+  /// The timestamp when the event was recorded.
+  final DateTime timestamp;
+}
+
+/// Manages an in-memory, bounded LIFO ring buffer of [FnqEvent]s.
+///
+/// Opt-in via `maxHistoryEntries` configuration.
+@internal
+class HistoryLogger {
+  HistoryLogger({required final int maxEntries}) : _maxEntries = maxEntries;
+
+  int _maxEntries;
+  final List<HistoryEntry> _history = [];
+  StreamSubscription<FnqEvent>? _subscription;
+  Stream<FnqEvent>? _coordinatorStream;
+
+  /// The maximum number of entries allowed in the history cache.
+  int get maxEntries => _maxEntries;
+
+  /// Starts listening to the event stream.
+  void startListening(final Stream<FnqEvent> stream) {
+    _subscription?.cancel();
+    _coordinatorStream = stream;
+    if (_maxEntries <= 0) {
+      return;
+    }
+
+    _subscription = stream.listen((final event) {
+      _history.insert(0, HistoryEntry(event)); // LIFO (most recent first)
+      if (_history.length > _maxEntries) {
+        _history.removeLast();
+      }
+    });
+  }
+
+  /// Updates the maximum cache bounds dynamically.
+  void updateMaxEntries(final int newMax) {
+    _maxEntries = newMax;
+    if (_maxEntries <= 0) {
+      _subscription?.cancel();
+      _subscription = null;
+      _history.clear();
+    } else {
+      if (_subscription == null && _coordinatorStream != null) {
+        startListening(_coordinatorStream!);
+      }
+      if (_history.length > _maxEntries) {
+        _history.removeRange(_maxEntries, _history.length);
+      }
+    }
+  }
+
+  /// Queries the captured notification history based on filters.
+  List<FnqEvent> getHistory({
+    final String? channelName,
+    final DismissReason? dismissReason,
+    final DateTime? since,
+    final int? limit,
+  }) {
+    Iterable<HistoryEntry> query = _history;
+
+    if (channelName != null) {
+      query = query.where((final entry) {
+        final e = entry.event;
+        if (e is NotificationQueued) {
+          return e.notification.channelName == channelName;
+        }
+        if (e is NotificationDismissed) {
+          return e.notification.channelName == channelName;
+        }
+        if (e is NotificationTapped) {
+          return e.notification.channelName == channelName;
+        }
+        if (e is NotificationPinned) {
+          return e.notification.channelName == channelName;
+        }
+        if (e is NotificationUnpinned) {
+          return e.notification.channelName == channelName;
+        }
+        if (e is NotificationSnoozed) {
+          return e.notification.channelName == channelName;
+        }
+        if (e is NotificationCustomActionTriggered) {
+          return e.notification.channelName == channelName;
+        }
+        if (e is NotificationRelocated) {
+          return e.notification.channelName == channelName;
+        }
+        return false;
+      });
+    }
+
+    if (dismissReason != null) {
+      query = query.where((final entry) {
+        final e = entry.event;
+        return e is NotificationDismissed && e.reason == dismissReason;
+      });
+    }
+
+    if (since != null) {
+      query = query.where((final entry) => entry.timestamp.isAfter(since));
+    }
+
+    final events = query.map((final entry) => entry.event);
+
+    if (limit != null) {
+      return events.take(limit).toList();
+    }
+
+    return events.toList();
+  }
+
+  /// Clears all recorded entries.
+  void clear() {
+    _history.clear();
+  }
+
+  /// Cancels subscriptions and releases resources.
+  void dispose() {
+    _subscription?.cancel();
+    _subscription = null;
+    _history.clear();
+  }
+}

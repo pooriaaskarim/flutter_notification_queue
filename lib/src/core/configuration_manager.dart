@@ -13,6 +13,8 @@ class ConfigurationManager {
     final Set<NotificationQueue> queues = const {},
     this.channels = const {},
     this.strictChannelLookup = false,
+    this.enableDynamicChannelParking = false,
+    this.maxHistoryEntries = 0,
   }) : queues = _initQueues(queues);
 
   static Set<NotificationQueue> _initQueues(
@@ -26,6 +28,26 @@ class ConfigurationManager {
   final Set<NotificationQueue> queues;
   final Set<NotificationChannel> channels;
   final bool strictChannelLookup;
+  final bool enableDynamicChannelParking;
+  final int maxHistoryEntries;
+
+  /// Stores dynamically parked channel positions mapping channel names to
+  /// their new positions.
+  final Map<String, QueuePosition> _parkedChannelRoutes = {};
+
+  /// Updates the parked queue position route for a channel.
+  void updateChannelRoute(
+      final String channelName, final QueuePosition newPosition,) {
+    _parkedChannelRoutes[channelName] = newPosition;
+  }
+
+  QueuePosition? getEffectiveChannelPosition(final String channelName) {
+    final channel = getChannel(channelName);
+    if (!enableDynamicChannelParking) {
+      return channel.position;
+    }
+    return _parkedChannelRoutes[channelName] ?? channel.position;
+  }
 
   /// Returns a concise summary of the configuration.
   String get summary => '${queues.length} Queues '
@@ -170,7 +192,8 @@ class ConfigurationManager {
       if (strictChannelLookup) {
         throw ArgumentError(
           'Channel "$channelName" is not registered. '
-          'To disable this check and fallback to defaults, set strictChannelLookup to false.',
+          'To disable this check and fallback to defaults, '
+          'set strictChannelLookup to false.',
         );
       }
       _logger.warning(

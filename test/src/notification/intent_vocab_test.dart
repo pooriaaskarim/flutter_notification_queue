@@ -237,5 +237,69 @@ void main() {
 
       expect(find.text('Snoozed notification'), findsOneWidget);
     });
+
+    testWidgets(
+        'pinned notification does not auto-dismiss when duration expires',
+        (final tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          builder: FlutterNotificationQueue.builder,
+          home: Scaffold(body: SizedBox.expand()),
+        ),
+      );
+
+      final n = NotificationWidget(
+        id: 'pinned_dismiss_test',
+        message: 'Pinned but with duration',
+        channelName: 'test',
+        dismissDuration: const Duration(milliseconds: 200),
+        initialIsPinned: true,
+      );
+
+      final List<FnqEvent> capturedEvents = [];
+      final sub = FlutterNotificationQueue.events.listen(capturedEvents.add);
+
+      n.show();
+      await tester.pump();
+      await tester.pump();
+      await _driveAnimation(tester);
+
+      expect(find.text('Pinned but with duration'), findsOneWidget);
+
+      // Advance clock past the dismiss duration by a large margin (2 seconds)
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pump();
+
+      // Pinned notification should still be visible, and no dismiss event
+      // should be fired!
+      expect(find.text('Pinned but with duration'), findsOneWidget);
+      expect(
+        capturedEvents.any((final e) =>
+            e is NotificationDismissed && e.notification.id == n.id,),
+        isFalse,
+      );
+
+      // Now unpin it
+      FlutterNotificationQueue.coordinator.unpin(n);
+      await tester.pump();
+      await tester.pump();
+
+      // Since the unpin starts/resumes the auto-dismiss timer, it should now dismiss after unpin duration.
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+
+      sub.cancel(); // ignore: unawaited_futures
+
+      expect(find.text('Pinned but with duration'), findsNothing);
+      expect(
+        capturedEvents.any(
+          (final e) =>
+              e is NotificationDismissed &&
+              e.notification.id == n.id &&
+              e.reason == DismissReason.timeout,
+        ),
+        isTrue,
+      );
+    });
   });
 }

@@ -249,7 +249,10 @@ void main() {
       expect(find.text('Pending 2'), findsOneWidget);
     });
 
-    testWidgets('strictChannelLookup: true throws ArgumentError for unregistered channelName', (final tester) async {
+    testWidgets(
+        'strictChannelLookup: true throws ArgumentError for unregistered '
+        'channelName',
+        (final tester) async {
       FlutterNotificationQueue.reset();
       FlutterNotificationQueue.configure(
         strictChannelLookup: true,
@@ -271,7 +274,9 @@ void main() {
       );
     });
 
-    testWidgets('FlutterNotificationQueue.show creates and displays notification', (final tester) async {
+    testWidgets(
+        'FlutterNotificationQueue.show creates and displays notification',
+        (final tester) async {
       FlutterNotificationQueue.reset();
       FlutterNotificationQueue.configure();
 
@@ -292,7 +297,8 @@ void main() {
       expect(find.text('Static helper message'), findsOneWidget);
     });
 
-    testWidgets('nextEvent resolves with the first event of type T', (final tester) async {
+    testWidgets('nextEvent resolves with the first event of type T',
+        (final tester) async {
       FlutterNotificationQueue.reset();
       FlutterNotificationQueue.configure();
 
@@ -303,7 +309,8 @@ void main() {
         ),
       );
 
-      final nextQueuedFuture = FlutterNotificationQueue.nextEvent<NotificationQueued>();
+      final nextQueuedFuture =
+          FlutterNotificationQueue.nextEvent<NotificationQueued>();
 
       FlutterNotificationQueue.show(
         message: 'Event test',

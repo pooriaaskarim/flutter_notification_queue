@@ -304,6 +304,17 @@ class _EventMeta {
             badge: 'all',
             subtitle: groupKey,
           ),
+        NotificationChannelRouteUpdated(
+          :final channelName,
+          :final oldPosition,
+          :final newPosition,
+        ) =>
+          _EventMeta(
+            label: 'Route Updated',
+            color: const Color(0xFFEC4899), // pink-500
+            badge: channelName,
+            subtitle: '${oldPosition.name} → ${newPosition.name}',
+          ),
       };
 }
 

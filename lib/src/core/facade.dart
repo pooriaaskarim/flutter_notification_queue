@@ -93,6 +93,8 @@ final class FlutterNotificationQueue {
     final List<Handler>? logHandlers,
     final bool captureFlutterErrors = false,
     final bool strictChannelLookup = false,
+    final bool enableDynamicChannelParking = false,
+    final int maxHistoryEntries = 0,
   }) {
     final isReconfig = isInitialized;
 
@@ -105,10 +107,16 @@ final class FlutterNotificationQueue {
       queues: queues ?? {NotificationQueue.defaultQueue()},
       channels: channels ?? NotificationChannel.standardChannels(),
       strictChannelLookup: strictChannelLookup,
+      enableDynamicChannelParking: enableDynamicChannelParking,
+      maxHistoryEntries: maxHistoryEntries,
     );
 
     final wasNew = _coordinator == null;
-    _coordinator ??= QueueCoordinator();
+    _coordinator ??= QueueCoordinator(
+      maxHistoryEntries: maxHistoryEntries,
+    );
+    _coordinator!.historyLogger
+        .updateMaxEntries(_configuration!.maxHistoryEntries);
 
     // Re-wire the proxy stream to the (potentially new) coordinator.
     _coordinatorEventSub?.cancel();
@@ -239,6 +247,30 @@ final class FlutterNotificationQueue {
   @visibleForTesting
   static Future<T> nextEvent<T extends FnqEvent>() =>
       events.where((final e) => e is T).cast<T>().first;
+
+  /// History logging is opt-in and must be configured via `maxHistoryEntries`
+  /// in [configure].
+  static List<FnqEvent> getHistory({
+    final String? channelName,
+    final DismissReason? dismissReason,
+    final DateTime? since,
+    final int? limit,
+  }) {
+    if (_coordinator == null) {
+      return const [];
+    }
+    return _coordinator!.historyLogger.getHistory(
+      channelName: channelName,
+      dismissReason: dismissReason,
+      since: since,
+      limit: limit,
+    );
+  }
+
+  /// Clears the captured notification history.
+  static void clearHistory() {
+    _coordinator?.historyLogger.clear();
+  }
 
   /// Static builder method for use in [MaterialApp.builder].
   ///
