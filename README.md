@@ -348,6 +348,43 @@ FlutterNotificationQueue.events.listen((event) {
 });
 ```
 
+#### Event History Log
+
+You can configure an in-memory, bounded LIFO ring buffer to automatically log past events. Query the cache or clear it on demand:
+
+```dart
+// 1. Opt-in by specifying maxHistoryEntries
+FlutterNotificationQueue.configure(
+  maxHistoryEntries: 50,
+);
+
+// 2. Query history with optional filters (channelName, dismissReason, since, limit)
+List<FnqEvent> logs = FlutterNotificationQueue.getHistory(
+  channelName: 'error',
+  limit: 10,
+);
+
+// 3. Clear history logs programmatically
+FlutterNotificationQueue.clearHistory();
+```
+
+> [!TIP]
+> **Performance & Disabling**: Set `maxHistoryEntries` to `0` (the default) or less to completely disable history logging. This cancels all internal stream subscriptions and releases the in-memory cache, ensuring **zero runtime CPU or memory overhead**.
+
+#### Dynamic Channel Parking
+
+Dynamic Channel Parking allows notification channels to update their target queues dynamically based on drag-and-drop gestures:
+
+```dart
+FlutterNotificationQueue.configure(
+  enableDynamicChannelParking: true,
+);
+```
+
+When enabled:
+* If a user drags a notification belonging to a channel (e.g. `info`) from its default position and relocates it into another queue position, the system dynamically updates the routing rule for that channel.
+* All future notifications dispatched on the `info` channel will automatically be delivered to the new queue position.
+
 
 ## 🌍 Multi-language Support
 

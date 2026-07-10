@@ -202,5 +202,66 @@ void main() {
       final allHistory = FlutterNotificationQueue.getHistory(since: beforeTime);
       expect(allHistory.length, equals(2));
     });
+
+    testWidgets(
+      'History log cancels subscriptions and clears memory completely '
+      'when disabled',
+        (final tester) async {
+      FlutterNotificationQueue.configure(maxHistoryEntries: 10);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          builder: FlutterNotificationQueue.builder,
+          home: Scaffold(body: SizedBox.expand()),
+        ),
+      );
+
+      // 1. Fire a notification and verify it is logged
+      NotificationWidget(
+        id: 'test_1',
+        message: 'Logged message',
+        channelName: 'default',
+      ).show();
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(FlutterNotificationQueue.getHistory().length, equals(1));
+
+      // 2. Disable history log dynamically by configuring to 0
+      FlutterNotificationQueue.configure(maxHistoryEntries: 0);
+
+      // 3. Verify history cache is immediately cleared to release memory
+      expect(FlutterNotificationQueue.getHistory(), isEmpty);
+
+      // 4. Fire another notification and verify it is NOT logged (ignored)
+      NotificationWidget(
+        id: 'test_2',
+        message: 'Ignored message',
+        channelName: 'default',
+      ).show();
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(FlutterNotificationQueue.getHistory(), isEmpty);
+
+      // 5. Re-enable history dynamically to verify it resumes listening
+      FlutterNotificationQueue.configure(maxHistoryEntries: 5);
+
+      NotificationWidget(
+        id: 'test_3',
+        message: 'Resumed message',
+        channelName: 'default',
+      ).show();
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      expect(FlutterNotificationQueue.getHistory().length, equals(1));
+      final firstEvent = FlutterNotificationQueue.getHistory().first
+          as NotificationQueued;
+      expect(
+        firstEvent.notification.id,
+        equals('test_3'),
+      );
+    });
   });
 }

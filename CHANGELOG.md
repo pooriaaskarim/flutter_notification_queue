@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0] - 2026-07-10
+
+### Features & Observability
+- **Dynamic Channel Parking**: Introduced runtime routing updates where dragging/relocating a notification card dynamically updates the routing rules for all future notifications of its channel.
+- **Event History Log**: Added an in-memory, LIFO bounded ring buffer (`maxHistoryEntries`) to capture notification events. Added `getHistory()` for querying with filters (channelName, dismissReason, since, limit) and `clearHistory()` for cache management.
+- **Zero-overhead Disabling**: When disabled (`maxHistoryEntries` is set to `0` or less), the history subscription is completely cancelled and detached, guaranteeing zero runtime performance or memory overhead.
+
 ## [0.6.0] - 2026-07-05
 
 ### Features & UX Enhancements
