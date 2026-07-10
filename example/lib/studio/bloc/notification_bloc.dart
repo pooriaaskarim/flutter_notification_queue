@@ -167,9 +167,10 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationDraft> {
       );
     }
 
-    final channelSetup = setupBloc.state.setup.channels[draft.channelName];
+    final effectiveLibraryPosition = FlutterNotificationQueue.configuration
+        .getEffectiveChannelPosition(draft.channelName);
     final resolvedPosition = draft.positionOverride ??
-        channelSetup?.position ??
+        effectiveLibraryPosition ??
         setupBloc.state.activeQueuePosition;
 
     // Fire notification
