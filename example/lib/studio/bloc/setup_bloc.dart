@@ -67,6 +67,15 @@ final class ResetSetup extends SetupEvent {
   const ResetSetup();
 }
 
+final class UpdateGlobalConfig extends SetupEvent {
+  const UpdateGlobalConfig({
+    this.enableDynamicChannelParking,
+    this.maxHistoryEntries,
+  });
+  final bool? enableDynamicChannelParking;
+  final int? maxHistoryEntries;
+}
+
 // ── State ──
 
 class SetupState {
@@ -190,6 +199,17 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
       );
     });
 
+    on<UpdateGlobalConfig>((final event, final emit) {
+      emit(
+        state.copyWith(
+          setup: state.setup.copyWith(
+            enableDynamicChannelParking: event.enableDynamicChannelParking,
+            maxHistoryEntries: event.maxHistoryEntries,
+          ),
+        ),
+      );
+    });
+
     on<ResetSetup>((final event, final emit) {
       emit(SetupState(setup: StudioSetup.withDefaults()));
     });
@@ -213,6 +233,8 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
     FlutterNotificationQueue.configure(
       queues: setup.toLibraryQueues(),
       channels: setup.toLibraryChannels(),
+      enableDynamicChannelParking: setup.enableDynamicChannelParking,
+      maxHistoryEntries: setup.maxHistoryEntries,
     );
     _lastAppliedSetup = setup;
     debugPrint(

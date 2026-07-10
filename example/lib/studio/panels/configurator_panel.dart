@@ -7,6 +7,7 @@ import 'configurator/channel_section.dart';
 import 'configurator/preview_section.dart';
 import 'configurator/queue_section.dart';
 import 'configurator/scenarios_section.dart';
+import 'configurator/system_options_section.dart';
 
 /// The left-side configurator panel with four collapsible sections:
 /// 1. **Queues** — add/remove/edit queue setups per position (with position map)
@@ -38,6 +39,14 @@ class ConfiguratorPanel extends StatelessWidget {
                 icon: Icons.tune_outlined,
                 initiallyExpanded: true,
                 child: ChannelSection(setupState: setupState),
+              ),
+
+              // ── Section 2.5: System Options ──
+              _StudioExpansionSection(
+                title: 'SYSTEM OPTIONS',
+                icon: Icons.settings_outlined,
+                initiallyExpanded: false,
+                child: SystemOptionsSection(setupState: setupState),
               ),
 
               // ── Section 3: Preview ──

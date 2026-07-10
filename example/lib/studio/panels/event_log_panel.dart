@@ -22,6 +22,10 @@ class _EventLogPanelState extends State<EventLogPanel> {
   @override
   void initState() {
     super.initState();
+    final history = FlutterNotificationQueue.getHistory();
+    for (final event in history.reversed) {
+      _events.add(_LogEntry(event: event, time: DateTime.now()));
+    }
     _sub = FlutterNotificationQueue.events.listen(_onEvent);
   }
 
@@ -85,7 +89,10 @@ class _EventLogPanelState extends State<EventLogPanel> {
               Tooltip(
                 message: 'Clear log',
                 child: InkWell(
-                  onTap: () => setState(_events.clear),
+                  onTap: () {
+                    FlutterNotificationQueue.clearHistory();
+                    setState(_events.clear);
+                  },
                   borderRadius: BorderRadius.circular(6),
                   child: Padding(
                     padding: const EdgeInsets.all(4),

@@ -12,11 +12,15 @@ class StudioSetup extends Equatable {
   const StudioSetup({
     this.queues = const {QueuePosition.topCenter: QueueSetup()},
     this.channels = const {},
+    this.enableDynamicChannelParking = false,
+    this.maxHistoryEntries = 20,
   });
 
   /// Creates a [StudioSetup] with one default queue and standard channels.
   factory StudioSetup.withDefaults() => StudioSetup(
         channels: ChannelSetup.standardChannels(),
+        enableDynamicChannelParking: false,
+        maxHistoryEntries: 20,
       );
 
   /// Queue configurations keyed by position.
@@ -25,13 +29,24 @@ class StudioSetup extends Equatable {
   /// Channel configurations keyed by name.
   final Map<String, ChannelSetup> channels;
 
+  /// Whether dynamic channel parking is enabled.
+  final bool enableDynamicChannelParking;
+
+  /// The maximum number of history entries to record.
+  final int maxHistoryEntries;
+
   StudioSetup copyWith({
     final Map<QueuePosition, QueueSetup>? queues,
     final Map<String, ChannelSetup>? channels,
+    final bool? enableDynamicChannelParking,
+    final int? maxHistoryEntries,
   }) =>
       StudioSetup(
         queues: queues ?? this.queues,
         channels: channels ?? this.channels,
+        enableDynamicChannelParking:
+            enableDynamicChannelParking ?? this.enableDynamicChannelParking,
+        maxHistoryEntries: maxHistoryEntries ?? this.maxHistoryEntries,
       );
 
   // ── Library Mappers ──
@@ -51,5 +66,10 @@ class StudioSetup extends Equatable {
       .toSet();
 
   @override
-  List<Object?> get props => [queues, channels];
+  List<Object?> get props => [
+        queues,
+        channels,
+        enableDynamicChannelParking,
+        maxHistoryEntries,
+      ];
 }
