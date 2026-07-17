@@ -8,14 +8,24 @@ import 'package:flutter/material.dart';
 class DartSyntaxHighlighter {
   DartSyntaxHighlighter._();
 
-  // ── Token colour palette (GitHub dark-mode inspired) ──
-  static const _keyword = Color(0xFFFF79C6); // pink
-  static const _string = Color(0xFF80CBC4); // teal
-  static const _comment = Color(0xFF6272A4); // muted blue-grey
-  static const _classType = Color(0xFF8BE9FD); // cyan
-  static const _number = Color(0xFFFFB86C); // orange
-  static const _punctuation = Color(0xFF6D8A9A); // slate
-  static const _plain = Color(0xFFCDD6F4); // near-white
+  // ── Token colour palettes ──
+  // Dark mode (GitHub dark-mode inspired)
+  static const _keywordDark = Color(0xFFFF79C6); // pink
+  static const _stringDark = Color(0xFF80CBC4); // teal
+  static const _commentDark = Color(0xFF6272A4); // muted blue-grey
+  static const _classTypeDark = Color(0xFF8BE9FD); // cyan
+  static const _numberDark = Color(0xFFFFB86C); // orange
+  static const _punctuationDark = Color(0xFF6D8A9A); // slate
+  static const _plainDark = Color(0xFFCDD6F4); // near-white
+
+  // Light mode (GitHub light-mode inspired)
+  static const _keywordLight = Color(0xFFCF222E); // red
+  static const _stringLight = Color(0xFF0A3069); // dark blue
+  static const _commentLight = Color(0xFF6E7781); // grey
+  static const _classTypeLight = Color(0xFF953800); // brown/orange
+  static const _numberLight = Color(0xFF0550AE); // blue
+  static const _punctuationLight = Color(0xFF57606A); // slate
+  static const _plainLight = Color(0xFF24292F); // dark slate/black
 
   static const _keywords = {
     'const',
@@ -46,6 +56,7 @@ class DartSyntaxHighlighter {
   /// [SelectableText.rich] widget.
   static TextSpan highlight(
     final String code, {
+    required final bool isDark,
     final double fontSize = 13,
     final double height = 1.6,
   }) {
@@ -54,6 +65,14 @@ class DartSyntaxHighlighter {
       fontSize: fontSize,
       height: height,
     );
+
+    final keywordColor = isDark ? _keywordDark : _keywordLight;
+    final stringColor = isDark ? _stringDark : _stringLight;
+    final commentColor = isDark ? _commentDark : _commentLight;
+    final classTypeColor = isDark ? _classTypeDark : _classTypeLight;
+    final numberColor = isDark ? _numberDark : _numberLight;
+    final punctuationColor = isDark ? _punctuationDark : _punctuationLight;
+    final plainColor = isDark ? _plainDark : _plainLight;
 
     // Tokenise by scanning the source left-to-right
     final children = <TextSpan>[];
@@ -68,7 +87,7 @@ class DartSyntaxHighlighter {
         children.add(
           TextSpan(
             text: comment,
-            style: style.copyWith(color: _comment),
+            style: style.copyWith(color: commentColor),
           ),
         );
         i += comment.length;
@@ -93,7 +112,7 @@ class DartSyntaxHighlighter {
         children.add(
           TextSpan(
             text: src.substring(i, end),
-            style: style.copyWith(color: _string),
+            style: style.copyWith(color: stringColor),
           ),
         );
         i = end;
@@ -109,11 +128,11 @@ class DartSyntaxHighlighter {
         final word = src.substring(i, end);
         final Color color;
         if (_keywords.contains(word)) {
-          color = _keyword;
+          color = keywordColor;
         } else if (_upperStart.hasMatch(word)) {
-          color = _classType;
+          color = classTypeColor;
         } else {
-          color = _plain;
+          color = plainColor;
         }
         children.add(TextSpan(text: word, style: style.copyWith(color: color)));
         i = end;
@@ -129,7 +148,7 @@ class DartSyntaxHighlighter {
         children.add(
           TextSpan(
             text: src.substring(i, end),
-            style: style.copyWith(color: _number),
+            style: style.copyWith(color: numberColor),
           ),
         );
         i = end;
@@ -141,7 +160,7 @@ class DartSyntaxHighlighter {
         children.add(
           TextSpan(
             text: src[i],
-            style: style.copyWith(color: _punctuation),
+            style: style.copyWith(color: punctuationColor),
           ),
         );
         i++;
@@ -152,7 +171,7 @@ class DartSyntaxHighlighter {
       children.add(
         TextSpan(
           text: src[i],
-          style: style.copyWith(color: _plain),
+          style: style.copyWith(color: plainColor),
         ),
       );
       i++;

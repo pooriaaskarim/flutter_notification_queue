@@ -111,9 +111,15 @@ class ChannelSection extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: c,
                         shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(color: Colors.white, width: 2)
-                            : null,
+                        border: Border.all(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.onSurface
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.15),
+                          width: isSelected ? 2 : 1,
+                        ),
                       ),
                     ),
                   );

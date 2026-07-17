@@ -38,7 +38,9 @@ class StudioTextField extends StatelessWidget {
           ),
           decoration: InputDecoration(
             filled: true,
-            fillColor: colorScheme.surface.withValues(alpha: 0.1),
+            fillColor: StudioTheme.isDark
+                ? colorScheme.surface.withValues(alpha: 0.1)
+                : colorScheme.onSurface.withValues(alpha: 0.04),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(

@@ -135,7 +135,8 @@ class _EventTile extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final meta = _EventMeta.of(entry.event);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final meta = _EventMeta.of(entry.event, isDark: isDark);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
@@ -150,7 +151,7 @@ class _EventTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 9,
                 fontFamily: 'monospace',
-                color: colorScheme.onSurface.withValues(alpha: 0.35),
+                color: colorScheme.onSurface,
                 height: 2.0,
               ),
             ),
@@ -226,60 +227,79 @@ class _EventMeta {
   final String? badge;
   final String? subtitle;
 
-  static _EventMeta of(final FnqEvent event) => switch (event) {
+  static _EventMeta of(final FnqEvent event, {required final bool isDark}) =>
+      switch (event) {
         NotificationQueued(:final notification) => _EventMeta(
             label: 'Queued',
-            color: const Color(0xFF60A5FA), // blue-400
+            color: isDark
+                ? const Color(0xFF60A5FA)
+                : const Color(0xFF1D4ED8), // blue-400 : blue-700
             badge: notification.queue.position.name,
             subtitle: notification.title ?? notification.message,
           ),
         NotificationDismissed(:final notification, :final reason) => _EventMeta(
             label: 'Dismissed',
-            color: const Color(0xFF94A3B8), // slate-400
+            color: isDark
+                ? const Color(0xFF94A3B8)
+                : const Color(0xFF475569), // slate-400 : slate-600
             badge: reason.name,
             subtitle: notification.title ?? notification.message,
           ),
         NotificationTapped(:final notification, :final behavior) => _EventMeta(
             label: 'Tapped',
-            color: const Color(0xFF34D399), // emerald-400
+            color: isDark
+                ? const Color(0xFF34D399)
+                : const Color(0xFF047857), // emerald-400 : emerald-700
             badge: behavior.runtimeType.toString(),
             subtitle: notification.title ?? notification.message,
           ),
         NotificationRelocated(:final from, :final to, :final notification) =>
           _EventMeta(
             label: 'Relocated',
-            color: const Color(0xFFA78BFA), // violet-400
+            color: isDark
+                ? const Color(0xFFA78BFA)
+                : const Color(0xFF6D28D9), // violet-400 : violet-700
             badge: '${from.name} → ${to.name}',
             subtitle: notification.title ?? notification.message,
           ),
         NotificationReordered(:final notification, :final toIndex) =>
           _EventMeta(
             label: 'Reordered',
-            color: const Color(0xFFFBBF24), // amber-400
+            color: isDark
+                ? const Color(0xFFFBBF24)
+                : const Color(0xFFB45309), // amber-400 : amber-700
             badge: 'index $toIndex',
             subtitle: notification.title ?? notification.message,
           ),
         QueueOverflowed(:final queue, :final dropped) => _EventMeta(
             label: 'Overflow',
-            color: const Color(0xFFF87171), // red-400
+            color: isDark
+                ? const Color(0xFFF87171)
+                : const Color(0xFFB91C1C), // red-400 : red-700
             badge: queue.position.name,
             subtitle: dropped.title ?? dropped.message,
           ),
         NotificationSnoozed(:final notification, :final duration) => _EventMeta(
             label: 'Snoozed',
-            color: const Color(0xFFFB7185), // rose-400
+            color: isDark
+                ? const Color(0xFFFB7185)
+                : const Color(0xFFBE123C), // rose-400 : rose-700
             badge: '${duration.inSeconds}s',
             subtitle: notification.title ?? notification.message,
           ),
         NotificationPinned(:final notification) => _EventMeta(
             label: 'Pinned',
-            color: const Color(0xFFF59E0B), // amber-500
+            color: isDark
+                ? const Color(0xFFF59E0B)
+                : const Color(0xFFB45309), // amber-500 : amber-700
             badge: 'pinned',
             subtitle: notification.title ?? notification.message,
           ),
         NotificationUnpinned(:final notification) => _EventMeta(
             label: 'Unpinned',
-            color: const Color(0xFF6B7280), // gray-500
+            color: isDark
+                ? const Color(0xFF6B7280)
+                : const Color(0xFF374151), // gray-500 : gray-700
             badge: 'unpinned',
             subtitle: notification.title ?? notification.message,
           ),
@@ -289,25 +309,33 @@ class _EventMeta {
         ) =>
           _EventMeta(
             label: 'Action',
-            color: const Color(0xFF10B981), // emerald-500
+            color: isDark
+                ? const Color(0xFF10B981)
+                : const Color(0xFF047857), // emerald-500 : emerald-700
             badge: actionName,
             subtitle: notification.title ?? notification.message,
           ),
         NotificationGroupExpanded(:final groupKey, :final count) => _EventMeta(
             label: 'Group Expanded',
-            color: const Color(0xFF22D3EE), // cyan-400
+            color: isDark
+                ? const Color(0xFF22D3EE)
+                : const Color(0xFF0E7490), // cyan-400 : cyan-700
             badge: '$count cards',
             subtitle: groupKey,
           ),
         NotificationGroupCollapsed(:final groupKey, :final count) => _EventMeta(
             label: 'Group Collapsed',
-            color: const Color(0xFF67E8F9), // cyan-300
+            color: isDark
+                ? const Color(0xFF67E8F9)
+                : const Color(0xFF0E7490), // cyan-300 : cyan-700
             badge: '$count cards',
             subtitle: groupKey,
           ),
         NotificationGroupDismissed(:final groupKey) => _EventMeta(
             label: 'Group Dismissed',
-            color: const Color(0xFF06B6D4), // cyan-500
+            color: isDark
+                ? const Color(0xFF06B6D4)
+                : const Color(0xFF0E7490), // cyan-500 : cyan-700
             badge: 'all',
             subtitle: groupKey,
           ),
@@ -318,7 +346,9 @@ class _EventMeta {
         ) =>
           _EventMeta(
             label: 'Route Updated',
-            color: const Color(0xFFEC4899), // pink-500
+            color: isDark
+                ? const Color(0xFFEC4899)
+                : const Color(0xFFBE185D), // pink-500 : pink-700
             badge: channelName,
             subtitle: '${oldPosition.name} → ${newPosition.name}',
           ),

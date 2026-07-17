@@ -235,32 +235,36 @@ class _HighlightedCodeViewState extends State<_HighlightedCodeView> {
   late TextSpan _highlightedCode;
   late List<String> _lines;
   String? _lastCode;
+  bool? _lastIsDark;
 
-  void _updateHighlight() {
-    if (_lastCode == widget.code) {
+  void _updateHighlight(final bool isDark) {
+    if (_lastCode == widget.code && _lastIsDark == isDark) {
       return;
     }
     _lastCode = widget.code;
-    _highlightedCode = DartSyntaxHighlighter.highlight(widget.code);
+    _lastIsDark = isDark;
+    _highlightedCode = DartSyntaxHighlighter.highlight(
+      widget.code,
+      isDark: isDark,
+    );
     _lines = widget.code.split('\n');
   }
 
   @override
   void initState() {
     super.initState();
-    _updateHighlight();
+    _updateHighlight(true);
   }
 
   @override
   void didUpdateWidget(covariant final _HighlightedCodeView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _updateHighlight();
   }
 
   @override
   Widget build(final BuildContext context) {
-    _updateHighlight();
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    _updateHighlight(isDark);
     final gutterColor =
         isDark ? const Color(0xFF161B22) : const Color(0xFFEAECEF);
     final gutterTextColor =

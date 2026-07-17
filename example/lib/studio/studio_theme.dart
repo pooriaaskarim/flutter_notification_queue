@@ -55,18 +55,33 @@ class StudioTheme {
 
   static const lightPrimaryColor = Color(0xFFF8FAFC);
   static const lightSurfaceColor = Color(0xFFFFFFFF);
-  static const lightAccentColor = Color(0xFF0EA5E9);
+  // Sky-700: High-contrast accessible primary blue
+  static const lightAccentColor = Color(0xFF0369A1);
 
   static ThemeData light() => ThemeData.light().copyWith(
         scaffoldBackgroundColor: lightPrimaryColor,
         colorScheme: const ColorScheme.light(
           primary: lightAccentColor,
+          onPrimary: Colors.white,
+          secondary: Color(0xFF0EA5E9), // Sky-500
+          onSecondary: Colors.white,
           surface: lightSurfaceColor,
-          onSurface: Color(0xFF0F172A),
+          onSurface: Color(0xFF0F172A), // Slate-900
+          primaryContainer: Color(0xFFE0F2FE), // Sky-100
+          onPrimaryContainer: Color(0xFF0369A1), // Sky-700
+          secondaryContainer: Color(0xFFF1F5F9), // Slate-100
+          onSecondaryContainer: Color(0xFF0F172A),
+          error: Color(0xFFDC2626), // Red-600
+          onError: Colors.white,
+          outline: Color(0xFFCBD5E1), // Slate-300
+          outlineVariant: Color(0xFFE2E8F0), // Slate-200
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          iconTheme: IconThemeData(
+            color: Color(0xFF0F172A), // Slate-900
+          ),
           titleTextStyle: TextStyle(
             color: Color(0xFF0F172A),
             fontSize: 20,
@@ -82,10 +97,17 @@ class StudioTheme {
           primary: accentColor,
           surface: surfaceColor,
           onSurface: Colors.white,
+          primaryContainer: Color(0xFF0F172A),
+          onPrimaryContainer: Color(0xFF38BDF8),
+          secondaryContainer: Color(0xFF1E293B),
+          onSecondaryContainer: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          iconTheme: IconThemeData(
+            color: Colors.white,
+          ),
           titleTextStyle: TextStyle(
             color: Colors.white,
             fontSize: 20,

@@ -34,7 +34,9 @@ class StudioDropdownTile<T> extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: colorScheme.surface.withValues(alpha: 0.1),
+            color: StudioTheme.isDark
+                ? colorScheme.surface.withValues(alpha: 0.1)
+                : colorScheme.onSurface.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: colorScheme.onSurface.withValues(alpha: 0.1),

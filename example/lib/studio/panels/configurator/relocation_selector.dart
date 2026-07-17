@@ -79,19 +79,19 @@ class RelocationSelector extends StatelessWidget {
           ),
           const SizedBox(height: 12),
         ],
-        const Text(
+        Text(
           'TARGET POSITIONS',
           style: TextStyle(
-            color: Colors.white54,
+            color: colorScheme.onSurface,
             fontSize: 10,
             letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
         if (availablePool.isEmpty && selected.isEmpty)
-          const Text(
+          Text(
             'No available positions found in the 3x3 grid.',
-            style: TextStyle(color: Colors.white24, fontSize: 11),
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 11),
           )
         else
           Wrap(
@@ -112,7 +112,9 @@ class RelocationSelector extends StatelessWidget {
                   p.name.toUpperCase(),
                   style: TextStyle(
                     fontSize: 9,
-                    color: isSelected ? Colors.white : Colors.white38,
+                    color: isSelected
+                        ? colorScheme.onSurface
+                        : colorScheme.onSurface.withValues(alpha: 0.35),
                   ),
                 ),
                 selected: isSelected,

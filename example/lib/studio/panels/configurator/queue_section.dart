@@ -619,8 +619,15 @@ class _DismissGroupButton extends StatelessWidget {
               'clears the entire bundle atomically.',
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF06B6D4),
-              side: const BorderSide(color: Color(0xFF06B6D4), width: 1),
+              foregroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF06B6D4)
+                  : const Color(0xFF0E7490),
+              side: BorderSide(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF06B6D4)
+                    : const Color(0xFF0E7490),
+                width: 1,
+              ),
               padding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 8,
@@ -633,7 +640,10 @@ class _DismissGroupButton extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              backgroundColor: const Color(0xFF06B6D4).withValues(alpha: 0.06),
+              backgroundColor: (Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF06B6D4)
+                      : const Color(0xFF0E7490))
+                  .withValues(alpha: 0.06),
             ),
             icon: const Icon(Icons.layers_clear_outlined, size: 14),
             label: const Text('DISMISS ACTIVE GROUP'),

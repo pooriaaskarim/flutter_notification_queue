@@ -220,7 +220,12 @@ class QueuePositionMap extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _LegendDot(color: Colors.blue.shade400, isDashed: true),
+                _LegendDot(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.blue.shade300
+                      : Colors.blue.shade700,
+                  isDashed: true,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   'Slave (Dashed Border / Link Color)',
