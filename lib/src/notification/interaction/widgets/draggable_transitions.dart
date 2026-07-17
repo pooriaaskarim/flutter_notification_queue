@@ -55,7 +55,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
       escapeThreshold: escapeThreshold,
     );
 
-    _snapBackController = AnimationController(
+    _snapBackController = AnimationController.unbounded(
       vsync: this,
     );
 
@@ -130,7 +130,10 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         },
       );
 
-  void _startSnapBack(final Offset releaseOffset) {
+  void _startSnapBack(
+    final Offset releaseOffset,
+    final Velocity releaseVelocity,
+  ) {
     final originalPosition = _dragStartData?.widgetPosition ?? Offset.zero;
     final finalRelativeOffset = releaseOffset - originalPosition;
 
@@ -142,22 +145,30 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         widget.notification.queue.dragBehavior;
     final physics = dragBehavior.springPhysics;
 
+    final double initialVelocity;
+    final double lenSq = finalRelativeOffset.dx * finalRelativeOffset.dx +
+        finalRelativeOffset.dy * finalRelativeOffset.dy;
+    if (lenSq > 0.0) {
+      final velocityOffset = releaseVelocity.pixelsPerSecond;
+      // Project the 2D velocity onto the 1D snap-back vector
+      initialVelocity = (velocityOffset.dx * finalRelativeOffset.dx +
+              velocityOffset.dy * finalRelativeOffset.dy) /
+          lenSq;
+    } else {
+      initialVelocity = 0.0;
+    }
+
     final simulation = SpringSimulation(
       physics.toSpringDescription(),
       1.0,
       0.0,
-      0.0,
+      initialVelocity,
     );
 
     _snapBackAnimation = Tween<Offset>(
-      begin: finalRelativeOffset,
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _snapBackController,
-        curve: Curves.linear,
-      ),
-    );
+      begin: Offset.zero,
+      end: finalRelativeOffset,
+    ).animate(_snapBackController);
 
     _snapBackController.animateWith(simulation).then((final _) {
       if (mounted) {
@@ -237,7 +248,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         final releaseOffset = details.offset;
         final distance = (releaseOffset - originalPosition).distance;
         if (distance > 1.0) {
-          _startSnapBack(releaseOffset);
+          _startSnapBack(releaseOffset, details.velocity);
         } else {
           _fsm.reset();
         }
