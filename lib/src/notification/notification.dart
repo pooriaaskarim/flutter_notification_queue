@@ -387,6 +387,11 @@ class NotificationWidgetState extends State<NotificationWidget>
     with TickerProviderStateMixin {
   late NotificationTheme theme;
 
+  /// Caches the brightness last used to resolve the theme so that
+  /// [didChangeDependencies] can skip re-resolving on every inherited
+  /// widget change that does not affect colours (e.g. window resize).
+  Brightness? _lastBrightness;
+
   Duration? get resolvedDismissDuration => widget.isPinned
       ? null
       : (widget.dismissDuration ?? widget.channel.defaultDismissDuration);
@@ -463,8 +468,18 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   @override
   void didChangeDependencies() {
-    // widget.state = this;
-    theme = NotificationTheme.resolveWith(context, widget.queue.style, widget);
+    // Only re-resolve the theme when the platform brightness actually
+    // changes. Skipping on every inherited-widget notification prevents
+    // a full NotificationTheme reconstruction on each resize frame.
+    final brightness = Theme.of(context).brightness;
+    if (brightness != _lastBrightness) {
+      _lastBrightness = brightness;
+      theme = NotificationTheme.resolveWith(
+        context,
+        widget.queue.style,
+        widget,
+      );
+    }
     _logger.debugBuffer
       ?..writeAll([
         'NotificationState: $this',
@@ -621,75 +636,84 @@ class NotificationWidgetState extends State<NotificationWidget>
                           }
                         },
                     },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
+                    child: ConstrainedBox(
+                      // NOTE: Using a plain ConstrainedBox (not
+                      // AnimatedContainer) because the constraints only
+                      // change during window resize. Running dozens of
+                      // 220 ms animations concurrently during resize was
+                      // the primary cause of CPU spikes and crashes.
                       constraints: Utils.horizontalConstraints(
                         context,
                         widget.queue.maxWidth,
                       ),
-                      curve: Curves.easeOut,
-                      decoration: BoxDecoration(
-                        border: theme.border,
-                      ),
-                      padding: EdgeInsetsDirectional.symmetric(
-                        vertical: isExpanded ? 8 : 4,
-                        horizontal: 4,
-                      ),
-                      // padding: EdgeInsets.all(8),
-                      child: Column(
-                        spacing: 4,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: theme.border,
+                        ),
+                        child: Padding(
+                          padding: EdgeInsetsDirectional.symmetric(
+                            vertical: isExpanded ? 8 : 4,
+                            horizontal: 4,
+                          ),
+                          // padding: EdgeInsets.all(8),
+                          child: Column(
                             spacing: 4,
                             children: [
-                              _getExpandButton(isExpanded: isExpanded),
-                              Expanded(
-                                child: _getTitle(isExpanded: isExpanded),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                spacing: 4,
+                                children: [
+                                  _getExpandButton(isExpanded: isExpanded),
+                                  Expanded(
+                                    child: _getTitle(isExpanded: isExpanded),
+                                  ),
+                                  _getCloseButton(isExpanded: true),
+                                ],
                               ),
-                              _getCloseButton(isExpanded: true),
+                              Padding(
+                                padding: const EdgeInsetsGeometry.symmetric(
+                                  horizontal: 12,
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  spacing: 8,
+                                  children: [
+                                    IconTheme(
+                                      data: IconThemeData(
+                                        color: theme.color,
+                                        size: 24,
+                                      ),
+                                      child: widget.icon ??
+                                          widget.channel.defaultIcon ??
+                                          const SizedBox.shrink(),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        widget.message,
+                                        style: theme
+                                            .themeData.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          color: theme.foregroundColor,
+                                        ),
+                                        maxLines: isExpanded ? 10 : 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              _getActionButton(),
+                              _timerIndicator(isExpanded: isExpanded),
                             ],
                           ),
-                          Padding(
-                            padding: const EdgeInsetsGeometry.symmetric(
-                              horizontal: 12,
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              spacing: 8,
-                              children: [
-                                IconTheme(
-                                  data: IconThemeData(
-                                    color: theme.color,
-                                    size: 24,
-                                  ),
-                                  child: widget.icon ??
-                                      widget.channel.defaultIcon ??
-                                      const SizedBox.shrink(),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    widget.message,
-                                    style: theme.themeData.textTheme.bodyMedium
-                                        ?.copyWith(
-                                      color: theme.foregroundColor,
-                                    ),
-                                    maxLines: isExpanded ? 10 : 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _getActionButton(),
-                          _timerIndicator(isExpanded: isExpanded),
-                        ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
             );
+
 
             // Conditionally omit BackdropFilter entirely when opacity == 1.0.
             // Even `enabled: false` installs a compositing layer and can

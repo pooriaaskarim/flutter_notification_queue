@@ -372,10 +372,12 @@ class _PositionCell extends StatelessWidget {
               // ── Dashed Slave Border Custom Paint ──
               if (isSlave && !isActive)
                 Positioned.fill(
-                  child: CustomPaint(
-                    painter: _DashedBorderPainter(
-                      color: border,
-                      borderRadius: 8.0,
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      painter: _DashedBorderPainter(
+                        color: border,
+                        borderRadius: 8.0,
+                      ),
                     ),
                   ),
                 ),
@@ -569,6 +571,9 @@ class _DashedBorderPainter extends CustomPainter {
   final Color color;
   final double borderRadius;
 
+  // Cache to avoid recalculating the path on every frame of animation/resize.
+  static final Map<_CacheKey, Path> _pathCache = {};
+
   @override
   void paint(final Canvas canvas, final Size size) {
     final paint = Paint()
@@ -576,34 +581,67 @@ class _DashedBorderPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
 
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Offset.zero & size,
-          Radius.circular(borderRadius),
-        ),
-      );
+    final key = _CacheKey(size, borderRadius);
+    var dashedPath = _pathCache[key];
 
-    const dashWidth = 3.5;
-    const dashSpace = 2.5;
-
-    for (final PathMetric metric in path.computeMetrics()) {
-      var distance = 0.0;
-      while (distance < metric.length) {
-        final len = metric.length - distance;
-        final drawLength = len < dashWidth ? len : dashWidth;
-        canvas.drawPath(
-          metric.extractPath(distance, distance + drawLength),
-          paint,
-        );
-        distance += dashWidth + dashSpace;
+    if (dashedPath == null) {
+      // Keep cache size bounded to prevent memory leaks during resizing.
+      if (_pathCache.length > 50) {
+        _pathCache.clear();
       }
+
+      final path = Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(
+            Offset.zero & size,
+            Radius.circular(borderRadius),
+          ),
+        );
+
+      dashedPath = Path();
+      const dashWidth = 3.5;
+      const dashSpace = 2.5;
+
+      for (final PathMetric metric in path.computeMetrics()) {
+        var distance = 0.0;
+        while (distance < metric.length) {
+          final len = metric.length - distance;
+          final drawLength = len < dashWidth ? len : dashWidth;
+          dashedPath.addPath(
+            metric.extractPath(distance, distance + drawLength),
+            Offset.zero,
+          );
+          distance += dashWidth + dashSpace;
+        }
+      }
+      _pathCache[key] = dashedPath;
     }
+
+    canvas.drawPath(dashedPath, paint);
   }
 
   @override
   bool shouldRepaint(covariant final _DashedBorderPainter oldDelegate) =>
       color != oldDelegate.color || borderRadius != oldDelegate.borderRadius;
+}
+
+@immutable
+class _CacheKey {
+  const _CacheKey(this.size, this.borderRadius);
+
+  final Size size;
+  final double borderRadius;
+
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is _CacheKey &&
+          runtimeType == other.runtimeType &&
+          size == other.size &&
+          borderRadius == other.borderRadius;
+
+  @override
+  int get hashCode => Object.hash(size, borderRadius);
 }
 
 class _LegendDot extends StatelessWidget {

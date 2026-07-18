@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
 import '../utils/extensions.dart' show ExtendedStringFuntionalities;
+import '../utils/utils.dart';
 
 part 'styles.dart';
 part 'queue_widget.dart';

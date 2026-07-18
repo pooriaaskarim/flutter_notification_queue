@@ -16,7 +16,7 @@ class DraggableTransitions extends StatefulWidget {
 
 class DraggableTransitionsState extends State<DraggableTransitions>
     with SingleTickerProviderStateMixin {
-  late Size _screenSize;
+  Size get _screenSize => Utils.screenSize(context);
 
   final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
       ValueNotifier(null);
@@ -70,7 +70,6 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         'State: $this',
       ])
       ..sink();
-    _screenSize = MediaQuery.of(context).size;
     super.didChangeDependencies();
   }
 

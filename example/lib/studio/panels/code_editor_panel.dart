@@ -234,6 +234,7 @@ class _HighlightedCodeView extends StatefulWidget {
 class _HighlightedCodeViewState extends State<_HighlightedCodeView> {
   late TextSpan _highlightedCode;
   late List<String> _lines;
+  late String _gutterText;
   String? _lastCode;
   bool? _lastIsDark;
 
@@ -248,6 +249,8 @@ class _HighlightedCodeViewState extends State<_HighlightedCodeView> {
       isDark: isDark,
     );
     _lines = widget.code.split('\n');
+    _gutterText =
+        List.generate(_lines.length, (final i) => '${i + 1}').join('\n');
   }
 
   @override
@@ -274,24 +277,18 @@ class _HighlightedCodeViewState extends State<_HighlightedCodeView> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Line number gutter ──
-        Container(
-          color: gutterColor,
-          padding: const EdgeInsets.fromLTRB(12, 0, 10, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: List.generate(
-              _lines.length,
-              (final i) => SizedBox(
-                height: 20.8, // ~13px * 1.6 line-height
-                child: Text(
-                  '${i + 1}',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 12,
-                    height: 1.6,
-                    color: gutterTextColor,
-                  ),
-                ),
+        RepaintBoundary(
+          child: Container(
+            color: gutterColor,
+            padding: const EdgeInsets.fromLTRB(12, 0, 10, 0),
+            child: Text(
+              _gutterText,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 13, // Matches font size of code
+                height: 1.6, // Matches line-height of code
+                color: gutterTextColor,
               ),
             ),
           ),

@@ -697,7 +697,7 @@ class QueueWidgetState extends State<QueueWidget>
 
     final content = ConstrainedBox(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
+        maxHeight: Utils.screenSize(context).height * 0.6,
       ),
       child: Column(
         key: _listKey,

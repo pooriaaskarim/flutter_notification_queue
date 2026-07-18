@@ -141,11 +141,15 @@ class _NotificationQueueStackState extends State<_NotificationQueueStack> {
             });
           }
 
-          final padding = MediaQuery.paddingOf(context);
+          // NOTE: Do NOT call MediaQuery.paddingOf(context) here — it
+          // subscribes _NotificationQueueStack to every size/insets change
+          // (including window resize), which rebuilds every queue and card
+          // on every resize frame. Padding is read inside performLayout
+          // from the ViewPadding passed by the render system, which never
+          // triggers a widget rebuild.
           final layout = CustomMultiChildLayout(
             delegate: _QueueOverlayLayoutDelegate(
               activePositions: activeQueues.keys.toList(),
-              padding: padding,
               activeQueues: activeQueues,
             ),
             children: activeQueues.values
@@ -194,16 +198,34 @@ class _NotificationQueueStackState extends State<_NotificationQueueStack> {
 class _QueueOverlayLayoutDelegate extends MultiChildLayoutDelegate {
   _QueueOverlayLayoutDelegate({
     required this.activePositions,
-    required this.padding,
     required this.activeQueues,
   });
 
   final List<QueuePosition> activePositions;
-  final EdgeInsets padding;
   final Map<QueuePosition, NotificationQueue> activeQueues;
+
+  /// Reads the OS-level insets (status bar, notch, home indicator) from
+  /// the FlutterView without touching MediaQuery or BuildContext, so this
+  /// delegate never subscribes to inherited widget changes.
+  EdgeInsets _viewPadding() {
+    final view = PlatformDispatcher.instance.implicitView;
+    if (view == null) {
+      return EdgeInsets.zero;
+    }
+    final ratio = view.devicePixelRatio;
+    final vp = view.viewPadding;
+    return EdgeInsets.fromLTRB(
+      vp.left / ratio,
+      vp.top / ratio,
+      vp.right / ratio,
+      vp.bottom / ratio,
+    );
+  }
 
   @override
   void performLayout(final Size size) {
+    final padding = _viewPadding();
+
     final Map<QueuePosition, Size> childSizes = {};
     for (final position in activePositions) {
       if (hasChild(position)) {
@@ -342,8 +364,26 @@ class _QueueOverlayLayoutDelegate extends MultiChildLayoutDelegate {
   @override
   bool shouldRelayout(
     covariant final _QueueOverlayLayoutDelegate oldDelegate,
-  ) =>
-      activePositions != oldDelegate.activePositions ||
-      padding != oldDelegate.padding ||
-      activeQueues != oldDelegate.activeQueues;
+  ) {
+    // Only relayout when the set of queues actually changes — not on
+    // every resize frame. Since the delegate is only recreated when
+    // _NotificationQueueStack rebuilds (i.e. when activeQueues notifier
+    // fires), this is already quite rare. We compare queue positions and
+    // their key layout properties so a configuration change still triggers
+    // a correct relayout.
+    if (activePositions.length != oldDelegate.activePositions.length) {
+      return true;
+    }
+    for (int i = 0; i < activePositions.length; i++) {
+      if (activePositions[i] != oldDelegate.activePositions[i]) {
+        return true;
+      }
+      final q = activeQueues[activePositions[i]];
+      final oq = oldDelegate.activeQueues[activePositions[i]];
+      if (q?.maxWidth != oq?.maxWidth || q?.margin != oq?.margin) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

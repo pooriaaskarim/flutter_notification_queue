@@ -86,12 +86,22 @@ class Utils {
     name: tablet,
   );
 
+  /// Returns the current media query size without registering a build
+  /// dependency on the [BuildContext]. Useful for preventing rebuilds
+  /// during window resizing.
+  static Size screenSize(final BuildContext context) {
+    final element =
+        context.getElementForInheritedWidgetOfExactType<MediaQuery>();
+    final widget = element?.widget as MediaQuery?;
+    return widget?.data.size ?? Size.zero;
+  }
+
   static BoxConstraints horizontalConstraints(
     final BuildContext context, [
     final double? customMaxWidth,
   ]) =>
       horizontalConstraintsForWidth(
-        MediaQuery.of(context).size.width,
+        screenSize(context).width,
         customMaxWidth,
       );
 
