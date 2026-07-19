@@ -51,40 +51,37 @@ The `closeButtonBehavior` property accepts a `QueueCloseButtonBehavior` instance
 > [!WARNING]
 > **Zombie Prevention**: If you use `Hidden()`, you **must** enable another dismissal method like `Dismiss()` or `Relocate()`. The system validates this at startup to prevent undismissable notifications.
 
-### Using Concrete Classes (Recommended)
+### Queue Configurations
 
-Each position has a corresponding class (e.g., `TopRightQueue`, `BottomCenterQueue`).
+Configure a queue for a specific position by passing a `NotificationQueue` with the target `position`:
 
 ```dart
 FlutterNotificationQueue.initialize(
   queues: {
     // 1. Standard Stack in Top Right
-    const TopRightQueue(
-      maxStackSize: 5,
+    const NotificationQueue(position: QueuePosition.topRight, maxStackSize: 5,
       style: FlatQueueStyle(),
     ),
     
     // 2. Snackbar-style in Bottom Center
-    const BottomCenterQueue(
-      maxStackSize: 1, // Only show one notification at a time
+    const NotificationQueue(position: QueuePosition.bottomCenter, maxStackSize: 1, // Only show one notification at a time
       margin: EdgeInsets.all(24),
     ),
 
     // 3. Persistent Log in Bottom Left
-    const BottomLeftQueue(
-      maxStackSize: 10,
+    const NotificationQueue(position: QueuePosition.bottomLeft, maxStackSize: 10,
       dragBehavior: DragBehavior.disabled(), // Prevent swiping away
     ),
   },
 );
 ```
 
-### Using Default Factory
+### Constructor Defaults
 
-For quick prototypes, you can use the factory method:
+For quick prototypes, you can instantiate `NotificationQueue` with minimal configuration to use the system defaults:
 
 ```dart
-NotificationQueue.defaultQueue(
+const NotificationQueue(
   position: QueuePosition.topRight,
   maxStackSize: 3,
 );

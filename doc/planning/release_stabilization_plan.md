@@ -100,7 +100,7 @@ Systematically review the public API surface (`lib/flutter_notification_queue.da
 | `channelName: 'success'` (string) | Should this be typed / validated at compile time rather than a raw string? |
 | `QueuePosition` enum | 9 positions — is `centerLeft`/`centerRight` documented well enough? |
 | `Relocate.to({...})` auto-sibling generation | Is the magic documented clearly? Could it surprise users? |
-| `NotificationQueue.defaultQueue()` | Is the default position (topCenter) appropriate? |
+| `NotificationQueue()` | Is the default position (topCenter) appropriate? |
 | `TapBehavior` sealed class hierarchy | Are `TapToDismiss`, `TapToExpand`, `TapToAct`, `TapDisabled` names intuitive? |
 | `FnqEvent` stream | Is the stream lifecycle (broadcast, no close) clearly documented? |
 | `captureFlutterErrors` flag | Should this be opt-in or opt-out? Is the default correct? |

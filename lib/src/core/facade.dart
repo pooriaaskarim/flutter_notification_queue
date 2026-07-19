@@ -84,7 +84,7 @@ final class FlutterNotificationQueue {
   /// This should be called to set up the system, typically in your `main()`
   /// function, but can be called again to reconfigure at runtime.
   ///
-  /// Empty/Null configuration would fallback to [NotificationQueue.defaultQueue]
+  /// Empty/Null configuration would fallback to [NotificationQueue]
   /// and [NotificationChannel.standardChannels].
   static void configure({
     final Set<NotificationQueue>? queues,
@@ -104,7 +104,7 @@ final class FlutterNotificationQueue {
       captureFlutterErrors: captureFlutterErrors,
     );
     _configuration = ConfigurationManager(
-      queues: queues ?? {NotificationQueue.defaultQueue()},
+      queues: queues ?? {const NotificationQueue()},
       channels: channels ?? NotificationChannel.standardChannels(),
       strictChannelLookup: strictChannelLookup,
       enableDynamicChannelParking: enableDynamicChannelParking,

@@ -26,6 +26,6 @@ graph TD
 
 ## Design Decisions
 
-- **Stateless Queues**: Queue definitions (`TopRightQueue`) are immutable const objects. They do not hold state. The `QueueCoordinator` holds the state.
+- **Stateless Queues**: Queue definitions (`NotificationQueue`) are immutable const objects. They do not hold state. The `QueueCoordinator` holds the state.
 - **Zero Global State in Widgets**: `NotificationWidget` and `QueueWidget` are pure UI. They receive all data via injection or providers, facilitating easier testing.
 - **Lazy Initialization**: Components are created only when needed.

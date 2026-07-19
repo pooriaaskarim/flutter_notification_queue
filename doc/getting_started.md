@@ -56,13 +56,12 @@ NotificationWidget(
 
 ## 5. Configuration
 
-You can customize queues and channels during initialization. Instead of the default factory, you can use concrete queue classes for specific positions.
+You can customize queues and channels during initialization by configuring queues for specific positions.
 
 ```dart
 FlutterNotificationQueue.initialize(
   queues: {
-    const TopRightQueue(
-      maxStackSize: 5,
+    const NotificationQueue(position: QueuePosition.topRight, maxStackSize: 5,
       style: const FlatQueueStyle(),
     ),
   },

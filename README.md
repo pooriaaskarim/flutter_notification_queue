@@ -94,14 +94,16 @@ void main() {
       // ...
     },
     queues: {
-      const TopCenterQueue(
+      const NotificationQueue(
+        position: QueuePosition.topCenter,
         style: FilledQueueStyle(
           borderRadius: BorderRadius.all(Radius.circular(12)),
           opacity: 0.9,
           elevation: 8,
         ),
       ),
-      const BottomCenterQueue(
+      const NotificationQueue(
+        position: QueuePosition.bottomCenter,
         style: FlatQueueStyle(),
       ),
     },
@@ -157,13 +159,11 @@ The system tries to be smart about defaults. For example, a `SlideTransitionStra
 
 ```dart
 // Auto-slide from TopCenter
-TopCenterQueue(
-  transition: const SlideTransitionStrategy(), 
+NotificationQueue(position: QueuePosition.topCenter, transition: const SlideTransitionStrategy(), 
 )
 
 // Custom curve and duration
-BottomRightQueue(
-  transition: const SlideTransitionStrategy(
+NotificationQueue(position: QueuePosition.bottomRight, transition: const SlideTransitionStrategy(
     curve: Curves.elasticOut,
     reverseCurve: Curves.easeOutExpo,
   ),
@@ -175,15 +175,13 @@ You can override standard properties like the slide offset or initial scale.
 
 ```dart
 // Slide from the side instead of bottom
-BottomCenterQueue(
-  transition: const SlideTransitionStrategy(
+NotificationQueue(position: QueuePosition.bottomCenter, transition: const SlideTransitionStrategy(
     slideOffset: Offset(-1, 0), // Slide from left
   ),
 )
 
 // Pop-in with custom scale and alignment
-CenterRightQueue(
-  transition: const ScaleTransitionStrategy(
+NotificationQueue(position: QueuePosition.centerRight, transition: const ScaleTransitionStrategy(
     initialScale: 0.5, // Start/end at 50% size
     alignment: Alignment.centerLeft, // Expand from left
   ),
@@ -194,8 +192,7 @@ CenterRightQueue(
 For complete control, use the `BuilderTransitionStrategy` to define any animation inline.
 
 ```dart
-TopCenterQueue(
-  transition: BuilderTransitionStrategy(
+NotificationQueue(position: QueuePosition.topCenter, transition: BuilderTransitionStrategy(
     (context, animation, position, child) {
       return RotationTransition(
         turns: animation,
@@ -282,8 +279,7 @@ To prevent visual clutter when multiple notifications from the same source arriv
 
 ```dart
 // Configure queue with grouping behavior
-TopCenterQueue(
-  groupingBehavior: QueueGroupingBehavior(
+NotificationQueue(position: QueuePosition.topCenter, groupingBehavior: QueueGroupingBehavior(
     enabled: true,
     maxBeforeGrouping: 3, // Group after 3 notifications
     enableGroupSwipeDismiss: true, // Dismiss whole group on swipe
@@ -309,8 +305,7 @@ If a queue is full (exceeds `maxStackSize`) and a higher-priority notification a
 Configure how a queue handles backpressure when the pending queue limit is reached:
 
 ```dart
-TopCenterQueue(
-  maxStackSize: 3,
+NotificationQueue(position: QueuePosition.topCenter, maxStackSize: 3,
   maxPendingSize: 10,
   overflowStrategy: QueueOverflowStrategy.discardOldest, // or discardNewest
 )
@@ -520,7 +515,7 @@ NotificationWidget(
     - `successChannel()`, `errorChannel()`, etc.: Factory methods for common channel types.
 - **`NotificationQueue`**: Manages the lifecycle and rendering constraints of a specific screen
   position.
-    - `defaultQueue()`: Factory method for creating a standard queue configuration.
+    - `NotificationQueue()`: Default constructor for creating a standard queue configuration.
 - **`NotificationAction`**: Definable user interactions (buttons, taps, gestures).
 
 ### Queue Positions
@@ -533,12 +528,6 @@ NotificationWidget(
 - `QueuePosition.bottomLeft`
 - `QueuePosition.bottomCenter`
 - `QueuePosition.bottomRight`
-
-### Queue Types
-
-- `TopLeftQueue`, `TopCenterQueue`, `TopRightQueue`
-- `CenterLeftQueue`, `CenterRightQueue`
-- `BottomLeftQueue`, `BottomCenterQueue`, `BottomRightQueue`
 
 ### Action Types
 
@@ -595,8 +584,7 @@ NotificationWidget(
 ### Custom Queue Indicator
 
 ```dart
-TopCenterQueue(
-  queueIndicatorBuilder: (context, count, config) => Container(
+NotificationQueue(position: QueuePosition.topCenter, queueIndicatorBuilder: (context, count, config) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
       color: Colors.red,

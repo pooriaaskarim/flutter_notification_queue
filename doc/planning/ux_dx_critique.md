@@ -113,7 +113,7 @@ The current resolution is: `widget.dismissDuration ?? widget.channel.defaultDism
 
 ```dart
 // This is the only way to do queue-level TapToAct today:
-NotificationQueue.defaultQueue(
+NotificationQueue(
   tapBehavior: TapToAct(
     onTap: () => doSomething(), // ← same callback for ALL notifications
   ),

@@ -46,7 +46,7 @@ final class TapToExpand extends TapBehavior {
 /// final myNotification = NotificationWidget(message: 'Hello');
 ///
 /// // In your queue setup:
-/// NotificationQueue.defaultQueue(
+/// NotificationQueue(
 ///   tapBehavior: TapToAct(onTap: () {
 ///     openDetailSheet();
 ///     myNotification.dismiss();

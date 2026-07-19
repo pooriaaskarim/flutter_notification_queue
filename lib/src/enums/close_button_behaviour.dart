@@ -51,7 +51,7 @@ sealed class QueueCloseButtonBehavior {
 /// always visible and always tappable.
 ///
 /// ```dart
-/// NotificationQueue.defaultQueue(
+/// NotificationQueue(
 ///   closeButtonBehavior: const AlwaysVisible(), // default
 /// )
 /// ```
@@ -85,7 +85,7 @@ final class AlwaysVisible extends QueueCloseButtonBehavior {
 /// - An iPad with a Magic Keyboard trackpad → hover fires → upgrades ✓
 ///
 /// ```dart
-/// NotificationQueue.defaultQueue(
+/// NotificationQueue(
 ///   closeButtonBehavior: const VisibleOnHover(),
 /// )
 /// ```
@@ -125,7 +125,7 @@ final class VisibleOnHover extends QueueCloseButtonBehavior {
 /// > [ConfigurationManager] will throw an [ArgumentError] at initialization.
 ///
 /// ```dart
-/// NotificationQueue.defaultQueue(
+/// NotificationQueue(
 ///   closeButtonBehavior: const Hidden(),
 ///   dragBehavior: const Dismiss(), // Required!
 /// )
