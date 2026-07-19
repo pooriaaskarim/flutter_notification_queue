@@ -42,7 +42,9 @@ void main() {
           longPressDragBehavior: const Reorder(),
         );
 
-        final copy = n.copyToQueue(const TopRightQueue());
+        final copy = n.copyToQueue(
+          const NotificationQueue(position: QueuePosition.topRight),
+        );
 
         expect(copy.dragBehavior, isA<Disabled>());
         expect(copy.longPressDragBehavior, isA<Reorder>());
@@ -51,7 +53,9 @@ void main() {
 
     test('copyToQueue preserves null overrides', () {
       final n = NotificationWidget(message: 'Default test');
-      final copy = n.copyToQueue(const TopRightQueue());
+      final copy = n.copyToQueue(
+        const NotificationQueue(position: QueuePosition.topRight),
+      );
 
       expect(copy.dragBehavior, isNull);
       expect(copy.longPressDragBehavior, isNull);
@@ -69,7 +73,8 @@ void main() {
           ),
         },
         queues: {
-          const TopRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.topRight,
             dragBehavior: Dismiss(),
           ),
         },

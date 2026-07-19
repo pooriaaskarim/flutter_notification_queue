@@ -37,7 +37,9 @@ class ConfigurationManager {
 
   /// Updates the parked queue position route for a channel.
   void updateChannelRoute(
-      final String channelName, final QueuePosition newPosition,) {
+    final String channelName,
+    final QueuePosition newPosition,
+  ) {
     _parkedChannelRoutes[channelName] = newPosition;
   }
 
@@ -217,13 +219,16 @@ class ConfigurationManager {
       if (queues.isNotEmpty) {
         return queues.first;
       }
-      return const TopCenterQueue(style: FilledQueueStyle());
+      return const NotificationQueue(
+        position: QueuePosition.topCenter,
+        style: FilledQueueStyle(),
+      );
     }
 
     // 2. Find Configured Queue
     final queue = queues.firstWhere(
       (final q) => q.position == position,
-      orElse: () => NotificationQueue.defaultQueue(position: position),
+      orElse: () => NotificationQueue(position: position),
     );
 
     final isGenerated = !queues.contains(queue);

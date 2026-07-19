@@ -45,146 +45,24 @@ enum QueuePosition {
     final double? maxWidth,
     final QueueGroupingBehavior groupingBehavior =
         const QueueGroupingBehavior(),
-  }) {
-    switch (this) {
-      case topLeft:
-        return TopLeftQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-      case topCenter:
-        return TopCenterQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-      case topRight:
-        return TopRightQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-      case centerLeft:
-        return CenterLeftQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-      case centerRight:
-        return CenterRightQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-      case bottomLeft:
-        return BottomLeftQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-      case bottomCenter:
-        return BottomCenterQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-      case bottomRight:
-        return BottomRightQueue(
-          style: style,
-          margin: margin,
-          spacing: spacing,
-          maxStackSize: maxStackSize,
-          dragBehavior: dragBehavior,
-          longPressDragBehavior: longPressDragBehavior,
-          tapBehavior: tapBehavior,
-          closeButtonBehavior: closeButtonBehavior,
-          queueIndicatorBuilder: queueIndicatorBuilder,
-          transition: transition ?? const SlideTransitionStrategy(),
-          maxPendingSize: maxPendingSize,
-          overflowStrategy: overflowStrategy,
-          maxWidth: maxWidth,
-          groupingBehavior: groupingBehavior,
-        );
-    }
-  }
+  }) =>
+      NotificationQueue(
+        position: this,
+        style: style,
+        margin: margin,
+        spacing: spacing,
+        maxStackSize: maxStackSize,
+        dragBehavior: dragBehavior,
+        longPressDragBehavior: longPressDragBehavior,
+        tapBehavior: tapBehavior,
+        closeButtonBehavior: closeButtonBehavior,
+        queueIndicatorBuilder: queueIndicatorBuilder,
+        transition: transition ?? const SlideTransitionStrategy(),
+        maxPendingSize: maxPendingSize,
+        overflowStrategy: overflowStrategy,
+        maxWidth: maxWidth,
+        groupingBehavior: groupingBehavior,
+      );
 
   AlignmentGeometry get alignment {
     switch (this) {

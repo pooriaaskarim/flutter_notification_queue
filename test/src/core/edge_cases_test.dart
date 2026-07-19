@@ -16,7 +16,10 @@ void main() {
 
     test('maxStackSize: 0 throws AssertionError', () {
       expect(
-        () => TopCenterQueue(maxStackSize: 0),
+        () => NotificationQueue(
+          position: QueuePosition.topCenter,
+          maxStackSize: 0,
+        ),
         throwsA(isA<AssertionError>()),
       );
     });
@@ -186,7 +189,8 @@ void main() {
         (final tester) async {
       FlutterNotificationQueue.configure(
         queues: {
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             maxStackSize: 1, // Only 1 visible at a time
           ),
         },
@@ -251,8 +255,7 @@ void main() {
 
     testWidgets(
         'strictChannelLookup: true throws ArgumentError for unregistered '
-        'channelName',
-        (final tester) async {
+        'channelName', (final tester) async {
       FlutterNotificationQueue.reset();
       FlutterNotificationQueue.configure(
         strictChannelLookup: true,

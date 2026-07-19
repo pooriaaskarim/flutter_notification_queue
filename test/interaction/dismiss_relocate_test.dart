@@ -14,11 +14,14 @@ void main() {
           ),
         },
         queues: {
-          TopRightQueue(
+          NotificationQueue(
+            position: QueuePosition.topRight,
             dragBehavior: Relocate.to({QueuePosition.topLeft}),
             longPressDragBehavior: const Dismiss(),
           ),
-          const TopLeftQueue(), // Needed for relocation target
+          const NotificationQueue(
+            position: QueuePosition.topLeft,
+          ), // Needed for relocation target
         },
       );
     });
@@ -53,7 +56,7 @@ void main() {
       await tester.drag(notifFinder, Offset(-startPos.dx, -startPos.dy));
       await tester.pumpAndSettle();
 
-      // Verify it is now in TopLeftQueue (TopRight should be unmounted)
+      // Verify it is now in topLeft queue (topRight queue should be unmounted)
       expect(find.byType(NotificationWidget), findsOneWidget);
 
       final activeQueues =

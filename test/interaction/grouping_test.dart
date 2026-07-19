@@ -19,13 +19,15 @@ void main() {
           ),
         },
         queues: {
-          const TopRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.topRight,
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
               maxBeforeGrouping: 2,
             ),
           ),
-          const BottomLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.bottomLeft,
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
               maxBeforeGrouping: 2,
@@ -101,14 +103,16 @@ void main() {
           ),
         },
         queues: {
-          const TopRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.topRight,
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
               maxBeforeGrouping: 2,
             ),
             maxStackSize: 2,
           ),
-          const BottomLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.bottomLeft,
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
               maxBeforeGrouping: 2,
@@ -224,7 +228,7 @@ void main() {
       );
 
       // 6. Enqueue critical 'chat' notification (c3) to trigger
-      // TopRightQueue overflow (maxStackSize: 2)
+      // topRight queue overflow (maxStackSize: 2)
       // Since queue has c1 (low) and c2 (normal), adding c3 (high)
       // should evict c1.
       NotificationWidget(
@@ -294,7 +298,8 @@ void main() {
           ),
         },
         queues: {
-          const BottomRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.bottomRight,
             dragBehavior: Dismiss(),
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
@@ -356,7 +361,8 @@ void main() {
           ),
         },
         queues: {
-          const TopLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.topLeft,
             dragBehavior: Dismiss(),
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,

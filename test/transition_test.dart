@@ -27,7 +27,8 @@ void main() {
         ),
       },
       queues: {
-        const TopCenterQueue(
+        const NotificationQueue(
+          position: QueuePosition.topCenter,
           transition: CustomTransition(),
         ),
       },
@@ -82,7 +83,7 @@ void main() {
         ),
       },
       queues: {
-        const BottomCenterQueue(),
+        const NotificationQueue(position: QueuePosition.bottomCenter),
       },
     );
     await tester.pumpWidget(
@@ -122,9 +123,15 @@ void main() {
         ),
       },
       queues: {
-        TopCenterQueue(
+        NotificationQueue(
+          position: QueuePosition.topCenter,
           transition: BuilderTransitionStrategy(
-            (final context, final animation, final position, final child) =>
+            (
+              final context,
+              final animation,
+              final position,
+              final child,
+            ) =>
                 RotationTransition(turns: animation, child: child),
           ),
         ),

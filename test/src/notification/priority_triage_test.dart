@@ -55,7 +55,9 @@ void main() {
         priority: NotificationPriority.high,
       );
 
-      final copy = n.copyToQueue(const TopRightQueue());
+      final copy = n.copyToQueue(
+        const NotificationQueue(position: QueuePosition.topRight),
+      );
 
       expect(copy.priority, NotificationPriority.high);
       expect(copy.resolvedPriority, NotificationPriority.high);
@@ -86,7 +88,8 @@ void main() {
           ),
         },
         queues: {
-          const TopRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.topRight,
             maxStackSize: 2,
           ),
         },

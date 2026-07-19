@@ -45,7 +45,9 @@ void main() {
         snoozedAt: now,
       );
 
-      final copy = n.copyToQueue(const TopRightQueue());
+      final copy = n.copyToQueue(
+        const NotificationQueue(position: QueuePosition.topRight),
+      );
       expect(copy.isPinned, isTrue);
       expect(copy.snoozedAt, now);
     });
@@ -73,7 +75,7 @@ void main() {
           ),
         },
         queues: {
-          const TopRightQueue(),
+          const NotificationQueue(position: QueuePosition.topRight),
         },
       );
     });
@@ -274,8 +276,9 @@ void main() {
       // should be fired!
       expect(find.text('Pinned but with duration'), findsOneWidget);
       expect(
-        capturedEvents.any((final e) =>
-            e is NotificationDismissed && e.notification.id == n.id,),
+        capturedEvents.any(
+          (final e) => e is NotificationDismissed && e.notification.id == n.id,
+        ),
         isFalse,
       );
 

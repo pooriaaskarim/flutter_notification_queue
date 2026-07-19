@@ -158,8 +158,8 @@ void main() {
         () async {
       FlutterNotificationQueue.configure(
         queues: {
-          NotificationQueue.defaultQueue(position: QueuePosition.topLeft),
-          NotificationQueue.defaultQueue(position: QueuePosition.topRight),
+          const NotificationQueue(position: QueuePosition.topLeft),
+          const NotificationQueue(position: QueuePosition.topRight),
         },
       );
 

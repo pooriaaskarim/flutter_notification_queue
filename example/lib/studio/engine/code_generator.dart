@@ -88,7 +88,7 @@ void _writeQueue(
   final QueueSetup q,
 ) {
   buf
-    ..writeln('    NotificationQueue.defaultQueue(')
+    ..writeln('    NotificationQueue(')
     ..writeln('      position: QueuePosition.${position.name},')
     ..writeln(
       '      style: ${_styleSnippet(q)},',

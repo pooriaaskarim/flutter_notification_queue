@@ -15,7 +15,7 @@ void main() {
           ),
         },
         queues: {
-          const TopRightQueue(),
+          const NotificationQueue(position: QueuePosition.topRight),
         },
       );
     });
@@ -109,15 +109,15 @@ void main() {
       expect(find.text('First'), findsOneWidget);
       expect(find.text('Second'), findsOneWidget);
 
-      // Verify vertical stacking (TopRightQueue)
+      // Verify vertical stacking (topRight queue)
       final firstCenter = tester.getCenter(find.text('First'));
       final secondCenter = tester.getCenter(find.text('Second'));
 
-      // TopRightQueue typically stacks downwards?
+      // topRight queue typically stacks downwards?
       // Need to check specific queue behavior or just ensure they constitute a
       // column-like structure. Usually "First" is at the top? Or bottom
       // depending on implementation.
-      // TopRightQueue typically has newer items at the bottom or top depending
+      // topRight queue typically has newer items at the bottom or top depending
       // on "gravity"? Standard/Default is usually growing downwards.
 
       // We just ensure they are not at the same position
@@ -145,11 +145,13 @@ void main() {
           ),
         },
         queues: {
-          const TopLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.topLeft,
             margin: EdgeInsets.all(10),
             spacing: 10,
           ),
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             margin: EdgeInsets.all(10),
             spacing: 10,
           ),
@@ -210,12 +212,14 @@ void main() {
           ),
         },
         queues: {
-          const TopLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.topLeft,
             margin: EdgeInsets.all(10),
             spacing: 10,
             maxWidth: 200.0,
           ),
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             margin: EdgeInsets.all(10),
             spacing: 10,
             maxWidth: 200.0,
@@ -277,11 +281,13 @@ void main() {
           ),
         },
         queues: {
-          const BottomLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.bottomLeft,
             margin: EdgeInsets.all(10),
             spacing: 10,
           ),
-          const BottomCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.bottomCenter,
             margin: EdgeInsets.all(10),
             spacing: 10,
           ),
@@ -343,12 +349,14 @@ void main() {
           ),
         },
         queues: {
-          const BottomLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.bottomLeft,
             margin: EdgeInsets.all(10),
             spacing: 10,
             maxWidth: 200.0,
           ),
-          const BottomCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.bottomCenter,
             margin: EdgeInsets.all(10),
             spacing: 10,
             maxWidth: 200.0,
@@ -411,11 +419,13 @@ void main() {
           ),
         },
         queues: {
-          const CenterLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.centerLeft,
             margin: EdgeInsets.all(10),
             spacing: 10,
           ),
-          const CenterRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.centerRight,
             margin: EdgeInsets.all(10),
             spacing: 10,
           ),
@@ -478,12 +488,14 @@ void main() {
           ),
         },
         queues: {
-          const CenterLeftQueue(
+          const NotificationQueue(
+            position: QueuePosition.centerLeft,
             margin: EdgeInsets.all(10),
             spacing: 10,
             maxWidth: 200.0,
           ),
-          const CenterRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.centerRight,
             margin: EdgeInsets.all(10),
             spacing: 10,
             maxWidth: 200.0,

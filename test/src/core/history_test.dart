@@ -189,24 +189,27 @@ void main() {
       // Limit query
       final limitHistory = FlutterNotificationQueue.getHistory(limit: 1);
       expect(limitHistory.length, equals(1));
-      expect((limitHistory.first as NotificationQueued).notification.id,
-          equals('test_2'),);
+      expect(
+        (limitHistory.first as NotificationQueued).notification.id,
+        equals('test_2'),
+      );
 
       // Since query
       final sinceHistory =
           FlutterNotificationQueue.getHistory(since: afterN1Time);
       expect(sinceHistory.length, equals(1));
-      expect((sinceHistory.first as NotificationQueued).notification.id,
-          equals('test_2'),);
+      expect(
+        (sinceHistory.first as NotificationQueued).notification.id,
+        equals('test_2'),
+      );
 
       final allHistory = FlutterNotificationQueue.getHistory(since: beforeTime);
       expect(allHistory.length, equals(2));
     });
 
     testWidgets(
-      'History log cancels subscriptions and clears memory completely '
-      'when disabled',
-        (final tester) async {
+        'History log cancels subscriptions and clears memory completely '
+        'when disabled', (final tester) async {
       FlutterNotificationQueue.configure(maxHistoryEntries: 10);
 
       await tester.pumpWidget(
@@ -256,8 +259,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(FlutterNotificationQueue.getHistory().length, equals(1));
-      final firstEvent = FlutterNotificationQueue.getHistory().first
-          as NotificationQueued;
+      final firstEvent =
+          FlutterNotificationQueue.getHistory().first as NotificationQueued;
       expect(
         firstEvent.notification.id,
         equals('test_3'),

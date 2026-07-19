@@ -223,7 +223,7 @@ class QueueSetup extends Equatable {
 
   /// Builds a [NotificationQueue] at the given [position].
   NotificationQueue toNotificationQueue(final QueuePosition position) =>
-      NotificationQueue.defaultQueue(
+      NotificationQueue(
         position: position,
         style: toQueueStyle(),
         transition: toTransition(),

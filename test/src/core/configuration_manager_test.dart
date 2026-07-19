@@ -32,8 +32,13 @@ void main() {
       expect(config.getChannel('error'), isNotNull);
 
       // Verify Standard Queues
-      // Default is desktop, which has TopRightQueue
-      expect(config.getQueue(QueuePosition.topRight), isA<TopRightQueue>());
+      // Default is desktop, which has topRight queue
+      expect(
+        config.getQueue(QueuePosition.topRight).position,
+        equals(
+          QueuePosition.topRight,
+        ),
+      );
     });
 
     // 3. Default Configuration
@@ -44,7 +49,12 @@ void main() {
 
       // Verify default queue logic (generates fallbacks)
       final queue = manager.getQueue(null);
-      expect(queue, isA<TopCenterQueue>());
+      expect(
+        queue.position,
+        equals(
+          QueuePosition.topCenter,
+        ),
+      );
       expect(queue.style, isA<FilledQueueStyle>());
 
       // Verify default channel logic
@@ -54,17 +64,31 @@ void main() {
 
     // 3. Custom Configuration
     test('Custom Configuration: Retains provided queues and channels', () {
-      const customQueue = TopRightQueue();
-      const customChannel =
-          NotificationChannel(name: 'custom', position: QueuePosition.topRight);
+      const customQueue = NotificationQueue(
+        position: QueuePosition.topRight,
+      );
+      const customChannel = NotificationChannel(
+        name: 'custom',
+        position: QueuePosition.topRight,
+      );
 
       final manager = ConfigurationManager(
         queues: {customQueue},
         channels: {customChannel},
       );
 
-      expect(manager.getQueue(QueuePosition.topRight), equals(customQueue));
-      expect(manager.getChannel('custom'), equals(customChannel));
+      expect(
+        manager.getQueue(QueuePosition.topRight),
+        equals(
+          customQueue,
+        ),
+      );
+      expect(
+        manager.getChannel('custom'),
+        equals(
+          customChannel,
+        ),
+      );
     });
 
     // 4. Channel Resolution (Fallback)
@@ -111,7 +135,10 @@ void main() {
       );
       final manager = ConfigurationManager(
         queues: {
-          TopCenterQueue(longPressDragBehavior: relocateBehavior),
+          NotificationQueue(
+            position: QueuePosition.topCenter,
+            longPressDragBehavior: relocateBehavior,
+          ),
         },
       );
 
@@ -124,11 +151,21 @@ void main() {
       // Original targets should still be present
       expect(
         relocateBehavior.positions,
-        containsAll([QueuePosition.centerRight, QueuePosition.centerLeft]),
+        containsAll(
+          [
+            QueuePosition.centerRight,
+            QueuePosition.centerLeft,
+          ],
+        ),
       );
 
       // Should have 3 positions total
-      expect(relocateBehavior.positions.length, equals(3));
+      expect(
+        relocateBehavior.positions.length,
+        equals(
+          3,
+        ),
+      );
 
       // Manager should have the source queue
       expect(manager.queues, isNotEmpty);
@@ -138,7 +175,8 @@ void main() {
     test('Group Expansion: Sibling queues are created for all targets', () {
       final manager = ConfigurationManager(
         queues: {
-          TopCenterQueue(
+          NotificationQueue(
+            position: QueuePosition.topCenter,
             longPressDragBehavior: Relocate<OnLongPress>.to(
               {QueuePosition.centerRight, QueuePosition.centerLeft},
             ),
@@ -152,14 +190,14 @@ void main() {
 
       // Verify each sibling was created
       final centerRight = manager.getQueue(QueuePosition.centerRight);
-      expect(centerRight, isA<CenterRightQueue>());
+      expect(centerRight.position, equals(QueuePosition.centerRight));
 
       final centerLeft = manager.getQueue(QueuePosition.centerLeft);
-      expect(centerLeft, isA<CenterLeftQueue>());
+      expect(centerLeft.position, equals(QueuePosition.centerLeft));
 
       // Verify original queue remains
       final topCenter = manager.getQueue(QueuePosition.topCenter);
-      expect(topCenter, isA<TopCenterQueue>());
+      expect(topCenter.position, equals(QueuePosition.topCenter));
     });
 
     // 8. Sibling queues inherit characteristics
@@ -171,7 +209,8 @@ void main() {
 
       final manager = ConfigurationManager(
         queues: {
-          TopCenterQueue(
+          NotificationQueue(
+            position: QueuePosition.topCenter,
             longPressDragBehavior: Relocate<OnLongPress>.to(
               {QueuePosition.bottomRight},
             ),
@@ -195,7 +234,8 @@ void main() {
 
       final manager = ConfigurationManager(
         queues: {
-          TopCenterQueue(
+          NotificationQueue(
+            position: QueuePosition.topCenter,
             longPressDragBehavior: Relocate<OnLongPress>.to(
               {QueuePosition.bottomLeft},
             ),
@@ -213,12 +253,14 @@ void main() {
       expect(
         () => ConfigurationManager(
           queues: {
-            TopCenterQueue(
+            NotificationQueue(
+              position: QueuePosition.topCenter,
               longPressDragBehavior: Relocate<OnLongPress>.to(
                 {QueuePosition.centerRight},
               ),
             ),
-            BottomCenterQueue(
+            NotificationQueue(
+              position: QueuePosition.bottomCenter,
               longPressDragBehavior: Relocate<OnLongPress>.to(
                 {QueuePosition.centerRight}, // overlap!
               ),
@@ -234,12 +276,14 @@ void main() {
         () {
       final manager = ConfigurationManager(
         queues: {
-          TopCenterQueue(
+          NotificationQueue(
+            position: QueuePosition.topCenter,
             longPressDragBehavior: Relocate<OnLongPress>.to(
               {QueuePosition.centerRight, QueuePosition.centerLeft},
             ),
           ),
-          BottomCenterQueue(
+          NotificationQueue(
+            position: QueuePosition.bottomCenter,
             longPressDragBehavior: Relocate<OnLongPress>.to(
               {QueuePosition.topLeft},
             ),
@@ -257,7 +301,8 @@ void main() {
     test('No Expansion: Dismiss/Disabled behaviors do not expand', () {
       final manager = ConfigurationManager(
         queues: {
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             dragBehavior: Dismiss(),
             longPressDragBehavior: Disabled(),
           ),
@@ -274,13 +319,15 @@ void main() {
 
       final manager = ConfigurationManager(
         queues: {
-          TopCenterQueue(
+          NotificationQueue(
+            position: QueuePosition.topCenter,
             longPressDragBehavior: Relocate<OnLongPress>.to(
               {QueuePosition.topRight},
             ),
             style: const FlatQueueStyle(), // source style
           ),
-          const TopRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.topRight,
             style: customStyle, // explicitly configured
           ),
         },

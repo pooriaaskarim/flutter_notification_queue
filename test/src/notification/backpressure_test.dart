@@ -32,7 +32,8 @@ void main() {
             ),
           },
           queues: {
-            const TopCenterQueue(
+            const NotificationQueue(
+              position: QueuePosition.topCenter,
               style: FlatQueueStyle(opacity: 1.0),
               maxStackSize: 1,
               maxPendingSize: null, // default is null
@@ -97,7 +98,8 @@ void main() {
             ),
           },
           queues: {
-            const TopCenterQueue(
+            const NotificationQueue(
+              position: QueuePosition.topCenter,
               style: FlatQueueStyle(opacity: 1.0),
               maxStackSize: 1,
               maxPendingSize: 2,
@@ -177,7 +179,8 @@ void main() {
             ),
           },
           queues: {
-            const TopCenterQueue(
+            const NotificationQueue(
+              position: QueuePosition.topCenter,
               style: FlatQueueStyle(opacity: 1.0),
               maxStackSize: 1,
               maxPendingSize: 2,

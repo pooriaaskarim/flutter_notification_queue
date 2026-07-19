@@ -20,8 +20,7 @@ void main() {
 
     testWidgets(
         'dynamic channel parking: disabled by default and does not change '
-        'routes',
-        (final tester) async {
+        'routes', (final tester) async {
       FlutterNotificationQueue.configure(
         enableDynamicChannelParking: false,
         channels: {
@@ -32,11 +31,11 @@ void main() {
           ),
         },
         queues: {
-          NotificationQueue.defaultQueue(
+          NotificationQueue(
             position: QueuePosition.topRight,
             longPressDragBehavior: Relocate.to({QueuePosition.topLeft}),
           ),
-          NotificationQueue.defaultQueue(
+          const NotificationQueue(
             position: QueuePosition.topLeft,
           ),
         },
@@ -78,8 +77,10 @@ void main() {
       // Verify that n2 is still routed to the original position (topRight),
       // not topLeft
       final stateKey = GlobalObjectKey<NotificationWidgetState>(n2.id);
-      expect(stateKey.currentState?.widget.queue.position,
-          equals(QueuePosition.topRight),);
+      expect(
+        stateKey.currentState?.widget.queue.position,
+        equals(QueuePosition.topRight),
+      );
     });
 
     testWidgets('dynamic channel parking: enabled updates routes dynamically',
@@ -94,11 +95,11 @@ void main() {
           ),
         },
         queues: {
-          NotificationQueue.defaultQueue(
+          NotificationQueue(
             position: QueuePosition.topRight,
             longPressDragBehavior: Relocate.to({QueuePosition.topLeft}),
           ),
-          NotificationQueue.defaultQueue(
+          const NotificationQueue(
             position: QueuePosition.topLeft,
           ),
         },
@@ -156,8 +157,10 @@ void main() {
 
       // Verify that n2 is now routed to topLeft!
       final stateKey = GlobalObjectKey<NotificationWidgetState>(n2.id);
-      expect(stateKey.currentState?.widget.queue.position,
-          equals(QueuePosition.topLeft),);
+      expect(
+        stateKey.currentState?.widget.queue.position,
+        equals(QueuePosition.topLeft),
+      );
     });
   });
 }

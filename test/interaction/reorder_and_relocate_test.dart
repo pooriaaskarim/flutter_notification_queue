@@ -14,13 +14,16 @@ void main() {
           ),
         },
         queues: {
-          TopRightQueue(
+          NotificationQueue(
+            position: QueuePosition.topRight,
             dragBehavior: ReorderAndRelocate.to(
               positions: {QueuePosition.topLeft},
               escapeThresholdInPixels: 50.0,
             ),
           ),
-          const TopLeftQueue(), // Destination queue
+          const NotificationQueue(
+            position: QueuePosition.topLeft,
+          ), // Destination queue
         },
       );
     });

@@ -9,7 +9,10 @@ import 'package:flutter_test/flutter_test.dart';
 void _initFnq() {
   FlutterNotificationQueue.configure(
     queues: {
-      const TopCenterQueue(tapBehavior: TapToDismiss()),
+      const NotificationQueue(
+        position: QueuePosition.topCenter,
+        tapBehavior: TapToDismiss(),
+      ),
     },
     channels: {
       const NotificationChannel(
@@ -59,21 +62,22 @@ void main() {
   // ── Queue-level tapBehavior ───────────────────────────────────────────────
 
   group('NotificationQueue.tapBehavior', () {
-    test('TopCenterQueue default tapBehavior is TapToDismiss', () {
-      const q = TopCenterQueue();
+    test('NotificationQueue on topCenter position defaults to TapToDismiss',
+        () {
+      const q = NotificationQueue(position: QueuePosition.topCenter);
       expect(q.tapBehavior, isA<TapToDismiss>());
     });
 
     test('all concrete queues default to TapToDismiss', () {
       const queues = [
-        TopLeftQueue(),
-        TopCenterQueue(),
-        TopRightQueue(),
-        CenterLeftQueue(),
-        CenterRightQueue(),
-        BottomLeftQueue(),
-        BottomCenterQueue(),
-        BottomRightQueue(),
+        NotificationQueue(position: QueuePosition.topLeft),
+        NotificationQueue(position: QueuePosition.topCenter),
+        NotificationQueue(position: QueuePosition.topRight),
+        NotificationQueue(position: QueuePosition.centerLeft),
+        NotificationQueue(position: QueuePosition.centerRight),
+        NotificationQueue(position: QueuePosition.bottomLeft),
+        NotificationQueue(position: QueuePosition.bottomCenter),
+        NotificationQueue(position: QueuePosition.bottomRight),
       ];
       for (final q in queues) {
         expect(
@@ -85,35 +89,43 @@ void main() {
     });
 
     test('custom tapBehavior is stored on queue', () {
-      const q = TopCenterQueue(tapBehavior: TapToExpand());
+      const q = NotificationQueue(
+        position: QueuePosition.topCenter,
+        tapBehavior: TapToExpand(),
+      );
       expect(q.tapBehavior, isA<TapToExpand>());
     });
 
     test('TapToAct is stored on queue and callback is callable', () {
       var fired = false;
-      final q =
-          TopCenterQueue(tapBehavior: TapToAct(onTap: () => fired = true));
+      final q = NotificationQueue(
+        position: QueuePosition.topCenter,
+        tapBehavior: TapToAct(onTap: () => fired = true),
+      );
       (q.tapBehavior as TapToAct).onTap();
       expect(fired, isTrue);
     });
 
     test('TapDisabled is stored correctly', () {
-      const q = TopCenterQueue(tapBehavior: TapDisabled());
+      const q = NotificationQueue(
+        position: QueuePosition.topCenter,
+        tapBehavior: TapDisabled(),
+      );
       expect(q.tapBehavior, isA<TapDisabled>());
     });
   });
 
-  // ── NotificationQueue.defaultQueue factory ────────────────────────────────
+  // ── NotificationQueue default factory constructor ─────────────────────────
 
-  group('NotificationQueue.defaultQueue factory', () {
+  group('NotificationQueue default factory constructor', () {
     test('tapBehavior defaults to TapToDismiss', () {
-      final q = NotificationQueue.defaultQueue();
+      const q = NotificationQueue();
       expect(q.tapBehavior, isA<TapToDismiss>());
     });
 
     test('custom tapBehavior is forwarded through factory', () {
-      final q = NotificationQueue.defaultQueue(
-        tapBehavior: const TapToExpand(),
+      const q = NotificationQueue(
+        tapBehavior: TapToExpand(),
       );
       expect(q.tapBehavior, isA<TapToExpand>());
     });
@@ -123,13 +135,19 @@ void main() {
 
   group('QueuePosition.generateQueueFrom propagation', () {
     test('tapBehavior is preserved when generating from another queue', () {
-      const source = TopLeftQueue(tapBehavior: TapToExpand());
+      const source = NotificationQueue(
+        position: QueuePosition.topLeft,
+        tapBehavior: TapToExpand(),
+      );
       final copy = QueuePosition.topRight.generateQueueFrom(source);
       expect(copy.tapBehavior, isA<TapToExpand>());
     });
 
     test('TapDisabled survives generateQueueFrom', () {
-      const source = BottomCenterQueue(tapBehavior: TapDisabled());
+      const source = NotificationQueue(
+        position: QueuePosition.bottomCenter,
+        tapBehavior: TapDisabled(),
+      );
       final copy = QueuePosition.bottomLeft.generateQueueFrom(source);
       expect(copy.tapBehavior, isA<TapDisabled>());
     });
@@ -158,13 +176,17 @@ void main() {
         message: 'Test',
         tapBehavior: const TapToExpand(),
       );
-      final copy = n.copyToQueue(const TopRightQueue());
+      final copy = n.copyToQueue(
+        const NotificationQueue(position: QueuePosition.topRight),
+      );
       expect(copy.tapBehavior, isA<TapToExpand>());
     });
 
     test('copyToQueue preserves null tapBehavior', () {
       final n = NotificationWidget(message: 'Test');
-      final copy = n.copyToQueue(const TopRightQueue());
+      final copy = n.copyToQueue(
+        const NotificationQueue(position: QueuePosition.topRight),
+      );
       expect(copy.tapBehavior, isNull);
     });
   });

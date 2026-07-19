@@ -23,7 +23,8 @@ void main() {
           ),
         },
         queues: {
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             style: FlatQueueStyle(opacity: 0.9),
             maxStackSize: 2,
           ),
@@ -74,7 +75,8 @@ void main() {
           ),
         },
         queues: {
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             style: FilledQueueStyle(opacity: 0.95),
             maxStackSize: 2,
           ),
@@ -125,7 +127,8 @@ void main() {
           ),
         },
         queues: {
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             style: OutlinedQueueStyle(elevation: 0),
             maxStackSize: 2,
           ),
@@ -182,8 +185,8 @@ void main() {
             ),
           },
           queues: {
-            const TopRightQueue(),
-            const BottomCenterQueue(),
+            const NotificationQueue(position: QueuePosition.topRight),
+            const NotificationQueue(position: QueuePosition.bottomCenter),
           },
         );
 
@@ -241,7 +244,8 @@ void main() {
           ),
         },
         queues: {
-          const TopCenterQueue(
+          const NotificationQueue(
+            position: QueuePosition.topCenter,
             groupingBehavior: QueueGroupingBehavior(
               enabled: true,
               maxBeforeGrouping: 2,

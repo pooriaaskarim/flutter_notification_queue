@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../flutter_notification_queue.dart';
+import '../core/core.dart';
 import '../utils/extensions.dart' show ExtendedStringFuntionalities;
 import '../utils/utils.dart';
 
@@ -12,35 +13,27 @@ part 'queue_widget.dart';
 part 'transitions.dart';
 part 'type_defs.dart';
 
-///  [NotificationQueue]s based on [QueuePosition].
-///
-/// - [TopLeftQueue]
-/// - [TopCenterQueue]
-/// - [TopRightQueue]
-/// - [CenterLeftQueue]
-/// - [CenterRightQueue]
-/// - [BottomLeftQueue]
-/// - [BottomCenterQueue]
-/// - [BottomRightQueue].
+/// Configures queue layouts for each [QueuePosition].
 ///
 /// Used in [FlutterNotificationQueue.configure] to configure queue layouts.
 ///
 /// If no [NotificationQueue] is provided for a [QueuePosition],
-/// defaults to that position's constructor defaults.
+/// defaults to constructor defaults.
 
-sealed class NotificationQueue {
+@immutable
+class NotificationQueue {
   const NotificationQueue({
-    required this.position,
-    required this.maxStackSize,
-    required this.dragBehavior,
-    required this.longPressDragBehavior,
-    required this.tapBehavior,
-    required this.closeButtonBehavior,
-    required this.spacing,
-    required this.margin,
-    required this.style,
-    required this.queueIndicatorBuilder,
-    required this.transition,
+    this.position = QueuePosition.topCenter,
+    this.maxStackSize = 3,
+    this.dragBehavior = const Dismiss(),
+    this.longPressDragBehavior = const Disabled(),
+    this.tapBehavior = const TapToDismiss(),
+    this.closeButtonBehavior = const AlwaysVisible(),
+    this.spacing = 4.0,
+    this.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
+    this.style = const FlatQueueStyle(),
+    this.queueIndicatorBuilder,
+    this.transition = const SlideTransitionStrategy(),
     this.maxPendingSize,
     this.overflowStrategy = QueueOverflowStrategy.discardOldest,
     this.maxWidth,
@@ -55,42 +48,13 @@ sealed class NotificationQueue {
           'maxWidth must be greater than 0',
         );
 
-  factory NotificationQueue.defaultQueue({
-    final QueuePosition position = QueuePosition.topCenter,
-    final int maxStackSize = 3,
-    final DragBehavior dragBehavior = const Disabled(),
-    final LongPressDragBehavior longPressDragBehavior = const Disabled(),
-    final TapBehavior tapBehavior = const TapToDismiss(),
-    final QueueCloseButtonBehavior closeButtonBehavior = const AlwaysVisible(),
-    final double spacing = 4.0,
-    final EdgeInsetsGeometry margin =
-        const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    final QueueStyle style = const FilledQueueStyle(),
-    final QueueIndicatorBuilder? queueIndicatorBuilder,
-    final NotificationTransition? transition,
-    final int? maxPendingSize,
-    final QueueOverflowStrategy overflowStrategy =
-        QueueOverflowStrategy.discardOldest,
-    final double? maxWidth,
-    final QueueGroupingBehavior groupingBehavior =
-        const QueueGroupingBehavior(),
-  }) =>
-      position.generateQueue(
-        maxStackSize: maxStackSize,
-        dragBehavior: dragBehavior,
-        longPressDragBehavior: longPressDragBehavior,
-        tapBehavior: tapBehavior,
-        closeButtonBehavior: closeButtonBehavior,
-        spacing: spacing,
-        style: style,
-        margin: margin,
-        queueIndicatorBuilder: queueIndicatorBuilder,
-        transition: transition,
-        maxPendingSize: maxPendingSize,
-        overflowStrategy: overflowStrategy,
-        maxWidth: maxWidth,
-        groupingBehavior: groupingBehavior,
-      );
+  @override
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is NotificationQueue && position == other.position;
+
+  @override
+  int get hashCode => position.hashCode;
 
   // NOTE: Assertions that depend on runtime checks of concrete types or complex
   // logic within const constructors are limited. We removed the complex init
@@ -188,212 +152,52 @@ sealed class NotificationQueue {
   // Widget get widget => QueueWidget(key: ValueKey(position), queue: this);
 
   MainAxisAlignment get mainAxisAlignment {
-    switch (this) {
-      case TopCenterQueue():
-      case TopLeftQueue():
-      case TopRightQueue():
+    switch (position) {
+      case QueuePosition.topCenter:
+      case QueuePosition.topLeft:
+      case QueuePosition.topRight:
         return MainAxisAlignment.start;
-      case CenterLeftQueue():
-      case CenterRightQueue():
+      case QueuePosition.centerLeft:
+      case QueuePosition.centerRight:
         return MainAxisAlignment.center;
-      case BottomCenterQueue():
-      case BottomLeftQueue():
-      case BottomRightQueue():
+      case QueuePosition.bottomCenter:
+      case QueuePosition.bottomLeft:
+      case QueuePosition.bottomRight:
         return MainAxisAlignment.end;
     }
   }
 
   CrossAxisAlignment get crossAxisAlignment {
-    switch (this) {
-      case TopCenterQueue():
-      case BottomCenterQueue():
+    switch (position) {
+      case QueuePosition.topCenter:
+      case QueuePosition.bottomCenter:
         return CrossAxisAlignment.center;
-      case TopLeftQueue():
-      case BottomLeftQueue():
-      case CenterLeftQueue():
+      case QueuePosition.topLeft:
+      case QueuePosition.bottomLeft:
+      case QueuePosition.centerLeft:
         return CrossAxisAlignment.start;
-      case TopRightQueue():
-      case BottomRightQueue():
-      case CenterRightQueue():
+      case QueuePosition.topRight:
+      case QueuePosition.bottomRight:
+      case QueuePosition.centerRight:
         return CrossAxisAlignment.end;
     }
   }
 
   VerticalDirection get verticalDirection {
-    switch (this) {
-      case TopCenterQueue():
-      case TopLeftQueue():
-      case TopRightQueue():
-      case CenterLeftQueue():
-      case CenterRightQueue():
+    switch (position) {
+      case QueuePosition.topCenter:
+      case QueuePosition.topLeft:
+      case QueuePosition.topRight:
+      case QueuePosition.centerLeft:
+      case QueuePosition.centerRight:
         return VerticalDirection.down;
-      case BottomCenterQueue():
-      case BottomLeftQueue():
-      case BottomRightQueue():
+      case QueuePosition.bottomCenter:
+      case QueuePosition.bottomLeft:
+      case QueuePosition.bottomRight:
         return VerticalDirection.up;
     }
   }
 
   @override
   String toString() => '${position.toString().capitalize}Queue';
-}
-
-/// A notification queue located at the top-left corner of the screen.
-final class TopLeftQueue extends NotificationQueue {
-  const TopLeftQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.topLeft);
-}
-
-/// A notification queue located at the top-center of the screen.
-final class TopCenterQueue extends NotificationQueue {
-  const TopCenterQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.topCenter);
-}
-
-/// A notification queue located at the top-right corner of the screen.
-final class TopRightQueue extends NotificationQueue {
-  const TopRightQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.topRight);
-}
-
-/// A notification queue located at the center-left side of the screen.
-final class CenterLeftQueue extends NotificationQueue {
-  const CenterLeftQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.centerLeft);
-}
-
-/// A notification queue located at the center-right side of the screen.
-final class CenterRightQueue extends NotificationQueue {
-  const CenterRightQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.centerRight);
-}
-
-/// A notification queue located at the bottom-left corner of the screen.
-final class BottomLeftQueue extends NotificationQueue {
-  const BottomLeftQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.bottomLeft);
-}
-
-/// A notification queue located at the bottom-center of the screen.
-final class BottomCenterQueue extends NotificationQueue {
-  const BottomCenterQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.bottomCenter);
-}
-
-/// A notification queue located at the bottom-right corner of the screen.
-final class BottomRightQueue extends NotificationQueue {
-  const BottomRightQueue({
-    super.style = const FlatQueueStyle(),
-    super.spacing = 4.0,
-    super.margin = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-    super.maxStackSize = 3,
-    super.queueIndicatorBuilder,
-    super.dragBehavior = const Dismiss(),
-    super.longPressDragBehavior = const Disabled(),
-    super.tapBehavior = const TapToDismiss(),
-    super.closeButtonBehavior = const AlwaysVisible(),
-    super.transition = const SlideTransitionStrategy(),
-    super.maxPendingSize,
-    super.overflowStrategy = QueueOverflowStrategy.discardOldest,
-    super.maxWidth,
-    super.groupingBehavior = const QueueGroupingBehavior(),
-  }) : super(position: QueuePosition.bottomRight);
 }

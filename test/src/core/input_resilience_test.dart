@@ -10,7 +10,8 @@ void main() {
       expect(
         () => ConfigurationManager(
           queues: {
-            const TopRightQueue(
+            const NotificationQueue(
+              position: QueuePosition.topRight,
               dragBehavior: Disabled(),
               longPressDragBehavior: Disabled(),
               closeButtonBehavior: Hidden(),
@@ -27,7 +28,8 @@ void main() {
       expect(
         () => ConfigurationManager(
           queues: {
-            TopRightQueue(
+            NotificationQueue(
+              position: QueuePosition.topRight,
               dragBehavior: Relocate.to({QueuePosition.bottomLeft}),
               longPressDragBehavior: const Disabled(),
               closeButtonBehavior: const Hidden(),
@@ -42,7 +44,8 @@ void main() {
       expect(
         () => ConfigurationManager(
           queues: {
-            const TopRightQueue(
+            const NotificationQueue(
+              position: QueuePosition.topRight,
               dragBehavior: Dismiss(), // Interactive!
               longPressDragBehavior: Disabled(),
               closeButtonBehavior: Hidden(),
@@ -57,8 +60,8 @@ void main() {
       expect(
         () => ConfigurationManager(
           queues: {
-            const TopRightQueue(
-              dragBehavior: Disabled(),
+            const NotificationQueue(
+              position: QueuePosition.topRight, dragBehavior: Disabled(),
               longPressDragBehavior: Disabled(),
               closeButtonBehavior: AlwaysVisible(), // Interactive!
             ),
@@ -74,8 +77,8 @@ void main() {
       expect(
         () => ConfigurationManager(
           queues: {
-            const TopRightQueue(
-              dragBehavior: Disabled(),
+            const NotificationQueue(
+              position: QueuePosition.topRight, dragBehavior: Disabled(),
               longPressDragBehavior: Disabled(),
               closeButtonBehavior: VisibleOnHover(), // Interactive via fallback
             ),

@@ -714,7 +714,6 @@ class NotificationWidgetState extends State<NotificationWidget>
               ),
             );
 
-
             // Conditionally omit BackdropFilter entirely when opacity == 1.0.
             // Even `enabled: false` installs a compositing layer and can
             // schedule continuous frames in the test environment, permanently
@@ -809,16 +808,9 @@ class NotificationWidgetState extends State<NotificationWidget>
   }
 
   Widget _getExpandButton({required final bool isExpanded}) {
-    final expandMoreIcon = (widget.queue is BottomLeftQueue ||
-            widget.queue is BottomCenterQueue ||
-            widget.queue is BottomRightQueue)
-        ? Icons.expand_less
-        : Icons.expand_more;
-    final expandLessIcon = (widget.queue is BottomLeftQueue ||
-            widget.queue is BottomCenterQueue ||
-            widget.queue is BottomRightQueue)
-        ? Icons.expand_more
-        : Icons.expand_less;
+    final isBottom = widget.queue.verticalDirection == VerticalDirection.up;
+    final expandMoreIcon = isBottom ? Icons.expand_less : Icons.expand_more;
+    final expandLessIcon = isBottom ? Icons.expand_more : Icons.expand_less;
     return SizedBox.square(
       dimension: 32,
       child: Center(

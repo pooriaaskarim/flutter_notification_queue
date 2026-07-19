@@ -14,7 +14,8 @@ void main() {
           ),
         },
         queues: {
-          const TopRightQueue(
+          const NotificationQueue(
+            position: QueuePosition.topRight,
             dragBehavior: Reorder(),
             longPressDragBehavior: Reorder(),
           ),
