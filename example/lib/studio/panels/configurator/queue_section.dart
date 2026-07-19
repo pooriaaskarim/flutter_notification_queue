@@ -165,11 +165,10 @@ class _QueueEditor extends StatelessWidget {
     TapDisabled,
   ];
 
-  String _formatType(final Type t) => t
-      .toString()
-      .replaceAll('QueueStyle', '')
-      .replaceAll('TransitionStrategy', '')
-      .toUpperCase();
+  String _formatBehaviorType(final Type t) => switch (t) {
+        == ReorderAndRelocate => 'REORDER & RELOCATE',
+        _ => t.toString().toUpperCase(),
+      };
 
   @override
   Widget build(final BuildContext context) {
@@ -219,7 +218,7 @@ class _QueueEditor extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Both gestures are set to '
-                        '${_formatType(setup.dragBehaviorType)}. '
+                        '${_formatBehaviorType(setup.dragBehaviorType)}. '
                         'You might want to use different behaviors for better '
                         'interaction.',
                         style: TextStyle(
@@ -316,7 +315,10 @@ class _QueueEditor extends StatelessWidget {
               label: 'VISUAL STYLE',
               value: setup.styleType,
               items: _styleTypes,
-              itemLabel: _formatType,
+              itemLabel: (final t) => t
+                  .toString()
+                  .replaceAll('QueueStyle', '')
+                  .toUpperCase(),
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateQueue(
                       position,
@@ -329,7 +331,10 @@ class _QueueEditor extends StatelessWidget {
               label: 'TRANSITION STRATEGY',
               value: setup.transitionType,
               items: _transitionTypes,
-              itemLabel: _formatType,
+              itemLabel: (final t) => t
+                  .toString()
+                  .replaceAll('TransitionStrategy', '')
+                  .toUpperCase(),
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateQueue(
                       position,
@@ -349,12 +354,7 @@ class _QueueEditor extends StatelessWidget {
                 }
                 return true;
               }).toList(),
-              itemLabel: (final e) {
-                if (e == ReorderAndRelocate) {
-                  return 'REORDER & RELOCATE';
-                }
-                return e.toString().toUpperCase();
-              },
+              itemLabel: _formatBehaviorType,
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateQueue(
                       position,
@@ -396,6 +396,7 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
+
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'LONG PRESS DRAG BEHAVIOR',
@@ -407,12 +408,7 @@ class _QueueEditor extends StatelessWidget {
                 }
                 return true;
               }).toList(),
-              itemLabel: (final e) {
-                if (e == ReorderAndRelocate) {
-                  return 'REORDER & RELOCATE';
-                }
-                return e.toString().toUpperCase();
-              },
+              itemLabel: _formatBehaviorType,
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateQueue(
                       position,
@@ -454,6 +450,7 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
+
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'CLOSE BUTTON VISIBILITY',

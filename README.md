@@ -233,34 +233,50 @@ const OutlinedQueueStyle(
 
 ### Drag and Gesture Behaviors
 
+FNQ uses an **Intent-First interaction model**. Each queue independently declares what a drag or long-press means:
+
+*   **`Dismiss`**: Swipe to dismiss. Configurable zones: `DismissZone.sideEdges` or `DismissZone.naturalDirection`.
+*   **`Reorder`**: Drag-to-reorder within the current stack. Live-shifting layout with hysteresis-based slot targeting.
+*   **`Relocate`**: Drag to relocate a card to a different queue position (e.g. park to a corner).
+*   **`ReorderAndRelocate`**: Reorder within the stack by default; drag past a configurable escape threshold to relocate.
+*   **`Disabled`**: No drag interaction.
+
 ```dart
-// Dismiss on drag
-const Dismiss(thresholdInPixels: 50)
+NotificationQueue(
+  position: QueuePosition.topRight,
+  dragBehavior: const Dismiss(),
+  longPressDragBehavior: Relocate.to({QueuePosition.bottomRight}),
+)
 
-// Relocate to specific positions
-Relocate.to({
-  QueuePosition.topLeft,
-  QueuePosition.topRight,
-  QueuePosition.bottomCenter,
-})
-
-// Disable gesture
-const Disabled()
+NotificationQueue(
+  position: QueuePosition.topLeft,
+  dragBehavior: const Reorder(),
+  longPressDragBehavior: ReorderAndRelocate.to(
+    positions: {QueuePosition.bottomLeft},
+  ),
+)
+```
 
 > [!TIP]
-> **Relocation Intelligence**: When you define `Relocate.to({...})` for a queue, the system automatically:
+> **Relocation Intelligence**: When you define `Relocate.to({...})` or `ReorderAndRelocate.to(positions: {...})` for a queue, the system automatically:
 > 1. Registers sibling queues for all target positions (no need to define them manually).
 > 2. Clones all characteristics (style, transition, spacing, maxStackSize) from the source queue to siblings.
 > 3. Adds the source position to the target set so notifications can be dragged back home.
 
-```
+### Interaction Details
+
+*   **Reorder with Hysteresis**: When using `Reorder` or `ReorderAndRelocate`, the insertion slot targeting uses a gravity-well algorithm — the active target zone holds a larger magnetic hit area, preventing accidental slot switches from minor pointer wobble during drags.
+*   **Selection Reticle**: The current insertion target is highlighted with a glowing border and a subtle background dimming so the drop slot is always visually clear.
+*   **Self-Drop Suppression**: Dragging a card back to its original position suppresses all insertion feedback and shows an empty placeholder, making it easy to cancel a reorder.
+*   **Hover-to-Pause**: On desktop, hovering over a notification with an active auto-dismiss timer pauses the countdown. The timer resumes when the pointer leaves.
+*   **Spring Snapback**: Releasing a drag that did not cross the activation threshold returns the card to its starting position using configurable spring physics (`SpringPhysicsConfiguration`).
 
 ### Close Button Behaviors
 
 ```dart
 const AlwaysVisible() // Always visible
-const VisibleOnHover() // Adaptive visibility (touch-safe)
-const Hidden() // Never show (gesture-only)
+const VisibleOnHover() // Adaptive visibility (shows subtle opacity for touch, fully hidden on desktop until hover)
+const Hidden() // Never show close button (gesture/tap-only dismissal)
 ```
 
 ### Architecture Concepts: Channels vs. Queues
@@ -279,10 +295,16 @@ To prevent visual clutter when multiple notifications from the same source arriv
 
 ```dart
 // Configure queue with grouping behavior
-NotificationQueue(position: QueuePosition.topCenter, groupingBehavior: QueueGroupingBehavior(
+NotificationQueue(
+  position: QueuePosition.topCenter,
+  groupingBehavior: QueueGroupingBehavior(
     enabled: true,
-    maxBeforeGrouping: 3, // Group after 3 notifications
-    enableGroupSwipeDismiss: true, // Dismiss whole group on swipe
+    maxBeforeGrouping: 3, // Collapse after 3 notifications arrive
+    maxStackedLayers: 2, // Number of background card decks to show
+    stackStepOffset: 6.0, // Vertical spacing between card decks
+    stackScaleMultiplier: 0.05, // Scale reduction per stacked deck
+    enableGroupSwipeDismiss: true, // Dismiss the whole group on swipe
+    groupDismissThreshold: 0.4, // Swipe displacement ratio to dismiss group
   ),
 )
 ```
@@ -608,74 +630,30 @@ NotificationQueue(position: QueuePosition.topCenter, queueIndicatorBuilder: (con
 
 ## 📈 Migration Guide
 
-### From 0.4.x to 0.5.0
-
-Version 0.5.0 stabilizes the API surface for the v1.0 release, introducing robustness fixes for reconfiguration and removing internal-only classes from public exports.
-
-**Key Changes:**
-
-- **Renamed `initialize()` to `configure()`**: Update all `FlutterNotificationQueue.initialize(...)` calls to `FlutterNotificationQueue.configure(...)`.
-- **Removed `QueueCoordinator` Export**: The internal `QueueCoordinator` is no longer exported from `package:flutter_notification_queue/flutter_notification_queue.dart`. Use `FlutterNotificationQueue` static facade APIs.
-- **Stable Events Stream**: The `FlutterNotificationQueue.events` stream is now a stable broadcast proxy. You no longer need to cancel and re-subscribe to `events` when calling `configure()` or `reset()`.
-- **Explicit `permanent` Property**: Added `permanent: true` to `NotificationWidget` factory as the official way to make a single notification permanent, overriding channel-level default dismiss durations.
-
-### From 0.3.x to 0.4.0
-
-Version 0.4.0 introduces a unified core engine, replacing the legacy context based
-`NotificationManager` singleton with a more robust contextless widget-tree integration.
-
-**Key Changes:**
-
-- `NotificationManager` has been removed.
-- Initialization is now explicitly required via `FlutterNotificationQueue.configure()`.
-- Integration is now handled via the `builder` pattern in `MaterialApp`.
-
-**Old Pattern (Singleton-based):**
-
-```dart
-// Initialization was often implicit or internal
-NotificationManager.instance.show(...);
-```
-
-**New Pattern (Core Engine):**
-
-```dart
-void main() {
-  // 1. Initialize configuration
-  FlutterNotificationQueue.configure(
-    channels: {...},
-    queues: {...},
-  );
-
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      // 2. Wrap your app using the builder
-      builder: FlutterNotificationQueue.builder,
-      home: const Screen(),
-    );
-  }
-}
-```
-
 ### From 0.1.x to 0.2.0
 
-The API has been significantly enhanced while maintaining backward compatibility:
+Version 0.2.0 consolidates the API and removes position-specific queue subclasses to simplify integration.
 
-```dart
-// Old way (deprecated)
-context.showSuccess('Message');
+**Key Changes:**
 
-// New way (recommended)
-NotificationWidget(
-  message: 'Message',
-  channelName: 'success',
-).show();
-```
+*   **Subclass Removal / Unified `NotificationQueue`**: All position-specific subclasses of `NotificationQueue` (e.g. `TopLeftQueue`, `TopCenterQueue`, `BottomCenterQueue`) have been removed. Use the single concrete `NotificationQueue` class directly and specify its `position` parameter.
+    
+    ```diff
+    // Old (deprecated in 0.1.0, removed in 0.2.0)
+    -const TopLeftQueue(
+    -  style: FlatQueueStyle(),
+    -)
+    
+    // New (v0.2.0+)
+    +const NotificationQueue(
+    +  position: QueuePosition.topLeft,
+    +  style: FlatQueueStyle(),
+    +)
+    ```
+
+*   **Simplified `QueuePosition` Helpers**: `QueuePosition.generateQueue(...)` and `QueuePosition.generateQueueFrom(...)` now directly construct and return a concrete `NotificationQueue` instance rather than a subclass.
+
+*   **Internal State Decoupling**: Configuration blueprints in `NotificationWidget` are now separated from active runtime state (dismiss timers, pinned states, priority) using the internal `NotificationEntry` class, preventing any `GlobalKey` conflicts.
 
 ## Contributing
 
