@@ -65,11 +65,8 @@ enum DismissZone {
   /// The notification can be dismissed by dragging it to the left or right
   /// edges of the screen.
   ///
-  /// These zones are vertically centered based on the queue's position.
-  /// for example:
-  /// * For top queues, the zones are near the top of the screen.
-  /// * For center queues, the zones are in the middle of the screen.
-  /// * For bottom queues, the zones are near the bottom of the screen.
+  /// These zones span the entire height of the screen, allowing dismissal
+  /// from any vertical position.
   sideEdges,
 
   /// The notification can be dismissed by dragging it in the natural direction
