@@ -49,7 +49,7 @@ class QueueCoordinator {
   /// This bridges the gap between a logical enqueue request and the visual
   /// mount of the [QueueWidget]. When a queue is requested but not yet mounted,
   /// items are stored here.
-  final _initializationQueue = <QueuePosition, List<NotificationWidget>>{};
+  final _initializationQueue = <QueuePosition, List<NotificationEntry>>{};
 
   /// The set of currently active queues (those with visible notifications).
   final _activeQueuesNotifier =
@@ -72,7 +72,7 @@ class QueueCoordinator {
 
   /// Retrieves and clears pending initialization items for a queue.
   /// Called by [QueueWidgetState.initState].
-  List<NotificationWidget> consumeInitializationQueue(
+  List<NotificationEntry> consumeInitializationQueue(
     final QueuePosition position,
   ) =>
       _initializationQueue.remove(position) ?? [];
@@ -100,14 +100,19 @@ class QueueCoordinator {
     final key = _widgetStateKeys[notificationQueue.position];
     final isMounted = key?.currentState != null;
 
+    final entry = NotificationEntry(
+      blueprint: notification,
+      queue: notificationQueue,
+    );
+
     if (isMounted) {
       // Widget is alive, delegate directly.
-      key!.currentState!.enqueue(notification);
+      key!.currentState!.enqueue(entry);
     } else {
       // Widget is not alive. Schedule startup.
       _initializationQueue
           .putIfAbsent(notificationQueue.position, () => [])
-          .add(notification);
+          .add(entry);
       _mountQueue(notificationQueue);
     }
   }

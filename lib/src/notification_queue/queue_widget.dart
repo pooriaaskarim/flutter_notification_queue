@@ -16,7 +16,7 @@ class QueueWidget extends StatefulWidget {
 
 class QueueWidgetState extends State<QueueWidget>
     with TickerProviderStateMixin {
-  final _pendingNotifications = Queue<NotificationWidget>();
+  final _pendingNotifications = Queue<NotificationEntry>();
   final List<_NotificationItemState> _items = [];
   final Set<String> _expandedGroups = {};
 
@@ -144,23 +144,23 @@ class QueueWidgetState extends State<QueueWidget>
     super.dispose();
   }
 
-  void enqueue(final NotificationWidget notification) {
+  void enqueue(final NotificationEntry entry) {
     // 1. Update Existing Active
-    final existingIndex = _indexOf(notification.id);
+    final existingIndex = _indexOf(entry.id);
     if (existingIndex != -1) {
       setState(() {
-        _items[existingIndex].widget = notification;
+        _items[existingIndex].entry = entry;
       });
       return;
     }
 
     // 2. Update Pending (in-place)
     bool isPendingUpdate = false;
-    final tempQueue = Queue<NotificationWidget>();
+    final tempQueue = Queue<NotificationEntry>();
     while (_pendingNotifications.isNotEmpty) {
       final n = _pendingNotifications.removeFirst();
-      if (n.id == notification.id) {
-        tempQueue.add(notification);
+      if (n.id == entry.id) {
+        tempQueue.add(entry);
         isPendingUpdate = true;
       } else {
         tempQueue.add(n);
@@ -191,18 +191,18 @@ class QueueWidgetState extends State<QueueWidget>
         _pendingNotifications.remove(oldestOfLowest);
         FlutterNotificationQueue.coordinator.emitOverflowed(
           queue: widget.queue,
-          dropped: oldestOfLowest,
+          dropped: oldestOfLowest.blueprint,
         );
-        _pendingNotifications.add(notification);
+        _pendingNotifications.add(entry);
       } else {
         FlutterNotificationQueue.coordinator.emitOverflowed(
           queue: widget.queue,
-          dropped: notification,
+          dropped: entry.blueprint,
         );
         return;
       }
     } else {
-      _pendingNotifications.add(notification);
+      _pendingNotifications.add(entry);
     }
     _sortPending();
     _triagePriorityEviction();
@@ -431,7 +431,7 @@ class QueueWidgetState extends State<QueueWidget>
 
     while (_pendingNotifications.isNotEmpty &&
         _items.length + toAdd.length < limit) {
-      final notification = _pendingNotifications.removeFirst();
+      final entry = _pendingNotifications.removeFirst();
       final controller = AnimationController(
         vsync: this,
         duration: const Duration(milliseconds: 300),
@@ -439,7 +439,7 @@ class QueueWidgetState extends State<QueueWidget>
       );
       toAdd.add(
         _NotificationItemState(
-          widget: notification,
+          entry: entry,
           controller: controller,
         ),
       );
@@ -503,7 +503,7 @@ class QueueWidgetState extends State<QueueWidget>
             _removeItemImmediate(itemIndex);
           }
 
-          _pendingNotifications.add(evictedWidget);
+          _pendingNotifications.add(lowestActiveItem.entry);
           _sortPending();
 
           _processPending();
@@ -1257,11 +1257,12 @@ enum _ItemStatus { entering, exiting }
 
 class _NotificationItemState {
   _NotificationItemState({
-    required this.widget,
+    required this.entry,
     required this.controller,
   });
 
-  NotificationWidget widget;
+  NotificationEntry entry;
+  NotificationWidget get widget => entry.blueprint;
   final AnimationController controller;
   final GlobalKey globalKey = GlobalKey();
   _ItemStatus status = _ItemStatus.entering;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_notification_queue/src/notification_queue/notification_queue.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -7,13 +8,20 @@ import 'package:flutter_test/flutter_test.dart';
 QueueWidgetState getState(final WidgetTester tester) =>
     tester.state<QueueWidgetState>(find.byType(QueueWidget));
 
+void _enqueue(final QueueWidgetState state, final NotificationWidget n) {
+  state.enqueue(NotificationEntry(blueprint: n, queue: n.queue));
+}
+
 void main() {
   group('QueueWidgetState', () {
     setUp(() {
       // Initialize system
       FlutterNotificationQueue.configure(
         queues: {
-          const TopRightQueue(maxStackSize: 2), // Limit 2 for testing overflow
+          const NotificationQueue(
+            position: QueuePosition.topRight,
+            maxStackSize: 2,
+          ), // Limit 2 for testing overflow
         },
         channels: {
           const NotificationChannel(
@@ -33,7 +41,10 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             body: QueueWidget(
-              queue: TopRightQueue(maxStackSize: 2),
+              queue: NotificationQueue(
+                position: QueuePosition.topRight,
+                maxStackSize: 2,
+              ),
             ),
           ),
         ),
@@ -45,7 +56,7 @@ void main() {
         message: 'Message 1',
       );
 
-      state.enqueue(notification);
+      _enqueue(state, notification);
       // Pump to start animation and settle it
       await tester.pump();
       await tester.pumpAndSettle();
@@ -58,7 +69,10 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             body: QueueWidget(
-              queue: TopRightQueue(maxStackSize: 2),
+              queue: NotificationQueue(
+                position: QueuePosition.topRight,
+                maxStackSize: 2,
+              ),
             ),
           ),
         ),
@@ -69,16 +83,15 @@ void main() {
       final n2 = NotificationWidget(id: 'n2', message: 'Message 2');
       final n3 = NotificationWidget(id: 'n3', message: 'Message 3');
 
-      state
-        ..enqueue(n1)
-        ..enqueue(n2);
+      _enqueue(state, n1);
+      _enqueue(state, n2);
       await tester.pump();
       await tester.pumpAndSettle();
 
       expect(find.text('Message 1'), findsOneWidget);
       expect(find.text('Message 2'), findsOneWidget);
 
-      state.enqueue(n3);
+      _enqueue(state, n3);
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -90,7 +103,10 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             body: QueueWidget(
-              queue: TopRightQueue(maxStackSize: 2),
+              queue: NotificationQueue(
+                position: QueuePosition.topRight,
+                maxStackSize: 2,
+              ),
             ),
           ),
         ),
@@ -101,10 +117,9 @@ void main() {
       final n2 = NotificationWidget(id: 'n2', message: 'Message 2');
       final n3 = NotificationWidget(id: 'n3', message: 'Message 3');
 
-      state
-        ..enqueue(n1)
-        ..enqueue(n2)
-        ..enqueue(n3);
+      _enqueue(state, n1);
+      _enqueue(state, n2);
+      _enqueue(state, n3);
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -122,7 +137,7 @@ void main() {
         const MaterialApp(
           home: Scaffold(
             body: QueueWidget(
-              queue: TopRightQueue(),
+              queue: NotificationQueue(position: QueuePosition.topRight),
             ),
           ),
         ),
@@ -130,13 +145,13 @@ void main() {
 
       final state = getState(tester);
       final n1 = NotificationWidget(id: 'n1', message: 'Original');
-      state.enqueue(n1);
+      _enqueue(state, n1);
       await tester.pump();
       await tester.pumpAndSettle(); // Settle entry animation
       expect(find.text('Original'), findsOneWidget);
 
       final n1Update = NotificationWidget(id: 'n1', message: 'Updated');
-      state.enqueue(n1Update);
+      _enqueue(state, n1Update);
       await tester.pump();
       await tester.pumpAndSettle();
 

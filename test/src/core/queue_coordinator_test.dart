@@ -17,7 +17,7 @@ void main() {
       // Initialize system to support NotificationWidget factory
       FlutterNotificationQueue.configure(
         queues: {
-          const TopRightQueue(),
+          const NotificationQueue(position: QueuePosition.topRight),
         },
         channels: {
           const NotificationChannel(
@@ -62,7 +62,7 @@ void main() {
         final items =
             coordinator.consumeInitializationQueue(QueuePosition.topRight);
         expect(items.length, 1);
-        expect(items.first, notification);
+        expect(items.first.blueprint, notification);
 
         // Should trigger overlay show
         verify(() => mockOverlayController.show()).called(1);
