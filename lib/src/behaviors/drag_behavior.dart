@@ -26,9 +26,6 @@ sealed class QueueNotificationBehavior<T> {
 
   /// Configuration for physical spring simulations during snap-back.
   final SpringPhysicsConfiguration springPhysics;
-
-  /// Creates the gesture plugin executing this behavior.
-  NotificationGesturePlugin createPlugin();
 }
 
 /// Relocates the notification to the specified positions.
@@ -61,10 +58,6 @@ final class Relocate<T> extends QueueNotificationBehavior<T> {
   }
 
   final Set<QueuePosition> positions;
-
-  @override
-  NotificationGesturePlugin createPlugin() =>
-      RelocateGesturePlugin(behavior: this);
 }
 
 /// Dismisses the notification.
@@ -82,10 +75,6 @@ final class Dismiss<T> extends QueueNotificationBehavior<T> {
   ///
   /// Defaults to [DismissZone.sideEdges].
   final DismissZone zones;
-
-  @override
-  NotificationGesturePlugin createPlugin() =>
-      DismissGesturePlugin(behavior: this);
 }
 
 /// Reorders the notification within its current queue.
@@ -98,10 +87,6 @@ final class Reorder<T> extends QueueNotificationBehavior<T> {
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
     super.springPhysics = const SpringPhysicsConfiguration.premium(),
   });
-
-  @override
-  NotificationGesturePlugin createPlugin() =>
-      ReorderGesturePlugin(behavior: this);
 }
 
 final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
@@ -137,10 +122,6 @@ final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
   /// Pixels beyond the source queue's rendered bounding box at which the
   /// system switches from Reorder to Relocate mode.
   final double escapeThresholdInPixels;
-
-  @override
-  NotificationGesturePlugin createPlugin() =>
-      ReorderRelocateGesturePlugin(behavior: this);
 }
 
 final class Disabled<T> extends QueueNotificationBehavior<T> {
@@ -149,10 +130,6 @@ final class Disabled<T> extends QueueNotificationBehavior<T> {
           thresholdInPixels: kDefaultQueueDragBehaviorThreshold,
           springPhysics: const SpringPhysicsConfiguration(),
         );
-
-  @override
-  NotificationGesturePlugin createPlugin() =>
-      throw UnsupportedError('Disabled behavior has no plugin');
 }
 
 typedef LongPressDragBehavior = QueueNotificationBehavior<OnLongPress>;

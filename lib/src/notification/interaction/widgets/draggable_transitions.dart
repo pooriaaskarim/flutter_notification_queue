@@ -226,7 +226,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     required final QueueNotificationBehavior behavior,
     required final bool isLongPress,
   }) {
-    final plugin = behavior.createPlugin();
+    final plugin = behavior.resolvePlugin();
 
     int? originalIndex;
 

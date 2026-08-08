@@ -18,6 +18,7 @@ part 'interaction/plugins/pin.dart';
 part 'interaction/plugins/relocate.dart';
 part 'interaction/plugins/reorder.dart';
 part 'interaction/plugins/reorder_relocate.dart';
+part 'interaction/plugins/resolver.dart';
 part 'interaction/plugins/snooze.dart';
 part 'interaction/zones/base.dart';
 part 'interaction/zones/edges.dart';

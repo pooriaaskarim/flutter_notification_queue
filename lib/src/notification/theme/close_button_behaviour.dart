@@ -1,4 +1,4 @@
-part of 'behaviors.dart';
+part of '../../behaviors/behaviors.dart';
 
 /// Controls when and how the close button appears on notifications.
 ///
