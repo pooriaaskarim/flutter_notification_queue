@@ -1,7 +1,7 @@
 part of '../../notification.dart';
 
-class _IntentTargets extends StatelessWidget {
-  const _IntentTargets({
+class IntentTargets extends StatelessWidget {
+  const IntentTargets({
     required this.screenSize,
     required this.threshold,
     required this.zones,
@@ -9,6 +9,7 @@ class _IntentTargets extends StatelessWidget {
     required this.icon,
     required this.activeColor,
     required this.label,
+    super.key,
   });
 
   final double threshold;
@@ -389,12 +390,13 @@ class _IntentIdleHandleState extends State<_IntentIdleHandle>
   }
 }
 
-class _SnoozeTargets extends StatelessWidget {
-  const _SnoozeTargets({
+class SnoozeTargets extends StatelessWidget {
+  const SnoozeTargets({
     required this.screenSize,
     required this.threshold,
     required this.zones,
     required this.pointerPositionNotifier,
+    super.key,
   });
 
   final double threshold;
@@ -403,7 +405,7 @@ class _SnoozeTargets extends StatelessWidget {
   final ValueNotifier<OffsetPair?> pointerPositionNotifier;
 
   @override
-  Widget build(final BuildContext context) => _IntentTargets(
+  Widget build(final BuildContext context) => IntentTargets(
         screenSize: screenSize,
         threshold: threshold,
         zones: zones,
@@ -414,13 +416,14 @@ class _SnoozeTargets extends StatelessWidget {
       );
 }
 
-class _PinTargets extends StatelessWidget {
-  const _PinTargets({
+class PinTargets extends StatelessWidget {
+  const PinTargets({
     required this.screenSize,
     required this.threshold,
     required this.zones,
     required this.pointerPositionNotifier,
     required this.isPinned,
+    super.key,
   });
 
   final double threshold;
@@ -430,7 +433,7 @@ class _PinTargets extends StatelessWidget {
   final bool isPinned;
 
   @override
-  Widget build(final BuildContext context) => _IntentTargets(
+  Widget build(final BuildContext context) => IntentTargets(
         screenSize: screenSize,
         threshold: threshold,
         zones: zones,
@@ -441,12 +444,13 @@ class _PinTargets extends StatelessWidget {
       );
 }
 
-class _ArchiveTargets extends StatelessWidget {
-  const _ArchiveTargets({
+class ArchiveTargets extends StatelessWidget {
+  const ArchiveTargets({
     required this.screenSize,
     required this.threshold,
     required this.zones,
     required this.pointerPositionNotifier,
+    super.key,
   });
 
   final double threshold;
@@ -455,7 +459,7 @@ class _ArchiveTargets extends StatelessWidget {
   final ValueNotifier<OffsetPair?> pointerPositionNotifier;
 
   @override
-  Widget build(final BuildContext context) => _IntentTargets(
+  Widget build(final BuildContext context) => IntentTargets(
         screenSize: screenSize,
         threshold: threshold,
         zones: zones,
@@ -466,13 +470,14 @@ class _ArchiveTargets extends StatelessWidget {
       );
 }
 
-class _CustomActionTargets extends StatelessWidget {
-  const _CustomActionTargets({
+class CustomActionTargets extends StatelessWidget {
+  const CustomActionTargets({
     required this.screenSize,
     required this.threshold,
     required this.zones,
     required this.pointerPositionNotifier,
     required this.actionName,
+    super.key,
   });
 
   final double threshold;
@@ -482,7 +487,7 @@ class _CustomActionTargets extends StatelessWidget {
   final String actionName;
 
   @override
-  Widget build(final BuildContext context) => _IntentTargets(
+  Widget build(final BuildContext context) => IntentTargets(
         screenSize: screenSize,
         threshold: threshold,
         zones: zones,
@@ -493,8 +498,8 @@ class _CustomActionTargets extends StatelessWidget {
       );
 }
 
-class _IntentFeedbackOverlay extends StatefulWidget {
-  const _IntentFeedbackOverlay({
+class IntentFeedbackOverlay extends StatefulWidget {
+  const IntentFeedbackOverlay({
     required this.passedThreshold,
     required this.dragOffset,
     required this.thresholdInPixels,
@@ -505,13 +510,14 @@ class _IntentFeedbackOverlay extends StatefulWidget {
     required this.activeColor,
     required this.labelText,
     required this.child,
+    super.key,
   });
 
   final bool passedThreshold;
   final Offset? dragOffset;
   final int thresholdInPixels;
   final Size screenSize;
-  final _DragStartData? startData;
+  final DragStartData? startData;
   final List<EdgeDropZone> zones;
   final SpringPhysicsConfiguration springPhysics;
   final Color activeColor;
@@ -519,10 +525,10 @@ class _IntentFeedbackOverlay extends StatefulWidget {
   final Widget child;
 
   @override
-  State<_IntentFeedbackOverlay> createState() => _IntentFeedbackOverlayState();
+  State<IntentFeedbackOverlay> createState() => _IntentFeedbackOverlayState();
 }
 
-class _IntentFeedbackOverlayState extends State<_IntentFeedbackOverlay>
+class _IntentFeedbackOverlayState extends State<IntentFeedbackOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _sinkingController;
 
@@ -538,7 +544,7 @@ class _IntentFeedbackOverlayState extends State<_IntentFeedbackOverlay>
   }
 
   @override
-  void didUpdateWidget(covariant final _IntentFeedbackOverlay oldWidget) {
+  void didUpdateWidget(covariant final IntentFeedbackOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.passedThreshold != widget.passedThreshold) {
       _animateToTarget();
@@ -716,7 +722,7 @@ class _IntentFeedbackOverlayState extends State<_IntentFeedbackOverlay>
 
   Offset _calculateMagnetCorrection({
     required final Offset dragOffset,
-    required final _DragStartData startData,
+    required final DragStartData startData,
     required final EdgeDropZone? lockedZone,
   }) {
     final Offset nominalTopLeft = dragOffset - startData.touchOffset;
@@ -748,8 +754,8 @@ class _IntentFeedbackOverlayState extends State<_IntentFeedbackOverlay>
   }
 }
 
-class _SnoozeFeedbackOverlay extends StatelessWidget {
-  const _SnoozeFeedbackOverlay({
+class SnoozeFeedbackOverlay extends StatelessWidget {
+  const SnoozeFeedbackOverlay({
     required this.passedThreshold,
     required this.dragOffset,
     required this.thresholdInPixels,
@@ -758,19 +764,20 @@ class _SnoozeFeedbackOverlay extends StatelessWidget {
     required this.zones,
     required this.springPhysics,
     required this.child,
+    super.key,
   });
 
   final bool passedThreshold;
   final Offset? dragOffset;
   final int thresholdInPixels;
   final Size screenSize;
-  final _DragStartData? startData;
+  final DragStartData? startData;
   final List<EdgeDropZone> zones;
   final SpringPhysicsConfiguration springPhysics;
   final Widget child;
 
   @override
-  Widget build(final BuildContext context) => _IntentFeedbackOverlay(
+  Widget build(final BuildContext context) => IntentFeedbackOverlay(
         passedThreshold: passedThreshold,
         dragOffset: dragOffset,
         thresholdInPixels: thresholdInPixels,
@@ -784,8 +791,8 @@ class _SnoozeFeedbackOverlay extends StatelessWidget {
       );
 }
 
-class _PinFeedbackOverlay extends StatelessWidget {
-  const _PinFeedbackOverlay({
+class PinFeedbackOverlay extends StatelessWidget {
+  const PinFeedbackOverlay({
     required this.passedThreshold,
     required this.dragOffset,
     required this.thresholdInPixels,
@@ -795,20 +802,21 @@ class _PinFeedbackOverlay extends StatelessWidget {
     required this.springPhysics,
     required this.isPinned,
     required this.child,
+    super.key,
   });
 
   final bool passedThreshold;
   final Offset? dragOffset;
   final int thresholdInPixels;
   final Size screenSize;
-  final _DragStartData? startData;
+  final DragStartData? startData;
   final List<EdgeDropZone> zones;
   final SpringPhysicsConfiguration springPhysics;
   final bool isPinned;
   final Widget child;
 
   @override
-  Widget build(final BuildContext context) => _IntentFeedbackOverlay(
+  Widget build(final BuildContext context) => IntentFeedbackOverlay(
         passedThreshold: passedThreshold,
         dragOffset: dragOffset,
         thresholdInPixels: thresholdInPixels,
@@ -822,8 +830,8 @@ class _PinFeedbackOverlay extends StatelessWidget {
       );
 }
 
-class _ArchiveFeedbackOverlay extends StatelessWidget {
-  const _ArchiveFeedbackOverlay({
+class ArchiveFeedbackOverlay extends StatelessWidget {
+  const ArchiveFeedbackOverlay({
     required this.passedThreshold,
     required this.dragOffset,
     required this.thresholdInPixels,
@@ -832,19 +840,20 @@ class _ArchiveFeedbackOverlay extends StatelessWidget {
     required this.zones,
     required this.springPhysics,
     required this.child,
+    super.key,
   });
 
   final bool passedThreshold;
   final Offset? dragOffset;
   final int thresholdInPixels;
   final Size screenSize;
-  final _DragStartData? startData;
+  final DragStartData? startData;
   final List<EdgeDropZone> zones;
   final SpringPhysicsConfiguration springPhysics;
   final Widget child;
 
   @override
-  Widget build(final BuildContext context) => _IntentFeedbackOverlay(
+  Widget build(final BuildContext context) => IntentFeedbackOverlay(
         passedThreshold: passedThreshold,
         dragOffset: dragOffset,
         thresholdInPixels: thresholdInPixels,
@@ -858,8 +867,8 @@ class _ArchiveFeedbackOverlay extends StatelessWidget {
       );
 }
 
-class _CustomActionFeedbackOverlay extends StatelessWidget {
-  const _CustomActionFeedbackOverlay({
+class CustomActionFeedbackOverlay extends StatelessWidget {
+  const CustomActionFeedbackOverlay({
     required this.passedThreshold,
     required this.dragOffset,
     required this.thresholdInPixels,
@@ -869,20 +878,21 @@ class _CustomActionFeedbackOverlay extends StatelessWidget {
     required this.springPhysics,
     required this.actionName,
     required this.child,
+    super.key,
   });
 
   final bool passedThreshold;
   final Offset? dragOffset;
   final int thresholdInPixels;
   final Size screenSize;
-  final _DragStartData? startData;
+  final DragStartData? startData;
   final List<EdgeDropZone> zones;
   final SpringPhysicsConfiguration springPhysics;
   final String actionName;
   final Widget child;
 
   @override
-  Widget build(final BuildContext context) => _IntentFeedbackOverlay(
+  Widget build(final BuildContext context) => IntentFeedbackOverlay(
         passedThreshold: passedThreshold,
         dragOffset: dragOffset,
         thresholdInPixels: thresholdInPixels,

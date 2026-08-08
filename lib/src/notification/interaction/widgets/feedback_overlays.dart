@@ -1,23 +1,9 @@
 part of '../../notification.dart';
 
-class _DragStartData {
-  const _DragStartData({
-    required this.widgetPosition,
-    required this.pointerPosition,
-    required this.widgetSize,
-  });
-
-  final Offset widgetPosition;
-  final Offset pointerPosition;
-  final Size widgetSize;
-
-  Offset get touchOffset => pointerPosition - widgetPosition;
-}
-
 /// A sophisticated overlay that handles the physical transformation of the
 /// Notification Widget during dismissal and relocation interactions.
-class _DismissFeedbackOverlay extends StatefulWidget {
-  const _DismissFeedbackOverlay({
+class DismissFeedbackOverlay extends StatefulWidget {
+  const DismissFeedbackOverlay({
     required this.passedThreshold,
     required this.dragOffset,
     required this.thresholdInPixels,
@@ -26,23 +12,23 @@ class _DismissFeedbackOverlay extends StatefulWidget {
     required this.zones,
     required this.springPhysics,
     required this.child,
+    super.key,
   });
 
   final bool passedThreshold;
   final Offset? dragOffset;
   final int thresholdInPixels;
   final Size screenSize;
-  final _DragStartData? startData;
+  final DragStartData? startData;
   final List<EdgeDropZone> zones;
   final SpringPhysicsConfiguration springPhysics;
   final Widget child;
 
   @override
-  State<_DismissFeedbackOverlay> createState() =>
-      _DismissFeedbackOverlayState();
+  State<DismissFeedbackOverlay> createState() => _DismissFeedbackOverlayState();
 }
 
-class _DismissFeedbackOverlayState extends State<_DismissFeedbackOverlay>
+class _DismissFeedbackOverlayState extends State<DismissFeedbackOverlay>
     with SingleTickerProviderStateMixin {
   late final AnimationController _sinkingController;
 
@@ -58,7 +44,7 @@ class _DismissFeedbackOverlayState extends State<_DismissFeedbackOverlay>
   }
 
   @override
-  void didUpdateWidget(covariant final _DismissFeedbackOverlay oldWidget) {
+  void didUpdateWidget(covariant final DismissFeedbackOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.passedThreshold != widget.passedThreshold) {
       _animateToTarget();
@@ -229,7 +215,7 @@ class _DismissFeedbackOverlayState extends State<_DismissFeedbackOverlay>
 
   Offset _calculateMagnetCorrection({
     required final Offset dragOffset,
-    required final _DragStartData startData,
+    required final DragStartData startData,
     required final EdgeDropZone? lockedZone,
   }) {
     final Offset nominalTopLeft = dragOffset - startData.touchOffset;
@@ -261,16 +247,16 @@ class _DismissFeedbackOverlayState extends State<_DismissFeedbackOverlay>
   }
 }
 
-class _ReorderPlaceholder extends StatefulWidget {
-  const _ReorderPlaceholder({required this.child});
+class ReorderPlaceholder extends StatefulWidget {
+  const ReorderPlaceholder({required this.child, super.key});
 
   final Widget child;
 
   @override
-  State<_ReorderPlaceholder> createState() => _ReorderPlaceholderState();
+  State<ReorderPlaceholder> createState() => _ReorderPlaceholderState();
 }
 
-class _ReorderPlaceholderState extends State<_ReorderPlaceholder>
+class _ReorderPlaceholderState extends State<ReorderPlaceholder>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
   late final Animation<double> _pulse;
@@ -374,13 +360,14 @@ class _DashedBorderPainter extends CustomPainter {
 
 /// Wraps the dragged notification to give it a "lifted" appearance
 /// under continuous spring physics.
-class _LiftedFeedback extends StatefulWidget {
-  const _LiftedFeedback({
+class LiftedFeedback extends StatefulWidget {
+  const LiftedFeedback({
     required this.child,
     required this.passedThreshold,
     required this.nearestProgress,
     required this.widgetSize,
     required this.springPhysics,
+    super.key,
   });
 
   final Widget child;
@@ -390,10 +377,10 @@ class _LiftedFeedback extends StatefulWidget {
   final SpringPhysicsConfiguration springPhysics;
 
   @override
-  State<_LiftedFeedback> createState() => _LiftedFeedbackState();
+  State<LiftedFeedback> createState() => _LiftedFeedbackState();
 }
 
-class _LiftedFeedbackState extends State<_LiftedFeedback>
+class _LiftedFeedbackState extends State<LiftedFeedback>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
@@ -409,7 +396,7 @@ class _LiftedFeedbackState extends State<_LiftedFeedback>
   }
 
   @override
-  void didUpdateWidget(covariant final _LiftedFeedback oldWidget) {
+  void didUpdateWidget(covariant final LiftedFeedback oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.passedThreshold != widget.passedThreshold ||
         oldWidget.nearestProgress != widget.nearestProgress) {

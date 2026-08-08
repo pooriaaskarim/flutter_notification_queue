@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
-import 'package:flutter_notification_queue/src/enums/enums.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 // Bounded pump sequence that drives the 300ms entry/exit animation to

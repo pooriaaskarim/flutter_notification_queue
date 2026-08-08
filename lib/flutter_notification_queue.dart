@@ -1,5 +1,6 @@
 library;
 
+export 'src/behaviors/behaviors.dart' hide OnDrag, OnLongPress;
 export 'src/core/core.dart'
     show
         DismissReason,
@@ -19,8 +20,8 @@ export 'src/core/core.dart'
         NotificationTapped,
         NotificationUnpinned,
         QueueOverflowed;
-export 'src/enums/enums.dart' hide OnDrag, OnLongPress;
-
+export 'src/enums/enums.dart';
+export 'src/models/offset_pair.dart';
 export 'src/notification/notification.dart' hide NotificationActionType;
 export 'src/notification_channel/notification_channel.dart';
 export 'src/notification_queue/notification_queue.dart'

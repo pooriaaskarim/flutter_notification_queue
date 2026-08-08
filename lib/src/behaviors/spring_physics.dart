@@ -1,4 +1,4 @@
-part of 'enums.dart';
+part of 'behaviors.dart';
 
 /// Configuration for continuous physical spring simulations
 /// (e.g., snapbacks, active dragging magnets).

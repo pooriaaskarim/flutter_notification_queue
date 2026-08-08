@@ -1,4 +1,4 @@
-part of 'enums.dart';
+part of 'behaviors.dart';
 
 /// Triggers a snooze action, temporarily dismissing the notification and
 /// re-displaying it after the specified duration.
@@ -11,6 +11,10 @@ final class Snooze<T> extends QueueNotificationBehavior<T> {
 
   /// The duration to snooze the notification.
   final Duration duration;
+
+  @override
+  NotificationGesturePlugin createPlugin() =>
+      SnoozeGesturePlugin(behavior: this);
 }
 
 /// Pins the notification, preventing gesture-based dismissals and styling it
@@ -20,6 +24,9 @@ final class Pin<T> extends QueueNotificationBehavior<T> {
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
     super.springPhysics = const SpringPhysicsConfiguration.premium(),
   });
+
+  @override
+  NotificationGesturePlugin createPlugin() => PinGesturePlugin(behavior: this);
 }
 
 /// Archives the notification, removing it from the queue and triggering
@@ -29,6 +36,10 @@ final class Archive<T> extends QueueNotificationBehavior<T> {
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
     super.springPhysics = const SpringPhysicsConfiguration.premium(),
   });
+
+  @override
+  NotificationGesturePlugin createPlugin() =>
+      ArchiveGesturePlugin(behavior: this);
 }
 
 /// Triggers a developer-defined custom action identified by a unique action
@@ -42,4 +53,8 @@ final class CustomAction<T> extends QueueNotificationBehavior<T> {
 
   /// The unique key representing this custom action.
   final String actionName;
+
+  @override
+  NotificationGesturePlugin createPlugin() =>
+      CustomActionGesturePlugin(behavior: this);
 }

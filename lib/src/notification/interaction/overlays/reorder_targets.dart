@@ -33,8 +33,8 @@ const List<double> _kDesatMatrix = [
 /// Owns the three-stage slot indicator logic and the anchor computation
 /// lifecycle. Rebuilds whenever the pointer moves via
 /// [pointerPositionNotifier].
-class _ReorderTargets extends StatefulWidget {
-  const _ReorderTargets({
+class ReorderTargets extends StatefulWidget {
+  const ReorderTargets({
     required this.draggedIndex,
     required this.zones,
     required this.itemKeys,
@@ -42,12 +42,13 @@ class _ReorderTargets extends StatefulWidget {
     required this.nearestIndex,
     required this.pointerPositionNotifier,
     required this.ghostChild,
+    super.key,
   });
 
   /// The original queue index of the item currently being dragged.
   final int draggedIndex;
 
-  /// The slot zones produced by [_zonesFromSlots]. Anchors are written into
+  /// The slot zones produced by [zonesFromSlots]. Anchors are written into
   /// these zones after layout.
   final List<SlotDropZone> zones;
 
@@ -67,10 +68,10 @@ class _ReorderTargets extends StatefulWidget {
   final Widget ghostChild;
 
   @override
-  State<_ReorderTargets> createState() => _ReorderTargetsState();
+  State<ReorderTargets> createState() => _ReorderTargetsState();
 }
 
-class _ReorderTargetsState extends State<_ReorderTargets> {
+class _ReorderTargetsState extends State<ReorderTargets> {
   /// Returns the screen-space bounding box of a rendered notification widget.
   Rect? _boundsOf(final GlobalKey key) {
     final box = key.currentContext?.findRenderObject() as RenderBox?;

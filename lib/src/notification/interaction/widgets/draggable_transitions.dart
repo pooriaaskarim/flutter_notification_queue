@@ -15,13 +15,76 @@ class DraggableTransitions extends StatefulWidget {
 }
 
 class DraggableTransitionsState extends State<DraggableTransitions>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin
+    implements DragGestureContext {
   Size get _screenSize => Utils.screenSize(context);
 
   final ValueNotifier<OffsetPair?> _dragOffsetPairNotifier =
       ValueNotifier(null);
 
   List<SlotDropZone>? _activeReorderZones;
+
+  @override
+  NotificationWidget get notification => widget.notification;
+
+  @override
+  Size get screenSize => _screenSize;
+
+  @override
+  DragStartData? get dragStartData => _dragStartData;
+
+  @override
+  List<SlotDropZone>? get activeReorderZones => _activeReorderZones;
+
+  @override
+  set activeReorderZones(final List<SlotDropZone>? value) =>
+      _activeReorderZones = value;
+
+  @override
+  int? get activeZoneIndex => _activeZoneIndex;
+
+  @override
+  set activeZoneIndex(final int? value) => _activeZoneIndex = value;
+
+  @override
+  OverlayPortalController get overlayPortalController =>
+      _overlayPortalController;
+
+  @override
+  ValueNotifier<OffsetPair?> get dragOffsetPairNotifier =>
+      _dragOffsetPairNotifier;
+
+  @override
+  List<DropZone> getZones(
+    final QueueNotificationBehavior behavior,
+    final QueuePosition position,
+  ) =>
+      _getZones(behavior, position);
+
+  @override
+  bool passedThreshold(
+    final Offset? globalOffset,
+    final int thresholdInPixels,
+    final List<DropZone> zones,
+  ) =>
+      _passedThreshold(globalOffset, thresholdInPixels, zones);
+
+  @override
+  int? nearestZoneIndexWithHysteresis(
+    final Offset? pointer,
+    final List<SlotDropZone> zones,
+  ) =>
+      _nearestZoneIndexWithHysteresis(pointer, zones);
+
+  @override
+  double nearestZoneProgress(
+    final Offset? pointer,
+    final List<DropZone> zones,
+  ) =>
+      _nearestZoneProgress(pointer, zones);
+
+  @override
+  Widget buildDummyGhost(final Size size) => _buildDummyGhost(size);
 
   late final GestureStateMachine _fsm;
 
@@ -87,26 +150,6 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     _snapBackController.dispose();
     super.dispose();
   }
-
-  NotificationGesturePlugin _resolvePlugin(
-    final QueueNotificationBehavior behavior,
-  ) =>
-      switch (behavior) {
-        Dismiss() => DismissGesturePlugin(behavior: behavior),
-        Relocate() => RelocateGesturePlugin(behavior: behavior),
-        Reorder() => ReorderGesturePlugin(behavior: behavior),
-        ReorderAndRelocate() => ReorderRelocateGesturePlugin(
-            behavior: behavior,
-          ),
-        final Snooze behavior => SnoozeGesturePlugin(behavior: behavior),
-        final Pin behavior => PinGesturePlugin(behavior: behavior),
-        final Archive behavior => ArchiveGesturePlugin(behavior: behavior),
-        final CustomAction behavior => CustomActionGesturePlugin(
-            behavior: behavior,
-          ),
-        Disabled() => throw UnsupportedError('Disabled behavior has no plugin'),
-      };
-
   int stateIndexOfThisItem() {
     final position = widget.notification.queue.position;
     final queueKey =
@@ -183,7 +226,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     required final QueueNotificationBehavior behavior,
     required final bool isLongPress,
   }) {
-    final plugin = _resolvePlugin(behavior);
+    final plugin = behavior.createPlugin();
 
     int? originalIndex;
 
@@ -292,7 +335,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         hapticFeedbackOnStart: widget.hapticFeedbackOnStart,
         hitTestBehavior: HitTestBehavior.deferToChild,
         childWhenDragging: behavior is Reorder || behavior is ReorderAndRelocate
-            ? _ReorderPlaceholder(
+            ? ReorderPlaceholder(
                 child:
                     _buildDummyGhost(_dragStartData?.widgetSize ?? Size.zero),
               )
@@ -323,7 +366,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
       maxSimultaneousDrags: 1,
       hitTestBehavior: HitTestBehavior.deferToChild,
       childWhenDragging: behavior is Reorder || behavior is ReorderAndRelocate
-          ? _ReorderPlaceholder(
+          ? ReorderPlaceholder(
               child: _buildDummyGhost(_dragStartData?.widgetSize ?? Size.zero),
             )
           : const SizedBox.shrink(),
@@ -338,19 +381,19 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     final QueuePosition position,
   ) {
     if (behavior is Dismiss) {
-      return _edgesFromDismissZone(behavior.zones, position);
+      return edgesFromDismissZone(behavior.zones, position);
     } else if (behavior is Snooze) {
-      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+      return edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is Pin) {
-      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+      return edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is Archive) {
-      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+      return edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is CustomAction) {
-      return _edgesFromDismissZone(DismissZone.sideEdges, position);
+      return edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is Relocate) {
-      return _zonesFromPositions(behavior.positions, position);
+      return zonesFromPositions(behavior.positions, position);
     } else if (behavior is ReorderAndRelocate) {
-      return _zonesFromPositions(behavior.positions, position);
+      return zonesFromPositions(behavior.positions, position);
     }
     return [];
   }
@@ -399,7 +442,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         onPointerDown: (final event) {
           final renderBox = context.findRenderObject() as RenderBox?;
           if (renderBox != null) {
-            _dragStartData = _DragStartData(
+            _dragStartData = DragStartData(
               widgetPosition: renderBox.localToGlobal(Offset.zero),
               pointerPosition: event.position,
               widgetSize: renderBox.size,
@@ -409,7 +452,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         child: longPressWidget(),
       );
 
-  _DragStartData? _dragStartData;
+  DragStartData? _dragStartData;
   int? _activeZoneIndex;
 
   int? _nearestZoneIndexWithHysteresis(

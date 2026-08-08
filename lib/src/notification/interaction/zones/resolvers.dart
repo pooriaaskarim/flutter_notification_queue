@@ -7,7 +7,7 @@ part of '../../notification.dart';
 /// Each target position gets its own zone anchored at its screen location.
 /// The current queue position is excluded — you cannot relocate to where you
 /// already are.
-List<PositionDropZone> _zonesFromPositions(
+List<PositionDropZone> zonesFromPositions(
   final Set<QueuePosition> targetPositions,
   final QueuePosition currentPosition,
 ) =>
@@ -26,7 +26,7 @@ List<PositionDropZone> _zonesFromPositions(
 ///
 /// Anchors are not set here — they are computed and assigned by the feedback
 /// widget after layout, once sibling rendered positions are known.
-List<SlotDropZone> _zonesFromSlots(
+List<SlotDropZone> zonesFromSlots(
   final int itemCount,
   final int currentIndex,
 ) =>
@@ -36,7 +36,7 @@ List<SlotDropZone> _zonesFromSlots(
     );
 
 /// Resolves the active [EdgeDropZone]s for a [Dismiss] behavior.
-List<EdgeDropZone> _edgesFromDismissZone(
+List<EdgeDropZone> edgesFromDismissZone(
   final DismissZone zones,
   final QueuePosition currentPosition,
 ) {

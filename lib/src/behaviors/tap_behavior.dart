@@ -1,4 +1,4 @@
-part of 'enums.dart';
+part of 'behaviors.dart';
 
 /// Defines the tap interaction behavior for notifications.
 ///

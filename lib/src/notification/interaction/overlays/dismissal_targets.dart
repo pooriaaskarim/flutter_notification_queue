@@ -5,12 +5,13 @@ part of '../../notification.dart';
 ///
 /// Drop resolution is handled by [DraggableTransitionsState] in `onDragEnd`
 /// via coordinate-based zone evaluation — this widget has no callbacks.
-class _DismissalTargets extends StatelessWidget {
-  const _DismissalTargets({
+class DismissalTargets extends StatelessWidget {
+  const DismissalTargets({
     required this.screenSize,
     required this.threshold,
     required this.zones,
     required this.pointerPositionNotifier,
+    super.key,
   });
 
   /// The width/height threshold of the dismissal bars.

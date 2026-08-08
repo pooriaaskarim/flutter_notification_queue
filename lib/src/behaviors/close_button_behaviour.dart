@@ -1,4 +1,4 @@
-part of 'enums.dart';
+part of 'behaviors.dart';
 
 /// Controls when and how the close button appears on notifications.
 ///
@@ -22,10 +22,10 @@ part of 'enums.dart';
 ///
 /// [Hidden] removes the close button entirely. If used, the queue **must**
 /// provide at least one other dismissal method (drag or long-press drag),
-/// or [ConfigurationManager] will throw an [ArgumentError].
+/// or `ConfigurationManager` will throw an [ArgumentError].
 ///
 /// See also:
-/// - [ConfigurationManager._validateInputResilience], which enforces this.
+/// - `ConfigurationManager._validateInputResilience`, which enforces this.
 sealed class QueueCloseButtonBehavior {
   /// Creates a close button behavior.
   const QueueCloseButtonBehavior();

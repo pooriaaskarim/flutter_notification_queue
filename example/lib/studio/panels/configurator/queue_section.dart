@@ -315,10 +315,8 @@ class _QueueEditor extends StatelessWidget {
               label: 'VISUAL STYLE',
               value: setup.styleType,
               items: _styleTypes,
-              itemLabel: (final t) => t
-                  .toString()
-                  .replaceAll('QueueStyle', '')
-                  .toUpperCase(),
+              itemLabel: (final t) =>
+                  t.toString().replaceAll('QueueStyle', '').toUpperCase(),
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateQueue(
                       position,
@@ -396,7 +394,6 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
-
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'LONG PRESS DRAG BEHAVIOR',
@@ -450,7 +447,6 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
-
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'CLOSE BUTTON VISIBILITY',

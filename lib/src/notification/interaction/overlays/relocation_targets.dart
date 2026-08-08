@@ -6,13 +6,14 @@ part of '../../notification.dart';
 /// Hover state is driven by [pointerPositionNotifier] proximity rather than
 /// [DragTarget] candidateData, keeping the visual system independent of the
 /// Draggable type.
-class _RelocationTargets extends StatelessWidget {
-  const _RelocationTargets({
+class RelocationTargets extends StatelessWidget {
+  const RelocationTargets({
     required this.currentPosition,
     required this.targets,
     required this.screenSize,
     required this.pointerPositionNotifier,
     required this.threshold,
+    super.key,
   });
 
   /// The set of available positions for relocation.

@@ -9,7 +9,16 @@ import 'package:logd/logd.dart';
 
 import '../../flutter_notification_queue.dart';
 import '../utils/utils.dart';
-
+part 'interaction/drag_gesture_context.dart';
+part 'interaction/plugins/archive.dart';
+part 'interaction/plugins/base.dart';
+part 'interaction/plugins/custom_action.dart';
+part 'interaction/plugins/dismiss.dart';
+part 'interaction/plugins/pin.dart';
+part 'interaction/plugins/relocate.dart';
+part 'interaction/plugins/reorder.dart';
+part 'interaction/plugins/reorder_relocate.dart';
+part 'interaction/plugins/snooze.dart';
 part 'interaction/zones/base.dart';
 part 'interaction/zones/edges.dart';
 part 'interaction/zones/positions.dart';
@@ -22,7 +31,6 @@ part 'interaction/widgets/feedback_overlays.dart';
 part 'interaction/overlays/relocation_targets.dart';
 part 'interaction/overlays/reorder_targets.dart';
 part 'interaction/gesture_state_machine.dart';
-part 'interaction/gesture_plugins.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
 part 'type_defs.dart';
