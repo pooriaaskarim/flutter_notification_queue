@@ -7,9 +7,24 @@ import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:logd/logd.dart';
 
-import '../../flutter_notification_queue.dart';
+import '../core/core.dart';
+import '../enums/enums.dart';
+import '../models/offset_pair.dart';
+import '../notification_channel/notification_channel.dart';
+import '../notification_queue/notification_queue.dart';
+import '../types/type_defs.dart';
 import '../utils/utils.dart';
+
+
+
+
+
 part 'interaction/drag_gesture_context.dart';
+part 'interaction/gesture_state_machine.dart';
+part 'interaction/overlays/dismissal_targets.dart';
+part 'interaction/overlays/intent_targets.dart';
+part 'interaction/overlays/relocation_targets.dart';
+part 'interaction/overlays/reorder_targets.dart';
 part 'interaction/plugins/archive.dart';
 part 'interaction/plugins/base.dart';
 part 'interaction/plugins/custom_action.dart';
@@ -20,21 +35,18 @@ part 'interaction/plugins/reorder.dart';
 part 'interaction/plugins/reorder_relocate.dart';
 part 'interaction/plugins/resolver.dart';
 part 'interaction/plugins/snooze.dart';
+part 'interaction/widgets/draggable_transitions.dart';
+part 'interaction/widgets/feedback_overlays.dart';
 part 'interaction/zones/base.dart';
 part 'interaction/zones/edges.dart';
 part 'interaction/zones/positions.dart';
-part 'interaction/zones/slots.dart';
 part 'interaction/zones/resolvers.dart';
-part 'interaction/overlays/dismissal_targets.dart';
-part 'interaction/overlays/intent_targets.dart';
-part 'interaction/widgets/draggable_transitions.dart';
-part 'interaction/widgets/feedback_overlays.dart';
-part 'interaction/overlays/relocation_targets.dart';
-part 'interaction/overlays/reorder_targets.dart';
-part 'interaction/gesture_state_machine.dart';
+part 'interaction/zones/slots.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
-part 'type_defs.dart';
+
+
+
 
 /// A widget representing an individual notification card in a queue.
 ///

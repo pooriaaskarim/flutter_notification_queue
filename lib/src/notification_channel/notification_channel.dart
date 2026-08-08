@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
-import '../../flutter_notification_queue.dart';
+import '../enums/enums.dart';
 
 const infoColor = Color(0xFF51B4F9);
 const warningColor = Color(0xFFC97725);
