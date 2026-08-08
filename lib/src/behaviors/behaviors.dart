@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+library;
 
-import '../core/core.dart';
+import 'package:flutter/widgets.dart';
+
 import '../enums/enums.dart';
-import '../notification_queue/notification_queue.dart';
 
-part '../notification/theme/close_button_behaviour.dart';
+part 'close_button_behavior.dart';
 part 'drag_behavior.dart';
 part 'drag_intents.dart';
 part 'spring_physics.dart';

@@ -26,3 +26,5 @@ export 'src/notification/notification.dart' hide NotificationActionType;
 export 'src/notification_channel/notification_channel.dart';
 export 'src/notification_queue/notification_queue.dart'
     hide QueueWidget, QueueWidgetState;
+export 'src/notification_queue/queue_grouping_behavior.dart';
+export 'src/types/type_defs.dart';
