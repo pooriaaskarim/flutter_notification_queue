@@ -14,9 +14,9 @@ import 'queue_grouping_behavior.dart';
 
 part 'styles.dart';
 part 'queue_group_widget.dart';
+part 'queue_item_state.dart';
 part 'queue_widget.dart';
 part 'transitions.dart';
-
 
 /// Configures queue layouts for each [QueuePosition].
 ///

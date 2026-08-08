@@ -1,3 +1,5 @@
+// ignore_for_file: comment_references
+
 part of 'behaviors.dart';
 
 /// Controls when and how the close button appears on notifications.
