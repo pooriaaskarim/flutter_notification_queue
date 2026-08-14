@@ -134,6 +134,8 @@ Complexity Tiers:
 
 | Item | Version | Summary | Target Files |
 |------|---------|---------|---|
+| **Memory & Teardown Hardening** | v0.3.1 | Automated timer & animation ticker disposal (`ditchAllDismissTimers`), OverlayPortal detachment, and multi-tenant scope test suite. | `lib/src/core/queue_coordinator.dart`, `lib/src/notification_queue/queue_widget.dart` |
+| **Multi-Tenant Architecture** | v0.3.0 | Introduced `NotificationController`, `NotificationScope`, `AppNotification`, sealed `NotificationEvent` hierarchy, `@Deprecated` legacy singletons. | `lib/src/core/notification_scope.dart`, `lib/src/core/notification_controller.dart` |
 | **F-02: Pin-to-Edge Interaction** | v0.6.0 | Pinned cards become persistent and immune to swipe gestures; auto-dismiss timers are automatically paused when pinned and resumed when unpinned. | `lib/src/notification/notification.dart` |
 | **F-04: Notification Grouping** | v0.6.0 | Gmail-style grouping with custom/channel keys, representative pill/stacks, collapse/expand toggle, and bulk swipe-to-dismiss behavior. | `lib/src/notification_queue/queue_widget.dart` |
 | **F-01: Drag-to-Reorder** | v0.5.2 | Premium live-shifting layout during drag. Neighboring items translate in real-time to open up a target slot, with unshifted bounds cached during the gesture lifecycle. | `lib/src/notification_queue/queue_widget.dart` |
