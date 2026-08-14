@@ -23,11 +23,16 @@ part of 'core.dart';
 class NotificationOverlay extends StatefulWidget {
   const NotificationOverlay({
     required this.child,
+    this.coordinator,
     super.key,
   });
 
   /// The app's root widget (e.g., [MaterialApp]).
   final Widget child;
+
+  /// Optional explicit queue coordinator instance.
+  /// If null, falls back to [FlutterNotificationQueue.coordinator].
+  final QueueCoordinator? coordinator;
 
   /// Static router method for use in [MaterialApp.builder].
   ///
@@ -49,25 +54,47 @@ class NotificationOverlay extends StatefulWidget {
 class _NotificationOverlayState extends State<NotificationOverlay> {
   final OverlayPortalController _overlayPortalController =
       OverlayPortalController();
-  late final QueueCoordinator _attachedCoordinator;
+  QueueCoordinator? _attachedCoordinator;
 
   @override
   void initState() {
     super.initState();
+  }
 
-    // Ensure system is initialized (lazy fallback triggered if needed)
-    _attachedCoordinator = FlutterNotificationQueue.coordinator;
-    _attachedCoordinator.attach(_overlayPortalController);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateCoordinator();
+  }
+
+  @override
+  void didUpdateWidget(final NotificationOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateCoordinator();
+  }
+
+  void _updateCoordinator() {
+    final scopeCoordinator = NotificationScope.maybeCoordinatorOf(context);
+    final resolved = widget.coordinator ??
+        scopeCoordinator ??
+        FlutterNotificationQueue.coordinator;
+    if (_attachedCoordinator != resolved) {
+      _attachedCoordinator?.detach();
+      _attachedCoordinator = resolved;
+      _attachedCoordinator!.attach(_overlayPortalController);
+    }
   }
 
   @override
   void dispose() {
-    _attachedCoordinator.detach();
+    _attachedCoordinator?.detach();
     super.dispose();
   }
 
   @override
   Widget build(final BuildContext context) {
+    final coordinator = _attachedCoordinator!;
+
     // Dual Strategy:
     // 1. If Overlay exists (e.g. used inside MaterialApp), use OverlayPortal.
     // 2. If Overlay is missing (e.g. used in MaterialApp.builder), use Stack.
@@ -76,7 +103,9 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
     if (hasOverlay) {
       return OverlayPortal(
         controller: _overlayPortalController,
-        overlayChildBuilder: (final context) => const _NotificationQueueStack(),
+        overlayChildBuilder: (final context) => _NotificationQueueStack(
+          coordinator: coordinator,
+        ),
         overlayLocation: OverlayChildLocation.rootOverlay,
         child: widget.child,
       );
@@ -93,7 +122,9 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
             child: Overlay(
               initialEntries: [
                 OverlayEntry(
-                  builder: (final context) => const _NotificationQueueStack(),
+                  builder: (final context) => _NotificationQueueStack(
+                    coordinator: coordinator,
+                  ),
                 ),
               ],
             ),
@@ -111,7 +142,11 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 /// [QueueWidget] which handles positioning, spacing, and notification
 /// rendering.
 class _NotificationQueueStack extends StatefulWidget {
-  const _NotificationQueueStack();
+  const _NotificationQueueStack({
+    required this.coordinator,
+  });
+
+  final QueueCoordinator coordinator;
 
   @override
   State<_NotificationQueueStack> createState() =>
@@ -130,7 +165,7 @@ class _NotificationQueueStackState extends State<_NotificationQueueStack> {
   @override
   Widget build(final BuildContext context) =>
       ValueListenableBuilder<Map<QueuePosition, NotificationQueue>>(
-        valueListenable: FlutterNotificationQueue.coordinator.activeQueues,
+        valueListenable: widget.coordinator.activeQueues,
         builder: (final context, final activeQueues, final child) {
           final hasActive = activeQueues.isNotEmpty;
           if (hasActive) {
@@ -157,9 +192,9 @@ class _NotificationQueueStackState extends State<_NotificationQueueStack> {
                   (final queue) => LayoutId(
                     id: queue.position,
                     child: QueueWidget(
-                      key: FlutterNotificationQueue.coordinator
-                          .getWidgetKey(queue.position),
+                      key: widget.coordinator.getWidgetKey(queue.position),
                       queue: queue,
+                      coordinator: widget.coordinator,
                       isEmbeddedInLayout: true,
                     ),
                   ),
@@ -180,9 +215,9 @@ class _NotificationQueueStackState extends State<_NotificationQueueStack> {
                   final isShiftPressed =
                       HardwareKeyboard.instance.isShiftPressed;
                   if (isShiftPressed) {
-                    FlutterNotificationQueue.coordinator.dismissAll();
+                    widget.coordinator.dismissAll();
                   } else {
-                    FlutterNotificationQueue.coordinator.dismissNewest();
+                    widget.coordinator.dismissNewest();
                   }
                   return KeyEventResult.handled;
                 }

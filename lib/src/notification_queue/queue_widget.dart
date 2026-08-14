@@ -3,11 +3,13 @@ part of 'notification_queue.dart';
 class QueueWidget extends StatefulWidget {
   const QueueWidget({
     required this.queue,
+    this.coordinator,
     this.isEmbeddedInLayout = false,
     super.key,
   });
 
   final NotificationQueue queue;
+  final QueueCoordinator? coordinator;
   final bool isEmbeddedInLayout;
 
   @override
@@ -16,6 +18,11 @@ class QueueWidget extends StatefulWidget {
 
 class QueueWidgetState extends State<QueueWidget>
     with TickerProviderStateMixin {
+  QueueCoordinator get _coordinator =>
+      widget.coordinator ??
+      NotificationScope.maybeCoordinatorOf(context) ??
+      FlutterNotificationQueue.coordinator;
+
   final _pendingNotifications = Queue<NotificationEntry>();
   final List<_NotificationItemState> _items = [];
   final Set<String> _expandedGroups = {};
@@ -126,8 +133,8 @@ class QueueWidgetState extends State<QueueWidget>
   @override
   void initState() {
     super.initState();
-    final startupItems = FlutterNotificationQueue.coordinator
-        .consumeInitializationQueue(widget.queue.position);
+    final startupItems =
+        _coordinator.consumeInitializationQueue(widget.queue.position);
     for (final item in startupItems) {
       _pendingNotifications.add(item);
     }
@@ -189,13 +196,13 @@ class QueueWidgetState extends State<QueueWidget>
           (final item) => item.resolvedPriority == lowestPriority,
         );
         _pendingNotifications.remove(oldestOfLowest);
-        FlutterNotificationQueue.coordinator.emitOverflowed(
+        _coordinator.emitOverflowed(
           queue: widget.queue,
           dropped: oldestOfLowest.blueprint,
         );
         _pendingNotifications.add(entry);
       } else {
-        FlutterNotificationQueue.coordinator.emitOverflowed(
+        _coordinator.emitOverflowed(
           queue: widget.queue,
           dropped: entry.blueprint,
         );
@@ -494,7 +501,7 @@ class QueueWidgetState extends State<QueueWidget>
         if (mounted) {
           // Emit a programmatic dismiss for the evicted card so that the
           // coordinator's event stream carries the correct reason.
-          FlutterNotificationQueue.coordinator.dismiss(
+          _coordinator.dismissWidget(
             evictedWidget,
             reason: DismissReason.evicted,
           );
@@ -639,8 +646,7 @@ class QueueWidgetState extends State<QueueWidget>
     if (_items.isEmpty && _pendingNotifications.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((final _) {
         if (mounted) {
-          FlutterNotificationQueue.coordinator
-              .unmountQueue(widget.queue.position);
+          _coordinator.unmountQueue(widget.queue.position);
         }
       });
     }
@@ -803,7 +809,7 @@ class QueueWidgetState extends State<QueueWidget>
               }
             });
             _syncGroupTimers(groupKey);
-            FlutterNotificationQueue.coordinator.emitGroupToggled(
+            _coordinator.emitGroupToggled(
               groupKey: groupKey,
               position: widget.queue.position,
               expanded: _expandedGroups.contains(groupKey),

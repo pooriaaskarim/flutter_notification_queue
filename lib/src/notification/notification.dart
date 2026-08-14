@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import 'package:logd/logd.dart';
+import 'package:meta/meta.dart';
 
 import '../core/core.dart';
 import '../enums/enums.dart';
@@ -15,10 +16,7 @@ import '../notification_queue/notification_queue.dart';
 import '../types/type_defs.dart';
 import '../utils/utils.dart';
 
-
-
-
-
+part 'app_notification.dart';
 part 'interaction/drag_gesture_context.dart';
 part 'interaction/gesture_state_machine.dart';
 part 'interaction/overlays/dismissal_targets.dart';
@@ -46,8 +44,6 @@ part 'notification_action.dart';
 part 'theme/notification_theme.dart';
 
 
-
-
 /// A widget representing an individual notification card in a queue.
 ///
 /// [NotificationWidget] encapsulates the content (title, message, icon),
@@ -63,33 +59,6 @@ part 'theme/notification_theme.dart';
 /// ```
 @immutable
 class NotificationWidget extends StatefulWidget {
-  NotificationWidget._({
-    required final GlobalObjectKey<NotificationWidgetState> key,
-    required this.message,
-    required this.id,
-    required this.queue,
-    required this.channelName,
-    required this.channel,
-    this.title,
-    this.action,
-    this.icon,
-    this.color,
-    this.foregroundColor,
-    this.backgroundColor,
-    this.dismissDuration,
-    this.tapBehavior,
-    this.dragBehavior,
-    this.longPressDragBehavior,
-    this.builder,
-    this.priority,
-    final bool initialIsPinned = false,
-    this.snoozedAt,
-    final DateTime? createdAt,
-    this.groupKey,
-  })  : _key = key,
-        isPinnedNotifier = ValueNotifier<bool>(initialIsPinned),
-        createdAt = createdAt ?? DateTime.now();
-
   /// Creates a new [NotificationWidget] with the specified content and style
   /// overrides.
   ///
@@ -125,22 +94,25 @@ class NotificationWidget extends StatefulWidget {
     final bool initialIsPinned = false,
     final DateTime? snoozedAt,
     final String? groupKey,
+    final ConfigurationManager? configuration,
+    final QueueCoordinator? coordinator,
   }) {
     assert(
       dismissDuration == null || dismissDuration > Duration.zero,
       'dismissDuration must be positive or null. '
       'Use permanent: true to keep a notification on screen indefinitely.',
     );
+    final config = configuration ??
+        coordinator?.configuration ??
+        FlutterNotificationQueue.configuration;
     final resolvedId =
         id ?? 'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
-    final resolveChannel =
-        FlutterNotificationQueue.configuration.getChannel(channelName);
+    final resolveChannel = config.getChannel(channelName);
     final effectivePosition = position ??
-        FlutterNotificationQueue.configuration
-            .getEffectiveChannelPosition(channelName);
-    final resolvedQueue =
-        FlutterNotificationQueue.configuration.getQueue(effectivePosition);
+        config.getEffectiveChannelPosition(channelName) ??
+        resolveChannel.position;
+    final resolvedQueue = config.getQueue(effectivePosition);
 
     // permanent: true forces null dismiss duration regardless of channel
     // default, allowing a single notification to opt out of auto-dismiss.
@@ -168,8 +140,40 @@ class NotificationWidget extends StatefulWidget {
       initialIsPinned: initialIsPinned,
       snoozedAt: snoozedAt,
       groupKey: groupKey,
+      coordinator: coordinator,
     );
   }
+  NotificationWidget._({
+    required final GlobalObjectKey<NotificationWidgetState> key,
+    required this.message,
+    required this.id,
+    required this.queue,
+    required this.channelName,
+    required this.channel,
+    this.title,
+    this.action,
+    this.icon,
+    this.color,
+    this.foregroundColor,
+    this.backgroundColor,
+    this.dismissDuration,
+    this.tapBehavior,
+    this.dragBehavior,
+    this.longPressDragBehavior,
+    this.builder,
+    this.priority,
+    final bool initialIsPinned = false,
+    this.snoozedAt,
+    final DateTime? createdAt,
+    this.groupKey,
+    this.coordinator,
+  })  : _key = key,
+        isPinnedNotifier = ValueNotifier<bool>(initialIsPinned),
+        createdAt = createdAt ?? DateTime.now();
+
+  /// Gets the effective [QueueCoordinator] for this notification.
+  QueueCoordinator get effectiveCoordinator =>
+      coordinator ?? FlutterNotificationQueue.coordinator;
 
   static int _idCounter = 0;
 
@@ -305,14 +309,17 @@ class NotificationWidget extends StatefulWidget {
   /// Custom builder for the notification stack indicator.
   final NotificationBuilder? builder;
 
-  void show() => FlutterNotificationQueue.coordinator.queue(this);
+  /// The [QueueCoordinator] driving this notification instance.
+  final QueueCoordinator? coordinator;
+
+  void show() => effectiveCoordinator.queue(this);
 
   Future<void> dismiss() async {
     final state = key.currentState;
     if (state != null) {
       await state.dismiss(reason: DismissReason.programmatic);
     } else {
-      FlutterNotificationQueue.coordinator.dismiss(
+      effectiveCoordinator.dismissWidget(
         this,
         reason: DismissReason.programmatic,
       );
@@ -320,7 +327,7 @@ class NotificationWidget extends StatefulWidget {
   }
 
   NotificationWidget? relocateTo(final QueuePosition position) =>
-      FlutterNotificationQueue.coordinator.relocate(this, position);
+      effectiveCoordinator.relocateWidget(this, position);
 
   @override
   State<StatefulWidget> createState() => NotificationWidgetState();
@@ -369,6 +376,7 @@ class NotificationWidget extends StatefulWidget {
         snoozedAt: snoozedAt,
         createdAt: createdAt,
         groupKey: groupKey,
+        coordinator: coordinator,
       );
 
   NotificationWidget copyForRequeue({
@@ -397,6 +405,7 @@ class NotificationWidget extends StatefulWidget {
         snoozedAt: snoozedAt,
         createdAt: createdAt,
         groupKey: groupKey,
+        coordinator: coordinator,
       );
 }
 
@@ -530,11 +539,16 @@ class NotificationWidgetState extends State<NotificationWidget>
     }
   }
 
+  QueueCoordinator get coordinator =>
+      widget.coordinator ??
+      NotificationScope.maybeCoordinatorOf(context) ??
+      FlutterNotificationQueue.coordinator;
+
   Future<void> dismiss({
     final DismissReason reason = DismissReason.programmatic,
   }) async {
     await animationController.reverse();
-    FlutterNotificationQueue.coordinator.dismiss(widget, reason: reason);
+    coordinator.dismissWidget(widget, reason: reason);
     _logger.debugBuffer
       ?..writeAll(['Dismissed.'])
       ..sink();
@@ -579,6 +593,16 @@ class NotificationWidgetState extends State<NotificationWidget>
     _dismissProgressController?.stop(canceled: false);
     _dismissProgressController?.dispose();
     _dismissProgressController = null;
+  }
+
+  void _toggleExpanded() {
+    isExpanded.value = !isExpanded.value;
+
+    if (isExpanded.value) {
+      _dismissProgressController?.stop(canceled: false);
+    } else if (!_isMouseHovering) {
+      _dismissProgressController?.forward();
+    }
   }
 
   @override
@@ -629,7 +653,7 @@ class NotificationWidgetState extends State<NotificationWidget>
                       TapDisabled() =>
                         () {}, // Intercept tap to prevent drag FSM reset
                       TapToDismiss() => () {
-                          FlutterNotificationQueue.coordinator.emitTapped(
+                          coordinator.emitTapped(
                             notification: widget,
                             behavior: _resolvedTapBehavior,
                           );
@@ -640,14 +664,14 @@ class NotificationWidgetState extends State<NotificationWidget>
                           dismiss(reason: DismissReason.userTap);
                         },
                       TapToExpand() => () {
-                          FlutterNotificationQueue.coordinator.emitTapped(
+                          coordinator.emitTapped(
                             notification: widget,
                             behavior: _resolvedTapBehavior,
                           );
                           _toggleExpanded();
                         },
                       TapToAct(:final onTap, :final dismissOnAct) => () {
-                          FlutterNotificationQueue.coordinator.emitTapped(
+                          coordinator.emitTapped(
                             notification: widget,
                             behavior: _resolvedTapBehavior,
                           );
@@ -818,15 +842,6 @@ class NotificationWidgetState extends State<NotificationWidget>
               ),
             )
           : const SizedBox.shrink();
-
-  void _toggleExpanded() {
-    if (isExpanded.value) {
-      initDismissTimer();
-    } else {
-      ditchDismissTimer();
-    }
-    isExpanded.value = !isExpanded.value;
-  }
 
   Widget _getExpandButton({required final bool isExpanded}) {
     final isBottom = widget.queue.verticalDirection == VerticalDirection.up;

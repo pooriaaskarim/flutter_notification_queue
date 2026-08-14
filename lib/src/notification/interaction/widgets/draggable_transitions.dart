@@ -150,10 +150,14 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     _snapBackController.dispose();
     super.dispose();
   }
+  QueueCoordinator get coordinator =>
+      widget.notification.coordinator ??
+      NotificationScope.maybeCoordinatorOf(context) ??
+      FlutterNotificationQueue.coordinator;
+
   int stateIndexOfThisItem() {
     final position = widget.notification.queue.position;
-    final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+    final queueKey = coordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     return queueState?.indexOf(widget.notification) ?? 0;
   }
@@ -253,8 +257,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
       }
 
       final position = widget.notification.queue.position;
-      final queueKey =
-          FlutterNotificationQueue.coordinator.getWidgetKey(position);
+      final queueKey = coordinator.getWidgetKey(position);
       queueKey.currentState?.setActiveDragGroup(
         widget.notification.resolvedGroupKey,
       );
@@ -278,9 +281,13 @@ class DraggableTransitionsState extends State<DraggableTransitions>
       final isExiting =
           widget.notification.key.currentState?.animationController.status ==
               AnimationStatus.reverse;
-      final isRelocated = currentQueuePosition != _fsm.initialPosition;
-      final isReordered =
-          originalIndex != null && stateIndexOfThisItem() != originalIndex;
+      final itemIndex = stateIndexOfThisItem();
+      final isRemovedOrRelocated = itemIndex == -1;
+      final isRelocated =
+          isRemovedOrRelocated || currentQueuePosition != _fsm.initialPosition;
+      final isReordered = !isRemovedOrRelocated &&
+          originalIndex != null &&
+          itemIndex != originalIndex;
 
       if (!isExiting &&
           !isRelocated &&
@@ -298,10 +305,11 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         _fsm.reset();
       }
 
-      final position = widget.notification.queue.position;
-      final queueKey =
-          FlutterNotificationQueue.coordinator.getWidgetKey(position);
-      queueKey.currentState?.setActiveDragGroup(null);
+      if (!isRemovedOrRelocated) {
+        final position = widget.notification.queue.position;
+        final queueKey = coordinator.getWidgetKey(position);
+        queueKey.currentState?.setActiveDragGroup(null);
+      }
     }
 
     final feedback = ValueListenableBuilder(
