@@ -28,11 +28,12 @@ enum DismissReason {
 
 // ── Event hierarchy ────────────────────────────────────────────────────────
 
-/// Base class for all events emitted by [QueueCoordinator.events].
+/// Base class for all events emitted by [NotificationController.events] and
+/// [QueueCoordinator.events].
 ///
-/// Listen to the stream via [FlutterNotificationQueue.events]:
+/// Listen to the stream:
 /// ```dart
-/// FlutterNotificationQueue.events.listen((event) {
+/// controller.events.listen((event) {
 ///   switch (event) {
 ///     case NotificationQueued(:final notification):
 ///       analytics.track('notification_shown', id: notification.id);
@@ -45,14 +46,18 @@ enum DismissReason {
 ///   }
 /// });
 /// ```
-sealed class FnqEvent {
-  const FnqEvent();
+sealed class NotificationEvent {
+  const NotificationEvent();
 }
+
+/// Legacy alias for [NotificationEvent].
+@Deprecated('FnqEvent is renamed to NotificationEvent.')
+typedef FnqEvent = NotificationEvent;
 
 /// Emitted when a [NotificationWidget] is accepted into a queue.
 ///
 /// Not emitted when the notification's channel is disabled.
-final class NotificationQueued extends FnqEvent {
+final class NotificationQueued extends NotificationEvent {
   const NotificationQueued({required this.notification});
 
   /// The notification that was queued.
@@ -64,7 +69,7 @@ final class NotificationQueued extends FnqEvent {
 }
 
 /// Emitted when a [NotificationWidget] is removed from its queue.
-final class NotificationDismissed extends FnqEvent {
+final class NotificationDismissed extends NotificationEvent {
   const NotificationDismissed({
     required this.notification,
     required this.reason,
@@ -89,7 +94,7 @@ final class NotificationDismissed extends FnqEvent {
 /// - [TapToAct] — the callback has been invoked.
 /// - [TapToExpand] — the card toggled its expanded state.
 /// - [TapDisabled] — this event is *not* emitted when tapping is disabled.
-final class NotificationTapped extends FnqEvent {
+final class NotificationTapped extends NotificationEvent {
   const NotificationTapped({
     required this.notification,
     required this.behavior,
@@ -108,7 +113,7 @@ final class NotificationTapped extends FnqEvent {
 
 /// Emitted when a [NotificationWidget] is successfully relocated to a new
 /// queue.
-final class NotificationRelocated extends FnqEvent {
+final class NotificationRelocated extends NotificationEvent {
   const NotificationRelocated({
     required this.notification,
     required this.from,
@@ -131,7 +136,7 @@ final class NotificationRelocated extends FnqEvent {
 }
 
 /// Emitted when a [NotificationWidget] is reordered within its queue.
-final class NotificationReordered extends FnqEvent {
+final class NotificationReordered extends NotificationEvent {
   const NotificationReordered({
     required this.notification,
     required this.toIndex,
@@ -150,7 +155,7 @@ final class NotificationReordered extends FnqEvent {
 
 /// Emitted when a notification is dropped because the queue has reached
 /// [NotificationQueue.maxStackSize].
-final class QueueOverflowed extends FnqEvent {
+final class QueueOverflowed extends NotificationEvent {
   const QueueOverflowed({
     required this.queue,
     required this.dropped,
@@ -168,7 +173,7 @@ final class QueueOverflowed extends FnqEvent {
 }
 
 /// Emitted when a [NotificationWidget] is successfully snoozed.
-final class NotificationSnoozed extends FnqEvent {
+final class NotificationSnoozed extends NotificationEvent {
   const NotificationSnoozed({
     required this.notification,
     required this.duration,
@@ -186,7 +191,7 @@ final class NotificationSnoozed extends FnqEvent {
 }
 
 /// Emitted when a [NotificationWidget] is pinned.
-final class NotificationPinned extends FnqEvent {
+final class NotificationPinned extends NotificationEvent {
   const NotificationPinned({required this.notification});
 
   /// The notification that was pinned.
@@ -197,7 +202,7 @@ final class NotificationPinned extends FnqEvent {
 }
 
 /// Emitted when a [NotificationWidget] is unpinned.
-final class NotificationUnpinned extends FnqEvent {
+final class NotificationUnpinned extends NotificationEvent {
   const NotificationUnpinned({required this.notification});
 
   /// The notification that was unpinned.
@@ -208,7 +213,7 @@ final class NotificationUnpinned extends FnqEvent {
 }
 
 /// Emitted when a custom action is triggered on a [NotificationWidget].
-final class NotificationCustomActionTriggered extends FnqEvent {
+final class NotificationCustomActionTriggered extends NotificationEvent {
   const NotificationCustomActionTriggered({
     required this.notification,
     required this.actionName,
@@ -230,7 +235,7 @@ final class NotificationCustomActionTriggered extends FnqEvent {
 
 /// Emitted when the user expands a collapsed notification group
 /// (i.e., taps the bundle pill to reveal all members).
-final class NotificationGroupExpanded extends FnqEvent {
+final class NotificationGroupExpanded extends NotificationEvent {
   const NotificationGroupExpanded({
     required this.groupKey,
     required this.position,
@@ -253,7 +258,7 @@ final class NotificationGroupExpanded extends FnqEvent {
 
 /// Emitted when the user collapses an expanded notification group
 /// (i.e., taps the bundle pill to hide excess members).
-final class NotificationGroupCollapsed extends FnqEvent {
+final class NotificationGroupCollapsed extends NotificationEvent {
   const NotificationGroupCollapsed({
     required this.groupKey,
     required this.position,
@@ -276,7 +281,7 @@ final class NotificationGroupCollapsed extends FnqEvent {
 
 /// Emitted when all members of a notification group are dismissed at once
 /// via [QueueCoordinator.dismissGroup].
-final class NotificationGroupDismissed extends FnqEvent {
+final class NotificationGroupDismissed extends NotificationEvent {
   const NotificationGroupDismissed({
     required this.groupKey,
     required this.position,
@@ -295,7 +300,7 @@ final class NotificationGroupDismissed extends FnqEvent {
 
 /// Emitted when a channel's default queue route is updated at runtime
 /// (Desktop Parking).
-final class NotificationChannelRouteUpdated extends FnqEvent {
+final class NotificationChannelRouteUpdated extends NotificationEvent {
   const NotificationChannelRouteUpdated({
     required this.channelName,
     required this.oldPosition,

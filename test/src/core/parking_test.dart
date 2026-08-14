@@ -60,7 +60,8 @@ void main() {
       expect(find.text('Message 1'), findsOneWidget);
 
       // Relocate n1 to topLeft
-      FlutterNotificationQueue.coordinator.relocate(n1, QueuePosition.topLeft);
+      FlutterNotificationQueue.coordinator
+          .relocateWidget(n1, QueuePosition.topLeft);
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -127,7 +128,8 @@ void main() {
       expect(find.text('Message 1'), findsOneWidget);
 
       // Relocate n1 to topLeft
-      FlutterNotificationQueue.coordinator.relocate(n1, QueuePosition.topLeft);
+      FlutterNotificationQueue.coordinator
+          .relocateWidget(n1, QueuePosition.topLeft);
       await tester.pump();
       await tester.pumpAndSettle();
 

@@ -200,7 +200,7 @@ void main() {
       final sub = FlutterNotificationQueue.events.listen(events.add);
 
       // Reorder emits the event regardless of widget mount state
-      FlutterNotificationQueue.coordinator.reorder(n, 2);
+      FlutterNotificationQueue.coordinator.reorderWidget(n, 2);
       await Future.delayed(Duration.zero);
 
       final reordered = events.whereType<NotificationReordered>().first;

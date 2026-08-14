@@ -2,10 +2,14 @@ part of 'core.dart';
 
 /// The entry point for the Flutter Notification Queue package.
 ///
-/// Use [configure] to configure the global queues and channels.
-///
-/// Use [builder] in [MaterialApp.builder] to integrate contextless
-///  notification support into your app.
+/// Deprecated in v0.3.0 in favor of [NotificationController] and
+/// [NotificationScope].
+@Deprecated(
+  'FlutterNotificationQueue is deprecated and will be removed in v1.0.0. '
+  'Use NotificationController to manage configuration/events and '
+  'NotificationScope in your widget tree. '
+  'See doc/migration_v1.md for details.',
+)
 final class FlutterNotificationQueue {
   const FlutterNotificationQueue._();
 
@@ -113,7 +117,7 @@ final class FlutterNotificationQueue {
 
     final wasNew = _coordinator == null;
     _coordinator ??= QueueCoordinator(
-      maxHistoryEntries: maxHistoryEntries,
+      configuration: _configuration,
     );
     _coordinator!.historyLogger
         .updateMaxEntries(_configuration!.maxHistoryEntries);
@@ -138,7 +142,7 @@ final class FlutterNotificationQueue {
   static void reset() {
     _coordinatorEventSub?.cancel();
     _coordinatorEventSub = null;
-    _coordinator?.detach();
+    _coordinator?.dispose();
     _configuration = null;
     _coordinator = null;
     // Reset input-device detection so tests that fire hover events do not

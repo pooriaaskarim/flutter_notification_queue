@@ -3,17 +3,27 @@ part of 'core.dart';
 /// The lifecycle bridge between [NotificationQueue]s and the rendering surface.
 ///
 /// Owns the [OverlayPortalController] and manages the lifecycle of queue
-/// widgets.
-///
-/// Refactored to delegate state management to [QueueWidgetState] via
-/// [GlobalKey]s, using a "startup mailbox" pattern to pass initial data to
-/// newly mounting widgets.
-class QueueCoordinator {
-  QueueCoordinator({final int maxHistoryEntries = 0}) {
+/// widgets. Implements [NotificationScopeState] so that [NotificationScope]
+/// can attach it to a [NotificationController].
+class QueueCoordinator implements NotificationScopeState {
+  QueueCoordinator({
+    final ConfigurationManager? configuration,
+  }) : configuration =
+            configuration ?? FlutterNotificationQueue.configuration {
     _historyLogger = HistoryLogger(
-      maxEntries: maxHistoryEntries,
+      maxEntries: this.configuration.maxHistoryEntries,
     )..startListening(events);
   }
+
+  /// Creates a [QueueCoordinator] pre-configured from a
+  /// [NotificationController].
+  factory QueueCoordinator.fromController(
+    final NotificationController controller,
+  ) =>
+      QueueCoordinator(configuration: controller.configuration);
+
+  /// The configuration this coordinator was initialised with.
+  final ConfigurationManager configuration;
 
   late final HistoryLogger _historyLogger;
   HistoryLogger get historyLogger => _historyLogger;
@@ -31,7 +41,9 @@ class QueueCoordinator {
   /// events without coupling to library internals. Multiple listeners are
   /// supported simultaneously.
   ///
-  /// Prefer accessing this via [FlutterNotificationQueue.events].
+  /// Prefer accessing this via [NotificationController.events] or
+  /// [FlutterNotificationQueue.events].
+  @override
   Stream<FnqEvent> get events => _eventController.stream;
 
   /// Adds [event] directly to the event stream.
@@ -66,6 +78,10 @@ class QueueCoordinator {
     _widgetStateKeys.clear();
     _initializationQueue.clear();
     _activeQueuesNotifier.value = {};
+  }
+
+  void dispose() {
+    detach();
     _eventController.close();
     _historyLogger.dispose();
   }
@@ -77,13 +93,33 @@ class QueueCoordinator {
   ) =>
       _initializationQueue.remove(position) ?? [];
 
-  /// Registers a queue's key. Called by [QueueWidget] constructor/build?
-  /// Typically we create the key here and pass it to the widget.
+  /// Registers a queue's key.
   GlobalKey<QueueWidgetState> _getKey(final QueuePosition position) =>
       _widgetStateKeys.putIfAbsent(
         position,
         () => GlobalKey<QueueWidgetState>(),
       );
+
+  // ── History ──────────────────────────────────────────────────────────────
+
+  @override
+  List<FnqEvent> getHistory({
+    final String? channelName,
+    final DismissReason? dismissReason,
+    final DateTime? since,
+    final int? limit,
+  }) =>
+      _historyLogger.getHistory(
+        channelName: channelName,
+        dismissReason: dismissReason,
+        since: since,
+        limit: limit,
+      );
+
+  @override
+  void clearHistory() => _historyLogger.clear();
+
+
 
   // --- Actions ---
 
@@ -117,7 +153,32 @@ class QueueCoordinator {
     }
   }
 
+  @override
+  void show(final AppNotification notification) {
+    queue(notification.toWidget(configuration, this));
+  }
+
+  // ── Dismiss ──────────────────────────────────────────────────────────────
+
+  /// Dismisses the notification described by [notification] by matching its id.
+  @override
   void dismiss(
+    final AppNotification notification, {
+    final DismissReason reason = DismissReason.programmatic,
+  }) {
+    for (final n in activeNotifications) {
+      if (n.id == notification.id) {
+        dismissWidget(n, reason: reason);
+        return;
+      }
+    }
+  }
+
+  /// Dismisses [notification] directly by widget reference.
+  ///
+  /// Used internally by gesture plugins and lifecycle handlers that operate on
+  /// a [NotificationWidget] instance rather than an [AppNotification] record.
+  void dismissWidget(
     final NotificationWidget notification, {
     final DismissReason reason = DismissReason.programmatic,
   }) {
@@ -142,7 +203,85 @@ class QueueCoordinator {
     }
   }
 
-  NotificationWidget? relocate(
+  /// Dismisses the newest active notification across all active queues.
+  @override
+  void dismissNewest() {
+    final active = activeNotifications;
+    if (active.isEmpty) {
+      return;
+    }
+    // Sort by createdAt descending to find the newest
+    active.sort((final a, final b) => b.createdAt.compareTo(a.createdAt));
+    dismissWidget(active.first, reason: DismissReason.programmatic);
+  }
+
+  /// Dismisses all active notifications across all active queues.
+  @override
+  void dismissAll({
+    final DismissReason reason = DismissReason.programmatic,
+  }) {
+    final active = activeNotifications;
+    for (final notification in active) {
+      dismissWidget(notification, reason: reason);
+    }
+  }
+
+  /// Dismisses all active notifications that share [groupKey].
+  @override
+  void dismissGroup(
+    final String groupKey, {
+    final DismissReason reason = DismissReason.programmatic,
+  }) {
+    for (final entry in _widgetStateKeys.entries) {
+      final position = entry.key;
+      final state = entry.value.currentState;
+      if (state != null) {
+        final hasGroup = state.activeNotifications.any(
+          (final n) => n.resolvedGroupKey == groupKey,
+        );
+        if (hasGroup) {
+          _eventController.add(
+            NotificationGroupDismissed(groupKey: groupKey, position: position),
+          );
+          state.dismissGroup(groupKey, reason: reason);
+        }
+      }
+    }
+  }
+
+  /// Legacy widget-level helper for group dismissal at a specific [position].
+  void dismissGroupAt(
+    final QueuePosition position,
+    final String groupKey, {
+    final DismissReason reason = DismissReason.programmatic,
+  }) {
+    _eventController.add(
+      NotificationGroupDismissed(groupKey: groupKey, position: position),
+    );
+    final key = _widgetStateKeys[position];
+    key?.currentState?.dismissGroup(groupKey, reason: reason);
+  }
+
+  // ── Relocate ─────────────────────────────────────────────────────────────
+
+  /// Moves the notification described by [notification] to [newPosition].
+  @override
+  void relocate(
+    final AppNotification notification,
+    final QueuePosition newPosition,
+  ) {
+    for (final n in activeNotifications) {
+      if (n.id == notification.id) {
+        relocateWidget(n, newPosition);
+        return;
+      }
+    }
+  }
+
+  /// Moves [notification] (by widget reference) to [newPosition].
+  ///
+  /// Used internally by gesture plugins.
+  NotificationWidget? relocateWidget(
     final NotificationWidget notification,
     final QueuePosition newPosition,
   ) {
@@ -169,7 +308,7 @@ class QueueCoordinator {
       final targetQueue = newPosition.generateQueueFrom(notification.queue);
       newNotification = notification.copyToQueue(targetQueue);
 
-      final config = FlutterNotificationQueue.configuration;
+      final config = configuration;
       if (config.enableDynamicChannelParking) {
         final oldPosition = notificationQueue.position;
         config.updateChannelRoute(notification.channelName, newPosition);
@@ -199,8 +338,23 @@ class QueueCoordinator {
     return newNotification;
   }
 
-  /// Reorders [notification] to [targetIndex] within its current queue.
-  void reorder(
+  // ── Reorder ──────────────────────────────────────────────────────────────
+
+  /// Reorders [notification] to [targetIndex] within its queue.
+  @override
+  void reorder(final AppNotification notification, final int targetIndex) {
+    for (final n in activeNotifications) {
+      if (n.id == notification.id) {
+        reorderWidget(n, targetIndex);
+        return;
+      }
+    }
+  }
+
+  /// Reorders [notification] (by widget reference) to [targetIndex].
+  ///
+  /// Used internally by gesture plugins.
+  void reorderWidget(
     final NotificationWidget notification,
     final int targetIndex,
   ) {
@@ -211,9 +365,23 @@ class QueueCoordinator {
     key?.currentState?.reorder(notification, targetIndex);
   }
 
-  /// Snoozes [notification] for [duration]. Dismisses the current instance
-  /// and automatically schedules it to re-enqueue.
-  void snooze(
+  // ── Snooze ───────────────────────────────────────────────────────────────
+
+  /// Temporarily hides [notification] and re-enqueues it after [duration].
+  @override
+  void snooze(final AppNotification notification, final Duration duration) {
+    for (final n in activeNotifications) {
+      if (n.id == notification.id) {
+        snoozeWidget(n, duration);
+        return;
+      }
+    }
+  }
+
+  /// Snoozes [notification] (by widget reference) for [duration].
+  ///
+  /// Used internally by gesture plugins.
+  void snoozeWidget(
     final NotificationWidget notification,
     final Duration duration,
   ) {
@@ -239,8 +407,23 @@ class QueueCoordinator {
     });
   }
 
+  // ── Pin / Unpin ──────────────────────────────────────────────────────────
+
   /// Pins [notification], making it persistent and immune to swipe gestures.
-  void pin(final NotificationWidget notification) {
+  @override
+  void pin(final AppNotification notification) {
+    for (final n in activeNotifications) {
+      if (n.id == notification.id) {
+        pinWidget(n);
+        return;
+      }
+    }
+  }
+
+  /// Pins [notification] (by widget reference).
+  ///
+  /// Used internally by gesture plugins.
+  void pinWidget(final NotificationWidget notification) {
     final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
     final state = stateKey.currentState;
     if (state != null) {
@@ -253,8 +436,21 @@ class QueueCoordinator {
     );
   }
 
-  /// Unpins [notification], restoring its dismissible/interactive swipe status.
-  void unpin(final NotificationWidget notification) {
+  /// Releases the pin on [notification].
+  @override
+  void unpin(final AppNotification notification) {
+    for (final n in activeNotifications) {
+      if (n.id == notification.id) {
+        unpinWidget(n);
+        return;
+      }
+    }
+  }
+
+  /// Releases the pin on [notification] (by widget reference).
+  ///
+  /// Used internally by gesture plugins.
+  void unpinWidget(final NotificationWidget notification) {
     final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
     final state = stateKey.currentState;
     if (state != null) {
@@ -266,6 +462,8 @@ class QueueCoordinator {
       NotificationUnpinned(notification: state?.widget ?? notification),
     );
   }
+
+  // ── Misc Actions ─────────────────────────────────────────────────────────
 
   /// Triggers a developer-defined custom action on [notification].
   void triggerCustomAction(
@@ -372,27 +570,7 @@ class QueueCoordinator {
               ),
       );
 
-  /// Dismisses all notifications that share [groupKey] in the queue at
-  /// [position] with an animated exit.
-  ///
-  /// Emits a [NotificationGroupDismissed] event before triggering removal.
-  /// Prefer this over calling [dismiss] in a loop — it guarantees atomic
-  /// group semantics and correct event emission.
-  void dismissGroup(
-    final QueuePosition position,
-    final String groupKey, {
-    final DismissReason reason = DismissReason.programmatic,
-  }) {
-    _eventController.add(
-      NotificationGroupDismissed(groupKey: groupKey, position: position),
-    );
-    final key = _widgetStateKeys[position];
-    key?.currentState?.dismissGroup(groupKey, reason: reason);
-  }
-
   /// Exposed for overlay.
-  /// Note: The overlay builder needs to use the GlobalKey we created.
-  /// We need a way to look it up.
   GlobalKey<QueueWidgetState> getWidgetKey(final QueuePosition position) =>
       _widgetStateKeys[position]!;
 
@@ -410,24 +588,5 @@ class QueueCoordinator {
       }
     }
     return list;
-  }
-
-  /// Dismisses the newest active notification across all active queues.
-  void dismissNewest() {
-    final active = activeNotifications;
-    if (active.isEmpty) {
-      return;
-    }
-    // Sort by createdAt descending to find the newest
-    active.sort((final a, final b) => b.createdAt.compareTo(a.createdAt));
-    dismiss(active.first, reason: DismissReason.programmatic);
-  }
-
-  /// Dismisses all active notifications across all active queues.
-  void dismissAll() {
-    final active = activeNotifications;
-    for (final notification in active) {
-      dismiss(notification, reason: DismissReason.programmatic);
-    }
   }
 }

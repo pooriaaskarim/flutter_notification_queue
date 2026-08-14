@@ -25,11 +25,36 @@ class ConfigurationManager {
     return _expandRelocationGroups(inputQueues);
   }
 
-  final Set<NotificationQueue> queues;
-  final Set<NotificationChannel> channels;
-  final bool strictChannelLookup;
-  final bool enableDynamicChannelParking;
-  final int maxHistoryEntries;
+  Set<NotificationQueue> queues;
+  Set<NotificationChannel> channels;
+  bool strictChannelLookup;
+  bool enableDynamicChannelParking;
+  int maxHistoryEntries;
+
+  /// Updates the configuration settings in-place.
+  void reconfigure({
+    final Set<NotificationQueue>? queues,
+    final Set<NotificationChannel>? channels,
+    final bool? strictChannelLookup,
+    final bool? enableDynamicChannelParking,
+    final int? maxHistoryEntries,
+  }) {
+    if (queues != null) {
+      this.queues = _initQueues(queues);
+    }
+    if (channels != null) {
+      this.channels = channels;
+    }
+    if (strictChannelLookup != null) {
+      this.strictChannelLookup = strictChannelLookup;
+    }
+    if (enableDynamicChannelParking != null) {
+      this.enableDynamicChannelParking = enableDynamicChannelParking;
+    }
+    if (maxHistoryEntries != null) {
+      this.maxHistoryEntries = maxHistoryEntries;
+    }
+  }
 
   /// Stores dynamically parked channel positions mapping channel names to
   /// their new positions.

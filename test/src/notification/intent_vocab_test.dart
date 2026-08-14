@@ -108,11 +108,11 @@ void main() {
       // Drive the 300ms entry animation to completion.
       await _driveAnimation(tester);
 
-      FlutterNotificationQueue.coordinator.pin(n);
+      FlutterNotificationQueue.coordinator.pinWidget(n);
       await tester.pump();
       await tester.pump();
 
-      FlutterNotificationQueue.coordinator.unpin(n);
+      FlutterNotificationQueue.coordinator.unpinWidget(n);
       await tester.pump();
       await tester.pump();
 
@@ -204,7 +204,7 @@ void main() {
       expect(find.text('Snoozed notification'), findsOneWidget);
 
       // Snooze for 500ms — longer than any transition.
-      FlutterNotificationQueue.coordinator.snooze(
+      FlutterNotificationQueue.coordinator.snoozeWidget(
         n,
         const Duration(milliseconds: 500),
       );
@@ -282,7 +282,7 @@ void main() {
       );
 
       // Now unpin it
-      FlutterNotificationQueue.coordinator.unpin(n);
+      FlutterNotificationQueue.coordinator.unpinWidget(n);
       await tester.pump();
       await tester.pump();
 
