@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.3.0] - 2026-08-14
+
+### Architectural Evolution (v1.0 Preparation)
+- **`NotificationController` Facade**: Introduced an explicit `NotificationController` to own configuration (`queues`, `channels`), active state, event streams, and history logging. Replaces global static state with clean dependency injection.
+- **`NotificationScope` Integration**: Introduced `NotificationScope` (`StatefulWidget` & `InheritedWidget`) to provide scoped access to `NotificationController` via `NotificationScope.of(context)`.
+- **`AppNotification` Intent Payload**: Separated data payload from widget rendering state. Applications dispatch immutable `AppNotification` payloads via `controller.show(AppNotification(...))`.
+- **Expanded Controller Surface**: Added `show`, `tryShow`, `dismiss`, `dismissAll`, `dismissNewest`, `dismissGroup`, `relocate`, `reorder`, `snooze`, `pin`, `unpin`, `getHistory`, `clearHistory`, and `events` directly to `NotificationController`.
+- **Sealed Event Hierarchy**: Renamed `FnqEvent` base class to `NotificationEvent` (`typedef FnqEvent = NotificationEvent` provided for backward compatibility).
+- **Deprecation Path**: Marked `FlutterNotificationQueue`, `NotificationWidget.show()`, and direct `NotificationWidget` instantiation as `@Deprecated`. See `doc/migration_v1.md` for complete migration guidance.
+
+### Bug Fixes & Stability
+- **Reorder & Relocate Null Safety**: Resolved unexpected `null` value errors and unmounted state crashes during card reordering and relocation interactions.
+- **Context-Aware Scope Resolution**: Implemented a 3-tier coordinator lookup hierarchy (`explicit -> NotificationScope.maybeCoordinatorOf(context) -> FlutterNotificationQueue.coordinator`) across UI overlay, queue widgets, and draggable transitions, preventing scoped `NotificationController` instances from defaulting to global static singletons.
+- **Blueprint Coordinator Preservation**: Preserved `coordinator` references across `copyToQueue` (relocation) and `copyForRequeue` (snooze) blueprint copies.
+- **Unmounted Timer Prevention**: Prevented calling `initDismissTimer()` on unmounting notification states after successful relocation.
+
+### Documentation & Tooling
+- **Migration Guide**: Added comprehensive migration documentation in `doc/migration_v1.md`.
+- **Studio Application**: Refactored `example/` Studio app to showcase `NotificationController` and `NotificationScope` patterns.
+
 ## [0.2.0] - 2026-07-19
 
 ### Consolidated API & Subclass Removal
