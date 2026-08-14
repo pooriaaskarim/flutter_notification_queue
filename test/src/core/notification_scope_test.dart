@@ -161,9 +161,9 @@ void main() {
 
       await subA.cancel();
       await subB.cancel();
+      await widgetTester.pumpWidget(const SizedBox());
       controllerA.dispose();
       controllerB.dispose();
-      await widgetTester.pumpWidget(const SizedBox());
     });
 
     testWidgets('detaches controller when NotificationScope is unmounted',
