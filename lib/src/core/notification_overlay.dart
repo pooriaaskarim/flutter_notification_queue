@@ -87,6 +87,9 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 
   @override
   void dispose() {
+    if (_overlayPortalController.isShowing) {
+      _overlayPortalController.hide();
+    }
     _attachedCoordinator?.detach();
     super.dispose();
   }
@@ -170,7 +173,9 @@ class _NotificationQueueStackState extends State<_NotificationQueueStack> {
           final hasActive = activeQueues.isNotEmpty;
           if (hasActive) {
             WidgetsBinding.instance.addPostFrameCallback((final _) {
-              if (_focusNode.canRequestFocus && !_focusNode.hasFocus) {
+              if (mounted &&
+                  _focusNode.canRequestFocus &&
+                  !_focusNode.hasFocus) {
                 _focusNode.requestFocus();
               }
             });

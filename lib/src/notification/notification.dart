@@ -557,8 +557,8 @@ class NotificationWidgetState extends State<NotificationWidget>
   @override
   void dispose() {
     widget.isPinnedNotifier.removeListener(_handlePinChanged);
+    ditchDismissTimer();
     animationController.dispose();
-    _dismissProgressController?.dispose();
     isExpanded.dispose();
     _logger.debugBuffer
       ?..writeln('Disposed')

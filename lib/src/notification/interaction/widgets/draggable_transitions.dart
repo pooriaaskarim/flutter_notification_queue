@@ -147,6 +147,9 @@ class DraggableTransitionsState extends State<DraggableTransitions>
 
     _dragOffsetPairNotifier.dispose();
     _fsm.dispose();
+    if (_snapBackController.isAnimating) {
+      _snapBackController.stop();
+    }
     _snapBackController.dispose();
     super.dispose();
   }

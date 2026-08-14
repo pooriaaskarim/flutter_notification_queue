@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.1] - 2026-08-14
+
+### Memory Teardown & Resource Hardening
+- **Automated Timer Teardown**: Added `ditchAllDismissTimers()` to `QueueWidgetState` and integrated it into `QueueCoordinator.dispose()` to ensure active tickers and auto-dismiss timers across all registered queues stop immediately on coordinator/controller disposal.
+- **Animation Ticker Teardown**: Prevented active `_snapBackController` animation leaks in `DraggableTransitionsState` and invoked `ditchDismissTimer()` prior to disposing `NotificationWidgetState`.
+- **OverlayPortal Controller Teardown**: Ensured `OverlayPortalController` and scope bindings detach cleanly on widget unmounting.
+
+### Test Suite Hardening
+- **Multi-Tenant Scope Verification**: Added unit and widget test suite in `notification_scope_test.dart` covering multi-tenant subtree isolation, scope nesting overrides, unmount detachment, and graceful timer teardown.
+
 ## [0.3.0] - 2026-08-14
 
 ### Architectural Evolution (v1.0 Preparation)

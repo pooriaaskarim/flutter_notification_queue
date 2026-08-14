@@ -51,7 +51,11 @@ class QueueCoordinator implements NotificationScopeState {
   /// Only intended for use in unit tests that need to verify stream consumers
   /// without spinning up a full widget tree.
   @visibleForTesting
-  void emitEvent(final FnqEvent event) => _eventController.add(event);
+  void emitEvent(final FnqEvent event) {
+    if (!_eventController.isClosed) {
+      _eventController.add(event);
+    }
+  }
 
   /// Registry of keys to communicate with active queue widgets.
   final _widgetStateKeys = <QueuePosition, GlobalKey<QueueWidgetState>>{};
@@ -74,6 +78,9 @@ class QueueCoordinator implements NotificationScopeState {
 
   void detach() {
     _logger.debug('Detaching OverlayPortalController...');
+    for (final key in _widgetStateKeys.values) {
+      key.currentState?.ditchAllDismissTimers();
+    }
     _controller = null;
     _widgetStateKeys.clear();
     _initializationQueue.clear();
@@ -81,6 +88,9 @@ class QueueCoordinator implements NotificationScopeState {
   }
 
   void dispose() {
+    for (final key in _widgetStateKeys.values) {
+      key.currentState?.ditchAllDismissTimers();
+    }
     detach();
     _eventController.close();
     _historyLogger.dispose();

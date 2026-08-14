@@ -180,7 +180,11 @@ class NotificationController {
       'Create a separate controller for each independent notification surface.',
     );
     _attachedState = state;
-    _stateSub = state.events.listen(_proxyController.add);
+    _stateSub = state.events.listen((final event) {
+      if (!_proxyController.isClosed) {
+        _proxyController.add(event);
+      }
+    });
   }
 
   /// Internal detachment protocol called by `NotificationScopeState.dispose()`.

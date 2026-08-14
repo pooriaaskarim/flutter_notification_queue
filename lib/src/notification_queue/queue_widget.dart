@@ -142,12 +142,20 @@ class QueueWidgetState extends State<QueueWidget>
     _processPending();
   }
 
+  /// Stops and cancels all active dismiss timers and tickers in this queue.
+  void ditchAllDismissTimers() {
+    for (final item in _items) {
+      item.widget.key.currentState?.ditchDismissTimer();
+      item.controller.stop(canceled: false);
+      item.controller.dispose();
+    }
+    _items.clear();
+  }
+
   @override
   void dispose() {
     _dragTargetIndexNotifier.dispose();
-    for (final item in _items) {
-      item.controller.dispose();
-    }
+    ditchAllDismissTimers();
     super.dispose();
   }
 
