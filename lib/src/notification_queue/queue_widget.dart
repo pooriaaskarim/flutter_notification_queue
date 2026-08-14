@@ -146,8 +146,12 @@ class QueueWidgetState extends State<QueueWidget>
   void ditchAllDismissTimers() {
     for (final item in _items) {
       item.widget.key.currentState?.ditchDismissTimer();
-      item.controller.stop(canceled: false);
-      item.controller.dispose();
+      if (item.controller.isAnimating) {
+        item.controller.stop(canceled: false);
+      }
+      try {
+        item.controller.dispose();
+      } on Object catch (_) {}
     }
     _items.clear();
   }

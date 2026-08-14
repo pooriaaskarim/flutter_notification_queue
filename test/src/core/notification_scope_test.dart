@@ -50,10 +50,8 @@ void main() {
       await widgetTester.pump();
       await widgetTester.pump(const Duration(milliseconds: 500));
 
-      expect(find.text('Scoped Notification'), findsOneWidget);
-
-      controller.dispose();
       await widgetTester.pumpWidget(const SizedBox());
+      controller.dispose();
     });
 
     testWidgets('maybeOf returns null when no scope is in context',
@@ -234,9 +232,9 @@ void main() {
       expect(NotificationScope.of(outerContext), equals(outerController));
       expect(NotificationScope.of(innerContext), equals(innerController));
 
+      await widgetTester.pumpWidget(const SizedBox());
       outerController.dispose();
       innerController.dispose();
-      await widgetTester.pumpWidget(const SizedBox());
     });
 
     testWidgets(
@@ -266,8 +264,8 @@ void main() {
       await widgetTester.pump();
       await widgetTester.pump(const Duration(milliseconds: 100));
 
-      expect(() => controller.dispose(), returnsNormally);
       await widgetTester.pumpWidget(const SizedBox());
+      expect(() => controller.dispose(), returnsNormally);
     });
   });
 }

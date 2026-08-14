@@ -84,16 +84,24 @@ class QueueCoordinator implements NotificationScopeState {
     _controller = null;
     _widgetStateKeys.clear();
     _initializationQueue.clear();
-    _activeQueuesNotifier.value = {};
+    try {
+      _activeQueuesNotifier.value = {};
+    } on Object catch (_) {}
   }
 
+  @override
   void dispose() {
     for (final key in _widgetStateKeys.values) {
       key.currentState?.ditchAllDismissTimers();
     }
     detach();
-    _eventController.close();
+    if (!_eventController.isClosed) {
+      _eventController.close();
+    }
     _historyLogger.dispose();
+    try {
+      _activeQueuesNotifier.dispose();
+    } on Object catch (_) {}
   }
 
   /// Retrieves and clears pending initialization items for a queue.

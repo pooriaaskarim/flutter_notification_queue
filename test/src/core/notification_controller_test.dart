@@ -97,6 +97,11 @@ class _FakeNotificationScopeState implements NotificationScopeState {
     clearedHistory = true;
   }
 
+  @override
+  void dispose() {
+    _eventController.close();
+  }
+
   void emitEvent(final FnqEvent event) {
     _eventController.add(event);
   }

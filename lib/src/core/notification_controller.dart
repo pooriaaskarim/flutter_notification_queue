@@ -59,6 +59,9 @@ abstract class NotificationScopeState {
 
   /// Clears recorded history.
   void clearHistory();
+
+  /// Disposes resources held by the scope surface.
+  void dispose();
 }
 
 /// Configuration owner and contextless dispatch handle for a notification
@@ -337,8 +340,11 @@ class NotificationController {
 
   /// Disposes this controller and releases resources.
   void dispose() {
+    _attachedState?.dispose();
     detach();
-    _proxyController.close();
+    if (!_proxyController.isClosed) {
+      _proxyController.close();
+    }
   }
 
   static void _configureLogger({
