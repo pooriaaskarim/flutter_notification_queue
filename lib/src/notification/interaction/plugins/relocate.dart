@@ -9,7 +9,7 @@ class RelocateGesturePlugin extends NotificationGesturePlugin {
   @override
   void onDragStart(final DragGestureContext ctx) {
     final position = ctx.notification.queue.position;
-    FlutterNotificationQueue.coordinator.bringToFront(position);
+    ctx.notification.effectiveCoordinator.bringToFront(position);
     ctx.notification.key.currentState?.ditchDismissTimer();
     ctx.dragOffsetPairNotifier.value = OffsetPair(
       local: Offset.zero,
@@ -36,6 +36,7 @@ class RelocateGesturePlugin extends NotificationGesturePlugin {
   ) {
     final pointer = ctx.dragOffsetPairNotifier.value?.global;
     final position = ctx.notification.queue.position;
+    bool relocated = false;
     if (pointer != null) {
       final zones = ctx.getZones(behavior, position);
       final hitZone = zones
@@ -50,12 +51,15 @@ class RelocateGesturePlugin extends NotificationGesturePlugin {
           .firstOrNull;
       if (hitZone != null) {
         HapticFeedback.mediumImpact();
-        FlutterNotificationQueue.coordinator
-            .relocate(ctx.notification, hitZone.position);
+        ctx.notification.effectiveCoordinator
+            .relocateWidget(ctx.notification, hitZone.position);
+        relocated = true;
       }
     }
     ctx.dragOffsetPairNotifier.value = null;
-    ctx.notification.key.currentState?.initDismissTimer();
+    if (!relocated) {
+      ctx.notification.key.currentState?.initDismissTimer();
+    }
     ctx.overlayPortalController.hide();
   }
 

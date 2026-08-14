@@ -10,12 +10,12 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
   void onDragStart(final DragGestureContext ctx) {
     final position = ctx.notification.queue.position;
     final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+        ctx.notification.effectiveCoordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     final itemCount = queueState?.itemCount ?? 1;
     final currentIndex = queueState?.indexOf(ctx.notification) ?? 0;
 
-    FlutterNotificationQueue.coordinator.bringToFront(position);
+    ctx.notification.effectiveCoordinator.bringToFront(position);
     ctx.notification.key.currentState?.ditchDismissTimer();
     queueState?.startDragReorder(ctx.notification.id, currentIndex);
     ctx
@@ -44,7 +44,7 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
       final targetIdx = zones[nearestIndex].targetIndex;
       final position = ctx.notification.queue.position;
       final queueKey =
-          FlutterNotificationQueue.coordinator.getWidgetKey(position);
+          ctx.notification.effectiveCoordinator.getWidgetKey(position);
       queueKey.currentState?.updateDragTarget(targetIdx);
     }
   }
@@ -56,7 +56,7 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
   ) {
     final position = ctx.notification.queue.position;
     final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+        ctx.notification.effectiveCoordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     queueState?.endDragReorder();
 
@@ -73,7 +73,7 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
             ctx.nearestZoneIndexWithHysteresis(pointer, zones);
         if (nearestZoneIdx != null) {
           HapticFeedback.mediumImpact();
-          FlutterNotificationQueue.coordinator.reorder(
+          ctx.notification.effectiveCoordinator.reorderWidget(
             ctx.notification,
             zones[nearestZoneIdx].targetIndex,
           );
@@ -95,7 +95,7 @@ class ReorderGesturePlugin extends NotificationGesturePlugin {
     final pointer = offsetPair?.global;
     final position = ctx.notification.queue.position;
     final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+        ctx.notification.effectiveCoordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     final currentIndex = queueState?.indexOf(ctx.notification) ?? 0;
 

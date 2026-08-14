@@ -257,10 +257,7 @@ void main() {
       expect(find.text('Chat 2'), findsNothing);
 
       // 8. Programmatic group dismissal for 'chat' queue
-      FlutterNotificationQueue.coordinator.dismissGroup(
-        QueuePosition.topRight,
-        'chat',
-      );
+      FlutterNotificationQueue.coordinator.dismissGroup('chat');
       await tester.pumpAndSettle();
 
       // Chat notifications are gone, system group remains at Bottom Left

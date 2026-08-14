@@ -10,12 +10,12 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
   void onDragStart(final DragGestureContext ctx) {
     final position = ctx.notification.queue.position;
     final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+        ctx.notification.effectiveCoordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     final itemCount = queueState?.itemCount ?? 1;
     final currentIndex = queueState?.indexOf(ctx.notification) ?? 0;
 
-    FlutterNotificationQueue.coordinator.bringToFront(position);
+    ctx.notification.effectiveCoordinator.bringToFront(position);
     ctx.notification.key.currentState?.ditchDismissTimer();
     queueState?.startDragReorder(ctx.notification.id, currentIndex);
     ctx
@@ -41,7 +41,7 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
     final pointer = details.globalPosition;
     final position = ctx.notification.queue.position;
     final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+        ctx.notification.effectiveCoordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
 
     if (queueState != null) {
@@ -73,10 +73,11 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
   ) {
     final position = ctx.notification.queue.position;
     final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+        ctx.notification.effectiveCoordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     queueState?.endDragReorder();
 
+    bool relocated = false;
     final pointer = ctx.dragOffsetPairNotifier.value?.global;
     if (pointer != null) {
       final reorderZones = ctx.activeReorderZones ?? [];
@@ -91,7 +92,7 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
             ctx.nearestZoneIndexWithHysteresis(pointer, reorderZones);
         if (nearestZoneIdx != null) {
           HapticFeedback.mediumImpact();
-          FlutterNotificationQueue.coordinator.reorder(
+          ctx.notification.effectiveCoordinator.reorderWidget(
             ctx.notification,
             reorderZones[nearestZoneIdx].targetIndex,
           );
@@ -116,15 +117,18 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
 
         if (hitPosition != null) {
           HapticFeedback.mediumImpact();
-          FlutterNotificationQueue.coordinator
-              .relocate(ctx.notification, hitPosition.position);
+          ctx.notification.effectiveCoordinator
+              .relocateWidget(ctx.notification, hitPosition.position);
+          relocated = true;
         }
       }
     }
     ctx.activeReorderZones = null;
     ctx.dragOffsetPairNotifier.value = null;
     ctx.activeZoneIndex = null;
-    ctx.notification.key.currentState?.initDismissTimer();
+    if (!relocated) {
+      ctx.notification.key.currentState?.initDismissTimer();
+    }
     ctx.overlayPortalController.hide();
   }
 
@@ -136,7 +140,7 @@ class ReorderRelocateGesturePlugin extends NotificationGesturePlugin {
     final pointer = offsetPair?.global;
     final position = ctx.notification.queue.position;
     final queueKey =
-        FlutterNotificationQueue.coordinator.getWidgetKey(position);
+        ctx.notification.effectiveCoordinator.getWidgetKey(position);
     final queueState = queueKey.currentState;
     final currentIndex = queueState?.indexOf(ctx.notification) ?? 0;
 

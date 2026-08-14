@@ -9,7 +9,7 @@ class PinGesturePlugin extends NotificationGesturePlugin {
   @override
   void onDragStart(final DragGestureContext ctx) {
     final position = ctx.notification.queue.position;
-    FlutterNotificationQueue.coordinator.bringToFront(position);
+    ctx.notification.effectiveCoordinator.bringToFront(position);
     ctx.notification.key.currentState?.ditchDismissTimer();
     ctx.dragOffsetPairNotifier.value = OffsetPair(
       local: Offset.zero,
@@ -49,9 +49,9 @@ class PinGesturePlugin extends NotificationGesturePlugin {
         HapticFeedback.mediumImpact();
         final isCurrentlyPinned = ctx.notification.isPinned;
         if (isCurrentlyPinned) {
-          FlutterNotificationQueue.coordinator.unpin(ctx.notification);
+          ctx.notification.effectiveCoordinator.unpinWidget(ctx.notification);
         } else {
-          FlutterNotificationQueue.coordinator.pin(ctx.notification);
+          ctx.notification.effectiveCoordinator.pinWidget(ctx.notification);
         }
       }
     }
