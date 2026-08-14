@@ -6,50 +6,50 @@ import 'setup_bloc.dart';
 
 // ── Events ──
 
-sealed class NotificationEvent {
-  const NotificationEvent();
+sealed class StudioNotificationEvent {
+  const StudioNotificationEvent();
 }
 
-final class UpdateTitle extends NotificationEvent {
+final class UpdateTitle extends StudioNotificationEvent {
   const UpdateTitle(this.title);
   final String title;
 }
 
-final class UpdateMessage extends NotificationEvent {
+final class UpdateMessage extends StudioNotificationEvent {
   const UpdateMessage(this.message);
   final String message;
 }
 
-final class UpdateNotificationActionStyle extends NotificationEvent {
+final class UpdateNotificationActionStyle extends StudioNotificationEvent {
   const UpdateNotificationActionStyle(this.style);
   final NotificationActionStyle style;
 }
 
-final class UpdateActionLabel extends NotificationEvent {
+final class UpdateActionLabel extends StudioNotificationEvent {
   const UpdateActionLabel(this.label);
   final String label;
 }
 
-final class UpdateDismissDuration extends NotificationEvent {
+final class UpdateDismissDuration extends StudioNotificationEvent {
   const UpdateDismissDuration(this.seconds);
   final int? seconds;
 }
 
-final class SelectPreviewChannel extends NotificationEvent {
+final class SelectPreviewChannel extends StudioNotificationEvent {
   const SelectPreviewChannel(this.channelName);
   final String channelName;
 }
 
-final class SelectPreviewPosition extends NotificationEvent {
+final class SelectPreviewPosition extends StudioNotificationEvent {
   const SelectPreviewPosition(this.position);
   final QueuePosition? position;
 }
 
-final class FirePreview extends NotificationEvent {
+final class FirePreview extends StudioNotificationEvent {
   const FirePreview();
 }
 
-final class ResetDraft extends NotificationEvent {
+final class ResetDraft extends StudioNotificationEvent {
   const ResetDraft();
 }
 
@@ -110,7 +110,8 @@ class NotificationDraft {
 ///
 /// Reads the current `StudioSetup` from `SetupBloc` to resolve
 /// channels and queue positions.
-class NotificationBloc extends Bloc<NotificationEvent, NotificationDraft> {
+class NotificationBloc
+    extends Bloc<StudioNotificationEvent, NotificationDraft> {
   NotificationBloc({required this.setupBloc})
       : super(const NotificationDraft()) {
     on<UpdateTitle>(
@@ -167,23 +168,25 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationDraft> {
       );
     }
 
-    final effectiveLibraryPosition = FlutterNotificationQueue.configuration
-        .getEffectiveChannelPosition(draft.channelName);
+    final channelSetup = setupBloc.state.setup.channels[draft.channelName];
+    final effectiveLibraryPosition = channelSetup?.position;
     final resolvedPosition = draft.positionOverride ??
         effectiveLibraryPosition ??
         setupBloc.state.activeQueuePosition;
 
-    // Fire notification
-    NotificationWidget(
-      title: draft.title,
-      message: draft.message,
-      channelName: draft.channelName,
-      position: resolvedPosition,
-      action: action,
-      tapBehavior: tapBehavior,
-      dismissDuration: draft.dismissSeconds != null
-          ? Duration(seconds: draft.dismissSeconds!)
-          : null,
-    ).show();
+    // Fire notification via NotificationController
+    setupBloc.controller.show(
+      AppNotification(
+        title: draft.title,
+        message: draft.message,
+        channelName: draft.channelName,
+        position: resolvedPosition,
+        action: action,
+        tapBehavior: tapBehavior,
+        dismissDuration: draft.dismissSeconds != null
+            ? Duration(seconds: draft.dismissSeconds!)
+            : null,
+      ),
+    );
   }
 }

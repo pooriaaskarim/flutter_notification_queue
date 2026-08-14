@@ -59,11 +59,13 @@ class _Scenario {
 
 // Fires with a short stagger to show stacking behaviour
 void _stagger(
-  final List<NotificationWidget> widgets, [
+  final NotificationController scope,
+  final List<AppNotification> notifications, [
   final Duration delay = const Duration(milliseconds: 600),
 ]) {
-  for (var i = 0; i < widgets.length; i++) {
-    Future.delayed(delay * i, widgets[i].show);
+  for (var i = 0; i < notifications.length; i++) {
+    final n = notifications[i];
+    Future.delayed(delay * i, () => scope.show(n));
   }
 }
 
@@ -74,9 +76,9 @@ final _scenarios = [
     subtitle: 'Permanent error + timed warning — multi-position demo',
     icon: Icons.monitor_heart_outlined,
     color: const Color(0xFFEF4444),
-    onFire: (final _) {
-      _stagger([
-        NotificationWidget(
+    onFire: (final context) {
+      _stagger(NotificationScope.of(context), [
+        AppNotification(
           title: 'Service Degraded',
           message: 'Database connection pool exhausted. '
               'Manual intervention required.',
@@ -87,11 +89,11 @@ final _scenarios = [
             onPressed: () => debugPrint('[Scenario] Diagnose tapped'),
           ),
         ),
-        NotificationWidget(
+        const AppNotification(
           title: 'High Memory Usage',
           message: 'Instance is at 89% memory. Consider scaling up.',
           channelName: 'warning',
-          dismissDuration: const Duration(seconds: 8),
+          dismissDuration: Duration(seconds: 8),
         ),
       ]);
     },
@@ -103,16 +105,17 @@ final _scenarios = [
     subtitle: '3 staggered notifications — tests maxStackSize overflow',
     icon: Icons.people_outline,
     color: const Color(0xFF38BDF8),
-    onFire: (final _) {
+    onFire: (final context) {
       _stagger(
+        NotificationScope.of(context),
         [
-          NotificationWidget(
+          const AppNotification(
             title: 'Alex liked your post',
             message: '"Beautiful sunset photo!"',
             channelName: 'info',
-            dismissDuration: const Duration(seconds: 4),
+            dismissDuration: Duration(seconds: 4),
           ),
-          NotificationWidget(
+          AppNotification(
             title: 'Mia commented',
             message: '"This is stunning, where was this taken?"',
             channelName: 'info',
@@ -122,11 +125,11 @@ final _scenarios = [
               onPressed: () => debugPrint('[Scenario] Reply tapped'),
             ),
           ),
-          NotificationWidget(
+          const AppNotification(
             title: '5 new followers',
             message: 'Your account is trending in Photography.',
             channelName: 'info',
-            dismissDuration: const Duration(seconds: 5),
+            dismissDuration: Duration(seconds: 5),
           ),
         ],
         const Duration(milliseconds: 400),
@@ -140,17 +143,19 @@ final _scenarios = [
     subtitle: 'Success with action button — bottomCenter queue',
     icon: Icons.cloud_done_outlined,
     color: const Color(0xFF22C55E),
-    onFire: (final _) {
-      NotificationWidget(
-        title: 'Sync Complete',
-        message: '142 files synced to cloud. 2.3 GB transferred.',
-        channelName: 'success',
-        dismissDuration: const Duration(seconds: 6),
-        action: NotificationAction.button(
-          label: 'VIEW FILES',
-          onPressed: () => debugPrint('[Scenario] View Files tapped'),
+    onFire: (final context) {
+      NotificationScope.of(context).show(
+        AppNotification(
+          title: 'Sync Complete',
+          message: '142 files synced to cloud. 2.3 GB transferred.',
+          channelName: 'success',
+          dismissDuration: const Duration(seconds: 6),
+          action: NotificationAction.button(
+            label: 'VIEW FILES',
+            onPressed: () => debugPrint('[Scenario] View Files tapped'),
+          ),
         ),
-      ).show();
+      );
     },
   ),
 
@@ -160,18 +165,20 @@ final _scenarios = [
     subtitle: 'TapToAct — permanent card, tap to review, manual dismiss',
     icon: Icons.security_outlined,
     color: const Color(0xFFF97316),
-    onFire: (final _) {
-      NotificationWidget(
-        title: '\u26a0 Unrecognised Sign-In Attempt',
-        message: 'Login from Lagos, Nigeria \u00b7 Chrome on Windows. '
-            'Tap to review.',
-        channelName: 'warning',
-        dismissDuration: null,
-        tapBehavior: TapToAct(
-          onTap: () => debugPrint('[Scenario] Security alert tapped'),
-          dismissOnAct: false,
+    onFire: (final context) {
+      NotificationScope.of(context).show(
+        AppNotification(
+          title: '⚠ Unrecognised Sign-In Attempt',
+          message: 'Login from Lagos, Nigeria · Chrome on Windows. '
+              'Tap to review.',
+          channelName: 'warning',
+          dismissDuration: null,
+          tapBehavior: TapToAct(
+            onTap: () => debugPrint('[Scenario] Security alert tapped'),
+            dismissOnAct: false,
+          ),
         ),
-      ).show();
+      );
     },
   ),
 
@@ -181,7 +188,8 @@ final _scenarios = [
     subtitle: '10 rapid notifications — stress tests queue overflow',
     icon: Icons.bolt_outlined,
     color: const Color(0xFFA855F7),
-    onFire: (final _) {
+    onFire: (final context) {
+      final scope = NotificationScope.of(context);
       final channels = ['info', 'success', 'warning', 'error'];
       final messages = [
         ('Build #47 passed', 'All 312 tests green in 4.2s.'),
@@ -198,12 +206,14 @@ final _scenarios = [
       for (var i = 0; i < messages.length; i++) {
         final (title, message) = messages[i];
         Future.delayed(Duration(milliseconds: 250 * i), () {
-          NotificationWidget(
-            title: title,
-            message: message,
-            channelName: channels[i % channels.length],
-            dismissDuration: Duration(seconds: 4 + (i % 3)),
-          ).show();
+          scope.show(
+            AppNotification(
+              title: title,
+              message: message,
+              channelName: channels[i % channels.length],
+              dismissDuration: Duration(seconds: 4 + (i % 3)),
+            ),
+          );
         });
       }
     },
@@ -216,31 +226,32 @@ final _scenarios = [
         'All 4 tap behaviors — dismiss, expand, act, disabled — staggered',
     icon: Icons.touch_app_outlined,
     color: const Color(0xFF14B8A6),
-    onFire: (final _) {
+    onFire: (final context) {
       _stagger(
+        NotificationScope.of(context),
         [
           // 1 — TapToDismiss (explicit, same as default)
-          NotificationWidget(
-            title: 'Tap \u2192 Dismiss',
+          const AppNotification(
+            title: 'Tap → Dismiss',
             message: 'TapToDismiss: tap anywhere on this card to close it '
                 'immediately.',
             channelName: 'info',
             dismissDuration: null,
-            tapBehavior: const TapToDismiss(),
+            tapBehavior: TapToDismiss(),
           ),
           // 2 — TapToExpand
-          NotificationWidget(
-            title: 'Tap \u2192 Expand',
+          const AppNotification(
+            title: 'Tap → Expand',
             message:
                 'TapToExpand: tap the card surface to toggle the full details '
                 'panel. The entire card is now the expand affordance.',
             channelName: 'info',
             dismissDuration: null,
-            tapBehavior: const TapToExpand(),
+            tapBehavior: TapToExpand(),
           ),
           // 3 — TapToAct
-          NotificationWidget(
-            title: 'Tap \u2192 Act',
+          AppNotification(
+            title: 'Tap → Act',
             message: 'TapToAct: tap fires a callback. '
                 'Check the console for the log output.',
             channelName: 'success',
@@ -250,13 +261,13 @@ final _scenarios = [
             ),
           ),
           // 4 — TapDisabled
-          NotificationWidget(
-            title: 'Tap \u2192 Disabled',
+          const AppNotification(
+            title: 'Tap → Disabled',
             message: 'TapDisabled: tapping this card does nothing. '
                 'Use the close button to dismiss.',
             channelName: 'warning',
             dismissDuration: null,
-            tapBehavior: const TapDisabled(),
+            tapBehavior: TapDisabled(),
           ),
         ],
         const Duration(milliseconds: 700),
@@ -270,22 +281,24 @@ final _scenarios = [
     subtitle: 'un-swipeable card inside swipeable queue — override demo',
     icon: Icons.pin_drop_outlined,
     color: const Color(0xFFF59E0B),
-    onFire: (final _) {
-      NotificationWidget(
-        title: 'CRITICAL SECURITY UPDATE',
-        message: 'This notification has dragBehavior: Disabled override. '
-            'It cannot be swiped away, but other notifications in this queue '
-            'can!',
-        channelName: 'error',
-        dismissDuration: null,
-        dragBehavior: const Disabled(),
-        action: NotificationAction.button(
-          label: 'OK',
-          onPressed: () {
-            debugPrint('[Scenario] Sticky Alert OK tapped');
-          },
+    onFire: (final context) {
+      NotificationScope.of(context).show(
+        AppNotification(
+          title: 'CRITICAL SECURITY UPDATE',
+          message: 'This notification has dragBehavior: Disabled override. '
+              'It cannot be swiped away, but other notifications in this queue '
+              'can!',
+          channelName: 'error',
+          dismissDuration: null,
+          dragBehavior: const Disabled(),
+          action: NotificationAction.button(
+            label: 'OK',
+            onPressed: () {
+              debugPrint('[Scenario] Sticky Alert OK tapped');
+            },
+          ),
         ),
-      ).show();
+      );
     },
   ),
 
@@ -295,23 +308,25 @@ final _scenarios = [
     subtitle: 'Showcases priority-aware auto-sorting & preemption eviction',
     icon: Icons.sort_rounded,
     color: const Color(0xFFF43F5E),
-    onFire: (final _) {
+    onFire: (final context) {
+      final scope = NotificationScope.of(context);
       // 1. Enqueue 2 low priority notifications staggered
       _stagger(
+        scope,
         [
-          NotificationWidget(
+          const AppNotification(
             title: 'Low Priority: Disk Cleanup',
             message: 'Background disk cleanup started.',
             channelName: 'info',
             priority: NotificationPriority.low,
-            dismissDuration: const Duration(seconds: 10),
+            dismissDuration: Duration(seconds: 10),
           ),
-          NotificationWidget(
+          const AppNotification(
             title: 'Low Priority: Syncing Logs',
             message: 'Diagnostic log sync in progress.',
             channelName: 'info',
             priority: NotificationPriority.low,
-            dismissDuration: const Duration(seconds: 10),
+            dismissDuration: Duration(seconds: 10),
           ),
         ],
         const Duration(milliseconds: 350),
@@ -320,26 +335,30 @@ final _scenarios = [
       // 2. Enqueue Normal priority notification that will auto-sort and push
       // to the front of pending queue
       Future.delayed(const Duration(milliseconds: 1000), () {
-        NotificationWidget(
-          title: 'Normal Priority: Package Update',
-          message: 'System package updates available.',
-          channelName: 'warning',
-          priority: NotificationPriority.normal,
-          dismissDuration: const Duration(seconds: 6),
-        ).show();
+        scope.show(
+          const AppNotification(
+            title: 'Normal Priority: Package Update',
+            message: 'System package updates available.',
+            channelName: 'warning',
+            priority: NotificationPriority.normal,
+            dismissDuration: Duration(seconds: 6),
+          ),
+        );
       });
 
       // 3. Enqueue a Critical notification that will immediately evict the
       // lowest priority active notification
       Future.delayed(const Duration(milliseconds: 2000), () {
-        NotificationWidget(
-          title: 'CRITICAL: Database Offline!',
-          message: 'Primary database connection lost! '
-              'Evicting low priority tasks.',
-          channelName: 'error',
-          priority: NotificationPriority.critical,
-          dismissDuration: const Duration(seconds: 6),
-        ).show();
+        scope.show(
+          const AppNotification(
+            title: 'CRITICAL: Database Offline!',
+            message: 'Primary database connection lost! '
+                'Evicting low priority tasks.',
+            channelName: 'error',
+            priority: NotificationPriority.critical,
+            dismissDuration: Duration(seconds: 6),
+          ),
+        );
       });
     },
   ),
@@ -365,27 +384,28 @@ final _scenarios = [
       }
 
       _stagger(
+        NotificationScope.of(context),
         [
-          NotificationWidget(
+          const AppNotification(
             title: 'Top Left Queue',
             message: 'Fired into topLeft queue.',
             channelName: 'info',
             position: QueuePosition.topLeft,
-            dismissDuration: const Duration(seconds: 12),
+            dismissDuration: Duration(seconds: 12),
           ),
-          NotificationWidget(
+          const AppNotification(
             title: 'Top Center Queue',
             message: 'Fired into topCenter queue.',
             channelName: 'warning',
             position: QueuePosition.topCenter,
-            dismissDuration: const Duration(seconds: 12),
+            dismissDuration: Duration(seconds: 12),
           ),
-          NotificationWidget(
+          const AppNotification(
             title: 'Top Right Queue',
             message: 'Fired into topRight queue.',
             channelName: 'error',
             position: QueuePosition.topRight,
-            dismissDuration: const Duration(seconds: 12),
+            dismissDuration: Duration(seconds: 12),
           ),
         ],
         const Duration(milliseconds: 200),
@@ -401,6 +421,7 @@ final _scenarios = [
     icon: Icons.mark_chat_unread_outlined,
     color: const Color(0xFF0EA5E9),
     onFire: (final context) {
+      final scope = NotificationScope.of(context);
       final setupBloc = context.read<SetupBloc>();
       // Automatically configure topRight queue to have groupingEnabled = true
       final existingQueue =
@@ -431,33 +452,34 @@ final _scenarios = [
         );
 
       // Delay to ensure SetupBloc state is applied before
-      // NotificationWidgets are built
+      // notifications are built
       Future.delayed(const Duration(milliseconds: 50), () {
         _stagger(
+          scope,
           [
-            NotificationWidget(
+            const AppNotification(
               title: 'Alice',
               message: 'Hey, are you free this afternoon?',
               channelName: 'chat',
-              dismissDuration: const Duration(seconds: 30),
+              dismissDuration: Duration(seconds: 30),
             ),
-            NotificationWidget(
+            const AppNotification(
               title: 'Alice',
               message: 'I have some updates on the design sprint.',
               channelName: 'chat',
-              dismissDuration: const Duration(seconds: 30),
+              dismissDuration: Duration(seconds: 30),
             ),
-            NotificationWidget(
+            const AppNotification(
               title: 'Alice',
               message: 'The stakeholders moved the review to Friday!',
               channelName: 'chat',
-              dismissDuration: const Duration(seconds: 30),
+              dismissDuration: Duration(seconds: 30),
             ),
-            NotificationWidget(
+            const AppNotification(
               title: 'Alice',
               message: 'Let me know if you need the deck beforehand.',
               channelName: 'chat',
-              dismissDuration: const Duration(seconds: 30),
+              dismissDuration: Duration(seconds: 30),
             ),
           ],
           const Duration(milliseconds: 500),
@@ -475,6 +497,7 @@ final _scenarios = [
     icon: Icons.layers_clear_outlined,
     color: const Color(0xFF06B6D4),
     onFire: (final context) {
+      final scope = NotificationScope.of(context);
       final setupBloc = context.read<SetupBloc>();
       // Automatically configure bottomLeft queue to have groupingEnabled = true
       final existingQueue =
@@ -507,33 +530,34 @@ final _scenarios = [
       const groupKey = 'system_tasks';
 
       // Delay to ensure SetupBloc state is applied before
-      // NotificationWidgets are built
+      // notifications are built
       Future.delayed(const Duration(milliseconds: 50), () {
         _stagger(
+          scope,
           [
-            NotificationWidget(
+            const AppNotification(
               title: 'Bob',
               message: 'Build pipeline started.',
               channelName: groupKey,
-              dismissDuration: const Duration(seconds: 60),
+              dismissDuration: Duration(seconds: 60),
             ),
-            NotificationWidget(
+            const AppNotification(
               title: 'Bob',
               message: 'Unit tests: all 312 passed.',
               channelName: groupKey,
-              dismissDuration: const Duration(seconds: 60),
+              dismissDuration: Duration(seconds: 60),
             ),
-            NotificationWidget(
+            const AppNotification(
               title: 'Bob',
               message: 'Integration tests: passed.',
               channelName: groupKey,
-              dismissDuration: const Duration(seconds: 60),
+              dismissDuration: Duration(seconds: 60),
             ),
-            NotificationWidget(
+            const AppNotification(
               title: 'Bob',
               message: '🚀 Deploy to staging complete.',
               channelName: groupKey,
-              dismissDuration: const Duration(seconds: 60),
+              dismissDuration: Duration(seconds: 60),
             ),
           ],
           const Duration(milliseconds: 400),
@@ -541,10 +565,7 @@ final _scenarios = [
 
         // After the burst has settled, dismiss the whole bundle at once.
         Future.delayed(const Duration(seconds: 3), () {
-          FlutterNotificationQueue.coordinator.dismissGroup(
-            QueuePosition.bottomLeft,
-            groupKey,
-          );
+          scope.dismissGroup(groupKey);
         });
       });
     },
@@ -606,7 +627,7 @@ class _ScenarioTile extends StatelessWidget {
                       scenario.subtitle,
                       style: TextStyle(
                         fontSize: 10,
-                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: colorScheme.onSurface.withValues(alpha: 0.55),
                       ),
                     ),
                   ],
@@ -614,8 +635,8 @@ class _ScenarioTile extends StatelessWidget {
               ),
               Icon(
                 Icons.play_arrow_rounded,
-                size: 18,
-                color: scenario.color.withValues(alpha: 0.8),
+                size: 16,
+                color: scenario.color,
               ),
             ],
           ),

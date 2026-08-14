@@ -7,7 +7,7 @@ import 'queue_setup.dart';
 /// The complete Studio configuration — all queues + all channels.
 ///
 /// This is the **single source of truth** passed to
-/// [FlutterNotificationQueue.configure].
+/// [NotificationController].
 class StudioSetup extends Equatable {
   const StudioSetup({
     this.queues = const {QueuePosition.topCenter: QueueSetup()},

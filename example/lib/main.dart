@@ -11,8 +11,8 @@ import 'studio/studio_theme.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Configuration is managed reactively by SetupBloc —
-  // no manual FlutterNotificationQueue.configure() call needed.
+  // NotificationController is managed reactively by SetupBloc —
+  // NotificationScope is mounted in MaterialApp.builder below.
 
   runApp(const NFQStudioApp());
 }
@@ -21,30 +21,34 @@ class NFQStudioApp extends StatelessWidget {
   const NFQStudioApp({super.key});
 
   @override
-  Widget build(final BuildContext context) {
-    final setupBloc = SetupBloc();
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (final _) => setupBloc),
-        BlocProvider(
-          create: (final _) => NotificationBloc(setupBloc: setupBloc),
+  Widget build(final BuildContext context) => MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (final _) => SetupBloc()),
+          BlocProvider(
+            create: (final context) => NotificationBloc(
+              setupBloc: context.read<SetupBloc>(),
+            ),
+          ),
+          BlocProvider(create: (final _) => StudioBloc()),
+        ],
+        child: BlocBuilder<StudioBloc, StudioState>(
+          builder: (final context, final state) => MaterialApp(
+            title: 'NFQ Studio',
+            debugShowCheckedModeBanner: false,
+            theme: StudioTheme.light(),
+            darkTheme: StudioTheme.dark(),
+            themeMode: state.themeMode,
+            builder: (final context, final child) {
+              StudioTheme.update(context);
+              return BlocBuilder<SetupBloc, SetupState>(
+                builder: (final context, final _) => NotificationScope(
+                  controller: context.read<SetupBloc>().controller,
+                  child: child!,
+                ),
+              );
+            },
+            home: const StudioHome(),
+          ),
         ),
-        BlocProvider(create: (final _) => StudioBloc()),
-      ],
-      child: BlocBuilder<StudioBloc, StudioState>(
-        builder: (final context, final state) => MaterialApp(
-          title: 'NFQ Studio',
-          debugShowCheckedModeBanner: false,
-          theme: StudioTheme.light(),
-          darkTheme: StudioTheme.dark(),
-          themeMode: state.themeMode,
-          builder: (final context, final child) {
-            StudioTheme.update(context);
-            return FlutterNotificationQueue.builder(context, child);
-          },
-          home: const StudioHome(),
-        ),
-      ),
-    );
-  }
+      );
 }

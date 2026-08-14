@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
-/// A live event log that subscribes to [FlutterNotificationQueue.events] and
+/// A live event log that subscribes to [NotificationScope] events and
 /// displays the last `_maxEvents` lifecycle events in real time.
 class EventLogPanel extends StatefulWidget {
   const EventLogPanel({super.key});
@@ -16,17 +16,20 @@ class _EventLogPanelState extends State<EventLogPanel> {
   static const _maxEvents = 50;
 
   final _events = <_LogEntry>[];
-  StreamSubscription<FnqEvent>? _sub;
+  StreamSubscription<NotificationEvent>? _sub;
   final _scrollController = ScrollController();
 
   @override
-  void initState() {
-    super.initState();
-    final history = FlutterNotificationQueue.getHistory();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _sub?.cancel();
+    final scope = NotificationScope.of(context);
+    final history = scope.getHistory();
+    _events.clear();
     for (final event in history.reversed) {
       _events.add(_LogEntry(event: event, time: DateTime.now()));
     }
-    _sub = FlutterNotificationQueue.events.listen(_onEvent);
+    _sub = scope.events.listen(_onEvent);
   }
 
   @override
@@ -36,7 +39,7 @@ class _EventLogPanelState extends State<EventLogPanel> {
     super.dispose();
   }
 
-  void _onEvent(final FnqEvent event) {
+  void _onEvent(final NotificationEvent event) {
     setState(() {
       _events.insert(0, _LogEntry(event: event, time: DateTime.now()));
       if (_events.length > _maxEvents) {
@@ -90,7 +93,7 @@ class _EventLogPanelState extends State<EventLogPanel> {
                 message: 'Clear log',
                 child: InkWell(
                   onTap: () {
-                    FlutterNotificationQueue.clearHistory();
+                    NotificationScope.of(context).clearHistory();
                     setState(_events.clear);
                   },
                   borderRadius: BorderRadius.circular(6),
@@ -227,7 +230,10 @@ class _EventMeta {
   final String? badge;
   final String? subtitle;
 
-  static _EventMeta of(final FnqEvent event, {required final bool isDark}) =>
+  static _EventMeta of(
+    final NotificationEvent event, {
+    required final bool isDark,
+  }) =>
       switch (event) {
         NotificationQueued(:final notification) => _EventMeta(
             label: 'Queued',
@@ -424,6 +430,6 @@ class _EmptyState extends StatelessWidget {
 class _LogEntry {
   const _LogEntry({required this.event, required this.time});
 
-  final FnqEvent event;
+  final NotificationEvent event;
   final DateTime time;
 }

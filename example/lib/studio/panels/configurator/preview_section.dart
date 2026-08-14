@@ -223,28 +223,31 @@ class _ProgrammaticControls extends StatefulWidget {
 }
 
 class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
-  NotificationWidget? _activeDemo;
+  AppNotification? _activeDemo;
 
   void _fireDemo() {
     final id = 'demo_${DateTime.now().millisecondsSinceEpoch}';
     final channelName = widget.setupState.setup.channels.keys.first;
-    final n = NotificationWidget(
+    final n = AppNotification(
       id: id,
       title: 'Programmatic Demo',
       message: 'Keep an eye on me! I can be controlled programmatically.',
       channelName: channelName,
       dismissDuration: const Duration(seconds: 15),
-    )..show();
+    );
+    NotificationScope.of(context).show(n);
     setState(() {
       _activeDemo = n;
     });
   }
 
   void _dismissDemo() {
-    _activeDemo?.dismiss();
-    setState(() {
-      _activeDemo = null;
-    });
+    if (_activeDemo != null) {
+      NotificationScope.of(context).dismiss(_activeDemo!);
+      setState(() {
+        _activeDemo = null;
+      });
+    }
   }
 
   void _relocateDemo() {
@@ -258,18 +261,16 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
     }
 
     // Find a queue that is different from current
-    final currentPos = _activeDemo!.queue.position;
+    final currentPos = _activeDemo!.position ?? queues.first;
     final targetPos = queues.firstWhere(
       (final q) => q != currentPos,
       orElse: () => queues.last,
     );
 
-    final updatedDemo = _activeDemo!.relocateTo(targetPos);
-    if (updatedDemo != null) {
-      setState(() {
-        _activeDemo = updatedDemo;
-      });
-    }
+    NotificationScope.of(context).relocate(_activeDemo!, targetPos);
+    setState(() {
+      _activeDemo = _activeDemo!.copyWith(position: targetPos);
+    });
   }
 
   @override

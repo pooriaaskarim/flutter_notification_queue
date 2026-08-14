@@ -1,4 +1,5 @@
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_notification_queue_example/studio/bloc/notification_bloc.dart';
 import 'package:flutter_notification_queue_example/studio/bloc/setup_bloc.dart';
 import 'package:flutter_notification_queue_example/studio/engine/code_generator.dart';
@@ -76,18 +77,19 @@ void main() {
   group('NotificationBloc Preview Routing Tests', () {
     late SetupBloc setupBloc;
     late NotificationBloc notificationBloc;
-
+    late QueueCoordinator coordinator;
     setUp(() {
-      FlutterNotificationQueue.reset();
-      FlutterNotificationQueue.configure();
       setupBloc = SetupBloc();
       notificationBloc = NotificationBloc(setupBloc: setupBloc);
+      coordinator = QueueCoordinator.fromController(setupBloc.controller);
+      // ignore: invalid_use_of_internal_member
+      setupBloc.controller.attach(coordinator);
     });
 
     tearDown(() {
-      setupBloc.close();
+      coordinator.dispose();
       notificationBloc.close();
-      FlutterNotificationQueue.reset();
+      setupBloc.close();
     });
 
     test('FirePreview routes to active queue position by default', () async {
@@ -102,8 +104,8 @@ void main() {
       );
 
       // 2. Listen for NotificationQueued event
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = coordinator.events.listen(events.add);
 
       // 3. Fire the preview notification
       notificationBloc.add(const FirePreview());
@@ -133,8 +135,8 @@ void main() {
       await Future.delayed(Duration.zero);
 
       // 3. Listen for NotificationQueued event
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = coordinator.events.listen(events.add);
 
       // 4. Fire the preview notification
       notificationBloc.add(const FirePreview());

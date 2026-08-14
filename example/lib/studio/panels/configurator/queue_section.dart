@@ -592,7 +592,7 @@ class _QueueEditor extends StatelessWidget {
 }
 
 /// A compact action button in the GROUPING section that calls
-/// [FlutterNotificationQueue] coordinator's dismissGroup for the 'chat'
+/// [NotificationController.dismissGroup] for the 'chat'
 /// channel group key.
 ///
 /// Demonstrates the explicit bulk-dismiss API introduced in G-03.
@@ -640,8 +640,7 @@ class _DismissGroupButton extends StatelessWidget {
             ),
             icon: const Icon(Icons.layers_clear_outlined, size: 14),
             label: const Text('DISMISS ACTIVE GROUP'),
-            onPressed: () => FlutterNotificationQueue.coordinator.dismissGroup(
-              position,
+            onPressed: () => NotificationScope.of(context).dismissGroup(
               _defaultGroupKey,
             ),
           ),

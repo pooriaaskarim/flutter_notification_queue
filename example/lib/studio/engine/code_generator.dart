@@ -11,9 +11,9 @@ String generateCode({
   required final StudioSetup setup,
   required final NotificationDraft draft,
 }) {
-  final buf = StringBuffer('// NFQ Studio — Generated Code\n')
+  final buf = StringBuffer('// NFQ Studio — Generated Code (v1.0)\n')
     ..writeln()
-    ..writeln('FlutterNotificationQueue.configure(')
+    ..writeln('final controller = NotificationController(')
     ..writeln('  queues: {');
 
   for (final entry in setup.queues.entries) {
@@ -40,43 +40,50 @@ String generateCode({
   buf
     ..writeln(');')
     ..writeln()
-
-    // ── NotificationWidget ──
-
-    ..writeln('// Fire a notification')
-    ..writeln('NotificationWidget(')
-    ..writeln("  title: '${draft.title}',")
-    ..writeln("  message: '${draft.message}',")
-    ..writeln("  channelName: '${draft.channelName}',");
+    ..writeln('// 1. Attach NotificationScope to your widget tree:')
+    ..writeln('// MaterialApp(')
+    ..writeln('//   builder: (context, child) => NotificationScope(')
+    ..writeln('//     controller: controller,')
+    ..writeln('//     child: child!,')
+    ..writeln('//   ),')
+    ..writeln('// );')
+    ..writeln()
+    ..writeln('// 2. Dispatch a notification:')
+    ..writeln('controller.show(')
+    ..writeln('  AppNotification(')
+    ..writeln("    title: '${draft.title}',")
+    ..writeln("    message: '${draft.message}',")
+    ..writeln("    channelName: '${draft.channelName}',");
 
   if (draft.positionOverride != null) {
     buf.writeln(
-      '  position: QueuePosition.${draft.positionOverride!.name},',
+      '    position: QueuePosition.${draft.positionOverride!.name},',
     );
   }
 
   if (draft.actionStyle == NotificationActionStyle.button) {
     buf
-      ..writeln('  action: NotificationAction.button(')
-      ..writeln("    label: '${draft.actionLabel}',")
-      ..writeln('    onPressed: () {},')
-      ..writeln('  ),');
+      ..writeln('    action: NotificationAction.button(')
+      ..writeln("      label: '${draft.actionLabel}',")
+      ..writeln('      onPressed: () {},')
+      ..writeln('    ),');
   } else if (draft.actionStyle == NotificationActionStyle.onTap) {
     buf
-      ..writeln('  action: NotificationAction.onTap(')
-      ..writeln('    onPressed: () {},')
-      ..writeln('  ),');
+      ..writeln('    action: NotificationAction.onTap(')
+      ..writeln('      onPressed: () {},')
+      ..writeln('    ),');
   }
 
   if (draft.dismissSeconds != null) {
     buf.writeln(
-      '  dismissDuration: '
+      '    dismissDuration: '
       'const Duration(seconds: ${draft.dismissSeconds}),',
     );
   }
 
   buf
-    ..writeln(').show();')
+    ..writeln('  ),')
+    ..writeln(');')
     ..writeln();
 
   return buf.toString();

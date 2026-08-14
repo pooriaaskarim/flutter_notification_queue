@@ -106,7 +106,7 @@ class SetupState {
 
 /// Manages the [StudioSetup] lifecycle.
 ///
-/// Reactively calls [FlutterNotificationQueue.configure] whenever
+/// Instantiates a new [NotificationController] whenever
 /// the setup actually changes, via the [onChange] hook.
 class SetupBloc extends Bloc<SetupEvent, SetupState> {
   SetupBloc() : super(SetupState(setup: StudioSetup.withDefaults())) {
@@ -218,6 +218,8 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
     _applyToLibrary(state.setup);
   }
 
+  bool _isControllerInitialized = false;
+  late NotificationController controller;
   StudioSetup? _lastAppliedSetup;
 
   @override
@@ -230,18 +232,34 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
   }
 
   void _applyToLibrary(final StudioSetup setup) {
-    FlutterNotificationQueue.configure(
-      queues: setup.toLibraryQueues(),
-      channels: setup.toLibraryChannels(),
-      enableDynamicChannelParking: setup.enableDynamicChannelParking,
-      maxHistoryEntries: setup.maxHistoryEntries,
-    );
+    if (!_isControllerInitialized) {
+      controller = NotificationController(
+        queues: setup.toLibraryQueues(),
+        channels: setup.toLibraryChannels(),
+        enableDynamicChannelParking: setup.enableDynamicChannelParking,
+        maxHistoryEntries: setup.maxHistoryEntries,
+      );
+      _isControllerInitialized = true;
+    } else {
+      controller.reconfigure(
+        queues: setup.toLibraryQueues(),
+        channels: setup.toLibraryChannels(),
+        enableDynamicChannelParking: setup.enableDynamicChannelParking,
+        maxHistoryEntries: setup.maxHistoryEntries,
+      );
+    }
     _lastAppliedSetup = setup;
     debugPrint(
       '[SetupBloc] Applied: '
       '${setup.queues.length} queues, '
       '${setup.channels.length} channels',
     );
+  }
+
+  @override
+  Future<void> close() {
+    controller.dispose();
+    return super.close();
   }
 
   /// Enforces NFQ library constraints and business rules on the setup.

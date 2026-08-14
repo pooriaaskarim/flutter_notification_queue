@@ -22,7 +22,7 @@ The NFQ (Notification Flutter Queue) Studio is the official showcase for the lib
   - `ConfigBloc` — owns the `NfqConfig` model and handles library configuration lifecycle.
   - `StudioBloc` — owns UI presentation state (theme, notification content, actions).
 - **`NfqConfig` as Single Source of Truth**: All queue configuration fields live in the `NfqConfig` Equatable model. Both the code generator and the configurator panel read from this model.
-- **Reactive Configuration**: `ConfigBloc` uses `onChange` to detect when `NfqConfig` actually changes and only then calls `FlutterNotificationQueue.configure()`. Never call `configure()` redundantly.
+- **Reactive Configuration**: `SetupBloc` uses `onChange` to instantiate a new `NotificationController` only when `StudioSetup` actually changes. Never recreate controllers redundantly.
 - **No Refactor Left Behind**: Ensure legacy example files are removed or updated to prevent confusion.
 
 ## 5. Bidirectional Sync (Planned)
