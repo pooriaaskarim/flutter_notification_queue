@@ -8,6 +8,8 @@
 
 A production-grade, overlay-based spatial notification engine for Flutter applications.
 
+[![Try NFQ Studio Web Demo](https://img.shields.io/badge/Try_Live_Demo-NFQ_Studio-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://pooriaaskarim.github.io/flutter_notification_queue/)
+
 `FlutterNotificationQueue` (FNQ) provides a comprehensive solution for displaying in-app notifications with spatial queue placement, Intent-First interactive drag/reorder/relocate gestures, notification bundling, priority triage preemption, dynamic channel parking, real-time observability, and deep theming.
 
 ---
@@ -45,7 +47,7 @@ Add `flutter_notification_queue` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_notification_queue: ^0.3.0
+  flutter_notification_queue: ^0.3.2
 ```
 
 ### 2. Initialize and Mount Scope

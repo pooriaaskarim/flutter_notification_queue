@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2] - 2026-08-26
+
+### Studio Application & Web Deployment
+- **GitHub Pages CI/CD Workflow**: Added automated GitHub Actions workflow (`deploy_pages.yml`) to compile and deploy the NFQ Studio web app (`example/`) to GitHub Pages on version tag pushes (`v*`).
+- **Interactive Web Demo Link**: Integrated a prominent `img.shields.io` for-the-badge demo button in `README.md` directing users to the hosted NFQ Studio live web app.
+- **Mobile Floating Action Button (FAB)**: Added a scroll-responsive floating action button in NFQ Studio for narrow screen viewports, enabling instant notification preview triggers on mobile devices.
+
 ## [0.3.1] - 2026-08-14
 
 ### Memory Teardown & Resource Hardening
