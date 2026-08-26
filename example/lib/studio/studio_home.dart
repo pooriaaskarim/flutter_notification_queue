@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'bloc/notification_bloc.dart';
 import 'bloc/studio_bloc.dart';
 import 'panels/code_editor_panel.dart';
 import 'panels/configurator_panel.dart';
@@ -11,7 +15,7 @@ import 'studio_theme.dart';
 ///
 /// Provides [StudioBloc] and renders a responsive split-pane layout:
 /// - **Wide screens**: Configurator (left) + Code Editor (right)
-/// - **Narrow screens**: Tabbed view with bottom navigation
+/// - **Narrow screens**: Tabbed view with bottom navigation & preview FAB
 class StudioHome extends StatelessWidget {
   const StudioHome({super.key});
 
@@ -28,85 +32,138 @@ class _StudioShell extends StatefulWidget {
 
 class _StudioShellState extends State<_StudioShell> {
   int _tabIndex = 0;
+  bool _isFabVisible = true;
+  Timer? _hideTimer;
 
   @override
-  Widget build(final BuildContext context) => Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          title: const Text(
-            'NFQ STUDIO',
-            style: TextStyle(
-              letterSpacing: 4,
-              fontWeight: FontWeight.w900,
-              fontSize: 20,
-            ),
-          ),
-          centerTitle: true,
-          backgroundColor:
-              Theme.of(context).colorScheme.surface.withValues(alpha: 0.85),
-          elevation: 0,
-          actions: [
-            BlocBuilder<StudioBloc, StudioState>(
-              builder: (final context, final state) => IconButton(
-                onPressed: () {
-                  context.read<StudioBloc>().add(const ToggleTheme());
-                },
-                icon: Icon(
-                  state.themeMode == ThemeMode.dark
-                      ? Icons.light_mode_outlined
-                      : Icons.dark_mode_outlined,
-                  size: 20,
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onUserScroll(final UserScrollNotification notification) {
+    if (notification.direction == ScrollDirection.reverse) {
+      _hideTimer?.cancel();
+      if (_isFabVisible) {
+        setState(() => _isFabVisible = false);
+      }
+    } else if (notification.direction == ScrollDirection.forward) {
+      _hideTimer?.cancel();
+      if (!_isFabVisible) {
+        setState(() => _isFabVisible = true);
+      }
+    } else if (notification.direction == ScrollDirection.idle) {
+      _scheduleFabShow();
+    }
+  }
+
+  void _scheduleFabShow() {
+    _hideTimer?.cancel();
+    _hideTimer = Timer(const Duration(milliseconds: 1000), () {
+      if (mounted && !_isFabVisible) {
+        setState(() => _isFabVisible = true);
+      }
+    });
+  }
+
+  @override
+  Widget build(final BuildContext context) => LayoutBuilder(
+        builder: (final context, final constraints) {
+          final isNarrow = constraints.maxWidth <= 1000;
+          return Scaffold(
+            extendBodyBehindAppBar: true,
+            appBar: AppBar(
+              title: const Text(
+                'NFQ STUDIO',
+                style: TextStyle(
+                  letterSpacing: 4,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 20,
                 ),
-                tooltip: 'Toggle Theme',
               ),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: Stack(
-          children: [
-            const _StudioBackground(),
-            SafeArea(
-              child: LayoutBuilder(
-                builder: (final context, final constraints) {
-                  if (constraints.maxWidth > 1000) {
-                    return _wideLayout();
-                  }
-                  return _narrowLayout();
-                },
-              ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: LayoutBuilder(
-          builder: (final context, final constraints) {
-            if (constraints.maxWidth > 1000) {
-              return const SizedBox.shrink();
-            }
-            return BottomNavigationBar(
-              currentIndex: _tabIndex,
-              onTap: (final i) => setState(() => _tabIndex = i),
-              backgroundColor: StudioTheme.colorScheme.surface,
-              selectedItemColor: StudioTheme.colorScheme.primary,
-              unselectedItemColor:
-                  StudioTheme.colorScheme.onSurface.withValues(alpha: 0.38),
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.tune),
-                  label: 'Configure',
+              centerTitle: true,
+              backgroundColor: Theme.of(context)
+                  .colorScheme
+                  .surface
+                  .withValues(alpha: 0.85),
+              elevation: 0,
+              actions: [
+                BlocBuilder<StudioBloc, StudioState>(
+                  builder: (final context, final state) => IconButton(
+                    onPressed: () {
+                      context.read<StudioBloc>().add(const ToggleTheme());
+                    },
+                    icon: Icon(
+                      state.themeMode == ThemeMode.dark
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                      size: 20,
+                    ),
+                    tooltip: 'Toggle Theme',
+                  ),
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.code),
-                  label: 'Code',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.stream_rounded),
-                  label: 'Events',
+                const SizedBox(width: 8),
+              ],
+            ),
+            body: Stack(
+              children: [
+                const _StudioBackground(),
+                SafeArea(
+                  child: isNarrow ? _narrowLayout() : _wideLayout(),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+            floatingActionButton: isNarrow && _tabIndex == 0
+                ? AnimatedSlide(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _isFabVisible ? 0.85 : 0.0,
+                      child: FloatingActionButton(
+                        onPressed: () {
+                          context
+                              .read<NotificationBloc>()
+                              .add(const FirePreview());
+                        },
+                        backgroundColor:
+                            StudioTheme.colorScheme.primaryContainer,
+                        foregroundColor:
+                            StudioTheme.colorScheme.onPrimaryContainer,
+                        elevation: 4,
+                        tooltip: 'Fire Notification',
+                        child: const Icon(Icons.send_rounded, size: 20),
+                      ),
+                    ),
+                  )
+                : null,
+            bottomNavigationBar: isNarrow
+                ? BottomNavigationBar(
+                    currentIndex: _tabIndex,
+                    onTap: (final i) => setState(() => _tabIndex = i),
+                    backgroundColor: StudioTheme.colorScheme.surface,
+                    selectedItemColor: StudioTheme.colorScheme.primary,
+                    unselectedItemColor: StudioTheme.colorScheme.onSurface
+                        .withValues(alpha: 0.38),
+                    items: const [
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.tune),
+                        label: 'Configure',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.code),
+                        label: 'Code',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(Icons.stream_rounded),
+                        label: 'Events',
+                      ),
+                    ],
+                  )
+                : null,
+          );
+        },
       );
 
   Widget _wideLayout() => Row(
@@ -125,13 +182,19 @@ class _StudioShellState extends State<_StudioShell> {
         ],
       );
 
-  Widget _narrowLayout() => IndexedStack(
-        index: _tabIndex,
-        children: const [
-          ConfiguratorPanel(),
-          CodeEditorPanel(),
-          EventLogPanel(),
-        ],
+  Widget _narrowLayout() => NotificationListener<UserScrollNotification>(
+        onNotification: (final notification) {
+          _onUserScroll(notification);
+          return false;
+        },
+        child: IndexedStack(
+          index: _tabIndex,
+          children: const [
+            ConfiguratorPanel(),
+            CodeEditorPanel(),
+            EventLogPanel(),
+          ],
+        ),
       );
 }
 

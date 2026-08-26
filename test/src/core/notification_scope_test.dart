@@ -162,6 +162,7 @@ void main() {
       await subA.cancel();
       await subB.cancel();
       await widgetTester.pumpWidget(const SizedBox());
+      await widgetTester.pumpAndSettle();
       controllerA.dispose();
       controllerB.dispose();
     });
@@ -233,6 +234,7 @@ void main() {
       expect(NotificationScope.of(innerContext), equals(innerController));
 
       await widgetTester.pumpWidget(const SizedBox());
+      await widgetTester.pumpAndSettle();
       outerController.dispose();
       innerController.dispose();
     });

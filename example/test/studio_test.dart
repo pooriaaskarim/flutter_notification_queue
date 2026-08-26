@@ -1,10 +1,15 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_notification_queue_example/studio/bloc/notification_bloc.dart';
 import 'package:flutter_notification_queue_example/studio/bloc/setup_bloc.dart';
+import 'package:flutter_notification_queue_example/studio/bloc/studio_bloc.dart';
 import 'package:flutter_notification_queue_example/studio/engine/code_generator.dart';
 import 'package:flutter_notification_queue_example/studio/models/queue_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/studio_setup.dart';
+import 'package:flutter_notification_queue_example/studio/studio_home.dart';
+import 'package:flutter_notification_queue_example/studio/studio_theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -152,5 +157,54 @@ void main() {
 
       await sub.cancel();
     });
+  });
+
+  group('StudioHome FAB Widget Tests', () {
+    testWidgets(
+      'Renders FAB on narrow screens and triggers notification on tap',
+      (final tester) async {
+        tester.view.physicalSize = const Size(500, 800);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final setupBloc = SetupBloc();
+        final notificationBloc = NotificationBloc(setupBloc: setupBloc);
+        final studioBloc = StudioBloc();
+
+        await tester.pumpWidget(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: setupBloc),
+              BlocProvider.value(value: notificationBloc),
+              BlocProvider.value(value: studioBloc),
+            ],
+            child: MaterialApp(
+              theme: StudioTheme.dark(),
+              builder: (final context, final child) {
+                StudioTheme.update(context);
+                return NotificationScope(
+                  controller: setupBloc.controller,
+                  child: child!,
+                );
+              },
+              home: const StudioHome(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final fabFinder = find.byType(FloatingActionButton);
+        expect(fabFinder, findsOneWidget);
+        expect(find.byTooltip('Fire Notification'), findsOneWidget);
+
+        await tester.tap(fabFinder);
+        await tester.pump();
+
+        await notificationBloc.close();
+        await setupBloc.close();
+        await studioBloc.close();
+      },
+    );
   });
 }
