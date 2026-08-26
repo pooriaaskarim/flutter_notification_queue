@@ -161,10 +161,10 @@ void main() {
 
       await subA.cancel();
       await subB.cancel();
-      await widgetTester.pumpWidget(const SizedBox());
-      await widgetTester.pumpAndSettle();
       controllerA.dispose();
       controllerB.dispose();
+      await widgetTester.pumpWidget(const SizedBox());
+      await widgetTester.pump();
     });
 
     testWidgets('detaches controller when NotificationScope is unmounted',
@@ -233,10 +233,10 @@ void main() {
       expect(NotificationScope.of(outerContext), equals(outerController));
       expect(NotificationScope.of(innerContext), equals(innerController));
 
-      await widgetTester.pumpWidget(const SizedBox());
-      await widgetTester.pumpAndSettle();
       outerController.dispose();
       innerController.dispose();
+      await widgetTester.pumpWidget(const SizedBox());
+      await widgetTester.pump();
     });
 
     testWidgets(
@@ -266,8 +266,9 @@ void main() {
       await widgetTester.pump();
       await widgetTester.pump(const Duration(milliseconds: 100));
 
-      await widgetTester.pumpWidget(const SizedBox());
       expect(() => controller.dispose(), returnsNormally);
+      await widgetTester.pumpWidget(const SizedBox());
+      await widgetTester.pump();
     });
   });
 }
