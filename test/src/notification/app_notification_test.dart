@@ -49,6 +49,27 @@ void main() {
       expect(notification.groupKey, equals('order_bundle'));
     });
 
+    test('copyWith replaces specified fields and falls back for null', () {
+      const original = AppNotification(
+        id: 'original-1',
+        message: 'Original Message',
+        title: 'Original Title',
+        channelName: 'orders',
+        priority: NotificationPriority.normal,
+      );
+
+      final copy = original.copyWith(
+        title: 'Updated Title',
+        priority: NotificationPriority.critical,
+      );
+
+      expect(copy.id, equals('original-1'));
+      expect(copy.message, equals('Original Message'));
+      expect(copy.title, equals('Updated Title'));
+      expect(copy.priority, equals(NotificationPriority.critical));
+      expect(original.toString(), contains('AppNotification'));
+    });
+
     test('toWidget converts AppNotification to NotificationWidget', () {
       const notification = AppNotification(
         id: 'notif-abc',
