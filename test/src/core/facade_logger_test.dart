@@ -17,10 +17,11 @@ void main() {
     });
 
     test('Custom log level is configured correctly', () {
-      NotificationController(
+      final controller = NotificationController(
         queues: {const NotificationQueue()},
         logLevel: LogLevel.warning,
       );
+      addTearDown(controller.dispose);
 
       final hierarchy = Logger.exportHierarchy();
       final fnqConfig = hierarchy['fnq'];
@@ -39,11 +40,12 @@ void main() {
         sink: sink,
       );
 
-      NotificationController(
+      final controller = NotificationController(
         queues: {const NotificationQueue()},
         logLevel: LogLevel.info,
         logHandlers: [handler],
       );
+      addTearDown(controller.dispose);
 
       Logger.get('fnq.test').info('Test log message');
 
@@ -58,15 +60,17 @@ void main() {
         'FlutterError.onError is hooked only when '
         'captureFlutterErrors is true', () {
       // By default, captureFlutterErrors should be false
-      NotificationController(queues: {const NotificationQueue()});
+      final c1 = NotificationController(queues: {const NotificationQueue()});
+      addTearDown(c1.dispose);
       expect(FlutterError.onError, equals(originalOnError));
 
       // With captureFlutterErrors set to true, it should wrap
       // FlutterError.onError
-      NotificationController(
+      final c2 = NotificationController(
         queues: {const NotificationQueue()},
         captureFlutterErrors: true,
       );
+      addTearDown(c2.dispose);
       expect(FlutterError.onError, isNot(equals(originalOnError)));
     });
   });
