@@ -11,7 +11,9 @@ void main() {
     });
 
     // 2. Zero-Config Initialization
-    test('Zero-Config Initialization: Uses standard defaults via NotificationController', () {
+    test(
+        'Zero-Config Initialization: Uses standard defaults via '
+        'NotificationController', () {
       final controller = NotificationController(
         queues: {const NotificationQueue(position: QueuePosition.topRight)},
       );

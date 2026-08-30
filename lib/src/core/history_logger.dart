@@ -1,6 +1,7 @@
 part of 'core.dart';
 
-/// A wrapper that stores a [NotificationEvent] along with its emission timestamp.
+/// A wrapper that stores a [NotificationEvent] along with its emission
+/// timestamp.
 @internal
 class HistoryEntry {
   HistoryEntry(this.event, {final DateTime? timestamp})

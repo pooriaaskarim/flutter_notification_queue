@@ -82,7 +82,8 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
     if (resolved == null) {
       throw StateError(
         'No QueueCoordinator available for NotificationOverlay. '
-        'Ensure your app or test tree is wrapped in a NotificationScope or pass a coordinator explicitly.',
+        'Ensure your app or test tree is wrapped in a NotificationScope or '
+        'pass a coordinator explicitly.',
       );
     }
     if (_attachedCoordinator != resolved) {

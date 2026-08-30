@@ -24,7 +24,8 @@ class QueueWidgetState extends State<QueueWidget>
     if (c == null) {
       throw StateError(
         'No QueueCoordinator available for QueueWidget. '
-        'Ensure your app or test tree is wrapped in a NotificationScope or pass a coordinator explicitly.',
+        'Ensure your app or test tree is wrapped in a NotificationScope or '
+        'pass a coordinator explicitly.',
       );
     }
     return c;

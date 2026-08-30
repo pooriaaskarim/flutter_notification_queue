@@ -180,8 +180,9 @@ class NotificationWidget extends StatefulWidget {
       return coordinator!;
     }
     throw StateError(
-      'No QueueCoordinator bound to NotificationWidget (${id}). '
-      'Ensure a coordinator is passed or display notifications via NotificationController and NotificationScope.',
+      'No QueueCoordinator bound to NotificationWidget ($id). '
+      'Ensure a coordinator is passed or display notifications via '
+      'NotificationController and NotificationScope.',
     );
   }
 
@@ -236,8 +237,7 @@ class NotificationWidget extends StatefulWidget {
   /// Optional [NotificationAction] provides notification with
   /// an action callback
   ///
-  /// A [NotificationAction] can be created by
-  /// [NotificationAction.button] or [NotificationAction.onTap].
+  /// A [NotificationAction] can be created via [NotificationAction.button].
   final NotificationAction? action;
 
   /// Per-notification override for the tap behavior.
@@ -544,7 +544,8 @@ class NotificationWidgetState extends State<NotificationWidget>
     if (c == null) {
       throw StateError(
         'No QueueCoordinator available for NotificationWidget. '
-        'Ensure your app or test tree is wrapped in a NotificationScope or pass a coordinator explicitly.',
+        'Ensure your app or test tree is wrapped in a NotificationScope or '
+        'pass a coordinator explicitly.',
       );
     }
     return c;

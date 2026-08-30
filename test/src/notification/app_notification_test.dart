@@ -58,7 +58,10 @@ void main() {
         priority: NotificationPriority.low,
       );
 
-      final widget = notification.toWidget(controller.configuration, controller.coordinator);
+      final widget = notification.toWidget(
+        controller.configuration,
+        controller.coordinator,
+      );
 
       expect(widget.id, equals('notif-abc'));
       expect(widget.message, equals('Hello World'));
