@@ -28,7 +28,7 @@ import '../notification_queue/notification_queue.dart';
 import '../utils/utils.dart';
 
 part 'configuration_manager.dart';
-part 'fnq_event.dart';
+part 'notification_event.dart';
 part 'history_logger.dart';
 part 'notification_controller.dart';
 part 'notification_overlay.dart';
