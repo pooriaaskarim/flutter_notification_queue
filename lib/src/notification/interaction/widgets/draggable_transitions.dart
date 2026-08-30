@@ -153,10 +153,17 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     _snapBackController.dispose();
     super.dispose();
   }
-  QueueCoordinator get coordinator =>
-      widget.notification.coordinator ??
-      NotificationScope.maybeCoordinatorOf(context) ??
-      FlutterNotificationQueue.coordinator;
+  QueueCoordinator get coordinator {
+    final c = widget.notification.coordinator ??
+        NotificationScope.maybeCoordinatorOf(context);
+    if (c == null) {
+      throw StateError(
+        'No QueueCoordinator available for DraggableTransitions. '
+        'Ensure your app or test tree is wrapped in a NotificationScope or pass a coordinator explicitly.',
+      );
+    }
+    return c;
+  }
 
   int stateIndexOfThisItem() {
     final position = widget.notification.queue.position;

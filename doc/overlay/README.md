@@ -1,37 +1,45 @@
-# Notification Overlay
+# Notification Overlay (v0.4.x)
 
-The **Notification Overlay** is the invisible layer that sits above your app content and hosts the notification queues.
+The **Notification Overlay** is the visual rendering surface that sits above application content to host spatial notification queues.
 
-## Mechanism
+## Rendering Mechanism
 
-FNQ uses Flutter's `Overlay` mechanism to float widgets on top of the application content. It specifically leverages `OverlayPortal` for optimized performance and flexibility in rendering.
+FNQ uses Flutter's modern `OverlayPortal` primitive for overlay rendering:
+- **Zero Tree Rebuild Overhead**: Avoids rebuilding the main app widget tree when notifications are shown, animated, or dismissed.
+- **Lazy Portal Lifecycle**: The `QueueCoordinator` automatically attaches the portal (`OverlayPortalController.show()`) when active notifications exist, and detaches it (`hide()`) when all queues are empty to eliminate unused layout passes.
+- **Top-Level Z-Ordering**: Renders cleanly above `Navigator` routes, modals, popups, and dialogs.
 
-## Integration
+## Integration & Scope Binding
 
-### FlutterNotificationQueue.builder
+### Recommended Setup (`NotificationScope` in `MaterialApp.builder`)
 
-The recommended integration method is via the `builder` parameter of `MaterialApp` or `CupertinoApp`.
+In **v0.4.x**, the notification overlay is attached using `NotificationScope` inside `MaterialApp.builder` (or `CupertinoApp.builder`):
 
 ```dart
 MaterialApp(
-  // ...
-  builder: FlutterNotificationQueue.builder,
+  title: 'My App',
+  builder: (context, child) => NotificationScope(
+    controller: notificationController,
+    child: child!,
+  ),
+  home: const HomeScreen(),
 )
 ```
 
-This method automatically:
-1.  Wraps the app in a `NotificationOverlay`.
-2.  Ensures the overlay is above the Navigator, allowing notifications to appear over dialogs and routes.
+This pattern automatically:
+1. Mounts `NotificationOverlay` above your app's `Navigator`.
+2. Connects the `NotificationController` instance to the underlying overlay portal.
+3. Exposes the controller to all descendant widgets via `NotificationScope.of(context)`.
 
-### Manual Integration
+### Subtree & Multi-Tenant Scope Binding
 
-If the `builder` method is not suitable, the `NotificationOverlay` widget can be manually inserted into the widget tree. It must be placed high enough in the hierarchy to cover all relevant screens.
+For embedded Flutter modules, desktop split views, or multi-window screens, `NotificationScope` can be placed over any independent widget subtree:
 
 ```dart
-Directionality(
-  textDirection: TextDirection.ltr,
-  child: NotificationOverlay(
-    child: MyAppContent(),
-  ),
+NotificationScope(
+  controller: dashboardNotificationController,
+  child: DashboardWidget(),
 )
 ```
+
+Notifications dispatched via `dashboardNotificationController` or `NotificationScope.of(context)` within this subtree will render inside that specific scope's overlay bounds.

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0] - 2026-08-30
+
+### Breaking API Changes (Deprecated Surface Removal)
+- **Removed Legacy Static Singleton Facade**: Removed `FlutterNotificationQueue` static facade. `NotificationController` and `NotificationScope` are now the canonical API for all notification queue management.
+- **Removed `FnqEvent` Typedef**: Standardized on `sealed class NotificationEvent` for all lifecycle event subscriptions.
+- **Removed Legacy Action Factory**: Removed `@Deprecated factory NotificationAction.onTap`. Use `NotificationAction.button` or gesture intents (`TapBehavior`, `DragBehavior`) instead.
+- **Removed `NotificationWidget.show()`**: Notifications are dispatched as `AppNotification` payloads via `controller.show(...)` or `NotificationScope.of(context).show(...)`.
+
 ## [0.3.2] - 2026-08-26
 
 ### Studio Application & Web Deployment
@@ -25,7 +33,7 @@
 - **`AppNotification` Intent Payload**: Separated data payload from widget rendering state. Applications dispatch immutable `AppNotification` payloads via `controller.show(AppNotification(...))`.
 - **Expanded Controller Surface**: Added `show`, `tryShow`, `dismiss`, `dismissAll`, `dismissNewest`, `dismissGroup`, `relocate`, `reorder`, `snooze`, `pin`, `unpin`, `getHistory`, `clearHistory`, and `events` directly to `NotificationController`.
 - **Sealed Event Hierarchy**: Renamed `FnqEvent` base class to `NotificationEvent` (`typedef FnqEvent = NotificationEvent` provided for backward compatibility).
-- **Deprecation Path**: Marked `FlutterNotificationQueue`, `NotificationWidget.show()`, and direct `NotificationWidget` instantiation as `@Deprecated`. See `doc/migration_v1.md` for complete migration guidance.
+- **Deprecation Path**: Marked `FlutterNotificationQueue`, `NotificationWidget.show()`, and direct `NotificationWidget` instantiation as `@Deprecated`. See `doc/migration_v0_4.md` for complete migration guidance.
 
 ### Bug Fixes & Stability
 - **Reorder & Relocate Null Safety**: Resolved unexpected `null` value errors and unmounted state crashes during card reordering and relocation interactions.
@@ -34,7 +42,7 @@
 - **Unmounted Timer Prevention**: Prevented calling `initDismissTimer()` on unmounting notification states after successful relocation.
 
 ### Documentation & Tooling
-- **Migration Guide**: Added comprehensive migration documentation in `doc/migration_v1.md`.
+- **Migration Guide**: Added comprehensive migration documentation in `doc/migration_v0_4.md`.
 - **Studio Application**: Refactored `example/` Studio app to showcase `NotificationController` and `NotificationScope` patterns.
 
 ## [0.2.0] - 2026-07-19

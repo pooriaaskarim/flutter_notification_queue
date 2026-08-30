@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Dismiss & Relocate Interaction via onDragEnd', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'test',
@@ -27,22 +29,26 @@ void main() {
     });
 
     tearDown(() {
-      FlutterNotificationQueue.reset();
+      controller.dispose();
     });
 
-    testWidgets('Relocates to topLeft on standard drag', (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
+    Widget buildApp() => MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(
             body: SizedBox.expand(),
           ),
-        ),
-      );
+        );
+
+    testWidgets('Relocates to topLeft on standard drag', (final tester) async {
+      await tester.pumpWidget(buildApp());
 
       NotificationWidget(
         message: 'Drag me',
         channelName: 'test',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -59,26 +65,19 @@ void main() {
       // Verify it is now in topLeft queue (topRight queue should be unmounted)
       expect(find.byType(NotificationWidget), findsOneWidget);
 
-      final activeQueues =
-          FlutterNotificationQueue.coordinator.activeQueues.value;
-      expect(activeQueues.containsKey(QueuePosition.topRight), isFalse);
-      expect(activeQueues.containsKey(QueuePosition.topLeft), isTrue);
+      final activeQueues = controller.coordinator?.activeQueues.value;
+      expect(activeQueues?.containsKey(QueuePosition.topRight), isFalse);
+      expect(activeQueues?.containsKey(QueuePosition.topLeft), isTrue);
     });
 
     testWidgets('Dismisses to right edge on long press drag',
         (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: SizedBox.expand(),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp());
 
       NotificationWidget(
         message: 'Dismiss me',
         channelName: 'test',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -101,9 +100,8 @@ void main() {
       // Verify it was dismissed
       expect(find.byType(NotificationWidget), findsNothing);
 
-      final activeQueues =
-          FlutterNotificationQueue.coordinator.activeQueues.value;
-      expect(activeQueues.containsKey(QueuePosition.topRight), isFalse);
+      final activeQueues = controller.coordinator?.activeQueues.value;
+      expect(activeQueues?.containsKey(QueuePosition.topRight), isFalse);
     });
   });
 }

@@ -1,12 +1,12 @@
-# Migration Guide: Upgrading to v1.0 (Architecture Modernization)
+# Migration Guide: Upgrading to v0.4.0 (Architecture Modernization)
 
-This document provides a step-by-step guide to migrate your codebase from **v0.x** (global static singleton API) to **v1.0** (decoupled Architecture: `NotificationController` + `NotificationScope` + `AppNotification`).
+This document provides a step-by-step guide to migrate your codebase from **v0.3.x** (global static singleton API) to **v0.4.0** (decoupled Architecture: `NotificationController` + `NotificationScope` + `AppNotification`).
 
 ---
 
 ## Key Overview of Changes
 
-| v0.x Legacy API | v1.0 Modern Architecture | Notes |
+| v0.3.x Legacy API | v0.4.0 Modern Architecture | Notes |
 |---|---|---|
 | `FlutterNotificationQueue.configure(...)` | `final controller = NotificationController(...)` | Pure Dart configuration owner |
 | `MaterialApp(builder: FlutterNotificationQueue.builder)` | `NotificationScope(controller: controller, child: child!)` | Scoped widget tree overlay binding |
@@ -19,7 +19,7 @@ This document provides a step-by-step guide to migrate your codebase from **v0.x
 
 ## Step 1: Upgrading Configuration & Initialization
 
-### Before (v0.x)
+### Before (v0.3.x)
 ```dart
 void main() {
   FlutterNotificationQueue.configure(
@@ -43,22 +43,18 @@ class MyApp extends StatelessWidget {
 }
 ```
 
-### After (v1.0)
-
-
+### After (v0.4.0)
+```dart
 class MyApp extends StatelessWidget {
   const MyApp({super.key, required this.controller});
 
-  final notificationController = NotificationController(
-    queues: {const NotificationQueue(position: QueuePosition.topRight)},
-    channels: {const NotificationChannel(name: 'orders')},
-  );
+  final NotificationController controller;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       builder: (context, child) => NotificationScope(
-        controller: notificationController,
+        controller: controller,
         child: child!,
       ),
       home: const HomeScreen(),
@@ -71,7 +67,7 @@ class MyApp extends StatelessWidget {
 
 ## Step 2: Dispatching Notifications
 
-### Before (v0.x)
+### Before (v0.3.x)
 ```dart
 // Creating and showing widget handle directly
 NotificationWidget(
@@ -80,7 +76,7 @@ NotificationWidget(
 ).show();
 ```
 
-### After (v1.0)
+### After (v0.4.0)
 
 #### Option A: Contextless (from BLoCs, Services, or Repositories)
 ```dart
@@ -106,7 +102,7 @@ NotificationScope.of(context).show(
 
 ## Step 3: Listening to Lifecycle Events
 
-### Before (v0.x)
+### Before (v0.3.x)
 ```dart
 FlutterNotificationQueue.events.listen((FnqEvent event) {
   if (event is NotificationDismissed) {
@@ -115,7 +111,7 @@ FlutterNotificationQueue.events.listen((FnqEvent event) {
 });
 ```
 
-### After (v1.0)
+### After (v0.4.0)
 ```dart
 controller.events.listen((NotificationEvent event) {
   if (event is NotificationDismissed) {
@@ -126,7 +122,7 @@ controller.events.listen((NotificationEvent event) {
 
 ---
 
-## Deprecation Schedule
+## Release Schedule
 
-- **v0.3.0**: `FlutterNotificationQueue`, `NotificationWidget.show()`, and `FnqEvent` are marked `@Deprecated` with compiler warnings and migration guidance. Existing v0.x code continues to work without breaking.
-- **v1.0.0**: Deprecated APIs will be removed completely.
+- **v0.3.0**: Soft-deprecation warnings introduced alongside additive `NotificationController` and `NotificationScope` APIs.
+- **v0.4.0**: Complete removal of legacy static surfaces (`FlutterNotificationQueue` static facade, `NotificationWidget.show()`, `typedef FnqEvent`, and `NotificationAction.onTap`). Standardized entirely on `NotificationController`, `NotificationScope`, and `AppNotification`.

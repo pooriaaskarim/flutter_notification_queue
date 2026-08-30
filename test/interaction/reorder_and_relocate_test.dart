@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ReorderAndRelocate Interaction via onDragEnd', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'test',
@@ -29,27 +31,32 @@ void main() {
     });
 
     tearDown(() {
-      FlutterNotificationQueue.reset();
+      controller.dispose();
     });
 
-    testWidgets('Drag within queue triggers reorder', (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
+    Widget buildApp() => MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(
             body: SizedBox.expand(),
           ),
-        ),
-      );
+        );
+
+    testWidgets('Drag within queue triggers reorder', (final tester) async {
+      await tester.pumpWidget(buildApp());
 
       final notification1 = NotificationWidget(
         message: 'Item 1',
         channelName: 'test',
+        coordinator: controller.coordinator,
       );
 
       final notification2 = NotificationWidget(
         message: 'Item 2',
         channelName: 'test',
+        coordinator: controller.coordinator,
       );
 
       notification1.show();
@@ -90,18 +97,12 @@ void main() {
     });
 
     testWidgets('Drag out of queue triggers relocate', (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: SizedBox.expand(),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp());
 
       NotificationWidget(
         message: 'Item 1',
         channelName: 'test',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -134,8 +135,7 @@ void main() {
     testWidgets(
         'ReorderAndRelocate configures self-inclusion of master queue '
         'as relocatable target', (final tester) async {
-      final queue = FlutterNotificationQueue.configuration
-          .getQueue(QueuePosition.topRight);
+      final queue = controller.configuration.getQueue(QueuePosition.topRight);
       final behavior = queue.dragBehavior as ReorderAndRelocate;
 
       // The original positions Set did not include topRight (the master queue),

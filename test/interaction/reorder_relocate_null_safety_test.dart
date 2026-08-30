@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Reorder & Relocate Null Safety', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'test',
@@ -31,29 +33,34 @@ void main() {
     });
 
     tearDown(() {
-      FlutterNotificationQueue.reset();
+      controller.dispose();
     });
+
+    Widget buildApp() => MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(
+            body: SizedBox.expand(),
+          ),
+        );
 
     testWidgets(
       'Reorder dragging feedback builds cleanly without null coordinator '
       'errors',
       (final tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            builder: FlutterNotificationQueue.builder,
-            home: Scaffold(
-              body: SizedBox.expand(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(buildApp());
 
         final n1 = NotificationWidget(
           message: 'First item',
           channelName: 'test',
+          coordinator: controller.coordinator,
         );
         final n2 = NotificationWidget(
           message: 'Second item',
           channelName: 'test',
+          coordinator: controller.coordinator,
         );
 
         n1.show();
@@ -84,18 +91,12 @@ void main() {
       'Relocate preserves effectiveCoordinator without null exception after '
       'relocation',
       (final tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            builder: FlutterNotificationQueue.builder,
-            home: Scaffold(
-              body: SizedBox.expand(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(buildApp());
 
         NotificationWidget(
           message: 'Relocate item',
           channelName: 'test',
+          coordinator: controller.coordinator,
         ).show();
         await tester.pumpAndSettle();
 
@@ -106,16 +107,14 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Relocate item'), findsOneWidget);
-        final activeQueues =
-            FlutterNotificationQueue.coordinator.activeQueues.value;
-        expect(activeQueues.containsKey(QueuePosition.topLeft), isTrue);
+        final activeQueues = controller.coordinator?.activeQueues.value;
+        expect(activeQueues?.containsKey(QueuePosition.topLeft), isTrue);
 
-        final activeNotifs =
-            FlutterNotificationQueue.coordinator.activeNotifications;
+        final activeNotifs = controller.coordinator?.activeNotifications;
         expect(activeNotifs, isNotEmpty);
         expect(
-          activeNotifs.first.effectiveCoordinator,
-          equals(FlutterNotificationQueue.coordinator),
+          activeNotifs?.first.effectiveCoordinator,
+          equals(controller.coordinator),
         );
       },
     );

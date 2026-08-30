@@ -5,7 +5,7 @@ part of 'core.dart';
 @internal
 abstract class NotificationScopeState {
   /// Stream of notification events emitted by the attached scope.
-  Stream<FnqEvent> get events;
+  Stream<NotificationEvent> get events;
 
   /// Enqueues [notification] for display.
   void show(final AppNotification notification);
@@ -50,7 +50,7 @@ abstract class NotificationScopeState {
   void unpin(final AppNotification notification);
 
   /// Retrieves recorded lifecycle history.
-  List<FnqEvent> getHistory({
+  List<NotificationEvent> getHistory({
     final String? channelName,
     final DismissReason? dismissReason,
     final DateTime? since,
@@ -122,9 +122,9 @@ class NotificationController {
   final ConfigurationManager configuration;
 
   /// Stable broadcast proxy stream for all lifecycle events.
-  final _proxyController = StreamController<FnqEvent>.broadcast();
+  final _proxyController = StreamController<NotificationEvent>.broadcast();
 
-  StreamSubscription<FnqEvent>? _stateSub;
+  StreamSubscription<NotificationEvent>? _stateSub;
   NotificationScopeState? _attachedState;
 
   /// Internal access to the attached coordinator if a NotificationScope is
@@ -144,7 +144,7 @@ class NotificationController {
   /// This stream **persists across `NotificationScope` mount and unmount
   /// cycles**. Listeners attached before the scope mounts will continue to
   /// receive events from the scope once it does mount, without re-subscribing.
-  Stream<FnqEvent> get events => _proxyController.stream;
+  Stream<NotificationEvent> get events => _proxyController.stream;
 
   /// Dynamically updates queue and channel configuration for this controller
   /// without re-instantiating the controller or interrupting active UI card
@@ -307,7 +307,7 @@ class NotificationController {
   /// Returns recorded notification lifecycle events, filtered by the given
   /// criteria. History recording is opt-in via
   /// [ConfigurationManager.maxHistoryEntries].
-  List<FnqEvent> getHistory({
+  List<NotificationEvent> getHistory({
     final String? channelName,
     final DismissReason? dismissReason,
     final DateTime? since,
@@ -335,7 +335,7 @@ class NotificationController {
   /// Returns a [Future] that completes with the next event of type [T].
   /// Only for use in tests.
   @visibleForTesting
-  Future<T> nextEvent<T extends FnqEvent>() =>
+  Future<T> nextEvent<T extends NotificationEvent>() =>
       events.where((final e) => e is T).cast<T>().first;
 
   /// Disposes this controller and releases resources.
@@ -376,6 +376,15 @@ class NotificationController {
         logLevel: resolvedLevel,
         handlers: resolvedHandlers,
       );
+    }
+
+    if (captureFlutterErrors) {
+      FlutterError.onError = (final details) {
+        Logger.get('fnq').error(
+          details.exceptionAsString(),
+          stackTrace: details.stack,
+        );
+      };
     }
   }
 }

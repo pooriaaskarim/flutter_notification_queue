@@ -104,7 +104,10 @@ class NotificationWidget extends StatefulWidget {
     );
     final config = configuration ??
         coordinator?.configuration ??
-        FlutterNotificationQueue.configuration;
+        ConfigurationManager(
+          queues: {const NotificationQueue()},
+          channels: NotificationChannel.standardChannels(),
+        );
     final resolvedId =
         id ?? 'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
@@ -172,8 +175,15 @@ class NotificationWidget extends StatefulWidget {
         createdAt = createdAt ?? DateTime.now();
 
   /// Gets the effective [QueueCoordinator] for this notification.
-  QueueCoordinator get effectiveCoordinator =>
-      coordinator ?? FlutterNotificationQueue.coordinator;
+  QueueCoordinator get effectiveCoordinator {
+    if (coordinator != null) {
+      return coordinator!;
+    }
+    throw StateError(
+      'No QueueCoordinator bound to NotificationWidget (${id}). '
+      'Ensure a coordinator is passed or display notifications via NotificationController and NotificationScope.',
+    );
+  }
 
   static int _idCounter = 0;
 
@@ -428,10 +438,6 @@ class NotificationWidgetState extends State<NotificationWidget>
 
   bool get hasTitle => widget.title != null;
 
-  bool get hasOnTapAction =>
-      widget.action != null &&
-      widget.action!.type == NotificationActionType.onTap;
-
   bool get hasButtonAction =>
       widget.action != null &&
       widget.action!.type == NotificationActionType.button;
@@ -440,19 +446,12 @@ class NotificationWidgetState extends State<NotificationWidget>
   ///
   /// The notification's own [NotificationWidget.tapBehavior] takes precedence
   /// over the queue-level [NotificationQueue.tapBehavior].
-  ///
-  /// Legacy [NotificationAction.onTap] is respected if no explicit
-  /// [TapBehavior] is set, for backward compatibility.
   TapBehavior get _resolvedTapBehavior {
     // 1. Per-notification override wins.
     if (widget.tapBehavior != null) {
       return widget.tapBehavior!;
     }
-    // 2. Legacy NotificationAction.onTap shim — preserve old behavior.
-    if (hasOnTapAction) {
-      return const TapToDismiss();
-    }
-    // 3. Queue-level default.
+    // 2. Queue-level default.
     return widget.queue.tapBehavior;
   }
 
@@ -539,10 +538,17 @@ class NotificationWidgetState extends State<NotificationWidget>
     }
   }
 
-  QueueCoordinator get coordinator =>
-      widget.coordinator ??
-      NotificationScope.maybeCoordinatorOf(context) ??
-      FlutterNotificationQueue.coordinator;
+  QueueCoordinator get coordinator {
+    final c = widget.coordinator ??
+        NotificationScope.maybeCoordinatorOf(context);
+    if (c == null) {
+      throw StateError(
+        'No QueueCoordinator available for NotificationWidget. '
+        'Ensure your app or test tree is wrapped in a NotificationScope or pass a coordinator explicitly.',
+      );
+    }
+    return c;
+  }
 
   Future<void> dismiss({
     final DismissReason reason = DismissReason.programmatic,
@@ -657,10 +663,6 @@ class NotificationWidgetState extends State<NotificationWidget>
                             notification: widget,
                             behavior: _resolvedTapBehavior,
                           );
-                          // Legacy onTap action callback respected.
-                          if (hasOnTapAction) {
-                            widget.action?.onPressed();
-                          }
                           dismiss(reason: DismissReason.userTap);
                         },
                       TapToExpand() => () {

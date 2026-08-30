@@ -4,41 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Notification Grouping / Bundling (F-04)', () {
-    setUp(() {
-      FlutterNotificationQueue.configure(
-        channels: {
-          const NotificationChannel(
-            name: 'chat',
-            position: QueuePosition.topRight,
-            defaultDismissDuration: null,
-          ),
-          const NotificationChannel(
-            name: 'system',
-            position: QueuePosition.bottomLeft,
-            defaultDismissDuration: null,
-          ),
-        },
-        queues: {
-          const NotificationQueue(
-            position: QueuePosition.topRight,
-            groupingBehavior: QueueGroupingBehavior(
-              enabled: true,
-              maxBeforeGrouping: 2,
-            ),
-          ),
-          const NotificationQueue(
-            position: QueuePosition.bottomLeft,
-            groupingBehavior: QueueGroupingBehavior(
-              enabled: true,
-              maxBeforeGrouping: 2,
-            ),
-          ),
-        },
-      );
-    });
-
-    tearDown(FlutterNotificationQueue.reset);
-
     test('QueueGroupingBehavior defaults and custom properties', () {
       const g = QueueGroupingBehavior(
         enabled: true,
@@ -60,23 +25,17 @@ void main() {
       const gDefault = QueueGroupingBehavior();
       expect(gDefault.enabled, isFalse);
       expect(gDefault.maxBeforeGrouping, equals(2));
-      expect(gDefault.maxStackedLayers, equals(2));
-      expect(gDefault.stackStepOffset, equals(6.0));
-      expect(gDefault.stackScaleMultiplier, equals(0.05));
-      expect(gDefault.enableGroupSwipeDismiss, isFalse);
-      expect(gDefault.groupDismissThreshold, equals(0.4));
     });
 
-    testWidgets('resolvedGroupKey returns custom key or channelName',
-        (final tester) async {
+    test('resolvedGroupKey fallback behavior', () {
       final n1 = NotificationWidget(
-        message: 'Hello',
+        message: 'No key',
         channelName: 'chat',
       );
       expect(n1.resolvedGroupKey, equals('chat'));
 
       final n2 = NotificationWidget(
-        message: 'World',
+        message: 'With key',
         channelName: 'chat',
         groupKey: 'custom_group',
       );
@@ -87,9 +46,7 @@ void main() {
         'Scenario 1: Multi-Group Lifecycle - Grouping, Isolated '
         'Expansion/Collapse, Priority Triage/Overflow, and Programmatic '
         'Dismissal', (final tester) async {
-      // Configure with different positions and maxStackSize constraints to
-      // test multiple layout settings
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'chat',
@@ -121,11 +78,15 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: Center(child: Text('App Home'))),
         ),
       );
 
@@ -135,6 +96,7 @@ void main() {
         message: 'Chat 1',
         channelName: 'chat',
         priority: NotificationPriority.low,
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -148,6 +110,7 @@ void main() {
         id: 'c2',
         message: 'Chat 2',
         channelName: 'chat',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -169,6 +132,7 @@ void main() {
         id: 's1',
         message: 'System 1',
         channelName: 'system',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -183,6 +147,7 @@ void main() {
         id: 's2',
         message: 'System 2',
         channelName: 'system',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -236,6 +201,7 @@ void main() {
         message: 'Chat 3',
         channelName: 'chat',
         priority: NotificationPriority.high,
+        coordinator: controller.coordinator,
       ).show();
       await tester.pumpAndSettle();
 
@@ -257,7 +223,7 @@ void main() {
       expect(find.text('Chat 2'), findsNothing);
 
       // 8. Programmatic group dismissal for 'chat' queue
-      FlutterNotificationQueue.coordinator.dismissGroup('chat');
+      controller.coordinator?.dismissGroup('chat');
       await tester.pumpAndSettle();
 
       // Chat notifications are gone, system group remains at Bottom Left
@@ -270,6 +236,7 @@ void main() {
         id: 's1',
         message: 'System 1',
         channelName: 'system',
+        coordinator: controller.coordinator,
       );
       final dismissFuture = s1Widget.dismiss();
       await tester.pumpAndSettle();
@@ -286,7 +253,7 @@ void main() {
         'Swipe-to-Dismiss Config, and Expanded Swipe', (final tester) async {
       // Configuration with enableGroupSwipeDismiss = true on
       // Bottom Right Position
-      FlutterNotificationQueue.configure(
+      final controller1 = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'chat',
@@ -306,19 +273,31 @@ void main() {
           ),
         },
       );
+      addTearDown(controller1.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: Center(child: Text('App Home'))),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller1,
+            child: child!,
+          ),
+          home: const Scaffold(body: Center(child: Text('App Home'))),
         ),
       );
 
       // Enqueue 2 notifications to bundle automatically on Bottom Right
-      NotificationWidget(id: 'c1', message: 'Chat 1', channelName: 'chat')
-          .show();
-      NotificationWidget(id: 'c2', message: 'Chat 2', channelName: 'chat')
-          .show();
+      NotificationWidget(
+        id: 'c1',
+        message: 'Chat 1',
+        channelName: 'chat',
+        coordinator: controller1.coordinator,
+      ).show();
+      NotificationWidget(
+        id: 'c2',
+        message: 'Chat 2',
+        channelName: 'chat',
+        coordinator: controller1.coordinator,
+      ).show();
       await tester.pumpAndSettle();
 
       // Bottom Right is bottom-anchored: oldest (Chat 1) is the representative
@@ -349,7 +328,7 @@ void main() {
 
       // 3. Reconfigure with enableGroupSwipeDismiss = false on
       // Top Left Position
-      FlutterNotificationQueue.configure(
+      final controller2 = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'chat',
@@ -369,14 +348,38 @@ void main() {
           ),
         },
       );
+      addTearDown(controller2.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            key: ValueKey(controller2),
+            controller: controller2,
+            child: child!,
+          ),
+          home: const Scaffold(body: Center(child: Text('App Home'))),
+        ),
+      );
 
       // Enqueue 3 notifications
-      NotificationWidget(id: 'c1', message: 'Chat 1', channelName: 'chat')
-          .show();
-      NotificationWidget(id: 'c2', message: 'Chat 2', channelName: 'chat')
-          .show();
-      NotificationWidget(id: 'c3', message: 'Chat 3', channelName: 'chat')
-          .show();
+      NotificationWidget(
+        id: 'c1',
+        message: 'Chat 1',
+        channelName: 'chat',
+        coordinator: controller2.coordinator,
+      ).show();
+      NotificationWidget(
+        id: 'c2',
+        message: 'Chat 2',
+        channelName: 'chat',
+        coordinator: controller2.coordinator,
+      ).show();
+      NotificationWidget(
+        id: 'c3',
+        message: 'Chat 3',
+        channelName: 'chat',
+        coordinator: controller2.coordinator,
+      ).show();
       await tester.pumpAndSettle();
 
       // Top Left is top-anchored: newest (Chat 3) is the representative

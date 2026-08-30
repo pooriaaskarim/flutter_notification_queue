@@ -14,11 +14,14 @@ part of 'core.dart';
 ///
 /// ## Integration
 ///
-/// Users should not instantiate this widget directly. Instead, use:
+/// Users attach notifications via [NotificationScope]:
 /// ```dart
 /// MaterialApp(
-///   builder: FlutterNotificationQueue.builder,
-/// )
+///   builder: (context, child) => NotificationScope(
+///     controller: controller,
+///     child: child!,
+///   ),
+/// );
 /// ```
 class NotificationOverlay extends StatefulWidget {
   const NotificationOverlay({
@@ -31,7 +34,7 @@ class NotificationOverlay extends StatefulWidget {
   final Widget child;
 
   /// Optional explicit queue coordinator instance.
-  /// If null, falls back to [FlutterNotificationQueue.coordinator].
+  /// If null, falls back to context's [NotificationScope].
   final QueueCoordinator? coordinator;
 
   /// Static router method for use in [MaterialApp.builder].
@@ -75,9 +78,13 @@ class _NotificationOverlayState extends State<NotificationOverlay> {
 
   void _updateCoordinator() {
     final scopeCoordinator = NotificationScope.maybeCoordinatorOf(context);
-    final resolved = widget.coordinator ??
-        scopeCoordinator ??
-        FlutterNotificationQueue.coordinator;
+    final resolved = widget.coordinator ?? scopeCoordinator;
+    if (resolved == null) {
+      throw StateError(
+        'No QueueCoordinator available for NotificationOverlay. '
+        'Ensure your app or test tree is wrapped in a NotificationScope or pass a coordinator explicitly.',
+      );
+    }
     if (_attachedCoordinator != resolved) {
       _attachedCoordinator?.detach();
       _attachedCoordinator = resolved;

@@ -4,18 +4,19 @@ import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-// Mock OverlayPortalController since it's used by Coordinator
 class MockOverlayPortalController extends Mock
     implements OverlayPortalController {}
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('QueueCoordinator', () {
+    late NotificationController controller;
     late QueueCoordinator coordinator;
     late MockOverlayPortalController mockOverlayController;
 
     setUp(() {
-      // Initialize system to support NotificationWidget factory
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         queues: {
           const NotificationQueue(position: QueuePosition.topRight),
         },
@@ -27,16 +28,17 @@ void main() {
           ),
         },
       );
-
-      coordinator = QueueCoordinator();
+      coordinator = QueueCoordinator.fromController(controller);
       mockOverlayController = MockOverlayPortalController();
       coordinator.attach(mockOverlayController);
       when(() => mockOverlayController.show()).thenReturn(null);
       when(() => mockOverlayController.hide()).thenReturn(null);
-      when(() => mockOverlayController.hide()).thenReturn(null);
     });
 
-    tearDown(FlutterNotificationQueue.reset);
+    tearDown(() {
+      coordinator.dispose();
+      controller.dispose();
+    });
 
     test('Initial state is clear', () {
       expect(coordinator.activeQueues.value.isEmpty, isTrue);
@@ -47,6 +49,7 @@ void main() {
         final notification = NotificationWidget(
           id: 'test',
           message: 'Test Message',
+          coordinator: coordinator,
         );
 
         coordinator.queue(notification);
@@ -72,6 +75,7 @@ void main() {
         final notification = NotificationWidget(
           id: 'test',
           message: 'Test Message',
+          coordinator: coordinator,
         );
         coordinator.queue(notification);
 

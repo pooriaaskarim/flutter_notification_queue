@@ -5,23 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 // Helpers
 // ---------------------------------------------------------------------------
 
-/// A minimal FlutterNotificationQueue configuration used in all tests.
-void _initFnq() {
-  FlutterNotificationQueue.configure(
-    queues: {
-      const NotificationQueue(
-        position: QueuePosition.topCenter,
-        tapBehavior: TapToDismiss(),
-      ),
-    },
-    channels: {
-      const NotificationChannel(
-        name: 'default',
-        defaultDismissDuration: null,
-      ),
-    },
-  );
-}
+
 
 // ---------------------------------------------------------------------------
 // TapBehavior unit tests
@@ -156,7 +140,7 @@ void main() {
   // ── Per-notification tapBehavior override ─────────────────────────────────
 
   group('NotificationWidget.tapBehavior per-notification override', () {
-    setUp(_initFnq);
+
 
     test('notification.tapBehavior field stores override', () {
       final n = NotificationWidget(
@@ -194,7 +178,7 @@ void main() {
   // ── Widget-level resolution (_resolvedTapBehavior) ────────────────────────
 
   group('_resolvedTapBehavior resolution priority', () {
-    setUp(_initFnq);
+
 
     testWidgets(
       'per-notification TapToExpand overrides queue TapToDismiss',

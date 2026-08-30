@@ -1,32 +1,33 @@
-# Notification Lifecycle
+# Notification Lifecycle (v0.4.x)
 
-Understanding the lifecycle of a notification is essential for debugging and advanced customization.
+Understanding the lifecycle of a notification from payload intent to teardown is essential for debugging, customization, and event stream observation.
 
 ## The 5 Stages
 
-### 1. Creation (`NotificationWidget.show`)
-- The user requests a notification.
-- The request is validated against the `ConfigurationManager`.
-- If valid, a `NotificationWidget` instance is created.
+### 1. Intent Dispatch (`controller.show(AppNotification(...))`)
+- Application code or service dispatches an `AppNotification` payload.
+- `NotificationController` validates channel and queue configurations via `ConfigurationManager`.
+- Emits `NotificationQueued` event on `controller.events`.
 
-### 2. Enqueueing
-- The widget is passed to the `QueueCoordinator`.
-- The Coordinator checks if the target queue is active (mounted).
-  - **If Active**: The notification is added directly to the existing `QueueWidget`.
-  - **If Inactive**: The notification is buffered, and the `QueueWidget` is mounted.
+### 2. Queue Triage & Capacity Evaluation
+- The notification is passed to the `QueueCoordinator`.
+- Coordinator evaluates priority triage, preemption rules, and capacity limits (`maxStackSize`).
+- If capacity is exceeded, lower-priority notifications are dropped, displaced, or parked according to queue policies (`NotificationCapacityExceeded` event emitted).
 
-### 3. Mounting & Display
-- The `QueueWidget` initializes.
-- It consumes any buffered notifications from the Coordinator.
-- The notification enters via an **Entrance Animation** (slide/fade).
+### 3. Mounting & Display (`NotificationShown`)
+- `QueueCoordinator` ensures `OverlayPortalController` is attached via `NotificationScope`.
+- Active `QueueWidget` renders the card into the spatial stack.
+- The notification animates onto the screen using its configured entrance animation (`Slide`, `Scale`, `Fade`).
+- Emits `NotificationShown` event on `controller.events`.
 
-### 4. Interaction (Active State)
-- The notification sits in the queue.
-- Users can interact (tap, dismiss, drag).
-- **Auto-Dismiss**: If configured, a timer counts down.
+### 4. Active Interaction & Timer Countdown
+- The card sits in the spatial stack.
+- Users can interact with the notification (swipe dismiss, drag to reorder/relocate, expand deck, tap actions).
+- **Auto-Dismiss Timer**: If `defaultDismissDuration` or notification-specific duration is specified, an internal countdown timer runs.
 
-### 5. Dismissal & Cleanup
-- **Trigger**: Timer ends, user swipes, or programmatic dismissal.
-- **Exit Animation**: The notification animates out.
-- **Garbage Collection**: Once the animation completes, the widget is removed from the tree.
-- **Queue Unmount**: If the queue becomes empty, the `QueueWidget` itself unmounts to free resources.
+### 5. Dismissal & Teardown (`NotificationDismissed`)
+- **Trigger**: Timer completion, manual swipe, card tap, or programmatic `controller.dismiss(...)`.
+- **Exit Animation**: The notification plays its exit transition animation.
+- **Teardown**: Notification state is removed from the active queue list and disposed.
+- Emits `NotificationDismissed` event containing the exact `DismissReason` (`userSwipe`, `timerComplete`, `programmatic`, `displaced`, etc.).
+- **Portal Cleanup**: When all queues become empty, `QueueCoordinator` detaches the `OverlayPortalController` to release system resources.

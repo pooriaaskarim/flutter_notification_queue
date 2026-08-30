@@ -10,17 +10,12 @@ void main() {
       expect(manager, isA<ConfigurationManager>());
     });
 
-    tearDown(() {
-      try {
-        FlutterNotificationQueue.reset();
-        // ignore: avoid_catching_errors
-      } on StateError catch (_) {}
-    });
-
     // 2. Zero-Config Initialization
-    test('Zero-Config Initialization: Uses standard defaults', () {
-      FlutterNotificationQueue.configure();
-      final config = FlutterNotificationQueue.configuration;
+    test('Zero-Config Initialization: Uses standard defaults via NotificationController', () {
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topRight)},
+      );
+      final config = controller.configuration;
 
       expect(config.queues, isNotEmpty);
       expect(config.channels, isNotEmpty);
@@ -30,7 +25,6 @@ void main() {
       expect(config.getChannel('error'), isNotNull);
 
       // Verify Standard Queues
-      // Default is desktop, which has topRight queue
       expect(
         config.getQueue(QueuePosition.topRight).position,
         equals(
@@ -115,9 +109,6 @@ void main() {
       expect(q1, isA<NotificationQueue>());
       expect(q1.position, equals(QueuePosition.bottomRight));
 
-      // Request again - should be a new instance (no caching in immutable
-      // manager) unless the system happens to return a const canonical instance
-      // but getQueue uses generateQueueFrom which likely creates new.
       final q2 = manager.getQueue(QueuePosition.bottomRight);
 
       expect(q2.position, equals(q1.position));
@@ -289,9 +280,6 @@ void main() {
         },
       );
 
-      // Group 1: topCenter + centerRight + centerLeft = 3 queues
-      // Group 2: bottomCenter + topLeft = 2 queues
-      // Total: 5
       expect(manager.queues.length, equals(5));
     });
 
@@ -307,7 +295,6 @@ void main() {
         },
       );
 
-      // Only the original queue should exist
       expect(manager.queues.length, equals(1));
     });
 
@@ -331,8 +318,6 @@ void main() {
         },
       );
 
-      // TopRight should keep its own explicitly configured style,
-      // not inherit the source's FlatQueueStyle
       final topRight = manager.getQueue(QueuePosition.topRight);
       expect(topRight.style, equals(customStyle));
     });

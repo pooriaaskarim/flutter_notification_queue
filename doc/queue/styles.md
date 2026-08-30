@@ -1,30 +1,34 @@
-# Queue Styles
+# Queue Styles (v0.4.x)
 
-A `QueueStyle` defines the visual template for notifications. FNQ comes with several built-in styles.
+A `QueueStyle` defines the visual visual template and stacking presentation for notifications within a `NotificationQueue`.
 
 ## Built-in Styles
 
-### 1. FilledQueueStyle (Default)
-- **Appearance**: Solid background color (based on channel color).
-- **Text**: Contrast color (usually white).
-- **Best For**: High-visibility alerts, toasts.
+### 1. `StackedQueueStyle` (Default)
+- **Appearance**: Cards stack on top of each other with slight vertical offsets and perspective scaling.
+- **Best For**: Modern card stacks, grouped notification decks, interactive reordering.
 
-### 2. FlatQueueStyle
-- **Appearance**: Transparent background, colored text.
-- **Best For**: Subtle notifications, clean interfaces.
+### 2. `FlatQueueStyle`
+- **Appearance**: Solid channel background color with high-contrast content text.
+- **Best For**: High-visibility alerts, toasts, snackbars.
 
-### 3. OutlinedQueueStyle
-- **Appearance**: Transparent background with a colored border.
-- **Best For**: Modern, minimalist designs.
+### 3. `OutlinedQueueStyle`
+- **Appearance**: Semi-transparent or frosted background with a distinct colored border.
+- **Best For**: Minimalist interfaces, dark mode UI, subtle system logs.
 
-## Customization
+## Customization & Properties
 
-You can customize styles when creating valid `NotificationQueue` instances.
+Styles can be customized when defining a `NotificationQueue`:
 
 ```dart
-const myStyle = FilledQueueStyle(
-  borderRadius: BorderRadius.all(Radius.circular(12)),
-  elevation: 4,
+const customStyle = StackedQueueStyle(
+  borderRadius: BorderRadius.all(Radius.circular(16)),
+  elevation: 6.0,
   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+);
+
+const myQueue = NotificationQueue(
+  position: QueuePosition.topRight,
+  style: customStyle,
 );
 ```

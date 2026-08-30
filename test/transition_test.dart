@@ -16,9 +16,9 @@ class CustomTransition extends NotificationTransition {
 }
 
 void main() {
-  setUp(() {
-    FlutterNotificationQueue.reset();
-    FlutterNotificationQueue.configure(
+  testWidgets('NotificationWidget uses custom transition',
+      (final tester) async {
+    final controller = NotificationController(
       channels: {
         const NotificationChannel(
           name: 'default',
@@ -33,23 +33,25 @@ void main() {
         ),
       },
     );
-  });
+    addTearDown(controller.dispose);
 
-  testWidgets('NotificationWidget uses custom transition',
-      (final tester) async {
     await tester.pumpWidget(
-      const MaterialApp(
-        builder: FlutterNotificationQueue.builder,
-        home: Scaffold(body: SizedBox()),
+      MaterialApp(
+        builder: (final context, final child) => NotificationScope(
+          controller: controller,
+          child: child!,
+        ),
+        home: const Scaffold(body: SizedBox()),
       ),
     );
 
-    // Show notification
-    NotificationWidget(message: 'Test').show();
-    await tester.pump(); // Frame 1: Queue processing
-    await tester.pump(); // Frame 2: Widget build
+    NotificationWidget(
+      message: 'Test',
+      coordinator: controller.coordinator,
+    ).show();
+    await tester.pump();
+    await tester.pump();
 
-    // Verify ScaleTransition is present as an ancestor of NotificationWidget
     expect(
       find.ancestor(
         of: find.byType(NotificationWidget),
@@ -58,8 +60,6 @@ void main() {
       findsAtLeastNWidgets(1),
     );
 
-    // Verify SlideTransition is NOT present as an ancestor of
-    // NotificationWidget
     expect(
       find.ancestor(
         of: find.byType(NotificationWidget),
@@ -73,8 +73,7 @@ void main() {
 
   testWidgets('NotificationWidget uses default transition if not specified',
       (final tester) async {
-    FlutterNotificationQueue.reset();
-    FlutterNotificationQueue.configure(
+    final controller = NotificationController(
       channels: {
         const NotificationChannel(
           name: 'default',
@@ -86,22 +85,26 @@ void main() {
         const NotificationQueue(position: QueuePosition.bottomCenter),
       },
     );
+    addTearDown(controller.dispose);
+
     await tester.pumpWidget(
-      const MaterialApp(
-        builder: FlutterNotificationQueue.builder,
-        home: Scaffold(body: SizedBox()),
+      MaterialApp(
+        builder: (final context, final child) => NotificationScope(
+          controller: controller,
+          child: child!,
+        ),
+        home: const Scaffold(body: SizedBox()),
       ),
     );
 
     NotificationWidget(
       message: 'Default',
       position: QueuePosition.bottomCenter,
+      coordinator: controller.coordinator,
     ).show();
     await tester.pump();
     await tester.pump();
 
-    // Verify SlideTransition is present as an ancestor of NotificationWidget
-    // (default SlideTransitionStrategy)
     expect(
       find.ancestor(
         of: find.byType(NotificationWidget),
@@ -113,8 +116,7 @@ void main() {
 
   testWidgets('NotificationWidget uses BuilderTransitionStrategy',
       (final tester) async {
-    FlutterNotificationQueue.reset();
-    FlutterNotificationQueue.configure(
+    final controller = NotificationController(
       channels: {
         const NotificationChannel(
           name: 'default',
@@ -137,21 +139,26 @@ void main() {
         ),
       },
     );
+    addTearDown(controller.dispose);
+
     await tester.pumpWidget(
-      const MaterialApp(
-        builder: FlutterNotificationQueue.builder,
-        home: Scaffold(body: SizedBox()),
+      MaterialApp(
+        builder: (final context, final child) => NotificationScope(
+          controller: controller,
+          child: child!,
+        ),
+        home: const Scaffold(body: SizedBox()),
       ),
     );
 
     NotificationWidget(
       message: 'Builder',
       position: QueuePosition.topCenter,
+      coordinator: controller.coordinator,
     ).show();
     await tester.pump();
     await tester.pump();
 
-    // Verify RotationTransition is present as an ancestor of NotificationWidget
     expect(
       find.ancestor(
         of: find.byType(NotificationWidget),
@@ -159,9 +166,5 @@ void main() {
       ),
       findsOneWidget,
     );
-  });
-
-  tearDown(() {
-    FlutterNotificationQueue.reset();
   });
 }

@@ -63,8 +63,10 @@ void main() {
   });
 
   group('Notification-level behavior override integration tests', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'test',
@@ -82,26 +84,30 @@ void main() {
     });
 
     tearDown(() {
-      FlutterNotificationQueue.reset();
+      controller.dispose();
     });
+
+    Widget buildApp() => MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(
+            body: SizedBox.expand(),
+          ),
+        );
 
     testWidgets(
       'notification with dragBehavior Disabled override '
       'is not dismissible by swipe',
       (final tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            builder: FlutterNotificationQueue.builder,
-            home: Scaffold(
-              body: SizedBox.expand(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(buildApp());
 
         final notification = NotificationWidget(
           message: 'Sticky Notification',
           channelName: 'test',
           dragBehavior: const Disabled(),
+          coordinator: controller.coordinator,
         );
 
         notification.show();
@@ -123,18 +129,12 @@ void main() {
       'regular notification in same queue (without override) '
       'remains dismissible',
       (final tester) async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            builder: FlutterNotificationQueue.builder,
-            home: Scaffold(
-              body: SizedBox.expand(),
-            ),
-          ),
-        );
+        await tester.pumpWidget(buildApp());
 
         final notification = NotificationWidget(
           message: 'Dismissible Notification',
           channelName: 'test',
+          coordinator: controller.coordinator,
         );
 
         notification.show();

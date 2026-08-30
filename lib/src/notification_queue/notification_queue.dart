@@ -20,7 +20,7 @@ part 'transitions.dart';
 
 /// Configures queue layouts for each [QueuePosition].
 ///
-/// Used in [FlutterNotificationQueue.configure] to configure queue layouts.
+/// Used in [NotificationController] to configure queue layouts.
 ///
 /// If no [NotificationQueue] is provided for a [QueuePosition],
 /// defaults to constructor defaults.

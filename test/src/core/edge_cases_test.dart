@@ -6,14 +6,6 @@ import 'package:logd/testing.dart';
 
 void main() {
   group('FNQ Edge Cases and Reset Tests', () {
-    setUp(() {
-      FlutterNotificationQueue.reset();
-    });
-
-    tearDown(() {
-      FlutterNotificationQueue.reset();
-    });
-
     test('maxStackSize: 0 throws AssertionError', () {
       expect(
         () => NotificationQueue(
@@ -32,7 +24,8 @@ void main() {
         sink: sink,
       );
 
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
         logLevel: LogLevel.warning,
         logHandlers: [handler],
         channels: {
@@ -43,11 +36,15 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
@@ -55,6 +52,7 @@ void main() {
         id: 'fallback_id',
         message: 'Hello Fallback',
         channelName: 'non_existent_channel',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -76,9 +74,10 @@ void main() {
       expect(find.text('Hello Fallback'), findsOneWidget);
     });
 
-    testWidgets('reset() mid-display clears all queues and detaches cleanly',
+    testWidgets('Controller disposal mid-display clears all queues cleanly',
         (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
         channels: {
           const NotificationChannel(
             name: 'default',
@@ -89,15 +88,19 @@ void main() {
       );
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
       NotificationWidget(
         id: 'reset_mid_id',
         message: 'Active Notif',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -105,15 +108,14 @@ void main() {
 
       expect(find.text('Active Notif'), findsOneWidget);
 
-      // Reset the queue system mid-display
-      FlutterNotificationQueue.reset();
+      await tester.pumpWidget(const SizedBox());
       await tester.pump();
+      controller.dispose();
 
-      // Coordinator should be null and queues should be inactive
-      expect(FlutterNotificationQueue.isInitialized, isFalse);
+      expect(controller.isAttached, isFalse);
 
-      // Re-configure to ensure system recovers cleanly
-      FlutterNotificationQueue.configure(
+      final newController = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
         channels: {
           const NotificationChannel(
             name: 'default',
@@ -122,13 +124,14 @@ void main() {
           ),
         },
       );
+      addTearDown(newController.dispose);
 
-      // Force widget tree to rebuild and instantiate a new NotificationOverlay
-      // attached to the new coordinator.
       await tester.pumpWidget(
         MaterialApp(
-          key: UniqueKey(),
-          builder: FlutterNotificationQueue.builder,
+          builder: (final context, final child) => NotificationScope(
+            controller: newController,
+            child: child!,
+          ),
           home: const Scaffold(body: SizedBox.expand()),
         ),
       );
@@ -136,6 +139,7 @@ void main() {
       NotificationWidget(
         id: 'new_id',
         message: 'New Notif',
+        coordinator: newController.coordinator,
       ).show();
 
       await tester.pump();
@@ -146,7 +150,8 @@ void main() {
 
     testWidgets('Duplicate IDs update existing active notification in-place',
         (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
         channels: {
           const NotificationChannel(
             name: 'default',
@@ -155,17 +160,22 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
       NotificationWidget(
         id: 'duplicate_id',
         message: 'First Message',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -176,22 +186,22 @@ void main() {
       NotificationWidget(
         id: 'duplicate_id',
         message: 'Second Message',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
 
-      // The message should be updated in-place without spawning a second card
       expect(find.text('First Message'), findsNothing);
       expect(find.text('Second Message'), findsOneWidget);
     });
 
     testWidgets('Duplicate IDs update pending notifications in-place',
         (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         queues: {
           const NotificationQueue(
             position: QueuePosition.topCenter,
-            maxStackSize: 1, // Only 1 visible at a time
+            maxStackSize: 1,
           ),
         },
         channels: {
@@ -202,19 +212,24 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
       final first = NotificationWidget(
         id: 'visible_id',
         message: 'Visible',
+        coordinator: controller.coordinator,
       );
-      FlutterNotificationQueue.coordinator.queue(first);
+      controller.coordinator?.queue(first);
 
       await tester.pump();
       await tester.pump();
@@ -222,6 +237,7 @@ void main() {
       NotificationWidget(
         id: 'pending_id',
         message: 'Pending 1',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -229,26 +245,20 @@ void main() {
       NotificationWidget(
         id: 'pending_id',
         message: 'Pending 2',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
 
-      // Now trigger dismiss of the visible one.
-      // Do not await the future directly as it blocks the FakeAsync zone
-      // until pumped.
       final Future<void> dismissFuture = first.dismiss();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       await dismissFuture;
 
-      // Pump exit size transition (200ms) and entry size/slide transitions
-      // (300ms)
       for (int i = 0; i < 5; i++) {
         await tester.pump(const Duration(milliseconds: 100));
       }
 
-      // The pending notification should show "Pending 2" because it was
-      // updated in-place
       expect(find.text('Pending 1'), findsNothing);
       expect(find.text('Pending 2'), findsOneWidget);
     });
@@ -256,15 +266,19 @@ void main() {
     testWidgets(
         'strictChannelLookup: true throws ArgumentError for unregistered '
         'channelName', (final tester) async {
-      FlutterNotificationQueue.reset();
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
         strictChannelLookup: true,
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
@@ -272,51 +286,65 @@ void main() {
         () => NotificationWidget(
           message: 'Strict test',
           channelName: 'non_existent_channel',
+          coordinator: controller.coordinator,
         ),
         throwsArgumentError,
       );
     });
 
     testWidgets(
-        'FlutterNotificationQueue.show creates and displays notification',
+        'NotificationController.show creates and displays notification',
         (final tester) async {
-      FlutterNotificationQueue.reset();
-      FlutterNotificationQueue.configure();
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
+      );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
-      FlutterNotificationQueue.show(
-        message: 'Static helper message',
+      controller.show(
+        const AppNotification(
+          message: 'Controller show message',
+        ),
       );
 
       await tester.pump();
       await tester.pump();
 
-      expect(find.text('Static helper message'), findsOneWidget);
+      expect(find.text('Controller show message'), findsOneWidget);
     });
 
     testWidgets('nextEvent resolves with the first event of type T',
         (final tester) async {
-      FlutterNotificationQueue.reset();
-      FlutterNotificationQueue.configure();
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
+      );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
-      final nextQueuedFuture =
-          FlutterNotificationQueue.nextEvent<NotificationQueued>();
+      final nextQueuedFuture = controller.nextEvent<NotificationQueued>();
 
-      FlutterNotificationQueue.show(
-        message: 'Event test',
+      controller.show(
+        const AppNotification(
+          message: 'Event test',
+        ),
       );
 
       final event = await nextQueuedFuture;

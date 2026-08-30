@@ -5,8 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Keyboard Shortcuts Tests', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'test_channel',
@@ -20,27 +22,31 @@ void main() {
       );
     });
 
-    tearDown(FlutterNotificationQueue.reset);
+    tearDown(() {
+      controller.dispose();
+    });
+
+    Widget buildApp() => MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(
+            body: Center(child: Text('App Home')),
+          ),
+        );
 
     testWidgets('Esc key dismisses only the newest notification',
         (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App Home')),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp());
 
-      // Create and show two notifications
       NotificationWidget(
         id: 'n1',
         message: 'First Notification',
         channelName: 'test_channel',
+        coordinator: controller.coordinator,
       ).show();
 
-      // Pump to let the first register
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
@@ -48,6 +54,7 @@ void main() {
         id: 'n2',
         message: 'Second Notification',
         channelName: 'test_channel',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -55,37 +62,27 @@ void main() {
       expect(find.text('First Notification'), findsOneWidget);
       expect(find.text('Second Notification'), findsOneWidget);
 
-      // Send Escape key event
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
 
-      // n2 (the newest notification) should be dismissed, n1 remains
       expect(find.text('Second Notification'), findsNothing);
       expect(find.text('First Notification'), findsOneWidget);
 
-      // Send Escape key event again
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
 
-      // n1 should be dismissed as well
       expect(find.text('First Notification'), findsNothing);
     });
 
     testWidgets('Shift + Esc key dismisses all active notifications',
         (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App Home')),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp());
 
       NotificationWidget(
         id: 'n1',
         message: 'First Notification',
         channelName: 'test_channel',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -95,6 +92,7 @@ void main() {
         id: 'n2',
         message: 'Second Notification',
         channelName: 'test_channel',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -102,13 +100,11 @@ void main() {
       expect(find.text('First Notification'), findsOneWidget);
       expect(find.text('Second Notification'), findsOneWidget);
 
-      // Simulate Shift + Escape key press
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       await tester.pumpAndSettle();
 
-      // Both notifications should be dismissed
       expect(find.text('First Notification'), findsNothing);
       expect(find.text('Second Notification'), findsNothing);
     });

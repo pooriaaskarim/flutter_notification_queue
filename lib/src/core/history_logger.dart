@@ -1,19 +1,19 @@
 part of 'core.dart';
 
-/// A wrapper that stores a [FnqEvent] along with its emission timestamp.
+/// A wrapper that stores a [NotificationEvent] along with its emission timestamp.
 @internal
 class HistoryEntry {
   HistoryEntry(this.event, {final DateTime? timestamp})
       : timestamp = timestamp ?? DateTime.now();
 
   /// The emitted event.
-  final FnqEvent event;
+  final NotificationEvent event;
 
   /// The timestamp when the event was recorded.
   final DateTime timestamp;
 }
 
-/// Manages an in-memory, bounded LIFO ring buffer of [FnqEvent]s.
+/// Manages an in-memory, bounded LIFO ring buffer of [NotificationEvent]s.
 ///
 /// Opt-in via `maxHistoryEntries` configuration.
 @internal
@@ -22,14 +22,14 @@ class HistoryLogger {
 
   int _maxEntries;
   final List<HistoryEntry> _history = [];
-  StreamSubscription<FnqEvent>? _subscription;
-  Stream<FnqEvent>? _coordinatorStream;
+  StreamSubscription<NotificationEvent>? _subscription;
+  Stream<NotificationEvent>? _coordinatorStream;
 
   /// The maximum number of entries allowed in the history cache.
   int get maxEntries => _maxEntries;
 
   /// Starts listening to the event stream.
-  void startListening(final Stream<FnqEvent> stream) {
+  void startListening(final Stream<NotificationEvent> stream) {
     _subscription?.cancel();
     _coordinatorStream = stream;
     if (_maxEntries <= 0) {
@@ -62,7 +62,7 @@ class HistoryLogger {
   }
 
   /// Queries the captured notification history based on filters.
-  List<FnqEvent> getHistory({
+  List<NotificationEvent> getHistory({
     final String? channelName,
     final DismissReason? dismissReason,
     final DateTime? since,

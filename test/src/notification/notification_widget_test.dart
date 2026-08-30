@@ -4,9 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('NotificationWidget', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
+          NotificationChannel.defaultChannel(),
           const NotificationChannel(
             name: 'test_channel',
             position: QueuePosition.topRight,
@@ -20,27 +23,32 @@ void main() {
       );
     });
 
-    tearDown(FlutterNotificationQueue.reset);
+    tearDown(() {
+      controller.dispose();
+    });
+
+    Widget buildApp({required final Widget child}) => MaterialApp(
+          builder: (final context, final c) => NotificationScope(
+            controller: controller,
+            child: c!,
+          ),
+          home: Scaffold(body: child),
+        );
 
     testWidgets('Renders basic content (message, icon)', (final tester) async {
       final notification = NotificationWidget(
         message: 'Hello World',
         channelName: 'test_channel',
+        configuration: controller.configuration,
+        coordinator: controller.coordinator,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: notification,
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp(child: notification));
 
       await tester.pumpAndSettle();
 
       expect(find.text('Hello World'), findsOneWidget);
-      expect(find.byIcon(Icons.abc), findsOneWidget); // Default icon from
-      // channel
+      expect(find.byIcon(Icons.abc), findsOneWidget);
     });
 
     testWidgets('Renders title when provided', (final tester) async {
@@ -48,15 +56,11 @@ void main() {
         title: 'My Title',
         message: 'My Message',
         channelName: 'test_channel',
+        configuration: controller.configuration,
+        coordinator: controller.coordinator,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: notification,
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp(child: notification));
 
       await tester.pumpAndSettle();
 
@@ -65,35 +69,24 @@ void main() {
     });
 
     testWidgets('Expand button toggles message maxLines', (final tester) async {
-      // Create a long message that would truncate
       final longMessage = List.generate(20, (final i) => 'Word $i').join(' ');
       final notification = NotificationWidget(
         message: longMessage,
         channelName: 'test_channel',
+        configuration: controller.configuration,
+        coordinator: controller.coordinator,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: notification,
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp(child: notification));
 
       await tester.pumpAndSettle();
 
-      // Initially collapsed (maxLines: 1)
-      // It's hard to verify maxLines directly on the RenderObject easily
-      // without checking properties on the widget.
-      // But we can check for the Expand button.
       final expandButton = find.byIcon(Icons.expand_more);
       expect(expandButton, findsOneWidget);
 
-      // Tap expand
       await tester.tap(expandButton);
-      await tester.pump(); // Rebuild with new state
+      await tester.pump();
 
-      // Icon should change to expand_less
       expect(find.byIcon(Icons.expand_less), findsOneWidget);
     });
 
@@ -107,15 +100,11 @@ void main() {
           label: 'Click Me',
           onPressed: () => actionClicked = true,
         ),
+        configuration: controller.configuration,
+        coordinator: controller.coordinator,
       );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: notification,
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp(child: notification));
 
       await tester.pumpAndSettle();
 

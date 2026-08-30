@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('NotificationOverlay Integration', () {
+    late NotificationController defaultController;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      defaultController = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'test_channel',
@@ -20,18 +22,27 @@ void main() {
       );
     });
 
-    tearDown(FlutterNotificationQueue.reset);
+    tearDown(() {
+      defaultController.dispose();
+    });
 
-    testWidgets('Shows notification via builder integration',
-        (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App Home')),
+    Widget buildApp({
+      required final NotificationController controller,
+      final Widget? child,
+    }) =>
+        MaterialApp(
+          builder: (final context, final c) => NotificationScope(
+            controller: controller,
+            child: c!,
           ),
-        ),
-      );
+          home: Scaffold(
+            body: Center(child: child ?? const Text('App Home')),
+          ),
+        );
+
+    testWidgets('Shows notification via NotificationScope integration',
+        (final tester) async {
+      await tester.pumpWidget(buildApp(controller: defaultController));
 
       // Verify initial state
       expect(find.text('App Home'), findsOneWidget);
@@ -42,6 +53,7 @@ void main() {
       NotificationWidget(
         message: 'Overlay Test',
         channelName: 'test_channel',
+        coordinator: defaultController.coordinator,
       ).show();
 
       await tester.pump(); // Start animation (enqueue)
@@ -51,8 +63,6 @@ void main() {
       expect(find.text('Overlay Test'), findsOneWidget);
       expect(find.byType(NotificationWidget), findsOneWidget);
 
-      // Capture location to verify it's valid (and conceptually "above" or at
-      // least visible)
       firstLocation = tester.getCenter(find.text('Overlay Test'));
       expect(firstLocation, isNotNull);
 
@@ -64,25 +74,17 @@ void main() {
 
     testWidgets('Dismissal removes notification from overlay',
         (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App Home')),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp(controller: defaultController));
 
       final notification = NotificationWidget(
         message: 'Dismiss Test',
         channelName: 'test_channel',
+        coordinator: defaultController.coordinator,
       )..show();
 
       await tester.pumpAndSettle();
       expect(find.text('Dismiss Test'), findsOneWidget);
 
-      // Dismiss (async because it waits for animation)
-      // We must pump while waiting for it, otherwise deadlock.
       final dismissFuture = notification.dismiss();
       await tester.pumpAndSettle();
       await dismissFuture;
@@ -92,35 +94,27 @@ void main() {
     });
 
     testWidgets('Multiple notifications stack correctly', (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App Home')),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp(controller: defaultController));
 
-      NotificationWidget(message: 'First', channelName: 'test_channel').show();
+      NotificationWidget(
+        message: 'First',
+        channelName: 'test_channel',
+        coordinator: defaultController.coordinator,
+      ).show();
       await tester.pump();
-      NotificationWidget(message: 'Second', channelName: 'test_channel').show();
+      NotificationWidget(
+        message: 'Second',
+        channelName: 'test_channel',
+        coordinator: defaultController.coordinator,
+      ).show();
       await tester.pumpAndSettle();
 
       expect(find.text('First'), findsOneWidget);
       expect(find.text('Second'), findsOneWidget);
 
-      // Verify vertical stacking (topRight queue)
       final firstCenter = tester.getCenter(find.text('First'));
       final secondCenter = tester.getCenter(find.text('Second'));
 
-      // topRight queue typically stacks downwards?
-      // Need to check specific queue behavior or just ensure they constitute a
-      // column-like structure. Usually "First" is at the top? Or bottom
-      // depending on implementation.
-      // topRight queue typically has newer items at the bottom or top depending
-      // on "gravity"? Standard/Default is usually growing downwards.
-
-      // We just ensure they are not at the same position
       expect(firstCenter.dy, isNot(equals(secondCenter.dy)));
     });
 
@@ -131,7 +125,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'left_chan',
@@ -157,13 +151,12 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App')),
-          ),
+        buildApp(
+          controller: controller,
+          child: const Text('App'),
         ),
       );
 
@@ -171,12 +164,14 @@ void main() {
         id: 'n_left',
         message: 'L',
         channelName: 'left_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       NotificationWidget(
         id: 'n_center',
         message: 'C',
         channelName: 'center_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -198,7 +193,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'left_chan',
@@ -226,13 +221,12 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App')),
-          ),
+        buildApp(
+          controller: controller,
+          child: const Text('App'),
         ),
       );
 
@@ -240,12 +234,14 @@ void main() {
         id: 'n_left',
         message: 'L',
         channelName: 'left_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       NotificationWidget(
         id: 'n_center',
         message: 'C',
         channelName: 'center_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -267,7 +263,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'bottom_left_chan',
@@ -293,13 +289,12 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App')),
-          ),
+        buildApp(
+          controller: controller,
+          child: const Text('App'),
         ),
       );
 
@@ -307,12 +302,14 @@ void main() {
         id: 'n_left',
         message: 'L',
         channelName: 'bottom_left_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       NotificationWidget(
         id: 'n_center',
         message: 'C',
         channelName: 'bottom_center_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -323,7 +320,6 @@ void main() {
       final leftPos = tester.getTopLeft(find.text('L'));
       final centerPos = tester.getTopLeft(find.text('C'));
 
-      // Bottom center should shift UPWARD, so centerPos.dy < leftPos.dy
       expect(centerPos.dy, lessThan(leftPos.dy));
     });
 
@@ -335,7 +331,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'bottom_left_chan',
@@ -363,13 +359,12 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App')),
-          ),
+        buildApp(
+          controller: controller,
+          child: const Text('App'),
         ),
       );
 
@@ -377,12 +372,14 @@ void main() {
         id: 'n_left',
         message: 'L',
         channelName: 'bottom_left_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       NotificationWidget(
         id: 'n_center',
         message: 'C',
         channelName: 'bottom_center_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -393,7 +390,6 @@ void main() {
       final leftPos = tester.getTopLeft(find.text('L'));
       final centerPos = tester.getTopLeft(find.text('C'));
 
-      // Since they do not collide, they should remain aligned vertically
       expect(centerPos.dy, equals(leftPos.dy));
     });
 
@@ -405,7 +401,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'center_left_chan',
@@ -431,13 +427,12 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App')),
-          ),
+        buildApp(
+          controller: controller,
+          child: const Text('App'),
         ),
       );
 
@@ -445,12 +440,14 @@ void main() {
         id: 'n_left',
         message: 'L',
         channelName: 'center_left_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       NotificationWidget(
         id: 'n_right',
         message: 'R',
         channelName: 'center_right_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -461,8 +458,6 @@ void main() {
       final leftPos = tester.getTopLeft(find.text('L'));
       final rightPos = tester.getTopLeft(find.text('R'));
 
-      // Center right should shift DOWNWARD because it's placed after
-      // center left and center positions fallback to downward shift.
       expect(rightPos.dy, greaterThan(leftPos.dy));
     });
 
@@ -474,7 +469,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
 
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'center_left_chan',
@@ -502,13 +497,12 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: Center(child: Text('App')),
-          ),
+        buildApp(
+          controller: controller,
+          child: const Text('App'),
         ),
       );
 
@@ -516,12 +510,14 @@ void main() {
         id: 'n_left',
         message: 'L',
         channelName: 'center_left_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       NotificationWidget(
         id: 'n_right',
         message: 'R',
         channelName: 'center_right_chan',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pumpAndSettle();
@@ -532,7 +528,6 @@ void main() {
       final leftPos = tester.getTopLeft(find.text('L'));
       final rightPos = tester.getTopLeft(find.text('R'));
 
-      // Since they do not collide, they should remain aligned vertically
       expect(rightPos.dy, equals(leftPos.dy));
     });
   });

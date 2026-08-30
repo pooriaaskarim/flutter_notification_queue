@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('AppNotification', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'orders',
@@ -19,7 +21,9 @@ void main() {
       );
     });
 
-    tearDown(FlutterNotificationQueue.reset);
+    tearDown(() {
+      controller.dispose();
+    });
 
     test('instantiates as a pure data object with expected properties', () {
       const notification = AppNotification(
@@ -54,7 +58,7 @@ void main() {
         priority: NotificationPriority.low,
       );
 
-      final widget = notification.toWidget();
+      final widget = notification.toWidget(controller.configuration, controller.coordinator);
 
       expect(widget.id, equals('notif-abc'));
       expect(widget.message, equals('Hello World'));

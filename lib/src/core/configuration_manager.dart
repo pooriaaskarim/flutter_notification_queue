@@ -1,12 +1,11 @@
 part of 'core.dart';
 
-/// The configuration registry for [FlutterNotificationQueue].
+/// The configuration registry for the notification system.
 ///
 /// Stores [NotificationQueue]s and [NotificationChannel]s.
 ///
 /// This class is internal — users configure the system through
-/// [FlutterNotificationQueue.configure] and never interact with this
-/// class directly.
+/// [NotificationController] and never interact with this class directly.
 @internal
 class ConfigurationManager {
   ConfigurationManager({
@@ -226,7 +225,7 @@ class ConfigurationManager {
       _logger.warning(
         'Channel "$channelName" is not registered. '
         'Falling back to the default channel. '
-        'Register it via FlutterNotificationQueue.configure(channels: {...}).',
+        'Register it via NotificationController(channels: {...}).',
       );
     }
 

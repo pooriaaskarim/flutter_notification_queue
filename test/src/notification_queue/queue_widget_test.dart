@@ -14,14 +14,16 @@ void _enqueue(final QueueWidgetState state, final NotificationWidget n) {
 
 void main() {
   group('QueueWidgetState', () {
+    late NotificationController controller;
+    late QueueCoordinator coordinator;
+
     setUp(() {
-      // Initialize system
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         queues: {
           const NotificationQueue(
             position: QueuePosition.topRight,
             maxStackSize: 2,
-          ), // Limit 2 for testing overflow
+          ),
         },
         channels: {
           const NotificationChannel(
@@ -31,21 +33,33 @@ void main() {
           ),
         },
       );
+      coordinator = QueueCoordinator.fromController(controller);
+      controller.attach(coordinator);
     });
 
-    tearDown(FlutterNotificationQueue.reset);
+    tearDown(() {
+      controller.detach();
+      coordinator.dispose();
+      controller.dispose();
+    });
+
+    Widget buildDirectQueue({required final NotificationQueue queue}) =>
+        MaterialApp(
+          home: Scaffold(
+            body: QueueWidget(
+              queue: queue,
+              coordinator: coordinator,
+            ),
+          ),
+        );
 
     testWidgets('enqueue adds to active list immediately if under limit',
         (final tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: QueueWidget(
-              queue: NotificationQueue(
-                position: QueuePosition.topRight,
-                maxStackSize: 2,
-              ),
-            ),
+        buildDirectQueue(
+          queue: const NotificationQueue(
+            position: QueuePosition.topRight,
+            maxStackSize: 2,
           ),
         ),
       );
@@ -54,10 +68,10 @@ void main() {
       final notification = NotificationWidget(
         id: 'n1',
         message: 'Message 1',
+        coordinator: coordinator,
       );
 
       _enqueue(state, notification);
-      // Pump to start animation and settle it
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -66,22 +80,30 @@ void main() {
 
     testWidgets('enqueue adds to pending if over limit', (final tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: QueueWidget(
-              queue: NotificationQueue(
-                position: QueuePosition.topRight,
-                maxStackSize: 2,
-              ),
-            ),
+        buildDirectQueue(
+          queue: const NotificationQueue(
+            position: QueuePosition.topRight,
+            maxStackSize: 2,
           ),
         ),
       );
 
       final state = getState(tester);
-      final n1 = NotificationWidget(id: 'n1', message: 'Message 1');
-      final n2 = NotificationWidget(id: 'n2', message: 'Message 2');
-      final n3 = NotificationWidget(id: 'n3', message: 'Message 3');
+      final n1 = NotificationWidget(
+        id: 'n1',
+        message: 'Message 1',
+        coordinator: coordinator,
+      );
+      final n2 = NotificationWidget(
+        id: 'n2',
+        message: 'Message 2',
+        coordinator: coordinator,
+      );
+      final n3 = NotificationWidget(
+        id: 'n3',
+        message: 'Message 3',
+        coordinator: coordinator,
+      );
 
       _enqueue(state, n1);
       _enqueue(state, n2);
@@ -100,22 +122,30 @@ void main() {
 
     testWidgets('dismiss promotes pending item', (final tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: QueueWidget(
-              queue: NotificationQueue(
-                position: QueuePosition.topRight,
-                maxStackSize: 2,
-              ),
-            ),
+        buildDirectQueue(
+          queue: const NotificationQueue(
+            position: QueuePosition.topRight,
+            maxStackSize: 2,
           ),
         ),
       );
 
       final state = getState(tester);
-      final n1 = NotificationWidget(id: 'n1', message: 'Message 1');
-      final n2 = NotificationWidget(id: 'n2', message: 'Message 2');
-      final n3 = NotificationWidget(id: 'n3', message: 'Message 3');
+      final n1 = NotificationWidget(
+        id: 'n1',
+        message: 'Message 1',
+        coordinator: coordinator,
+      );
+      final n2 = NotificationWidget(
+        id: 'n2',
+        message: 'Message 2',
+        coordinator: coordinator,
+      );
+      final n3 = NotificationWidget(
+        id: 'n3',
+        message: 'Message 3',
+        coordinator: coordinator,
+      );
 
       _enqueue(state, n1);
       _enqueue(state, n2);
@@ -126,7 +156,7 @@ void main() {
       expect(find.text('Message 3'), findsNothing);
 
       state.dismiss(n1);
-      await tester.pumpAndSettle(); // Allow animations
+      await tester.pumpAndSettle();
 
       expect(find.text('Message 3'), findsOneWidget);
       expect(find.text('Message 1'), findsNothing);
@@ -134,23 +164,27 @@ void main() {
 
     testWidgets('update existing notification (active)', (final tester) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: QueueWidget(
-              queue: NotificationQueue(position: QueuePosition.topRight),
-            ),
-          ),
+        buildDirectQueue(
+          queue: const NotificationQueue(position: QueuePosition.topRight),
         ),
       );
 
       final state = getState(tester);
-      final n1 = NotificationWidget(id: 'n1', message: 'Original');
+      final n1 = NotificationWidget(
+        id: 'n1',
+        message: 'Original',
+        coordinator: coordinator,
+      );
       _enqueue(state, n1);
       await tester.pump();
-      await tester.pumpAndSettle(); // Settle entry animation
+      await tester.pumpAndSettle();
       expect(find.text('Original'), findsOneWidget);
 
-      final n1Update = NotificationWidget(id: 'n1', message: 'Updated');
+      final n1Update = NotificationWidget(
+        id: 'n1',
+        message: 'Updated',
+        coordinator: coordinator,
+      );
       _enqueue(state, n1Update);
       await tester.pump();
       await tester.pumpAndSettle();

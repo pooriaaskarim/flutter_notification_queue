@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Reorder Interaction via onDragEnd', () {
+    late NotificationController controller;
+
     setUp(() {
-      FlutterNotificationQueue.configure(
+      controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'test',
@@ -24,27 +26,32 @@ void main() {
     });
 
     tearDown(() {
-      FlutterNotificationQueue.reset();
+      controller.dispose();
     });
 
-    testWidgets('Reorders items within the same queue', (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
+    Widget buildApp() => MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(
             body: SizedBox.expand(),
           ),
-        ),
-      );
+        );
+
+    testWidgets('Reorders items within the same queue', (final tester) async {
+      await tester.pumpWidget(buildApp());
 
       final notification1 = NotificationWidget(
         message: 'Item 1',
         channelName: 'test',
+        coordinator: controller.coordinator,
       );
 
       final notification2 = NotificationWidget(
         message: 'Item 2',
         channelName: 'test',
+        coordinator: controller.coordinator,
       );
 
       notification1.show();
@@ -58,19 +65,8 @@ void main() {
       expect(notifFinder1, findsOneWidget);
       expect(notifFinder2, findsOneWidget);
 
-      // Start drag on Item 2 to move it above Item 1
-      // Dragging to the position of Item 1 should swap them
       final startPos = tester.getCenter(notifFinder2);
       final targetPos = tester.getCenter(notifFinder1);
-
-      // We need to move exactly to the target to hit the reorder zone.
-      // Reorder triggers when threshold is passed, and it finds nearest
-      // zone index.
-      // Offset from item 2 to item 1
-
-      // Because the queue positions items vertically with spacing,
-      // dragging it UP by more than threshold (e.g. height of an item +
-      // spacing)
 
       final gesture = await tester.startGesture(startPos);
       await tester.pump(const Duration(milliseconds: 100));
@@ -86,9 +82,6 @@ void main() {
       await gesture.up();
       await tester.pumpAndSettle();
 
-      // Verify reorder happened.
-      // Since order is maintained by the queue, the visual positions should
-      // be swapped.
       final newPos1 = tester.getCenter(notifFinder1);
       final newPos2 = tester.getCenter(notifFinder2);
 
@@ -100,23 +93,18 @@ void main() {
 
     testWidgets('Shifts items visually during drag before drop',
         (final tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(
-            body: SizedBox.expand(),
-          ),
-        ),
-      );
+      await tester.pumpWidget(buildApp());
 
       final notification1 = NotificationWidget(
         message: 'Item 1',
         channelName: 'test',
+        coordinator: controller.coordinator,
       );
 
       final notification2 = NotificationWidget(
         message: 'Item 2',
         channelName: 'test',
+        coordinator: controller.coordinator,
       );
 
       notification1.show();

@@ -4,8 +4,6 @@ export 'src/behaviors/behaviors.dart' hide OnDrag, OnLongPress;
 export 'src/core/core.dart'
     show
         DismissReason,
-        FlutterNotificationQueue,
-        FnqEvent,
         NotificationChannelRouteUpdated,
         NotificationController,
         NotificationCustomActionTriggered,

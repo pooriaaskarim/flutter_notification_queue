@@ -11,19 +11,11 @@ Future<void> _driveAnimation(final WidgetTester tester) async {
 
 void main() {
   group('Backpressure Strategy Integration Tests', () {
-    setUp(() {
-      // Configuration will be overridden in individual test cases if needed
-    });
-
-    tearDown(() {
-      FlutterNotificationQueue.reset();
-    });
-
     testWidgets(
       'unbounded pending queue by default (no capacity limit)',
       timeout: const Timeout(Duration(seconds: 3)),
       (final tester) async {
-        FlutterNotificationQueue.configure(
+        final controller = NotificationController(
           channels: {
             const NotificationChannel(
               name: 'default',
@@ -40,22 +32,45 @@ void main() {
             ),
           },
         );
+        addTearDown(controller.dispose);
 
         await tester.pumpWidget(
-          const MaterialApp(
-            builder: FlutterNotificationQueue.builder,
-            home: Scaffold(
+          MaterialApp(
+            builder: (final context, final child) => NotificationScope(
+              controller: controller,
+              child: child!,
+            ),
+            home: const Scaffold(
               body: SizedBox.expand(),
             ),
           ),
         );
 
-        // Enqueue 5 items into maxStackSize: 1 queue
-        final n1 = NotificationWidget(id: 'n1', message: 'Item 1');
-        final n2 = NotificationWidget(id: 'n2', message: 'Item 2');
-        final n3 = NotificationWidget(id: 'n3', message: 'Item 3');
-        final n4 = NotificationWidget(id: 'n4', message: 'Item 4');
-        final n5 = NotificationWidget(id: 'n5', message: 'Item 5');
+        final n1 = NotificationWidget(
+          id: 'n1',
+          message: 'Item 1',
+          coordinator: controller.coordinator,
+        );
+        final n2 = NotificationWidget(
+          id: 'n2',
+          message: 'Item 2',
+          coordinator: controller.coordinator,
+        );
+        final n3 = NotificationWidget(
+          id: 'n3',
+          message: 'Item 3',
+          coordinator: controller.coordinator,
+        );
+        final n4 = NotificationWidget(
+          id: 'n4',
+          message: 'Item 4',
+          coordinator: controller.coordinator,
+        );
+        final n5 = NotificationWidget(
+          id: 'n5',
+          message: 'Item 5',
+          coordinator: controller.coordinator,
+        );
 
         n1.show();
         n2.show();
@@ -66,18 +81,16 @@ void main() {
         await tester.pump();
         await _driveAnimation(tester);
 
-        // 1 active, others pending
         expect(find.text('Item 1'), findsOneWidget);
         expect(find.text('Item 2'), findsNothing);
 
-        // Now dismiss Item 1 to let subsequent items flow
-        unawaited(n1.dismiss()); // DO NOT AWAIT HERE! Deadlock!
+        unawaited(n1.dismiss());
         await tester.pump();
         await _driveAnimation(tester);
 
         expect(find.text('Item 2'), findsOneWidget);
 
-        unawaited(n2.dismiss()); // DO NOT AWAIT HERE!
+        unawaited(n2.dismiss());
         await tester.pump();
         await _driveAnimation(tester);
 
@@ -89,7 +102,7 @@ void main() {
       'discardOldest strategy drops oldest pending and '
       'emits QueueOverflowed event',
       (final tester) async {
-        FlutterNotificationQueue.configure(
+        final controller = NotificationController(
           channels: {
             const NotificationChannel(
               name: 'default',
@@ -107,25 +120,43 @@ void main() {
             ),
           },
         );
+        addTearDown(controller.dispose);
 
         await tester.pumpWidget(
-          const MaterialApp(
-            builder: FlutterNotificationQueue.builder,
-            home: Scaffold(
+          MaterialApp(
+            builder: (final context, final child) => NotificationScope(
+              controller: controller,
+              child: child!,
+            ),
+            home: const Scaffold(
               body: SizedBox.expand(),
             ),
           ),
         );
 
-        final events = <FnqEvent>[];
-        final subscription = FlutterNotificationQueue.events.listen(events.add);
+        final events = <NotificationEvent>[];
+        final subscription = controller.events.listen(events.add);
 
-        // Enqueue 4 items: n1 becomes active, n2 & n3 fill up the pending
-        // queue of size 2.
-        final n1 = NotificationWidget(id: 'n1', message: 'Active Item');
-        final n2 = NotificationWidget(id: 'n2', message: 'Pending Item 2');
-        final n3 = NotificationWidget(id: 'n3', message: 'Pending Item 3');
-        final n4 = NotificationWidget(id: 'n4', message: 'Pending Item 4');
+        final n1 = NotificationWidget(
+          id: 'n1',
+          message: 'Active Item',
+          coordinator: controller.coordinator,
+        );
+        final n2 = NotificationWidget(
+          id: 'n2',
+          message: 'Pending Item 2',
+          coordinator: controller.coordinator,
+        );
+        final n3 = NotificationWidget(
+          id: 'n3',
+          message: 'Pending Item 3',
+          coordinator: controller.coordinator,
+        );
+        final n4 = NotificationWidget(
+          id: 'n4',
+          message: 'Pending Item 4',
+          coordinator: controller.coordinator,
+        );
 
         n1.show();
         n2.show();
@@ -134,20 +165,16 @@ void main() {
         await tester.pump();
         await _driveAnimation(tester);
 
-        // Pending queue is now full: [n2, n3]
         expect(find.text('Active Item'), findsOneWidget);
 
-        // Enqueue n4: should overflow and drop n2 (oldest pending)
         n4.show();
         await tester.pump();
         await _driveAnimation(tester);
 
-        // Verify the dropped event was received
         final overflowEvents = events.whereType<QueueOverflowed>().toList();
         expect(overflowEvents.length, 1);
         expect(overflowEvents.first.dropped.id, 'n2');
 
-        // Dismiss n1: should promote n3, not n2
         unawaited(n1.dismiss());
         await tester.pump();
         await _driveAnimation(tester);
@@ -155,7 +182,6 @@ void main() {
         expect(find.text('Pending Item 3'), findsOneWidget);
         expect(find.text('Pending Item 2'), findsNothing);
 
-        // Dismiss n3: should promote n4
         unawaited(n3.dismiss());
         await tester.pump();
         await _driveAnimation(tester);
@@ -170,7 +196,7 @@ void main() {
       'discardNewest strategy rejects incoming item and '
       'emits QueueOverflowed event',
       (final tester) async {
-        FlutterNotificationQueue.configure(
+        final controller = NotificationController(
           channels: {
             const NotificationChannel(
               name: 'default',
@@ -188,25 +214,43 @@ void main() {
             ),
           },
         );
+        addTearDown(controller.dispose);
 
         await tester.pumpWidget(
-          const MaterialApp(
-            builder: FlutterNotificationQueue.builder,
-            home: Scaffold(
+          MaterialApp(
+            builder: (final context, final child) => NotificationScope(
+              controller: controller,
+              child: child!,
+            ),
+            home: const Scaffold(
               body: SizedBox.expand(),
             ),
           ),
         );
 
-        final events = <FnqEvent>[];
-        final subscription = FlutterNotificationQueue.events.listen(events.add);
+        final events = <NotificationEvent>[];
+        final subscription = controller.events.listen(events.add);
 
-        // Enqueue 4 items: n1 becomes active, n2 & n3 fill up the pending
-        // queue of size 2.
-        final n1 = NotificationWidget(id: 'n1', message: 'Active Item');
-        final n2 = NotificationWidget(id: 'n2', message: 'Pending Item 2');
-        final n3 = NotificationWidget(id: 'n3', message: 'Pending Item 3');
-        final n4 = NotificationWidget(id: 'n4', message: 'Pending Item 4');
+        final n1 = NotificationWidget(
+          id: 'n1',
+          message: 'Active Item',
+          coordinator: controller.coordinator,
+        );
+        final n2 = NotificationWidget(
+          id: 'n2',
+          message: 'Pending Item 2',
+          coordinator: controller.coordinator,
+        );
+        final n3 = NotificationWidget(
+          id: 'n3',
+          message: 'Pending Item 3',
+          coordinator: controller.coordinator,
+        );
+        final n4 = NotificationWidget(
+          id: 'n4',
+          message: 'Pending Item 4',
+          coordinator: controller.coordinator,
+        );
 
         n1.show();
         n2.show();
@@ -215,24 +259,20 @@ void main() {
         await tester.pump();
         await _driveAnimation(tester);
 
-        // Enqueue n4: should overflow and drop n4 itself (newest)
         n4.show();
         await tester.pump();
         await _driveAnimation(tester);
 
-        // Verify the dropped event was received for n4
         final overflowEvents = events.whereType<QueueOverflowed>().toList();
         expect(overflowEvents.length, 1);
         expect(overflowEvents.first.dropped.id, 'n4');
 
-        // Dismiss n1: should promote n2
         unawaited(n1.dismiss());
         await tester.pump();
         await _driveAnimation(tester);
 
         expect(find.text('Pending Item 2'), findsOneWidget);
 
-        // Dismiss n2: should promote n3
         unawaited(n2.dismiss());
         await tester.pump();
         await _driveAnimation(tester);

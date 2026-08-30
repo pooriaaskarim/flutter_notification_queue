@@ -8,8 +8,11 @@ part of 'core.dart';
 class QueueCoordinator implements NotificationScopeState {
   QueueCoordinator({
     final ConfigurationManager? configuration,
-  }) : configuration =
-            configuration ?? FlutterNotificationQueue.configuration {
+  }) : configuration = configuration ??
+            ConfigurationManager(
+              queues: {const NotificationQueue()},
+              channels: NotificationChannel.standardChannels(),
+            ) {
     _historyLogger = HistoryLogger(
       maxEntries: this.configuration.maxHistoryEntries,
     )..startListening(events);
@@ -33,25 +36,16 @@ class QueueCoordinator implements NotificationScopeState {
   OverlayPortalController? _controller;
 
   /// Broadcast stream of all notification lifecycle events.
-  final _eventController = StreamController<FnqEvent>.broadcast();
+  final _eventController = StreamController<NotificationEvent>.broadcast();
 
-  /// A broadcast stream of all notification lifecycle events.
-  ///
-  /// Subscribe to observe queued, dismissed, tapped, relocated, and reordered
-  /// events without coupling to library internals. Multiple listeners are
-  /// supported simultaneously.
-  ///
-  /// Prefer accessing this via [NotificationController.events] or
-  /// [FlutterNotificationQueue.events].
+  /// A broadcast stream of all notification lifecycle events for this
+  /// coordinator instance.
   @override
-  Stream<FnqEvent> get events => _eventController.stream;
+  Stream<NotificationEvent> get events => _eventController.stream;
 
-  /// Adds [event] directly to the event stream.
-  ///
-  /// Only intended for use in unit tests that need to verify stream consumers
-  /// without spinning up a full widget tree.
-  @visibleForTesting
-  void emitEvent(final FnqEvent event) {
+  /// Emits [event] on [events] and records it in history if enabled.
+  @internal
+  void emitEvent(final NotificationEvent event) {
     if (!_eventController.isClosed) {
       _eventController.add(event);
     }
@@ -121,7 +115,7 @@ class QueueCoordinator implements NotificationScopeState {
   // ── History ──────────────────────────────────────────────────────────────
 
   @override
-  List<FnqEvent> getHistory({
+  List<NotificationEvent> getHistory({
     final String? channelName,
     final DismissReason? dismissReason,
     final DateTime? since,

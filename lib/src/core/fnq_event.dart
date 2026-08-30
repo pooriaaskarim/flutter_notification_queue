@@ -50,10 +50,6 @@ sealed class NotificationEvent {
   const NotificationEvent();
 }
 
-/// Legacy alias for [NotificationEvent].
-@Deprecated('FnqEvent is renamed to NotificationEvent.')
-typedef FnqEvent = NotificationEvent;
-
 /// Emitted when a [NotificationWidget] is accepted into a queue.
 ///
 /// Not emitted when the notification's channel is disabled.

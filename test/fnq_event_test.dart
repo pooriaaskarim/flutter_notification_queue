@@ -1,4 +1,5 @@
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -6,13 +7,36 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });
 
+  late NotificationController controller;
+  late QueueCoordinator coordinator;
+
   setUp(() {
-    FlutterNotificationQueue.reset();
-    FlutterNotificationQueue.configure();
+    controller = NotificationController(
+      queues: {
+        const NotificationQueue(position: QueuePosition.topLeft),
+        const NotificationQueue(position: QueuePosition.topRight),
+      },
+      channels: {
+        const NotificationChannel(
+          name: 'info',
+          position: QueuePosition.topLeft,
+          defaultDismissDuration: null,
+        ),
+        const NotificationChannel(
+          name: 'disabled_ch',
+          enabled: false,
+          defaultDismissDuration: null,
+        ),
+      },
+    );
+    coordinator = QueueCoordinator.fromController(controller);
+    controller.attach(coordinator);
   });
 
   tearDown(() {
-    FlutterNotificationQueue.reset();
+    controller.detach();
+    coordinator.dispose();
+    controller.dispose();
   });
 
   // ── Helpers ──
@@ -27,14 +51,15 @@ void main() {
         message: 'Test message',
         channelName: channelName,
         tapBehavior: tapBehavior,
+        coordinator: coordinator,
       );
 
   // ── NotificationQueued ─────────────────────────────────────────────────────
 
   group('NotificationQueued', () {
     test('emits when show() is called', () async {
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
       makeWidget().show();
       await Future.delayed(Duration.zero);
@@ -45,16 +70,8 @@ void main() {
     });
 
     test('does NOT emit when channel is disabled', () async {
-      FlutterNotificationQueue.configure(
-        channels: {
-          const NotificationChannel(
-            name: 'disabled_ch',
-            enabled: false,
-          ),
-        },
-      );
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
       makeWidget(channelName: 'disabled_ch').show();
       await Future.delayed(Duration.zero);
@@ -65,8 +82,8 @@ void main() {
 
     test('carries correct notification reference', () async {
       final n = makeWidget();
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
       n.show();
       await Future.delayed(Duration.zero);
@@ -82,12 +99,10 @@ void main() {
   group('NotificationDismissed (programmatic)', () {
     test('emits NotificationDismissed with reason=programmatic', () async {
       final n = makeWidget();
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      // Emit directly — tests without a widget tree cannot call show()/dismiss()
-      // on a mounted widget, but the coordinator can emit standalone.
-      FlutterNotificationQueue.coordinator.emitEvent(
+      coordinator.emitEvent(
         NotificationDismissed(
           notification: n,
           reason: DismissReason.programmatic,
@@ -102,10 +117,10 @@ void main() {
 
     test('emits with reason=timeout', () async {
       final n = makeWidget();
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      FlutterNotificationQueue.coordinator.emitEvent(
+      coordinator.emitEvent(
         NotificationDismissed(
           notification: n,
           reason: DismissReason.timeout,
@@ -120,10 +135,10 @@ void main() {
 
     test('emits with reason=userSwipe', () async {
       final n = makeWidget();
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      FlutterNotificationQueue.coordinator.emitEvent(
+      coordinator.emitEvent(
         NotificationDismissed(
           notification: n,
           reason: DismissReason.userSwipe,
@@ -138,10 +153,10 @@ void main() {
 
     test('emits with reason=userTap', () async {
       final n = makeWidget();
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      FlutterNotificationQueue.coordinator.emitEvent(
+      coordinator.emitEvent(
         NotificationDismissed(
           notification: n,
           reason: DismissReason.userTap,
@@ -160,24 +175,18 @@ void main() {
   group('NotificationRelocated', () {
     test('emits NotificationRelocated with correct from/to positions',
         () async {
-      FlutterNotificationQueue.configure(
-        queues: {
-          const NotificationQueue(position: QueuePosition.topLeft),
-          const NotificationQueue(position: QueuePosition.topRight),
-        },
-      );
-
       final n = NotificationWidget(
         title: 'Relocate me',
         message: 'Relocate message',
         channelName: 'info',
         position: QueuePosition.topLeft,
+        coordinator: controller.coordinator,
       );
 
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      FlutterNotificationQueue.coordinator.emitEvent(
+      coordinator.emitEvent(
         NotificationRelocated(
           notification: n,
           from: QueuePosition.topLeft,
@@ -200,11 +209,10 @@ void main() {
   group('NotificationReordered', () {
     test('emits with correct toIndex', () async {
       final n = makeWidget();
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      // Reorder emits the event regardless of widget mount state
-      FlutterNotificationQueue.coordinator.reorderWidget(n, 2);
+      coordinator.reorderWidget(n, 2);
       await Future.delayed(Duration.zero);
 
       final reordered = events.whereType<NotificationReordered>().first;
@@ -218,10 +226,10 @@ void main() {
 
   group('Stream integrity', () {
     test('supports multiple concurrent listeners', () async {
-      final a = <FnqEvent>[];
-      final b = <FnqEvent>[];
-      final subA = FlutterNotificationQueue.events.listen(a.add);
-      final subB = FlutterNotificationQueue.events.listen(b.add);
+      final a = <NotificationEvent>[];
+      final b = <NotificationEvent>[];
+      final subA = controller.events.listen(a.add);
+      final subB = controller.events.listen(b.add);
 
       makeWidget().show();
       await Future.delayed(Duration.zero);
@@ -232,9 +240,9 @@ void main() {
       subB.cancel(); // ignore: unawaited_futures
     });
 
-    test('FlutterNotificationQueue.events is a broadcast stream', () {
+    test('controller.events is a broadcast stream', () {
       expect(
-        FlutterNotificationQueue.events.isBroadcast,
+        controller.events.isBroadcast,
         isTrue,
       );
     });
@@ -244,10 +252,10 @@ void main() {
     test('NotificationTapped carries correct behavior type via emitTapped',
         () async {
       final n = makeWidget(tapBehavior: const TapToExpand());
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      FlutterNotificationQueue.coordinator.emitTapped(
+      coordinator.emitTapped(
         notification: n,
         behavior: const TapToExpand(),
       );
@@ -262,10 +270,10 @@ void main() {
 
     test('emitTapped emits for TapToAct with correct behavior', () async {
       final n = makeWidget(tapBehavior: TapToAct(onTap: () {}));
-      final events = <FnqEvent>[];
-      final sub = FlutterNotificationQueue.events.listen(events.add);
+      final events = <NotificationEvent>[];
+      final sub = controller.events.listen(events.add);
 
-      FlutterNotificationQueue.coordinator.emitTapped(
+      coordinator.emitTapped(
         notification: n,
         behavior: TapToAct(onTap: () {}),
       );

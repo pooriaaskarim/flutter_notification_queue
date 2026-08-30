@@ -5,16 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('FNQ Visual Regression Golden Tests', () {
-    setUp(() {
-      // Configuration will be overridden in individual test cases
-    });
-
-    tearDown(() {
-      FlutterNotificationQueue.reset();
-    });
-
     testWidgets('FlatQueueStyle Golden Test', (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'default',
@@ -30,6 +22,7 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       tester.view.physicalSize = const Size(800, 600);
       tester.view.devicePixelRatio = 1.0;
@@ -37,7 +30,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          builder: FlutterNotificationQueue.builder,
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
           home: const Scaffold(
             body: Center(
               child: Text('App Content'),
@@ -51,6 +47,7 @@ void main() {
         title: 'Flat Notification',
         message: 'This is a flat queue style notification.',
         icon: const Icon(Icons.info_outline, color: Colors.blue),
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -65,7 +62,7 @@ void main() {
     });
 
     testWidgets('FilledQueueStyle Golden Test', (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'default',
@@ -82,6 +79,7 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       tester.view.physicalSize = const Size(800, 600);
       tester.view.devicePixelRatio = 1.0;
@@ -89,7 +87,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          builder: FlutterNotificationQueue.builder,
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
           home: const Scaffold(
             body: Center(
               child: Text('App Content'),
@@ -103,6 +104,7 @@ void main() {
         title: 'Filled Notification',
         message: 'This is a filled queue style notification.',
         icon: const Icon(Icons.star, color: Colors.white),
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -117,7 +119,7 @@ void main() {
     });
 
     testWidgets('OutlinedQueueStyle Golden Test', (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'default',
@@ -134,6 +136,7 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       tester.view.physicalSize = const Size(800, 600);
       tester.view.devicePixelRatio = 1.0;
@@ -141,7 +144,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          builder: FlutterNotificationQueue.builder,
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
           home: const Scaffold(
             body: Center(
               child: Text('App Content'),
@@ -155,6 +161,7 @@ void main() {
         title: 'Outlined Notification',
         message: 'This is an outlined queue style notification.',
         icon: const Icon(Icons.check, color: Colors.green),
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();
@@ -171,7 +178,7 @@ void main() {
     testWidgets(
       'Anchoring TopRight vs BottomCenter Golden Test',
       (final tester) async {
-        FlutterNotificationQueue.configure(
+        final controller = NotificationController(
           channels: {
             const NotificationChannel(
               name: 'ch_tr',
@@ -189,6 +196,7 @@ void main() {
             const NotificationQueue(position: QueuePosition.bottomCenter),
           },
         );
+        addTearDown(controller.dispose);
 
         tester.view.physicalSize = const Size(800, 600);
         tester.view.devicePixelRatio = 1.0;
@@ -196,7 +204,10 @@ void main() {
         await tester.pumpWidget(
           MaterialApp(
             theme: ThemeData(useMaterial3: true),
-            builder: FlutterNotificationQueue.builder,
+            builder: (final context, final child) => NotificationScope(
+              controller: controller,
+              child: child!,
+            ),
             home: const Scaffold(
               body: Center(
                 child: Text('App Content'),
@@ -209,6 +220,7 @@ void main() {
           id: 'n_tr',
           message: 'Top Right Queue Position',
           channelName: 'ch_tr',
+          coordinator: controller.coordinator,
         ).show();
 
         await tester.pump();
@@ -218,6 +230,7 @@ void main() {
           id: 'n_bc',
           message: 'Bottom Center Queue Position',
           channelName: 'ch_bc',
+          coordinator: controller.coordinator,
         ).show();
 
         await tester.pump();
@@ -234,7 +247,7 @@ void main() {
 
     testWidgets('Notification Grouping Bundle Golden Test',
         (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
         channels: {
           const NotificationChannel(
             name: 'default',
@@ -253,6 +266,7 @@ void main() {
           ),
         },
       );
+      addTearDown(controller.dispose);
 
       tester.view.physicalSize = const Size(800, 600);
       tester.view.devicePixelRatio = 1.0;
@@ -260,7 +274,10 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(useMaterial3: true),
-          builder: FlutterNotificationQueue.builder,
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
           home: const Scaffold(
             body: Center(
               child: Text('App Content'),
@@ -273,6 +290,7 @@ void main() {
         id: 'n1',
         title: 'First Notification',
         message: 'This is the first notification in the group.',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
@@ -281,6 +299,7 @@ void main() {
         id: 'n2',
         title: 'Second Notification',
         message: 'This is the second notification in the group.',
+        coordinator: controller.coordinator,
       ).show();
 
       await tester.pump();

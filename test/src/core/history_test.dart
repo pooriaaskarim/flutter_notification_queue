@@ -10,22 +10,21 @@ Future<void> _driveAnimation(final WidgetTester tester) async {
 
 void main() {
   group('F-05 Persistent History Log Database Tests', () {
-    setUp(() {
-      FlutterNotificationQueue.reset();
-    });
-
-    tearDown(() {
-      FlutterNotificationQueue.reset();
-    });
-
     testWidgets('History is disabled by default (maxHistoryEntries = 0)',
         (final tester) async {
-      FlutterNotificationQueue.configure(maxHistoryEntries: 0);
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
+        maxHistoryEntries: 0,
+      );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
@@ -33,27 +32,36 @@ void main() {
         id: 'test_1',
         message: 'Hello',
         channelName: 'default',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(FlutterNotificationQueue.getHistory(), isEmpty);
+      expect(controller.getHistory(), isEmpty);
     });
 
     testWidgets('History captures events and filters them correctly',
         (final tester) async {
-      FlutterNotificationQueue.configure(
+      final controller = NotificationController(
+        queues: {
+          const NotificationQueue(position: QueuePosition.topRight),
+          const NotificationQueue(position: QueuePosition.topLeft),
+        },
         maxHistoryEntries: 10,
         channels: {
           NotificationChannel.successChannel(defaultDismissDuration: null),
           NotificationChannel.errorChannel(defaultDismissDuration: null),
         },
       );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
@@ -62,6 +70,7 @@ void main() {
         message: 'Hello 1',
         channelName: 'success',
         permanent: true,
+        coordinator: controller.coordinator,
       )..show();
       await tester.pump();
       await tester.pump();
@@ -72,30 +81,29 @@ void main() {
         message: 'Hello 2',
         channelName: 'error',
         permanent: true,
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pump();
       await _driveAnimation(tester);
 
       // Verify Queued events are logged
-      final history = FlutterNotificationQueue.getHistory();
+      final history = controller.getHistory();
       expect(history.length, equals(2));
       expect(history.every((final e) => e is NotificationQueued), isTrue);
 
-      // Dismiss one programmatically, and tap the other (simulate dismissing
-      // n1)
+      // Dismiss one programmatically
       final dismissFuture = n1.dismiss();
       await tester.pumpAndSettle();
       await dismissFuture;
 
-      final historyAfterDismiss = FlutterNotificationQueue.getHistory();
+      final historyAfterDismiss = controller.getHistory();
       // Should now have 3 events: 2 queued, 1 dismissed
       expect(historyAfterDismiss.length, equals(3));
       expect(historyAfterDismiss.first, isA<NotificationDismissed>());
 
       // Query by channel
-      final successHistory =
-          FlutterNotificationQueue.getHistory(channelName: 'success');
+      final successHistory = controller.getHistory(channelName: 'success');
       expect(successHistory.length, equals(2)); // queued and dismissed
       expect(
         successHistory.every(
@@ -107,12 +115,12 @@ void main() {
       );
 
       // Query by dismiss reason
-      final dismissedTimeout = FlutterNotificationQueue.getHistory(
+      final dismissedTimeout = controller.getHistory(
         dismissReason: DismissReason.timeout,
       );
       expect(dismissedTimeout, isEmpty);
 
-      final dismissedProgrammatic = FlutterNotificationQueue.getHistory(
+      final dismissedProgrammatic = controller.getHistory(
         dismissReason: DismissReason.programmatic,
       );
       expect(dismissedProgrammatic.length, equals(1));
@@ -120,12 +128,19 @@ void main() {
 
     testWidgets('History obeys maximum entries and handles clear',
         (final tester) async {
-      FlutterNotificationQueue.configure(maxHistoryEntries: 3);
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
+        maxHistoryEntries: 3,
+      );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
@@ -134,6 +149,7 @@ void main() {
           id: 'notif_$i',
           message: 'Message $i',
           channelName: 'default',
+          coordinator: controller.coordinator,
         ).show();
         await tester.pump();
         await tester.pump();
@@ -141,28 +157,33 @@ void main() {
       }
 
       // History must be capped at 3
-      final history = FlutterNotificationQueue.getHistory();
+      final history = controller.getHistory();
       expect(history.length, equals(3));
-      // Since LIFO, the most recent ones (notif_4, notif_3, notif_2) should
-      // be there
       final ids = history
           .map((final e) => (e as NotificationQueued).notification.id)
           .toList();
       expect(ids, equals(['notif_4', 'notif_3', 'notif_2']));
 
       // Test clearHistory
-      FlutterNotificationQueue.clearHistory();
-      expect(FlutterNotificationQueue.getHistory(), isEmpty);
+      controller.clearHistory();
+      expect(controller.getHistory(), isEmpty);
     });
 
     testWidgets('History respects limit and since filters',
         (final tester) async {
-      FlutterNotificationQueue.configure(maxHistoryEntries: 10);
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
+        maxHistoryEntries: 10,
+      );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
@@ -172,6 +193,7 @@ void main() {
         id: 'test_1',
         message: 'Hello 1',
         channelName: 'default',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pumpAndSettle();
@@ -182,12 +204,13 @@ void main() {
         id: 'test_2',
         message: 'Hello 2',
         channelName: 'default',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pumpAndSettle();
 
       // Limit query
-      final limitHistory = FlutterNotificationQueue.getHistory(limit: 1);
+      final limitHistory = controller.getHistory(limit: 1);
       expect(limitHistory.length, equals(1));
       expect(
         (limitHistory.first as NotificationQueued).notification.id,
@@ -195,27 +218,33 @@ void main() {
       );
 
       // Since query
-      final sinceHistory =
-          FlutterNotificationQueue.getHistory(since: afterN1Time);
+      final sinceHistory = controller.getHistory(since: afterN1Time);
       expect(sinceHistory.length, equals(1));
       expect(
         (sinceHistory.first as NotificationQueued).notification.id,
         equals('test_2'),
       );
 
-      final allHistory = FlutterNotificationQueue.getHistory(since: beforeTime);
+      final allHistory = controller.getHistory(since: beforeTime);
       expect(allHistory.length, equals(2));
     });
 
     testWidgets(
         'History log cancels subscriptions and clears memory completely '
-        'when disabled', (final tester) async {
-      FlutterNotificationQueue.configure(maxHistoryEntries: 10);
+        'when reconfigured', (final tester) async {
+      final controller = NotificationController(
+        queues: {const NotificationQueue(position: QueuePosition.topCenter)},
+        maxHistoryEntries: 10,
+      );
+      addTearDown(controller.dispose);
 
       await tester.pumpWidget(
-        const MaterialApp(
-          builder: FlutterNotificationQueue.builder,
-          home: Scaffold(body: SizedBox.expand()),
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
         ),
       );
 
@@ -224,43 +253,46 @@ void main() {
         id: 'test_1',
         message: 'Logged message',
         channelName: 'default',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(FlutterNotificationQueue.getHistory().length, equals(1));
+      expect(controller.getHistory().length, equals(1));
 
-      // 2. Disable history log dynamically by configuring to 0
-      FlutterNotificationQueue.configure(maxHistoryEntries: 0);
+      // 2. Reconfigure history log dynamically to 0
+      controller.reconfigure(maxHistoryEntries: 0);
 
       // 3. Verify history cache is immediately cleared to release memory
-      expect(FlutterNotificationQueue.getHistory(), isEmpty);
+      expect(controller.getHistory(), isEmpty);
 
       // 4. Fire another notification and verify it is NOT logged (ignored)
       NotificationWidget(
         id: 'test_2',
         message: 'Ignored message',
         channelName: 'default',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(FlutterNotificationQueue.getHistory(), isEmpty);
+      expect(controller.getHistory(), isEmpty);
 
       // 5. Re-enable history dynamically to verify it resumes listening
-      FlutterNotificationQueue.configure(maxHistoryEntries: 5);
+      controller.reconfigure(maxHistoryEntries: 5);
 
       NotificationWidget(
         id: 'test_3',
         message: 'Resumed message',
         channelName: 'default',
+        coordinator: controller.coordinator,
       ).show();
       await tester.pump();
       await tester.pumpAndSettle();
 
-      expect(FlutterNotificationQueue.getHistory().length, equals(1));
+      expect(controller.getHistory().length, equals(1));
       final firstEvent =
-          FlutterNotificationQueue.getHistory().first as NotificationQueued;
+          controller.getHistory().first as NotificationQueued;
       expect(
         firstEvent.notification.id,
         equals('test_3'),

@@ -1,44 +1,51 @@
-# Channel System
+# Channel System (v0.4.x)
 
-The **Channel System** categorizes notifications by intent. It allows you to define global defaults for different types of messages.
+The **Channel System** categorizes notifications by intent. It allows you to define global visual themes and default queue targets for different categories of messages.
 
-## NotificationChannel
+## `NotificationChannel`
 
 A `NotificationChannel` is a named configuration profile that defines:
-- **Name**: Unique identifier (e.g., 'success', 'chat_message').
+- **Name**: Unique string identifier (e.g., `'success'`, `'orders'`, `'chat'`).
 - **Colors**: Default background and foreground colors.
-- **Icon**: Default icon.
-- **Target Queue**: Which queue position this channel should use by default.
+- **Icon**: Default icon widget.
+- **Target Queue**: Optional `QueuePosition` override to route all channel notifications to a specific queue.
+- **Priority**: Default priority tier (`low`, `normal`, `high`, `critical`).
+- **Auto-Dismiss Duration**: Default display duration before auto-dismissal.
 
 ### Why Use Channels?
 
-1.  **Consistency**: Ensure all "Error" messages look the same across your app.
-2.  **Maintainability**: Change the color of all "Success" messages in one place.
-3.  **Simplicity**: Call `NotificationWidget.show(channel: 'error')` instead of manually styling every widget.
+1. **Visual Consistency**: Ensures all "Error" or "Success" notifications maintain uniform styling across your app.
+2. **Centralized Theming**: Modify the theme or target position of a channel in one place without touching UI dispatch calls.
+3. **Intent-First Dispatching**: Call `controller.show(AppNotification(message: '...', channelName: 'orders'))` without manually specifying colors, icons, or positions at every callsite.
+
+---
 
 ## Standard Channels
 
-FNQ comes with 4 standard channels out of the box:
+FNQ provides built-in standard channels out of the box:
 
-- **success**: Green, Checkmark icon.
-- **error**: Red, Error icon.
-- **warning**: Orange, Warning icon.
-- **info**: Blue, Info icon.
+- **`success`**: Green, Checkmark icon.
+- **`error`**: Red, Error icon.
+- **`warning`**: Orange, Warning icon.
+- **`info`**: Blue, Info icon.
 
-These are available via `NotificationChannel.standardChannels()`.
+Standard channels are accessible via `NotificationChannel.standardChannels()`.
 
-## Custom Channels
+---
 
-Define your own channels for app-specific needs:
+## Custom Channels & Controller Setup
+
+Define your own channels and pass them to your `NotificationController`:
 
 ```dart
-final chatChannel = NotificationChannel(
+final chatChannel = const NotificationChannel(
   name: 'chat',
   defaultIcon: Icon(Icons.chat_bubble),
   defaultColor: Colors.purple,
+  position: QueuePosition.topRight,
 );
 
-FlutterNotificationQueue.initialize(
+final controller = NotificationController(
   channels: {
     ...NotificationChannel.standardChannels(),
     chatChannel,

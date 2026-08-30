@@ -5,7 +5,7 @@ import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _FakeNotificationScopeState implements NotificationScopeState {
-  final _eventController = StreamController<FnqEvent>.broadcast();
+  final _eventController = StreamController<NotificationEvent>.broadcast();
   final List<AppNotification> shownNotifications = [];
   final List<AppNotification> dismissedNotifications = [];
   bool dismissedAll = false;
@@ -19,7 +19,7 @@ class _FakeNotificationScopeState implements NotificationScopeState {
   final List<AppNotification> unpinned = [];
 
   @override
-  Stream<FnqEvent> get events => _eventController.stream;
+  Stream<NotificationEvent> get events => _eventController.stream;
 
   @override
   void show(final AppNotification notification) {
@@ -84,7 +84,7 @@ class _FakeNotificationScopeState implements NotificationScopeState {
   }
 
   @override
-  List<FnqEvent> getHistory({
+  List<NotificationEvent> getHistory({
     final String? channelName,
     final DismissReason? dismissReason,
     final DateTime? since,
@@ -102,7 +102,7 @@ class _FakeNotificationScopeState implements NotificationScopeState {
     _eventController.close();
   }
 
-  void emitEvent(final FnqEvent event) {
+  void emitEvent(final NotificationEvent event) {
     _eventController.add(event);
   }
 }

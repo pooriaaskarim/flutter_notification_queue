@@ -8,8 +8,9 @@
 /// - [NotificationOverlay] — the rendering surface that mounts notifications
 ///   into the widget tree.
 ///
-/// All three are internal. The public API is exposed exclusively through
-/// [FlutterNotificationQueue] and [NotificationWidget].
+/// All core components of FNQ.
+///
+/// Public entry points are [NotificationController] and [NotificationScope].
 library;
 
 import 'dart:async';
@@ -24,11 +25,9 @@ import '../enums/enums.dart';
 import '../notification/notification.dart';
 import '../notification_channel/notification_channel.dart';
 import '../notification_queue/notification_queue.dart';
-import '../types/type_defs.dart';
 import '../utils/utils.dart';
 
 part 'configuration_manager.dart';
-part 'facade.dart';
 part 'fnq_event.dart';
 part 'history_logger.dart';
 part 'notification_controller.dart';

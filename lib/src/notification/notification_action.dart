@@ -35,34 +35,6 @@ class NotificationAction {
         type: NotificationActionType.button,
       );
 
-  /// Creates callback on [NotificationWidget] tap.
-  ///
-  /// **Deprecated.** Use [TapToAct] on the queue or notification instead:
-  /// ```dart
-  /// // Before
-  /// NotificationWidget(
-  ///   action: NotificationAction.onTap(onPressed: fn),
-  /// )
-  ///
-  /// // After
-  /// NotificationWidget(
-  ///   tapBehavior: TapToAct(onTap: (n) => fn()),
-  /// )
-  /// ```
-  @Deprecated(
-    'Use TapToAct behavior on NotificationWidget.tapBehavior or '
-    'NotificationQueue.tapBehavior instead. '
-    'This factory will be removed in a future major version.',
-  )
-  factory NotificationAction.onTap({
-    required final void Function() onPressed,
-  }) =>
-      NotificationAction._(
-        label: null,
-        onPressed: onPressed,
-        type: NotificationActionType.onTap,
-      );
-
   /// Action Label text
   final String? label;
 
@@ -74,11 +46,6 @@ class NotificationAction {
 }
 
 /// Type of action for [NotificationWidget].
-///
-/// [button] creates a **button** bellow the [NotificationWidget.message].
-/// [onTap] executes [NotificationAction.onPressed] callback
-/// *on notification tap*.
 enum NotificationActionType {
   button,
-  onTap;
 }

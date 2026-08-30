@@ -52,11 +52,11 @@ Complexity Tiers:
 
 ---
 
-### F-02: Pin-to-Edge Interaction (Pinning)
+### F-02: Pin-to-Edge Interaction (Pinning) (Completed)
 * **Category**: Phase 2 (UX & Interaction Polish)
 * **Complexity**: 🟡 Medium
 * **Technical Challenges**:
-  * Extending `NotificationWidget` parameters to hold an active `isPinned` state.
+  * Extending `AppNotification` parameters to hold an active `isPinned` state.
   * Inhibiting standard drag-to-dismiss behavior when pinned.
   * Modifying the dismissal layout delegate to skip auto-dismissal timers for pinned notifications.
 * **Verification Criteria**:
@@ -76,7 +76,7 @@ Complexity Tiers:
 
 ---
 
-### F-04: Gmail-Style Notification Grouping (Bundling) (Completed)
+### F-04: Notification Grouping (Bundling) (Completed)
 * **Category**: Phase 3 (Advanced Layout Engine)
 * **Complexity**: 🔴 High
 * **Technical Challenges**:
@@ -134,17 +134,13 @@ Complexity Tiers:
 
 | Item | Version | Summary | Target Files |
 |------|---------|---------|---|
+| **Zero Deprecated Surface & Pure Architecture** | v0.4.0 | Complete removal of legacy static singletons (`FlutterNotificationQueue`), deprecated `FnqEvent` typedefs, and legacy action factories. Standardized 100% on `NotificationController`, `NotificationScope`, and `AppNotification`. | `lib/flutter_notification_queue.dart`, `lib/src/core/` |
+| **Studio Web App & CI/CD Pipeline** | v0.3.2 | GitHub Pages deployment workflow (`deploy_pages.yml`), live demo badges, and mobile responsive Studio UI. | `.github/workflows/deploy_pages.yml`, `example/` |
 | **Memory & Teardown Hardening** | v0.3.1 | Automated timer & animation ticker disposal (`ditchAllDismissTimers`), OverlayPortal detachment, and multi-tenant scope test suite. | `lib/src/core/queue_coordinator.dart`, `lib/src/notification_queue/queue_widget.dart` |
 | **Multi-Tenant Architecture** | v0.3.0 | Introduced `NotificationController`, `NotificationScope`, `AppNotification`, sealed `NotificationEvent` hierarchy, `@Deprecated` legacy singletons. | `lib/src/core/notification_scope.dart`, `lib/src/core/notification_controller.dart` |
-| **F-02: Pin-to-Edge Interaction** | v0.6.0 | Pinned cards become persistent and immune to swipe gestures; auto-dismiss timers are automatically paused when pinned and resumed when unpinned. | `lib/src/notification/notification.dart` |
-| **F-04: Notification Grouping** | v0.6.0 | Gmail-style grouping with custom/channel keys, representative pill/stacks, collapse/expand toggle, and bulk swipe-to-dismiss behavior. | `lib/src/notification_queue/queue_widget.dart` |
-| **F-01: Drag-to-Reorder** | v0.5.2 | Premium live-shifting layout during drag. Neighboring items translate in real-time to open up a target slot, with unshifted bounds cached during the gesture lifecycle. | `lib/src/notification_queue/queue_widget.dart` |
-| **F-09: Smart Layout** | v0.5.1 | Custom `_QueueOverlayLayoutDelegate` dynamically shifts adjacent colliding queues under layout space constraints (using `CustomMultiChildLayout`). | `lib/src/core/notification_overlay.dart` |
-| **F-10: Keyboard Shortcuts** | v0.5.0 | Global overlay-level keyboard listeners to dismiss individual or all active cards programmatically (`Esc` / `Shift+Esc`). | `lib/src/core/notification_overlay.dart` |
-| **F-11: Visual Golden Tests** | v0.5.0 | Added native `flutter_test` golden tests for Flat, Filled, and Outlined styles, and queue anchoring. | `test/golden/visual_regression_test.dart` |
-| **Adaptive Close Button** | v0.4.4 | Opacity-based close model with progressive enhancement for touch/mouse adaptation. | `lib/src/notification/notification.dart` |
-| **Relocation Maturity** | v0.4.3 | Automated group expansion, validation, and characteristic inheritance for relocation. | `lib/src/core/queue_coordinator.dart` |
-| **Decoupled Animations** | v0.4.2 | Introduced `NotificationTransition` strategy pattern with Slide, Scale, Fade, and Builder support. | `lib/src/notification/animation/` |
-| **Animation Harmony** | v0.4.2 | Refactored `QueueWidget` to Managed State for synchronized layout animations. | `lib/src/notification_queue/queue_widget.dart` |
-| **Stateless Queues** | v0.4.0 | Moved queue state out of configuration objects. | `lib/src/notification_queue/notification_queue.dart` |
-| **Unified Core Engine** | v0.4.0 | Replaced `NotificationManager` singleton with `QueueCoordinator`. | `lib/src/core/queue_coordinator.dart` |
+| **F-04: Notification Grouping** | v0.2.0 | Gmail-style grouping with custom/channel keys, representative stacks, drag-to-reveal peeking, and bulk swipe-to-dismiss behavior. | `lib/src/notification_queue/queue_widget.dart` |
+| **F-01: Drag-to-Reorder** | v0.2.0 | Live-shifting layout during drag. Neighboring items translate in real-time to open up insertion slot. | `lib/src/notification_queue/queue_widget.dart` |
+| **F-02: Pin-to-Edge Interaction** | v0.2.0 | Pinned cards become persistent and immune to swipe gestures; auto-dismiss timers pause when pinned. | `lib/src/notification/notification.dart` |
+| **F-09: Smart Layout** | v0.2.0 | Custom layout delegate dynamically shifts colliding queues under layout constraints. | `lib/src/core/notification_overlay.dart` |
+| **F-10: Keyboard Shortcuts** | v0.2.0 | Global overlay-level keyboard listeners (`Esc` / `Shift+Esc`). | `lib/src/core/notification_overlay.dart` |
+| **F-11: Visual Golden Tests** | v0.2.0 | Native golden tests for Flat, Filled, and Outlined styles. | `test/golden/visual_regression_test.dart` |

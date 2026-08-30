@@ -829,7 +829,7 @@ testWidgets('does not show notification when API succeeds', (tester) async {
 
 ---
 
-## 8. Migration Plan: v0.x → v0.3.0 → v1.0
+## 8. Migration Plan: v0.3.0 → v0.4.0
 
 ### Phase A — v0.3.0: Additive Deprecations (Zero Breaking Changes)
 
@@ -839,14 +839,14 @@ The old API continues to work but emits deprecation warnings.
 ```dart
 @Deprecated(
   'FlutterNotificationQueue is replaced by NotificationController + NotificationScope. '
-  'See doc/migration_v1.md for a step-by-step guide.',
+  'See doc/migration_v0_4.md for a step-by-step guide.',
 )
 final class FlutterNotificationQueue { ... }
 
 @Deprecated(
   'NotificationWidget is replaced by AppNotification. '
   'NotificationWidget(...).show() becomes controller.show(AppNotification(...)). '
-  'See doc/migration_v1.md.',
+  'See doc/migration_v0_4.md.',
 )
 final class NotificationWidget { ... }
 
@@ -856,14 +856,13 @@ typedef FnqEvent = NotificationEvent;
 
 No user code breaks in v0.3.0. The deprecation warnings are the migration signal.
 
-### Phase B — v1.0.0: Breaking Removal
+### Phase B — v0.4.0: Breaking Removal
 
-Remove all deprecated symbols. The semver major version bump is the explicit signal to users
-that breaking changes have landed. A `doc/migration_v1.md` guide accompanies the release.
+Remove all deprecated static symbols in v0.4.0 under pre-1.0 SemVer rules (where `0.y.0` indicates breaking API changes). The codebase is completely standardized around `NotificationController`, `NotificationScope`, and `AppNotification`. A `doc/migration_v0_4.md` guide accompanies the release.
 
 **One-to-one replacement table:**
 
-| v0.x | v1.0 |
+| v0.3.x Legacy API | v0.4.0 Modern Architecture |
 |---|---|
 | `FlutterNotificationQueue.configure(queues: q, channels: c)` | `NotificationController(queues: q, channels: c)` |
 | `FlutterNotificationQueue.builder` | `(ctx, child) => NotificationScope(controller: c, child: child!)` |
@@ -922,7 +921,7 @@ Step 8  Update all tests
 
 Step 9  Update example app
 
-Step 10 Write doc/migration_v1.md
+Step 10 Write doc/migration_v0_4.md
 ```
 
 ---

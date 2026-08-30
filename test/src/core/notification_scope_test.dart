@@ -7,15 +7,20 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });
 
-  setUp(() {
-    FlutterNotificationQueue.reset();
-  });
+
 
   group('NotificationScope', () {
     testWidgets('mounts scope, attaches controller, and dispatches to overlay',
         (final widgetTester) async {
       final controller = NotificationController(
         queues: {const NotificationQueue(position: QueuePosition.topCenter)},
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            position: QueuePosition.topCenter,
+            defaultDismissDuration: null,
+          ),
+        },
       );
 
       late BuildContext savedContext;
@@ -51,6 +56,7 @@ void main() {
       await widgetTester.pump(const Duration(milliseconds: 500));
 
       await widgetTester.pumpWidget(const SizedBox());
+      await widgetTester.pump();
       controller.dispose();
     });
 
@@ -80,9 +86,23 @@ void main() {
         (final widgetTester) async {
       final controllerA = NotificationController(
         queues: {const NotificationQueue(position: QueuePosition.topLeft)},
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            position: QueuePosition.topLeft,
+            defaultDismissDuration: null,
+          ),
+        },
       );
       final controllerB = NotificationController(
         queues: {const NotificationQueue(position: QueuePosition.bottomRight)},
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            position: QueuePosition.bottomRight,
+            defaultDismissDuration: null,
+          ),
+        },
       );
 
       late BuildContext contextA;
@@ -159,18 +179,24 @@ void main() {
       expect(eventsA.any((final e) => e is NotificationQueued), isTrue);
       expect(eventsB.any((final e) => e is NotificationQueued), isTrue);
 
-      await subA.cancel();
-      await subB.cancel();
-      controllerA.dispose();
-      controllerB.dispose();
+      subA.cancel(); // ignore: unawaited_futures
+      subB.cancel(); // ignore: unawaited_futures
       await widgetTester.pumpWidget(const SizedBox());
       await widgetTester.pump();
+      controllerA.dispose();
+      controllerB.dispose();
     });
 
     testWidgets('detaches controller when NotificationScope is unmounted',
         (final widgetTester) async {
       final controller = NotificationController(
         queues: {const NotificationQueue()},
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            defaultDismissDuration: null,
+          ),
+        },
       );
 
       await widgetTester.pumpWidget(
@@ -200,9 +226,21 @@ void main() {
         (final widgetTester) async {
       final outerController = NotificationController(
         queues: {const NotificationQueue()},
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            defaultDismissDuration: null,
+          ),
+        },
       );
       final innerController = NotificationController(
         queues: {const NotificationQueue()},
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            defaultDismissDuration: null,
+          ),
+        },
       );
 
       late BuildContext outerContext;
@@ -233,10 +271,10 @@ void main() {
       expect(NotificationScope.of(outerContext), equals(outerController));
       expect(NotificationScope.of(innerContext), equals(innerController));
 
-      outerController.dispose();
-      innerController.dispose();
       await widgetTester.pumpWidget(const SizedBox());
       await widgetTester.pump();
+      outerController.dispose();
+      innerController.dispose();
     });
 
     testWidgets(
@@ -245,6 +283,13 @@ void main() {
       final controller = NotificationController(
         queues: {
           const NotificationQueue(position: QueuePosition.topRight),
+        },
+        channels: {
+          const NotificationChannel(
+            name: 'default',
+            position: QueuePosition.topRight,
+            defaultDismissDuration: null,
+          ),
         },
       );
 
@@ -266,9 +311,9 @@ void main() {
       await widgetTester.pump();
       await widgetTester.pump(const Duration(milliseconds: 100));
 
-      expect(() => controller.dispose(), returnsNormally);
       await widgetTester.pumpWidget(const SizedBox());
       await widgetTester.pump();
+      expect(() => controller.dispose(), returnsNormally);
     });
   });
 }

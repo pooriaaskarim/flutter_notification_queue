@@ -5,20 +5,20 @@ import 'package:logd/logd.dart';
 import 'package:logd/testing.dart';
 
 void main() {
-  group('FlutterNotificationQueue Logger Configuration', () {
-    final originalOnError = FlutterError.onError;
+  group('NotificationController Logger Configuration', () {
+    late FlutterExceptionHandler? originalOnError;
 
     setUp(() {
-      FlutterNotificationQueue.reset();
+      originalOnError = FlutterError.onError;
     });
 
     tearDown(() {
       FlutterError.onError = originalOnError;
-      FlutterNotificationQueue.reset();
     });
 
     test('Custom log level is configured correctly', () {
-      FlutterNotificationQueue.configure(
+      NotificationController(
+        queues: {const NotificationQueue()},
         logLevel: LogLevel.warning,
       );
 
@@ -39,7 +39,8 @@ void main() {
         sink: sink,
       );
 
-      FlutterNotificationQueue.configure(
+      NotificationController(
+        queues: {const NotificationQueue()},
         logLevel: LogLevel.info,
         logHandlers: [handler],
       );
@@ -57,12 +58,15 @@ void main() {
         'FlutterError.onError is hooked only when '
         'captureFlutterErrors is true', () {
       // By default, captureFlutterErrors should be false
-      FlutterNotificationQueue.configure();
+      NotificationController(queues: {const NotificationQueue()});
       expect(FlutterError.onError, equals(originalOnError));
 
       // With captureFlutterErrors set to true, it should wrap
       // FlutterError.onError
-      FlutterNotificationQueue.configure(captureFlutterErrors: true);
+      NotificationController(
+        queues: {const NotificationQueue()},
+        captureFlutterErrors: true,
+      );
       expect(FlutterError.onError, isNot(equals(originalOnError)));
     });
   });

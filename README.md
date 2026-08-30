@@ -47,7 +47,7 @@ Add `flutter_notification_queue` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_notification_queue: ^0.3.2
+  flutter_notification_queue: ^0.4.0
 ```
 
 ### 2. Initialize and Mount Scope
@@ -404,7 +404,7 @@ NotificationQueue(
 | `NotificationScope.of(context).show(...)` | `NotificationScope.of(context).show(AppNotification(...))` | Context-aware dispatching |
 | `FlutterNotificationQueue.events` | `controller.events` | Stable broadcast stream |
 
-For full step-by-step details, see [doc/migration_v1.md](doc/migration_v1.md).
+For full step-by-step details, see [doc/migration_v0_4.md](doc/migration_v0_4.md).
 
 ---
 

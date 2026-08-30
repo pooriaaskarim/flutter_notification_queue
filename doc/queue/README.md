@@ -1,88 +1,106 @@
-# Queue System
+# Queue System (v0.4.x)
 
-The **Queue System** determines *where* notifications appear on the screen and *how* they stack.
+The **Queue System** determines *where* notifications appear on the screen, *how* they stack, how overflow/capacity rules behave, and how gesture intents operate.
 
-## NotificationQueue
+## `NotificationQueue`
 
-A `NotificationQueue` is a configuration object that defines:
-- **Position**: Where on the screen the queue is anchored.
-- **Behavior**: How notifications enter, leave, and handle gestures.
-- **Transition**: The entrance and exit animation strategy.
+A `NotificationQueue` is an immutable configuration value object that defines:
+- **Position**: Spatial anchor on the screen (`QueuePosition`).
+- **Drag Behavior**: Interaction intent (`Dismiss`, `Reorder`, `Relocate`, `ReorderAndRelocate`, `Disabled`).
+- **Transition**: Entrance and exit animation strategy (`Slide`, `Scale`, `Fade`, `Custom`).
 - **Close Button**: Visibility strategy (`AlwaysVisible`, `VisibleOnHover`, `Hidden`).
-- **Style**: The visual appearance of notifications within this queue.
-- **Constraints**: Maximum stack size (`maxStackSize`) and spacing.
+- **Style**: Visual layout template (`StackedQueueStyle`, `FlatQueueStyle`, `OutlinedQueueStyle`).
+- **Grouping**: Deck aggregation rules (`QueueGroupingBehavior`).
+- **Constraints**: Maximum stack size (`maxStackSize`), capacity strategy (`overflowStrategy`), and margins.
 
-### QueuePosition
+---
 
-The `QueuePosition` enum defines available anchor points:
+### `QueuePosition`
+
+The `QueuePosition` enum defines 8 spatial anchor points on screen:
 - **Corners**: `topLeft`, `topRight`, `bottomLeft`, `bottomRight`.
 - **Centers**: `topCenter`, `bottomCenter`, `centerLeft`, `centerRight`.
 
-## Configuring Queues
+---
 
-You can configure queues during initialization. While `NotificationQueue.defaultQueue` exists for convenience, we recommend using the **Concrete Queue Classes** for clarity and explicit control.
+## Gesture & Interaction Behaviors
 
-### Transitions
+Queue behavior governs how users interact with notification cards in the stack:
 
-Queues accept a `transition` property of type `NotificationTransition`. Built-in strategies include:
-- `SlideTransitionStrategy` (Default)
-- `ScaleTransitionStrategy`
-- `FadeTransitionStrategy`
-- `BuilderTransitionStrategy` (Custom)
+- **`Dismiss()`**: Standard directional swipe to dismiss.
+- **`Reorder()`**: Drag up/down to reorder notifications within the stack.
+- **`Relocate()`**: Drag notification cards across queue positions.
+- **`ReorderAndRelocate()`**: Hybrid spatial drag supporting both in-queue reordering and cross-queue relocation.
+- **`Disabled()`**: Non-interactive notification cards.
 
-### Gestures and Relocation
+> **Relocation Intelligence**: Defining relocation destinations automatically provisions sibling target queues with inherited styles and transitions.
 
-Behaviors define how users interact with notifications:
+---
 
-- **Relocate**: Allows dragging to other queue positions.
-- **Dismiss**: Standard swipe-to-remove.
-- **Disabled**: Non-interactive notifications.
+## Notification Grouping / Bundling (`QueueGroupingBehavior`)
 
-> **Relocation Intelligence**: Defining `Relocate.to({...})` automatically generates sibling queues for target positions, inheriting the source's style, transition, and constraints.
-
-### Close Button Visibility
-
-The `closeButtonBehavior` property accepts a `QueueCloseButtonBehavior` instance.
-
-- **AlwaysVisible** (Default): Button is always present.
-- **VisibleOnHover**: Adaptive behavior. Hidden on desktop until hover; subtly visible (0.3 opacity) on touch devices to ensure discoverability.
-- **Hidden**: Removes the close button.
-
-> [!WARNING]
-> **Zombie Prevention**: If you use `Hidden()`, you **must** enable another dismissal method like `Dismiss()` or `Relocate()`. The system validates this at startup to prevent undismissable notifications.
-
-### Queue Configurations
-
-Configure a queue for a specific position by passing a `NotificationQueue` with the target `position`:
-
-```dart
-FlutterNotificationQueue.initialize(
-  queues: {
-    // 1. Standard Stack in Top Right
-    const NotificationQueue(position: QueuePosition.topRight, maxStackSize: 5,
-      style: FlatQueueStyle(),
-    ),
-    
-    // 2. Snackbar-style in Bottom Center
-    const NotificationQueue(position: QueuePosition.bottomCenter, maxStackSize: 1, // Only show one notification at a time
-      margin: EdgeInsets.all(24),
-    ),
-
-    // 3. Persistent Log in Bottom Left
-    const NotificationQueue(position: QueuePosition.bottomLeft, maxStackSize: 10,
-      dragBehavior: DragBehavior.disabled(), // Prevent swiping away
-    ),
-  },
-);
-```
-
-### Constructor Defaults
-
-For quick prototypes, you can instantiate `NotificationQueue` with minimal configuration to use the system defaults:
+When multiple notifications target the same channel or group key, `QueueGroupingBehavior` aggregates them into visual card decks:
 
 ```dart
 const NotificationQueue(
   position: QueuePosition.topRight,
-  maxStackSize: 3,
+  groupingBehavior: QueueGroupingBehavior(
+    enabled: true,
+    maxBeforeGrouping: 2,
+    maxStackedLayers: 3,
+    enableGroupSwipeDismiss: true,
+  ),
+)
+```
+
+- **Representative Card**: Top card surfaces the newest message while showing a group badge (e.g. `+3`).
+- **Drag-to-Reveal / Peek**: Swiping down/aside reveals underlying cards without breaking the group.
+- **Group Swipe Dismiss**: Swipe to dismiss the representative card or the entire stack deck.
+
+---
+
+## Close Button Visibility (`QueueCloseButtonBehavior`)
+
+The `closeButtonBehavior` property accepts a `QueueCloseButtonBehavior` strategy:
+
+- **`AlwaysVisible()`** (Default): Close button is always rendered at 1.0 opacity.
+- **`VisibleOnHover()`**: Adaptive behavior. Fully visible on hover; semi-transparent (0.3 opacity) on touch viewports for discoverability.
+- **`Hidden()`**: Removes the visual close button.
+
+> [!WARNING]
+> **Safety Assertion**: If `Hidden()` close button is selected, the queue must have an interactive drag behavior enabled (e.g. `Dismiss()`) or auto-dismiss duration configured to prevent undismissable cards.
+
+---
+
+## Configuring Queues in `NotificationController`
+
+Configure queues by passing a `Set<NotificationQueue>` to your `NotificationController`:
+
+```dart
+final controller = NotificationController(
+  queues: {
+    // 1. Stacked Deck in Top Right
+    const NotificationQueue(
+      position: QueuePosition.topRight,
+      maxStackSize: 5,
+      style: StackedQueueStyle(),
+      dragBehavior: ReorderAndRelocate(),
+    ),
+    
+    // 2. Snackbar Toast in Bottom Center
+    const NotificationQueue(
+      position: QueuePosition.bottomCenter,
+      maxStackSize: 1,
+      margin: EdgeInsets.all(24),
+      dragBehavior: Dismiss(),
+    ),
+
+    // 3. Persistent Alert Log in Bottom Left
+    const NotificationQueue(
+      position: QueuePosition.bottomLeft,
+      maxStackSize: 10,
+      dragBehavior: Disabled(),
+    ),
+  },
 );
 ```

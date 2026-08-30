@@ -18,10 +18,17 @@ class QueueWidget extends StatefulWidget {
 
 class QueueWidgetState extends State<QueueWidget>
     with TickerProviderStateMixin {
-  QueueCoordinator get _coordinator =>
-      widget.coordinator ??
-      NotificationScope.maybeCoordinatorOf(context) ??
-      FlutterNotificationQueue.coordinator;
+  QueueCoordinator get _coordinator {
+    final c =
+        widget.coordinator ?? NotificationScope.maybeCoordinatorOf(context);
+    if (c == null) {
+      throw StateError(
+        'No QueueCoordinator available for QueueWidget. '
+        'Ensure your app or test tree is wrapped in a NotificationScope or pass a coordinator explicitly.',
+      );
+    }
+    return c;
+  }
 
   final _pendingNotifications = Queue<NotificationEntry>();
   final List<_NotificationItemState> _items = [];
