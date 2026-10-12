@@ -192,18 +192,24 @@ void main() {
             ),
           ),
         );
-        await tester.pumpAndSettle();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
 
         final fabFinder = find.byType(FloatingActionButton);
         expect(fabFinder, findsOneWidget);
         expect(find.byTooltip('Fire Notification'), findsOneWidget);
 
+        addTearDown(() {
+          notificationBloc.close();
+          setupBloc.close();
+          studioBloc.close();
+        });
+
         await tester.tap(fabFinder);
         await tester.pump();
+        expect(find.byType(NotificationWidget), findsOneWidget);
 
-        await notificationBloc.close();
-        await setupBloc.close();
-        await studioBloc.close();
+        await tester.pumpWidget(const SizedBox());
       },
     );
   });

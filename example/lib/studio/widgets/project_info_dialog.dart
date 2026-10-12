@@ -43,7 +43,7 @@ class ProjectInfoDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final displayVersion =
-        version != null && version!.isNotEmpty ? 'v$version' : 'v0.4.0';
+        version != null && version!.isNotEmpty ? 'v$version' : 'v0.5.0';
 
     return Dialog(
       backgroundColor: Colors.transparent,
