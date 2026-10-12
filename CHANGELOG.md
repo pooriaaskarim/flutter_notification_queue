@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0] - 2026-10-12
+
+### Stability & Resource Hardening
+- **Snooze Timer Lifecycle & Leak Protection**: Added active timer registry (`_snoozeTimers`) to `QueueCoordinator`. All pending snooze timers are automatically cancelled upon coordinator detach or disposal, and callbacks guard against invoking actions on disposed instances.
+- **Idempotent Lifecycle Disposal**: Added `_isDisposed` guards and public `isDisposed` getters to both `NotificationController` and `QueueCoordinator`, eliminating double-dispose exceptions when controllers and widget scopes unmount in varying orders.
+- **Chained `FlutterError.onError` Handler**: Replaced destructive `FlutterError.onError` reassignment in `NotificationController` with non-destructive handler chaining, preserving integration with crash reporters (Sentry, Firebase Crashlytics) and Flutter defaults.
+- **Single Source of Truth for `isPinned`**: Linked `NotificationEntry` directly to the blueprint's `isPinnedNotifier`, and refactored `pinWidget` and `unpinWidget` in `QueueCoordinator` to mutate pinned state directly through the notifier.
+- **Robust Detach & Disposal Logging**: Replaced empty `on Object catch (_) {}` exception swallowing in `QueueCoordinator` with contextual debug logging.
+
+### Test Suite & Visual Regression Hardening
+- **Tolerant Golden File Comparator**: Added `_TolerantGoldenComparator` with a 0.5% diff tolerance threshold to `visual_regression_test.dart` to prevent platform-specific sub-pixel anti-aliasing false positives in CI environments.
+- **Lifecycle & Chaining Unit Tests**: Added unit tests covering `NotificationController` and `QueueCoordinator` disposal idempotency, snooze timer cancellation on detach/dispose, and `FlutterError.onError` preservation.
+
+### Code Quality & Documentation
+- **Resolved Codebase TODOs**: Clarified and documented rationale for per-notification gesture interaction overrides in `AppNotification`, theme shadow color derivation in `NotificationTheme`, and duration permanence rules in `NotificationWidget`.
+
 ## [0.4.1] - 2026-09-12
 
 ### Studio & Web Deployment

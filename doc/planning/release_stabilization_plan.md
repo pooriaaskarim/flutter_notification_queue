@@ -1,9 +1,10 @@
 # FNQ Release Stabilization Plan
 
-> **Target**: `flutter_notification_queue` v1.0 public release on pub.dev
-> **Current version**: 0.6.0
-> **Scope**: UX/DX critique, real-world use case validation, and platform performance hardening.
-> **Baseline**: `dart analyze` — no issues. `flutter test` — 177/177 passed.
+> **Target**: `flutter_notification_queue` v1.0 public release on pub.dev  
+> **Current Version**: 0.5.0  
+> **Scope**: UX/DX critique, real-world use case validation, stability, and platform performance hardening.  
+> **Baseline**: `dart analyze` — 0 issues | `flutter test` — 231/231 passed.  
+> **Unified Roadmap & Tracker**: See [Unified Roadmap](../roadmap.md) for multi-release tracking.
 
 ---
 
@@ -14,7 +15,8 @@ This plan is split into two major tracks that run in phases:
 | Track | Focus | Deliverable | Status |
 |---|---|---|---|
 | **Track A — Critique** | UX + DX stability & practicality | [UX & DX Critique Report](ux_dx_critique.md) | ✅ Complete |
-| **Track B — Performance** | Platform perf on all supported targets | [Performance Audit](performance_audit.md) | ✅ B1–B3 Complete, B4 Pending |
+| **Track B — Performance** | Platform perf on all supported targets | [Performance Audit](performance_audit.md) | ✅ Complete |
+| **Track C — Stability** | Core resource safety & lifecycle hardening | [Stability Plan](../../../brain/574cb1fe-7cb5-432e-9973-f51af1060ec6/fnq_stability_plan.md) | ✅ Complete (v0.5.0) |
 
 ---
 
