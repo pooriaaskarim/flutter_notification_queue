@@ -13,7 +13,7 @@ class NotificationEntry {
         createdAt = blueprint.createdAt,
         snoozedAt = blueprint.snoozedAt,
         groupKey = blueprint.groupKey,
-        isPinnedNotifier = ValueNotifier<bool>(blueprint.isPinned);
+        isPinnedNotifier = blueprint.isPinnedNotifier;
 
   /// The original [NotificationWidget] configuration blueprint.
   final NotificationWidget blueprint;
@@ -46,7 +46,6 @@ class NotificationEntry {
   bool get isPinned => isPinnedNotifier.value;
   set isPinned(final bool value) {
     isPinnedNotifier.value = value;
-    blueprint.isPinned = value;
   }
 
   /// The timestamp when this notification was created.

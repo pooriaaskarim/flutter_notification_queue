@@ -65,6 +65,15 @@ class QueueCoordinator implements NotificationScopeState {
   final _activeQueuesNotifier =
       ValueNotifier<Map<QueuePosition, NotificationQueue>>({});
 
+  /// Active snooze timers that need to be cancelled if the coordinator
+  /// detaches or disposes.
+  final _snoozeTimers = <Timer>{};
+
+  bool _isDisposed = false;
+
+  /// Whether this coordinator has been disposed.
+  bool get isDisposed => _isDisposed;
+
   void attach(final OverlayPortalController controller) {
     _logger.debug('Attaching OverlayPortalController...');
     _controller = controller;
@@ -72,19 +81,31 @@ class QueueCoordinator implements NotificationScopeState {
 
   void detach() {
     _logger.debug('Detaching OverlayPortalController...');
+    for (final timer in _snoozeTimers) {
+      timer.cancel();
+    }
+    _snoozeTimers.clear();
     for (final key in _widgetStateKeys.values) {
       key.currentState?.ditchAllDismissTimers();
     }
     _controller = null;
     _widgetStateKeys.clear();
     _initializationQueue.clear();
-    try {
-      _activeQueuesNotifier.value = {};
-    } on Object catch (_) {}
+    if (!_isDisposed) {
+      try {
+        _activeQueuesNotifier.value = {};
+      } on Object catch (e) {
+        _logger.debug('Error resetting active queues notifier on detach: $e');
+      }
+    }
   }
 
   @override
   void dispose() {
+    if (_isDisposed) {
+      return;
+    }
+    _isDisposed = true;
     for (final key in _widgetStateKeys.values) {
       key.currentState?.ditchAllDismissTimers();
     }
@@ -95,7 +116,9 @@ class QueueCoordinator implements NotificationScopeState {
     _historyLogger.dispose();
     try {
       _activeQueuesNotifier.dispose();
-    } on Object catch (_) {}
+    } on Object catch (e) {
+      _logger.debug('Error disposing active queues notifier: $e');
+    }
   }
 
   /// Retrieves and clears pending initialization items for a queue.
@@ -413,10 +436,16 @@ class QueueCoordinator implements NotificationScopeState {
     );
 
     // 3. Schedule auto-re-queue
-    Timer(duration, () {
+    late final Timer timer;
+    timer = Timer(duration, () {
+      _snoozeTimers.remove(timer);
+      if (_isDisposed) {
+        return;
+      }
       final freshCopy = notification.copyForRequeue(snoozedAt: null);
       queue(freshCopy);
     });
+    _snoozeTimers.add(timer);
   }
 
   // ── Pin / Unpin ──────────────────────────────────────────────────────────
@@ -438,11 +467,7 @@ class QueueCoordinator implements NotificationScopeState {
   void pinWidget(final NotificationWidget notification) {
     final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
     final state = stateKey.currentState;
-    if (state != null) {
-      state.widget.isPinned = true;
-    } else {
-      notification.isPinned = true;
-    }
+    notification.isPinnedNotifier.value = true;
     _eventController.add(
       NotificationPinned(notification: state?.widget ?? notification),
     );
@@ -465,11 +490,7 @@ class QueueCoordinator implements NotificationScopeState {
   void unpinWidget(final NotificationWidget notification) {
     final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
     final state = stateKey.currentState;
-    if (state != null) {
-      state.widget.isPinned = false;
-    } else {
-      notification.isPinned = false;
-    }
+    notification.isPinnedNotifier.value = false;
     _eventController.add(
       NotificationUnpinned(notification: state?.widget ?? notification),
     );

@@ -338,8 +338,17 @@ class NotificationController {
   Future<T> nextEvent<T extends NotificationEvent>() =>
       events.where((final e) => e is T).cast<T>().first;
 
+  bool _isDisposed = false;
+
+  /// Whether this controller has been disposed.
+  bool get isDisposed => _isDisposed;
+
   /// Disposes this controller and releases resources.
   void dispose() {
+    if (_isDisposed) {
+      return;
+    }
+    _isDisposed = true;
     _attachedState?.dispose();
     detach();
     if (!_proxyController.isClosed) {
@@ -379,11 +388,13 @@ class NotificationController {
     }
 
     if (captureFlutterErrors) {
+      final originalOnError = FlutterError.onError;
       FlutterError.onError = (final details) {
         Logger.get('fnq').error(
           details.exceptionAsString(),
           stackTrace: details.stack,
         );
+        originalOnError?.call(details);
       };
     }
   }

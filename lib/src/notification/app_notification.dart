@@ -100,11 +100,11 @@ class AppNotification {
   /// [NotificationChannel].
   final NotificationPriority? priority;
 
-  //todo: RationaliZe having tap, drag, longPressDragBehavior overrides 
-  //todo: inside notification, since they are inherently Queue properties.
   /// Per-notification override for tap interaction behavior.
   ///
-  /// When set, this takes precedence over the queue's default [TapBehavior].
+  /// When set, this takes precedence over the queue's default [TapBehavior],
+  /// allowing individual urgent or critical notifications to enforce custom
+  /// interaction policies.
   final TapBehavior? tapBehavior;
 
   /// Per-notification override for drag interaction behavior.

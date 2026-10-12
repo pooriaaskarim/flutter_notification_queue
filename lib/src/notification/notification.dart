@@ -303,13 +303,11 @@ class NotificationWidget extends StatefulWidget {
   /// [Theme.of(Context).colorScheme.surface].
   final Color? backgroundColor;
 
-  /// Notification dismiss duration
+  /// Notification dismiss duration.
   ///
-  /// If null, [NotificationWidget] will be permanent.
-  /// Defaults to [NotificationChannel.defaultDismissDuration] if null.
-  //todo: what if a channel is set with a specific Duration but
-  //todo:  user wants a specific descendant notification to be permanent?
-  //todo: (bool) permanent field for notification or the channel?
+  /// If `null`, defaults to [NotificationChannel.defaultDismissDuration]. If
+  /// that is also null, or if the notification is pinned (`isPinned == true`),
+  /// the notification remains permanent until explicitly dismissed.
   final Duration? dismissDuration;
 
   final NotificationQueue queue;

@@ -115,8 +115,7 @@ class NotificationTheme {
   /// with [color].
   final Color backgroundColor;
 
-  /// Notification shadow color.
-  //todo: Configurable??!!
+  /// Notification shadow color, derived from [ThemeData.shadowColor].
   final Color shadowColor;
 
   final ShapeBorder? shape;
