@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -281,6 +282,44 @@ void main() {
       expect(controller.configuration.enableDynamicChannelParking, isTrue);
 
       controller.dispose();
+    });
+
+    test('dispose is idempotent and marks isDisposed', () {
+      final controller = NotificationController(
+        queues: {const NotificationQueue()},
+      );
+
+      expect(controller.isDisposed, isFalse);
+      controller.dispose();
+      expect(controller.isDisposed, isTrue);
+      expect(controller.dispose, returnsNormally);
+    });
+
+    test(
+      'captureFlutterErrors chains original FlutterError.onError handler',
+      () {
+        final originalHandler = FlutterError.onError;
+      var originalCalled = false;
+
+      FlutterError.onError = (final details) {
+        originalCalled = true;
+      };
+
+      try {
+        final controller = NotificationController(
+          queues: {const NotificationQueue()},
+          captureFlutterErrors: true,
+        );
+        addTearDown(controller.dispose);
+
+        FlutterError.onError?.call(
+          FlutterErrorDetails(exception: Exception('test error')),
+        );
+
+        expect(originalCalled, isTrue);
+      } finally {
+        FlutterError.onError = originalHandler;
+      }
     });
   });
 }
