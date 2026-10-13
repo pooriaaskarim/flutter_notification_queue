@@ -286,7 +286,7 @@ class _ChannelThemeConfigTile extends StatelessWidget {
                         setup.description ?? 'Channel notification preview.',
                     previewIcon: setup.iconPreset.toWidget() ??
                         const Icon(Icons.notifications_outlined),
-                    onApplyTheme: (final newTheme) {
+                    onApply: (final newTheme, final newStyleType) {
                       final current = context
                               .read<SetupBloc>()
                               .state
@@ -298,6 +298,7 @@ class _ChannelThemeConfigTile extends StatelessWidget {
                               setup.name,
                               current.copyWith(
                                 theme: () => newTheme,
+                                styleType: () => newStyleType,
                                 color: () => newTheme?.accentColor,
                                 foregroundColor: () =>
                                     newTheme?.foregroundColor,

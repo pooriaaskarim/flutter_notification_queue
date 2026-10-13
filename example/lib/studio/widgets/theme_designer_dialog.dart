@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
 import '../studio_theme.dart';
+import 'studio_color_selection_tile.dart';
 import 'studio_section_header.dart';
 import 'studio_slider_tile.dart';
+import 'style_archetype_selector.dart';
 
 /// A responsive Theme & Style Designer dialog / bottom sheet.
 ///
@@ -295,8 +297,26 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     final fgHex = _foregroundColor != null
         ? '0x${_foregroundColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
         : null;
+    final borderHex = _borderColor != null
+        ? '0x${_borderColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
+        : null;
 
-    final buf = StringBuffer('const NotificationThemeData(\n');
+    final buf = StringBuffer();
+    if (_styleType != null) {
+      final styleExpr = switch (_styleType) {
+        == FilledQueueStyle => 'const FilledQueueStyle()',
+        == OutlinedQueueStyle => 'const OutlinedQueueStyle()',
+        == FlatQueueStyle => 'const FlatQueueStyle()',
+        _ => 'const $_styleType()',
+      };
+      buf
+        ..writeln('// Gear 1: Physical Style Archetype')
+        ..writeln('final style = $styleExpr;\n');
+    }
+
+    buf
+      ..writeln('// Gear 2: Chromatics Theme Tokens')
+      ..writeln('const theme = NotificationThemeData(');
     if (accentHex != null) {
       buf.writeln('  accentColor: Color($accentHex),');
     }
@@ -306,20 +326,27 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     if (fgHex != null) {
       buf.writeln('  foregroundColor: Color($fgHex),');
     }
+    if (borderHex != null) {
+      buf.writeln('  borderColor: Color($borderHex),');
+    }
+    if (_borderWidth != 1.0) {
+      buf.writeln('  borderWidth: $_borderWidth,');
+    }
     if (_borderRadius != 12.0) {
       buf.writeln(
-        '  borderRadius: BorderRadius.all(Radius.circular($_borderRadius)),',
+        '  borderRadius: '
+        'BorderRadius.all(Radius.circular($_borderRadius)),',
       );
     }
     if (_elevation != 4.0) {
       buf.writeln('  elevation: $_elevation,');
     }
-    buf.write(')');
+    buf.write(');');
 
     Clipboard.setData(ClipboardData(text: buf.toString()));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Copied NotificationThemeData to clipboard!'),
+        content: Text('Copied Style & Theme to clipboard!'),
         duration: Duration(seconds: 2),
       ),
     );
@@ -696,162 +723,140 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     );
   }
 
-  Widget _buildControls() {
-    final colorScheme = StudioTheme.colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+  Widget _buildControls() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+        // ── Active Physical Structure (Gear 1) ──
+        StyleArchetypeSelector(
+          label: 'STRUCTURE ARCHETYPE (GEAR 1)',
+          badgeLabel: widget.channelName != null ? 'CHANNEL' : 'OVERRIDE',
+          selectedType: _styleType,
+          showInheritDefault: true,
+          onChanged: (final v) => setState(() => _styleType = v),
+        ),
+        const SizedBox(height: 16),
+
         // ── Presets & Seed Colors ──
         const StudioSectionHeader(title: 'COLOR PALETTE PRESETS'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _seedPalette.map((final c) {
-              final isSelected = _accentColor == c;
-              return InkWell(
-                borderRadius: BorderRadius.circular(8),
-                onTap: () => _applySeedColor(c),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: c,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.transparent,
-                      width: 2,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: c.withValues(alpha: 0.5),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                        : null,
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _presetChip(
-                'SUCCESS',
-                const Color(0xFF2D7512),
-                () => _applyPreset('success'),
-              ),
-              _presetChip(
-                'ERROR',
-                const Color(0xFFD03332),
-                () => _applyPreset('error'),
-              ),
-              _presetChip(
-                'WARNING',
-                const Color(0xFFC97725),
-                () => _applyPreset('warning'),
-              ),
-              _presetChip(
-                'INFO',
-                const Color(0xFF51B4F9),
-                () => _applyPreset('info'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // ── Active Physical Structure (Gear 1) ──
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.2),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _seedPalette.map((final c) {
+            final isSelected = _accentColor == c;
+            return InkWell(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: colorScheme.onSurface.withValues(alpha: 0.08),
+              onTap: () => _applySeedColor(c),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: c,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected ? Colors.white : Colors.transparent,
+                    width: 2,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: c.withValues(alpha: 0.5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
               ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            _presetChip(
+              'SUCCESS',
+              const Color(0xFF2D7512),
+              () => _applyPreset('success'),
             ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.architecture_rounded,
-                  size: 14,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'STRUCTURE (GEAR 1):',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    switch (_styleType) {
-                      == FilledQueueStyle => 'FILLED',
-                      == OutlinedQueueStyle => 'OUTLINED',
-                      == FlatQueueStyle => 'FLAT',
-                      _ => 'INHERITED DEFAULT',
-                    },
-                    style: const TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+            _presetChip(
+              'ERROR',
+              const Color(0xFFD03332),
+              () => _applyPreset('error'),
             ),
-          ),
-          const SizedBox(height: 16),
+            _presetChip(
+              'WARNING',
+              const Color(0xFFC97725),
+              () => _applyPreset('warning'),
+            ),
+            _presetChip(
+              'INFO',
+              const Color(0xFF51B4F9),
+              () => _applyPreset('info'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
 
-          // ── Surface & Shape Tokens ──
-          const StudioSectionHeader(title: 'SURFACE & SHAPE TOKENS'),
-          StudioSliderTile(
-            label: 'CORNER RADIUS',
-            value: _borderRadius,
-            min: 0,
-            max: 24,
-            divisions: 24,
-            onChanged: (final v) => setState(() => _borderRadius = v),
-          ),
-          const SizedBox(height: 12),
-          StudioSliderTile(
-            label: 'BORDER WIDTH',
-            value: _borderWidth,
-            min: 0,
-            max: 4,
-            divisions: 8,
-            onChanged: (final v) => setState(() => _borderWidth = v),
-          ),
-          const SizedBox(height: 12),
-          StudioSliderTile(
-            label: 'ELEVATION',
-            value: _elevation,
-            min: 0,
-            max: 12,
-            divisions: 12,
-            onChanged: (final v) => setState(() => _elevation = v),
-          ),
-        ],
-      );
-  }
+        // ── Fine-Tuned Chromatic Tokens (Gear 2) ──
+        const StudioSectionHeader(title: 'FINE-TUNED CHROMATICS (GEAR 2)'),
+        StudioColorSelectionTile(
+          label: 'ACCENT COLOR',
+          value: _accentColor,
+          onChanged: (final v) => setState(() => _accentColor = v),
+        ),
+        const SizedBox(height: 10),
+        StudioColorSelectionTile(
+          label: 'BACKGROUND COLOR',
+          value: _backgroundColor,
+          onChanged: (final v) => setState(() => _backgroundColor = v),
+        ),
+        const SizedBox(height: 10),
+        StudioColorSelectionTile(
+          label: 'FOREGROUND / TEXT COLOR',
+          value: _foregroundColor,
+          onChanged: (final v) => setState(() => _foregroundColor = v),
+        ),
+        const SizedBox(height: 10),
+        StudioColorSelectionTile(
+          label: 'BORDER COLOR',
+          value: _borderColor,
+          onChanged: (final v) => setState(() => _borderColor = v),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Surface & Shape Tokens ──
+        const StudioSectionHeader(title: 'SURFACE & SHAPE TOKENS'),
+        StudioSliderTile(
+          label: 'CORNER RADIUS',
+          value: _borderRadius,
+          min: 0,
+          max: 24,
+          divisions: 24,
+          onChanged: (final v) => setState(() => _borderRadius = v),
+        ),
+        const SizedBox(height: 12),
+        StudioSliderTile(
+          label: 'BORDER WIDTH',
+          value: _borderWidth,
+          min: 0,
+          max: 4,
+          divisions: 8,
+          onChanged: (final v) => setState(() => _borderWidth = v),
+        ),
+        const SizedBox(height: 12),
+        StudioSliderTile(
+          label: 'ELEVATION',
+          value: _elevation,
+          min: 0,
+          max: 12,
+          divisions: 12,
+          onChanged: (final v) => setState(() => _elevation = v),
+        ),
+      ],
+    );
 
   Widget _presetChip(
     final String label,

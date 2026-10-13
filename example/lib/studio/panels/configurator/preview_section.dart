@@ -513,10 +513,13 @@ class _NotificationThemeOverrideTile extends StatelessWidget {
                         ? draft.message
                         : 'Custom styled notification card preview.',
                     isNotificationOverride: true,
-                    onApplyTheme: (final newTheme) {
+                    onApply: (final newTheme, final newStyleType) {
                       context
                           .read<NotificationBloc>()
                           .add(UpdateThemeOverride(newTheme));
+                      context
+                          .read<NotificationBloc>()
+                          .add(UpdateStyleOverride(newStyleType));
                     },
                   ),
                 ),
