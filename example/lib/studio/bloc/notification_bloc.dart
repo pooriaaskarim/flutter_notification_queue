@@ -50,9 +50,25 @@ final class UpdatePriority extends StudioNotificationEvent {
   final NotificationPriority? priority;
 }
 
+final class UpdatePermanent extends StudioNotificationEvent {
+  const UpdatePermanent({required this.permanent});
+  final bool permanent;
+}
+
+/// Backward compatibility event alias for [UpdatePermanent].
 final class UpdateInitialIsPinned extends StudioNotificationEvent {
   const UpdateInitialIsPinned({required this.isPinned});
   final bool isPinned;
+}
+
+final class UpdateThemeOverride extends StudioNotificationEvent {
+  const UpdateThemeOverride(this.theme);
+  final NotificationThemeData? theme;
+}
+
+final class UpdateStyleOverride extends StudioNotificationEvent {
+  const UpdateStyleOverride(this.styleType);
+  final Type? styleType;
 }
 
 final class UpdateDragBehaviorOverride extends StudioNotificationEvent {
@@ -88,10 +104,13 @@ class NotificationDraft {
     this.channelName = 'info',
     this.positionOverride,
     this.priority,
-    this.initialIsPinned = false,
+    this.permanent = false,
+    final bool? initialIsPinned,
+    this.themeOverride,
+    this.styleOverride,
     this.dragBehaviorOverrideType,
     this.snoozeDurationSeconds = 5,
-  });
+  }) : _initialIsPinned = initialIsPinned ?? permanent;
 
   final String title;
   final String message;
@@ -108,8 +127,20 @@ class NotificationDraft {
   /// Priority rank override.
   final NotificationPriority? priority;
 
-  /// Whether the notification starts pinned to the top.
-  final bool initialIsPinned;
+  /// Whether the notification stays on screen indefinitely until dismissed.
+  final bool permanent;
+
+  final bool _initialIsPinned;
+
+  /// Compatibility getter for legacy tests.
+  bool get initialIsPinned => _initialIsPinned;
+
+  /// One-off [NotificationThemeData] palette override for preview card.
+  final NotificationThemeData? themeOverride;
+
+  /// One-off [QueueStyle] type override for preview card (e.g.
+  /// [FilledQueueStyle]).
+  final Type? styleOverride;
 
   /// Optional per-notification drag behavior override.
   final Type? dragBehaviorOverrideType;
@@ -126,7 +157,10 @@ class NotificationDraft {
     final String? channelName,
     final QueuePosition? Function()? positionOverride,
     final NotificationPriority? Function()? priority,
+    final bool? permanent,
     final bool? initialIsPinned,
+    final NotificationThemeData? Function()? themeOverride,
+    final Type? Function()? styleOverride,
     final Type? Function()? dragBehaviorOverrideType,
     final int? snoozeDurationSeconds,
   }) =>
@@ -142,7 +176,11 @@ class NotificationDraft {
             ? positionOverride()
             : this.positionOverride,
         priority: priority != null ? priority() : this.priority,
-        initialIsPinned: initialIsPinned ?? this.initialIsPinned,
+        permanent: permanent ?? initialIsPinned ?? this.permanent,
+        themeOverride:
+            themeOverride != null ? themeOverride() : this.themeOverride,
+        styleOverride:
+            styleOverride != null ? styleOverride() : this.styleOverride,
         dragBehaviorOverrideType: dragBehaviorOverrideType != null
             ? dragBehaviorOverrideType()
             : this.dragBehaviorOverrideType,
@@ -191,9 +229,21 @@ class NotificationBloc
       (final event, final emit) =>
           emit(state.copyWith(priority: () => event.priority)),
     );
+    on<UpdatePermanent>(
+      (final event, final emit) =>
+          emit(state.copyWith(permanent: event.permanent)),
+    );
     on<UpdateInitialIsPinned>(
       (final event, final emit) =>
-          emit(state.copyWith(initialIsPinned: event.isPinned)),
+          emit(state.copyWith(permanent: event.isPinned)),
+    );
+    on<UpdateThemeOverride>(
+      (final event, final emit) =>
+          emit(state.copyWith(themeOverride: () => event.theme)),
+    );
+    on<UpdateStyleOverride>(
+      (final event, final emit) =>
+          emit(state.copyWith(styleOverride: () => event.styleType)),
     );
     on<UpdateDragBehaviorOverride>(
       (final event, final emit) => emit(
@@ -233,41 +283,37 @@ class NotificationBloc
     }
 
     final channelSetup = setupBloc.state.setup.channels[draft.channelName];
-    final effectiveLibraryPosition = channelSetup?.position;
-    final resolvedPosition = draft.positionOverride ??
-        effectiveLibraryPosition ??
+    final targetPosition = draft.positionOverride ??
+        channelSetup?.position ??
         setupBloc.state.activeQueuePosition;
 
-    // Resolve drag behavior override
-    DragBehavior? dragBehavior;
-    if (draft.dragBehaviorOverrideType == Snooze) {
-      dragBehavior = Snooze(
-        duration: Duration(seconds: draft.snoozeDurationSeconds),
-      );
-    } else if (draft.dragBehaviorOverrideType == Pin) {
-      dragBehavior = const Pin();
-    } else if (draft.dragBehaviorOverrideType == Dismiss) {
-      dragBehavior = const Dismiss();
-    } else if (draft.dragBehaviorOverrideType == Disabled) {
-      dragBehavior = const Disabled();
+    QueueStyle? resolvedStyle;
+    if (draft.styleOverride != null) {
+      resolvedStyle = switch (draft.styleOverride) {
+        == FilledQueueStyle => const FilledQueueStyle(),
+        == OutlinedQueueStyle => const OutlinedQueueStyle(),
+        == FlatQueueStyle => const FlatQueueStyle(),
+        _ => null,
+      };
     }
 
-    // Fire notification via NotificationController
+    // Fire notification via NotificationController with targetPosition routing
     setupBloc.controller.show(
       AppNotification(
         title: draft.title,
         message: draft.message,
         channelName: draft.channelName,
-        position: resolvedPosition,
         priority: draft.priority,
-        initialIsPinned: draft.initialIsPinned,
-        dragBehavior: dragBehavior,
+        permanent: draft.permanent,
+        style: resolvedStyle,
+        theme: draft.themeOverride,
         action: action,
         tapBehavior: tapBehavior,
         dismissDuration: draft.dismissSeconds != null
             ? Duration(seconds: draft.dismissSeconds!)
             : null,
       ),
+      targetPosition: targetPosition,
     );
   }
 }

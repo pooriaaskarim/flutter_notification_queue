@@ -5,11 +5,14 @@ import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import '../../bloc/notification_bloc.dart';
 import '../../bloc/setup_bloc.dart';
 import '../../studio_theme.dart';
+import '../../widgets/resolution_inspector.dart';
 import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_section_header.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_text_field.dart';
 import '../../widgets/studio_toggle_tile.dart';
+import '../../widgets/style_archetype_selector.dart';
+import '../../widgets/theme_designer_dialog.dart';
 
 class PreviewSection extends StatelessWidget {
   const PreviewSection({
@@ -21,23 +24,6 @@ class PreviewSection extends StatelessWidget {
   final SetupState setupState;
   final NotificationDraft draft;
 
-  static const _dragOverrideTypes = [
-    null,
-    Dismiss,
-    Snooze,
-    Pin,
-    Disabled,
-  ];
-
-  String _formatDragOverride(final Type? t) => switch (t) {
-        null => 'CHANNEL DEFAULT',
-        == Dismiss => 'DISMISS (SWIPE AWAY)',
-        == Snooze => 'SNOOZE (DRAG TO SNOOZE)',
-        == Pin => 'PIN (LOCK TO QUEUE)',
-        == Disabled => 'DISABLED (STICKY CARD)',
-        _ => t.toString().toUpperCase(),
-      };
-
   @override
   Widget build(final BuildContext context) {
     final channelNames = setupState.setup.channels.keys.toList();
@@ -48,6 +34,13 @@ class PreviewSection extends StatelessWidget {
       children: [
         const StudioSectionHeader(title: 'PREVIEW'),
         const SizedBox(height: 8),
+
+        // ── Cascade Resolution Inspector (Gears) ──
+        ResolutionInspector(
+          setupState: setupState,
+          draft: draft,
+        ),
+        const SizedBox(height: 12),
 
         // ── Channel Selector ──
         if (channelNames.isNotEmpty)
@@ -88,9 +81,9 @@ class PreviewSection extends StatelessWidget {
           ),
         const SizedBox(height: 12),
 
-        // ── Position Override ──
+        // ── Dispatch Target Position ──
         StudioDropdownTile<QueuePosition?>(
-          label: 'POSITION OVERRIDE',
+          label: 'DISPATCH TARGET POSITION (targetPosition)',
           value: draft.positionOverride,
           items: const [null, ...QueuePosition.values],
           itemLabel: (final e) =>
@@ -127,39 +120,28 @@ class PreviewSection extends StatelessWidget {
           onChanged: (final v) =>
               context.read<NotificationBloc>().add(UpdateMessage(v)),
         ),
-        const SizedBox(height: 12),
-
-        // ── Drag Gesture Override ──
-        StudioDropdownTile<Type?>(
-          label: 'DRAG BEHAVIOR OVERRIDE',
-          value: draft.dragBehaviorOverrideType,
-          items: _dragOverrideTypes,
-          itemLabel: _formatDragOverride,
-          onChanged: (final v) => context
-              .read<NotificationBloc>()
-              .add(UpdateDragBehaviorOverride(v)),
+        // ── Gear 1: Notification Style Archetype Override ──
+        StyleArchetypeSelector(
+          label: 'ALERT STYLE ARCHETYPE',
+          badgeLabel: 'ALERT OVERRIDE',
+          selectedType: draft.styleOverride,
+          showInheritDefault: true,
+          onChanged: (final v) =>
+              context.read<NotificationBloc>().add(UpdateStyleOverride(v)),
         ),
-        if (draft.dragBehaviorOverrideType == Snooze) ...[
-          const SizedBox(height: 12),
-          StudioSliderTile(
-            label: 'SNOOZE DURATION: ${draft.snoozeDurationSeconds}s',
-            value: draft.snoozeDurationSeconds.toDouble(),
-            min: 1,
-            max: 30,
-            divisions: 29,
-            onChanged: (final v) => context
-                .read<NotificationBloc>()
-                .add(UpdateSnoozeDurationSeconds(v.round())),
-          ),
-        ],
         const SizedBox(height: 12),
 
-        // ── Initial Pin State ──
+        // ── Gear 2: Notification Theme Override ──
+        _NotificationThemeOverrideTile(
+          draft: draft,
+          setupState: setupState,
+        ),
+        const SizedBox(height: 12),
         StudioToggleTile(
-          label: 'PIN INITIALLY (PREVENTS SWIPE & TIMEOUT)',
-          value: draft.initialIsPinned,
+          label: 'PERMANENT (STAYS UNTIL DISMISSED)',
+          value: draft.permanent,
           onChanged: (final v) => context.read<NotificationBloc>().add(
-                UpdateInitialIsPinned(isPinned: v),
+                UpdatePermanent(permanent: v),
               ),
         ),
         const SizedBox(height: 12),
@@ -424,6 +406,122 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
             ],
           ),
       ],
+    );
+  }
+}
+
+class _NotificationThemeOverrideTile extends StatelessWidget {
+  const _NotificationThemeOverrideTile({
+    required this.draft,
+    required this.setupState,
+  });
+
+  final NotificationDraft draft;
+  final SetupState setupState;
+
+  @override
+  Widget build(final BuildContext context) {
+    final colorScheme = StudioTheme.colorScheme;
+    final hasOverride = draft.themeOverride != null;
+    final channelSetup = setupState.setup.channels[draft.channelName];
+    final baseTheme =
+        channelSetup?.theme ?? channelSetup?.toNotificationChannel().theme;
+    final effectiveAccent = draft.themeOverride?.accentColor ??
+        baseTheme?.accentColor ??
+        colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: colorScheme.onSurface.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: effectiveAccent,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: effectiveAccent.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  hasOverride
+                      ? 'CHROMATICS: CUSTOM PALETTE ACTIVE'
+                      : 'CHROMATICS: INHERITED FROM #${draft.channelName}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.palette_outlined, size: 15),
+                  label: Text(
+                    hasOverride ? 'EDIT PALETTE' : 'CUSTOMIZE PALETTE',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () => ThemeDesignerDialog.show(
+                    context,
+                    title: 'Notification Theme Override',
+                    channelName: draft.channelName,
+                    initialTheme: draft.themeOverride ?? baseTheme,
+                    initialStyleType:
+                        draft.styleOverride ?? channelSetup?.styleType,
+                    previewTitle: draft.title.isNotEmpty
+                        ? draft.title
+                        : 'Preview Notification',
+                    previewMessage: draft.message.isNotEmpty
+                        ? draft.message
+                        : 'Custom styled notification card preview.',
+                    isNotificationOverride: true,
+                    onApplyTheme: (final newTheme) {
+                      context
+                          .read<NotificationBloc>()
+                          .add(UpdateThemeOverride(newTheme));
+                    },
+                  ),
+                ),
+              ),
+              if (hasOverride) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.restart_alt, size: 18),
+                  tooltip: 'Reset to channel theme',
+                  onPressed: () => context
+                      .read<NotificationBloc>()
+                      .add(const UpdateThemeOverride(null)),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

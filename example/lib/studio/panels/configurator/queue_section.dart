@@ -11,6 +11,7 @@ import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_section_header.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_toggle_tile.dart';
+import '../../widgets/style_archetype_selector.dart';
 import 'relocation_selector.dart';
 
 /// A section that manages the creation, deletion, and configuration of
@@ -140,11 +141,6 @@ class _QueueEditor extends StatelessWidget {
   final QueuePosition position;
   final QueueSetup setup;
 
-  static const _styleTypes = [
-    FilledQueueStyle,
-    FlatQueueStyle,
-    OutlinedQueueStyle,
-  ];
   static const _behaviorTypes = [
     Disabled,
     Dismiss,
@@ -318,23 +314,21 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
-            const SizedBox(height: 12),
-            StudioDropdownTile<Type>(
-              label: 'VISUAL STYLE',
-              value: setup.styleType,
-              items: _styleTypes,
-              itemLabel: (final t) => switch (t) {
-                == FilledQueueStyle => 'FILLED',
-                == FlatQueueStyle => 'FLAT',
-                == OutlinedQueueStyle => 'OUTLINED',
-                _ => t.toString().replaceAll('QueueStyle', '').toUpperCase(),
+            StyleArchetypeSelector(
+              label: 'BASELINE STYLE ARCHETYPE',
+              badgeLabel: 'QUEUE BASELINE',
+              selectedType: setup.styleType,
+              showInheritDefault: false,
+              onChanged: (final v) {
+                if (v != null) {
+                  context.read<SetupBloc>().add(
+                        UpdateQueue(
+                          position,
+                          setup.copyWith(styleType: v),
+                        ),
+                      );
+                }
               },
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(styleType: v),
-                    ),
-                  ),
             ),
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(

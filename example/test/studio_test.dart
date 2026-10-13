@@ -6,13 +6,33 @@ import 'package:flutter_notification_queue_example/studio/bloc/notification_bloc
 import 'package:flutter_notification_queue_example/studio/bloc/setup_bloc.dart';
 import 'package:flutter_notification_queue_example/studio/bloc/studio_bloc.dart';
 import 'package:flutter_notification_queue_example/studio/engine/code_generator.dart';
+import 'package:flutter_notification_queue_example/studio/models/channel_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/queue_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/studio_setup.dart';
 import 'package:flutter_notification_queue_example/studio/studio_home.dart';
 import 'package:flutter_notification_queue_example/studio/studio_theme.dart';
+import 'package:flutter_notification_queue_example/studio/widgets/theme_designer_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  group('ChannelSetup Model & Mapping Tests', () {
+    test('toNotificationChannel propagates theme and style override', () {
+      const channelSetup = ChannelSetup(
+        name: 'billing',
+        color: Color(0xFF6366F1),
+        foregroundColor: Color(0xFFFFFFFF),
+        backgroundColor: Color(0xFF1E1B4B),
+        styleType: FilledQueueStyle,
+      );
+      final channel = channelSetup.toNotificationChannel();
+      expect(channel.theme, isNotNull);
+      expect(channel.theme!.accentColor, equals(const Color(0xFF6366F1)));
+      expect(channel.theme!.foregroundColor, equals(const Color(0xFFFFFFFF)));
+      expect(channel.theme!.backgroundColor, equals(const Color(0xFF1E1B4B)));
+      expect(channel.style, isA<FilledQueueStyle>());
+    });
+  });
+
   group('QueueSetup Model & Mapping Tests', () {
     test('default constructor sets maxWidth to null', () {
       const setup = QueueSetup();
@@ -70,8 +90,7 @@ void main() {
       expect(codeSnippet, contains('maxWidth: 280.0,'));
     });
 
-    test('generateCode emits Snooze, Priority, and initialIsPinned snippets',
-        () {
+    test('generateCode emits Snooze, Priority, and permanent snippets', () {
       const queueSetup = QueueSetup(
         dragBehaviorType: Snooze,
         dragSnoozeSeconds: 10,
@@ -80,16 +99,21 @@ void main() {
         queues: {
           QueuePosition.topRight: queueSetup,
         },
-        channels: {},
+        channels: {
+          'billing': ChannelSetup(
+            name: 'billing',
+            color: Color(0xFF6366F1),
+            styleType: FilledQueueStyle,
+          ),
+        },
       );
       const draft = NotificationDraft(
         title: 'Snooze Draft',
         message: 'Testing Snooze',
-        channelName: 'info',
+        channelName: 'billing',
         priority: NotificationPriority.critical,
-        initialIsPinned: true,
-        dragBehaviorOverrideType: Snooze,
-        snoozeDurationSeconds: 5,
+        permanent: true,
+        positionOverride: QueuePosition.bottomRight,
       );
 
       final codeSnippet = generateCode(
@@ -102,8 +126,41 @@ void main() {
         contains('const Snooze(duration: Duration(seconds: 10))'),
       );
       expect(codeSnippet, contains('priority: NotificationPriority.critical,'));
-      expect(codeSnippet, contains('initialIsPinned: true,'));
-      expect(codeSnippet, contains('duration: Duration(seconds: 5),'));
+      expect(codeSnippet, contains('permanent: true,'));
+      expect(
+        codeSnippet,
+        contains('targetPosition: QueuePosition.bottomRight,'),
+      );
+      expect(codeSnippet, contains('NotificationThemeData('));
+      expect(codeSnippet, contains('const FilledQueueStyle()'));
+    });
+
+    test('generateCode emits notification payload theme override when set', () {
+      const studioSetup = StudioSetup(
+        queues: {
+          QueuePosition.topRight: QueueSetup(),
+        },
+        channels: {
+          'info': ChannelSetup(name: 'info'),
+        },
+      );
+      const draft = NotificationDraft(
+        title: 'Theme Override Test',
+        message: 'Has custom notification tokens',
+        channelName: 'info',
+        themeOverride: NotificationThemeData(
+          accentColor: Color(0xFF10B981),
+          elevation: 6,
+        ),
+      );
+
+      final codeSnippet = generateCode(
+        setup: studioSetup,
+        draft: draft,
+      );
+
+      expect(codeSnippet, contains('accentColor: Color(0xff10b981),'));
+      expect(codeSnippet, contains('elevation: 6.0,'));
     });
 
     test('generateCode omits maxWidth property when null', () {
@@ -262,5 +319,87 @@ void main() {
         await tester.pumpWidget(const SizedBox());
       },
     );
+  });
+
+  group('ThemeDesignerDialog Widget Tests', () {
+    testWidgets('Opens ThemeDesignerDialog and calls onApplyTheme on submit',
+        (final tester) async {
+      NotificationThemeData? appliedTheme;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (final context) => ElevatedButton(
+                onPressed: () => ThemeDesignerDialog.show(
+                  context,
+                  title: 'Configure Theme',
+                  initialTheme: const NotificationThemeData(
+                    accentColor: Color(0xFF6366F1),
+                  ),
+                  onApplyTheme: (final t) => appliedTheme = t,
+                ),
+                child: const Text('OPEN'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('OPEN'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('CONFIGURE THEME'), findsOneWidget);
+      expect(find.text('LIVE CARD PREVIEW'), findsOneWidget);
+      expect(find.text('APPLY THEME'), findsOneWidget);
+
+      await tester.tap(find.text('APPLY THEME'));
+      await tester.pumpAndSettle();
+
+      expect(appliedTheme, isNotNull);
+      expect(appliedTheme!.accentColor, equals(const Color(0xFF6366F1)));
+    });
+
+    testWidgets('ThemeDesignerDialog triggers unified onApply with styleType',
+        (final tester) async {
+      NotificationThemeData? appliedTheme;
+      Type? appliedStyleType;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (final context) => ElevatedButton(
+                onPressed: () => ThemeDesignerDialog.show(
+                  context,
+                  title: 'Configure Channel Theme',
+                  channelName: 'orders',
+                  initialTheme: const NotificationThemeData(
+                    accentColor: Color(0xFF10B981),
+                  ),
+                  initialStyleType: FilledQueueStyle,
+                  onApply: (final theme, final styleType) {
+                    appliedTheme = theme;
+                    appliedStyleType = styleType;
+                  },
+                ),
+                child: const Text('OPEN'),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('OPEN'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('CONFIGURE CHANNEL THEME'), findsOneWidget);
+
+      await tester.tap(find.text('APPLY THEME'));
+      await tester.pumpAndSettle();
+
+      expect(appliedTheme, isNotNull);
+      expect(appliedStyleType, equals(FilledQueueStyle));
+    });
   });
 }

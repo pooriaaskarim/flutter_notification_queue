@@ -10,6 +10,8 @@ import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_text_field.dart';
 import '../../widgets/studio_toggle_tile.dart';
+import '../../widgets/style_archetype_selector.dart';
+import '../../widgets/theme_designer_dialog.dart';
 
 class ChannelTile extends StatelessWidget {
   const ChannelTile({
@@ -100,36 +102,28 @@ class _TileContent extends StatelessWidget {
                     ),
                   ),
             ),
+            StyleArchetypeSelector(
+              selectedType: setup.styleType,
+              badgeLabel: 'CHANNEL OVERRIDE',
+              showInheritDefault: true,
+              onChanged: (final v) => context.read<SetupBloc>().add(
+                    UpdateChannel(
+                      setup.name,
+                      setup.copyWith(styleType: () => v),
+                    ),
+                  ),
+            ),
+            const SizedBox(height: 12),
+            // ── Theme & Archetype Designer ──
+            _ChannelThemeConfigTile(setup: setup),
             const SizedBox(height: 12),
             StudioColorSelectionTile(
-              label: 'PRIMARY COLOR',
+              label: 'QUICK ACCENT COLOR',
               value: setup.color,
               onChanged: (final v) => context.read<SetupBloc>().add(
                     UpdateChannel(
                       setup.name,
                       setup.copyWith(color: () => v),
-                    ),
-                  ),
-            ),
-            const SizedBox(height: 12),
-            StudioColorSelectionTile(
-              label: 'FOREGROUND COLOR',
-              value: setup.foregroundColor,
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateChannel(
-                      setup.name,
-                      setup.copyWith(foregroundColor: () => v),
-                    ),
-                  ),
-            ),
-            const SizedBox(height: 12),
-            StudioColorSelectionTile(
-              label: 'BACKGROUND COLOR',
-              value: setup.backgroundColor,
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateChannel(
-                      setup.name,
-                      setup.copyWith(backgroundColor: () => v),
                     ),
                   ),
             ),
@@ -176,4 +170,140 @@ class _TileContent extends StatelessWidget {
           ],
         ),
       );
+}
+
+class _ChannelThemeConfigTile extends StatelessWidget {
+  const _ChannelThemeConfigTile({required this.setup});
+  final ChannelSetup setup;
+
+  @override
+  Widget build(final BuildContext context) {
+    final colorScheme = StudioTheme.colorScheme;
+    final hasCustomTheme = setup.theme != null;
+    final effectiveColor =
+        setup.theme?.accentColor ?? setup.color ?? colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: colorScheme.onSurface.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: effectiveColor,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: effectiveColor.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  hasCustomTheme
+                      ? 'CHROMATICS: CUSTOM PALETTE ACTIVE'
+                      : 'CHROMATICS: CHANNEL PALETTE',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.palette_outlined, size: 15),
+                  label: Text(
+                    hasCustomTheme ? 'EDIT THEME' : 'CUSTOMIZE THEME',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () => ThemeDesignerDialog.show(
+                    context,
+                    title: 'Configure Theme: #${setup.name}',
+                    channelName: setup.name,
+                    initialTheme:
+                        setup.theme ?? setup.toNotificationChannel().theme,
+                    initialStyleType: setup.styleType,
+                    previewTitle: setup.name.toUpperCase(),
+                    previewMessage:
+                        setup.description ?? 'Channel notification preview.',
+                    previewIcon: setup.iconPreset.toWidget() ??
+                        const Icon(Icons.notifications_outlined),
+                    onApplyTheme: (final newTheme) {
+                      final current = context
+                              .read<SetupBloc>()
+                              .state
+                              .setup
+                              .channels[setup.name] ??
+                          setup;
+                      context.read<SetupBloc>().add(
+                            UpdateChannel(
+                              setup.name,
+                              current.copyWith(
+                                theme: () => newTheme,
+                                color: () => newTheme?.accentColor,
+                                foregroundColor: () =>
+                                    newTheme?.foregroundColor,
+                                backgroundColor: () =>
+                                    newTheme?.backgroundColor,
+                              ),
+                            ),
+                          );
+                    },
+                  ),
+                ),
+              ),
+              if (hasCustomTheme) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.restart_alt, size: 18),
+                  tooltip: 'Reset to default theme',
+                  onPressed: () {
+                    final current = context
+                            .read<SetupBloc>()
+                            .state
+                            .setup
+                            .channels[setup.name] ??
+                        setup;
+                    context.read<SetupBloc>().add(
+                          UpdateChannel(
+                            setup.name,
+                            current.copyWith(
+                              theme: () => null,
+                              foregroundColor: () => null,
+                              backgroundColor: () => null,
+                            ),
+                          ),
+                        );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

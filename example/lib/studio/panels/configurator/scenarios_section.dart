@@ -275,30 +275,30 @@ final _scenarios = [
     },
   ),
 
-  // ── 7. Sticky Alert (Override) ──
+  // ── 7. Sticky Alert (Permanent) ──
   _Scenario(
-    title: 'Sticky Alert (Override)',
-    subtitle: 'un-swipeable card inside swipeable queue — override demo',
+    title: 'Sticky Alert (Permanent)',
+    subtitle: 'Permanent card — stays until action button tapped',
     icon: Icons.pin_drop_outlined,
     color: const Color(0xFFF59E0B),
     onFire: (final context) {
-      NotificationScope.of(context).show(
-        AppNotification(
-          title: 'CRITICAL SECURITY UPDATE',
-          message: 'This notification has dragBehavior: Disabled override. '
-              'It cannot be swiped away, but other notifications in this queue '
-              'can!',
-          channelName: 'error',
-          dismissDuration: null,
-          dragBehavior: const Disabled(),
-          action: NotificationAction.button(
-            label: 'OK',
-            onPressed: () {
-              debugPrint('[Scenario] Sticky Alert OK tapped');
-            },
-          ),
+      final scope = NotificationScope.of(context);
+      late final AppNotification notification;
+      notification = AppNotification(
+        title: 'CRITICAL SECURITY UPDATE',
+        message: 'This notification is configured with permanent: true. '
+            'It stays in place until explicitly dismissed or acknowledged.',
+        channelName: 'error',
+        permanent: true,
+        action: NotificationAction.button(
+          label: 'OK',
+          onPressed: () {
+            scope.dismiss(notification);
+            debugPrint('[Scenario] Sticky Alert OK tapped');
+          },
         ),
       );
+      scope.show(notification);
     },
   ),
 
@@ -575,7 +575,7 @@ final _scenarios = [
   _Scenario(
     title: 'Interactive Snooze & Return',
     subtitle:
-        'Drag card to edge or tap SNOOZE — hides and resurfaces after 5s.',
+        'Tap SNOOZE — programmatic snooze hides and resurfaces after 5s.',
     icon: Icons.snooze_rounded,
     color: const Color(0xFFFB7185),
     onFire: (final context) {
@@ -583,10 +583,9 @@ final _scenarios = [
       late final AppNotification notification;
       notification = AppNotification(
         title: 'Meeting in 15 Minutes',
-        message: 'Product sync with mobile core team. Tap or drag to snooze.',
+        message: 'Product sync with mobile core team. Tap to snooze for 5s.',
         channelName: 'info',
         dismissDuration: const Duration(seconds: 25),
-        dragBehavior: const Snooze(duration: Duration(seconds: 5)),
         action: NotificationAction.button(
           label: 'SNOOZE 5s',
           onPressed: () {
@@ -610,9 +609,10 @@ final _scenarios = [
       late final AppNotification notification;
       notification = AppNotification(
         title: '⚠ Active Security Incident',
-        message: 'Locked in place by Pin intent. Tap to acknowledge & unlock.',
+        message: 'Locked in place by permanent intent. '
+            'Tap to acknowledge & unlock.',
         channelName: 'warning',
-        initialIsPinned: true,
+        permanent: true,
         priority: NotificationPriority.critical,
         dismissDuration: null,
         action: NotificationAction.button(
@@ -625,6 +625,49 @@ final _scenarios = [
         ),
       );
       scope.show(notification);
+    },
+  ),
+
+  // ── 14. Dynamic Theme Tokens (v0.5.0) ──
+  _Scenario(
+    title: 'Dynamic Theme Tokens',
+    subtitle: 'NotificationThemeData.fromSeed — cohesive branding palette',
+    icon: Icons.palette_outlined,
+    color: const Color(0xFF8B5CF6),
+    onFire: (final context) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      NotificationScope.of(context).show(
+        AppNotification(
+          title: 'Brand Theme Token Sync',
+          message: 'Styled using NotificationThemeData.fromSeed '
+              'with adaptive tokens.',
+          channelName: 'info',
+          theme: NotificationThemeData.fromSeed(
+            seedColor: const Color(0xFF8B5CF6),
+            brightness: isDark ? Brightness.dark : Brightness.light,
+          ),
+          dismissDuration: const Duration(seconds: 8),
+        ),
+      );
+    },
+  ),
+
+  // ── 15. Contextual Dispatch Routing (v0.5.0) ──
+  _Scenario(
+    title: 'Contextual Dispatch Routing',
+    subtitle: 'controller.show(..., targetPosition:) — dynamic corner override',
+    icon: Icons.alt_route_rounded,
+    color: const Color(0xFF06B6D4),
+    onFire: (final context) {
+      NotificationScope.of(context).show(
+        const AppNotification(
+          title: 'Dynamic Routing Override',
+          message: 'Routed to bottomCenter via dispatch targetPosition!',
+          channelName: 'info',
+          dismissDuration: Duration(seconds: 6),
+        ),
+        targetPosition: QueuePosition.bottomCenter,
+      );
     },
   ),
 ];

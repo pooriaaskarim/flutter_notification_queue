@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
 import '../bloc/notification_bloc.dart';
@@ -11,7 +12,7 @@ String generateCode({
   required final StudioSetup setup,
   required final NotificationDraft draft,
 }) {
-  final buf = StringBuffer('// NFQ Studio — Generated Code (v1.0)\n')
+  final buf = StringBuffer('// NFQ Studio — Generated Code (v0.5.0)\n')
     ..writeln()
     ..writeln('final controller = NotificationController(')
     ..writeln('  queues: {');
@@ -55,33 +56,24 @@ String generateCode({
     ..writeln("    message: '${draft.message}',")
     ..writeln("    channelName: '${draft.channelName}',");
 
-  if (draft.positionOverride != null) {
-    buf.writeln(
-      '    position: QueuePosition.${draft.positionOverride!.name},',
-    );
-  }
-
   if (draft.priority != null) {
     buf.writeln(
       '    priority: NotificationPriority.${draft.priority!.name},',
     );
   }
 
-  if (draft.initialIsPinned) {
-    buf.writeln('    initialIsPinned: true,');
+  if (draft.permanent) {
+    buf.writeln('    permanent: true,');
   }
 
-  if (draft.dragBehaviorOverrideType != null) {
-    final override = switch (draft.dragBehaviorOverrideType) {
-      == Snooze => 'const Snooze(\n'
-          '      duration: Duration(seconds: ${draft.snoozeDurationSeconds}),\n'
-          '    )',
-      == Pin => 'const Pin()',
-      == Dismiss => 'const Dismiss()',
-      == Disabled => 'const Disabled()',
-      _ => 'const ${draft.dragBehaviorOverrideType}()',
-    };
-    buf.writeln('    dragBehavior: $override,');
+  if (draft.styleOverride != null) {
+    buf.writeln(
+      '    style: const ${_styleClassName(draft.styleOverride!)}(),',
+    );
+  }
+
+  if (draft.themeOverride != null) {
+    _writeThemeSnippet(buf, draft.themeOverride!, indent: '  ');
   }
 
   if (draft.actionStyle == NotificationActionStyle.button) {
@@ -104,8 +96,15 @@ String generateCode({
     );
   }
 
+  buf.writeln('  ),');
+
+  if (draft.positionOverride != null) {
+    buf.writeln(
+      '  targetPosition: QueuePosition.${draft.positionOverride!.name},',
+    );
+  }
+
   buf
-    ..writeln('  ),')
     ..writeln(');')
     ..writeln();
 
@@ -161,27 +160,23 @@ void _writeChannel(final StringBuffer buf, final ChannelSetup c) {
   if (c.description != null) {
     buf.writeln("      description: '${c.description}',");
   }
-  if (c.color != null) {
-    buf.writeln(
-      '      defaultColor: '
-      'Color(0x${c.color!.toARGB32().toRadixString(16).padLeft(8, '0')}'
-      '),',
-    );
+
+  final theme = c.theme ??
+      (c.color != null || c.foregroundColor != null || c.backgroundColor != null
+          ? NotificationThemeData(
+              accentColor: c.color,
+              foregroundColor: c.foregroundColor,
+              backgroundColor: c.backgroundColor,
+            )
+          : null);
+  if (theme != null) {
+    _writeThemeSnippet(buf, theme, indent: '    ');
   }
-  if (c.foregroundColor != null) {
-    buf.writeln(
-      '      defaultForegroundColor: Color(0x'
-      '${c.foregroundColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
-      '),',
-    );
+
+  if (c.styleType != null) {
+    buf.writeln('      style: const ${_styleClassName(c.styleType!)}(),');
   }
-  if (c.backgroundColor != null) {
-    buf.writeln(
-      '      defaultBackgroundColor: Color(0x'
-      '${c.backgroundColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
-      '),',
-    );
-  }
+
   if (c.position != null) {
     buf.writeln(
       '      position: QueuePosition.${c.position!.name},',
@@ -200,7 +195,7 @@ void _writeChannel(final StringBuffer buf, final ChannelSetup c) {
       ChannelIconPreset.warning => 'warning',
       ChannelIconPreset.error => 'error',
       ChannelIconPreset.notification => 'notifications',
-      ChannelIconPreset.none => '', // shouldn't happen
+      ChannelIconPreset.none => '',
     };
     buf.writeln('      defaultIcon: Icon(Icons.$iconName),');
   }
@@ -274,3 +269,43 @@ String _closeButtonSnippet(final Type t) => switch (t) {
       == Hidden => 'const Hidden()',
       _ => 'const $t()',
     };
+
+String _colorHex(final Color color) =>
+    '0x${color.toARGB32().toRadixString(16).padLeft(8, '0')}';
+
+void _writeThemeSnippet(
+  final StringBuffer buf,
+  final NotificationThemeData theme, {
+  required final String indent,
+}) {
+  buf.writeln('$indent  theme: const NotificationThemeData(');
+  final accent = theme.accentColor;
+  if (accent != null) {
+    buf.writeln('$indent    accentColor: Color(${_colorHex(accent)}),');
+  }
+  final bg = theme.backgroundColor;
+  if (bg != null) {
+    buf.writeln('$indent    backgroundColor: Color(${_colorHex(bg)}),');
+  }
+  final fg = theme.foregroundColor;
+  if (fg != null) {
+    buf.writeln('$indent    foregroundColor: Color(${_colorHex(fg)}),');
+  }
+  final border = theme.borderColor;
+  if (border != null) {
+    buf.writeln('$indent    borderColor: Color(${_colorHex(border)}),');
+  }
+  final radius = theme.borderRadius;
+  if (radius is BorderRadius && radius.topLeft.x > 0) {
+    buf.writeln(
+      '$indent    borderRadius: const BorderRadius.all('
+      ' Radius.circular(${radius.topLeft.x.round()}),'
+      ' ),',
+    );
+  }
+  final elevation = theme.elevation;
+  if (elevation != null && elevation != 0) {
+    buf.writeln('$indent    elevation: $elevation,');
+  }
+  buf.writeln('$indent  ),');
+}
