@@ -12,8 +12,15 @@ import '../engine/dart_syntax_highlighter.dart';
 ///
 /// Reads `StudioSetup` from `SetupBloc` and `NotificationDraft`
 /// from `NotificationBloc`.
-class CodeEditorPanel extends StatelessWidget {
+class CodeEditorPanel extends StatefulWidget {
   const CodeEditorPanel({super.key});
+
+  @override
+  State<CodeEditorPanel> createState() => _CodeEditorPanelState();
+}
+
+class _CodeEditorPanelState extends State<CodeEditorPanel> {
+  CodeSnippetScope _selectedScope = CodeSnippetScope.fullSetup;
 
   @override
   Widget build(final BuildContext context) =>
@@ -24,6 +31,7 @@ class CodeEditorPanel extends StatelessWidget {
             final code = generateCode(
               setup: setupState.setup,
               draft: draft,
+              scope: _selectedScope,
             );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -76,7 +84,10 @@ class CodeEditorPanel extends StatelessWidget {
                           Clipboard.setData(ClipboardData(text: code));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Code copied to clipboard'),
+                              content: Text(
+                                '${_selectedScope.label} snippet '
+                                'copied to clipboard',
+                              ),
                               backgroundColor:
                                   Theme.of(context).colorScheme.primary,
                               behavior: SnackBarBehavior.floating,
@@ -97,6 +108,97 @@ class CodeEditorPanel extends StatelessWidget {
                         },
                       ),
                     ],
+                  ),
+                ),
+
+                // ── Snippet Scope Tabs ──
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.06),
+                      ),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: CodeSnippetScope.values.map((final scope) {
+                        final isSelected = _selectedScope == scope;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InkWell(
+                            onTap: () => setState(() => _selectedScope = scope),
+                            borderRadius: BorderRadius.circular(6),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.15)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    scope.icon,
+                                    size: 13,
+                                    color: isSelected
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    scope.label,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
 

@@ -12,6 +12,7 @@ import 'panels/configurator_panel.dart';
 import 'panels/event_log_panel.dart';
 import 'studio_theme.dart';
 import 'widgets/project_info_dialog.dart';
+import 'widgets/quick_fire_cockpit.dart';
 
 /// The root layout for NFQ Studio.
 ///
@@ -72,61 +73,78 @@ class _StudioShellState extends State<_StudioShell> {
   Widget build(final BuildContext context) => LayoutBuilder(
         builder: (final context, final constraints) {
           final isNarrow = constraints.maxWidth <= 1000;
-          return Scaffold(
-            extendBodyBehindAppBar: true,
-            appBar: AppBar(
-              title: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'NFQ STUDIO',
-                    style: TextStyle(
-                      letterSpacing: 4,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 20,
+          return CallbackShortcuts(
+            bindings: {
+              const SingleActivator(LogicalKeyboardKey.enter, meta: true): () {
+                context.read<NotificationBloc>().add(const FirePreview());
+              },
+              const SingleActivator(LogicalKeyboardKey.enter, control: true):
+                  () {
+                context.read<NotificationBloc>().add(const FirePreview());
+              },
+            },
+            child: Scaffold(
+              extendBodyBehindAppBar: true,
+              appBar: AppBar(
+                title: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'NFQ STUDIO',
+                      style: TextStyle(
+                        letterSpacing: 3,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    _VersionBadge(),
+                  ],
+                ),
+                centerTitle: true,
+                backgroundColor: Theme.of(context)
+                    .colorScheme
+                    .surface
+                    .withValues(alpha: 0.85),
+                elevation: 0,
+                actions: [
+                  IconButton(
+                    onPressed: () => ProjectInfoDialog.show(context),
+                    icon: const Icon(Icons.info_outline, size: 20),
+                    tooltip: 'About & Project Info',
+                  ),
+                  BlocBuilder<StudioBloc, StudioState>(
+                    builder: (final context, final state) => IconButton(
+                      onPressed: () {
+                        context.read<StudioBloc>().add(const ToggleTheme());
+                      },
+                      icon: Icon(
+                        state.themeMode == ThemeMode.dark
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
+                        size: 20,
+                      ),
+                      tooltip: 'Toggle Theme',
                     ),
                   ),
-                  SizedBox(width: 8),
-                  _VersionBadge(),
+                  const SizedBox(width: 8),
                 ],
               ),
-              centerTitle: true,
-              backgroundColor: Theme.of(context)
-                  .colorScheme
-                  .surface
-                  .withValues(alpha: 0.85),
-              elevation: 0,
-              actions: [
-                IconButton(
-                  onPressed: () => ProjectInfoDialog.show(context),
-                  icon: const Icon(Icons.info_outline, size: 20),
-                  tooltip: 'About & Project Info',
-                ),
-                BlocBuilder<StudioBloc, StudioState>(
-                  builder: (final context, final state) => IconButton(
-                    onPressed: () {
-                      context.read<StudioBloc>().add(const ToggleTheme());
-                    },
-                    icon: Icon(
-                      state.themeMode == ThemeMode.dark
-                          ? Icons.light_mode_outlined
-                          : Icons.dark_mode_outlined,
-                      size: 20,
+              body: Stack(
+                children: [
+                  const _StudioBackground(),
+                  SafeArea(
+                    child: Column(
+                      children: [
+                        const QuickFireCockpit(),
+                        Expanded(
+                          child: isNarrow ? _narrowLayout() : _wideLayout(),
+                        ),
+                      ],
                     ),
-                    tooltip: 'Toggle Theme',
                   ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-            body: Stack(
-              children: [
-                const _StudioBackground(),
-                SafeArea(
-                  child: isNarrow ? _narrowLayout() : _wideLayout(),
-                ),
-              ],
-            ),
+                ],
+              ),
             floatingActionButton: isNarrow && _tabIndex == 0
                 ? AnimatedSlide(
                     duration: const Duration(milliseconds: 250),
@@ -176,6 +194,7 @@ class _StudioShellState extends State<_StudioShell> {
                     ],
                   )
                 : null,
+            ),
           );
         },
       );
@@ -230,15 +249,36 @@ class _StudioBackground extends StatelessWidget {
         child: Stack(
           children: [
             Positioned(
-              top: -100,
-              right: -100,
+              top: -120,
+              right: -120,
+              child: Container(
+                width: 450,
+                height: 450,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      StudioTheme.colorScheme.primary.withValues(alpha: 0.12),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -150,
+              left: -100,
               child: Container(
                 width: 400,
                 height: 400,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color:
-                      StudioTheme.colorScheme.primary.withValues(alpha: 0.08),
+                  gradient: RadialGradient(
+                    colors: [
+                      const Color(0xFF8B5CF6).withValues(alpha: 0.06),
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
               ),
             ),

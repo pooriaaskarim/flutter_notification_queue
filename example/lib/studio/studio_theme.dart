@@ -101,6 +101,10 @@ class StudioTheme {
           onPrimaryContainer: Color(0xFF38BDF8),
           secondaryContainer: Color(0xFF1E293B),
           onSecondaryContainer: Colors.white,
+          surfaceContainerHigh: Color(0xFF1E293B),
+          surfaceContainerHighest: Color(0xFF283548),
+          outline: Color(0x66475569),
+          outlineVariant: Color(0x40334155),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,

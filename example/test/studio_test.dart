@@ -9,6 +9,7 @@ import 'package:flutter_notification_queue_example/studio/engine/code_generator.
 import 'package:flutter_notification_queue_example/studio/models/channel_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/queue_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/studio_setup.dart';
+import 'package:flutter_notification_queue_example/studio/panels/event_log_panel.dart';
 import 'package:flutter_notification_queue_example/studio/studio_home.dart';
 import 'package:flutter_notification_queue_example/studio/studio_theme.dart';
 import 'package:flutter_notification_queue_example/studio/widgets/theme_designer_dialog.dart';
@@ -183,6 +184,44 @@ void main() {
       );
 
       expect(codeSnippet, isNot(contains('maxWidth:')));
+    });
+
+    test('generateCode respects CodeSnippetScope.dispatchOnly', () {
+      final studioSetup = StudioSetup.withDefaults();
+      const draft = NotificationDraft(
+        title: 'Alert Title',
+        message: 'Alert Body',
+        channelName: 'info',
+      );
+
+      final dispatchCode = generateCode(
+        setup: studioSetup,
+        draft: draft,
+        scope: CodeSnippetScope.dispatchOnly,
+      );
+
+      expect(dispatchCode, contains("controller.show("));
+      expect(dispatchCode, contains("title: 'Alert Title'"));
+      expect(dispatchCode, isNot(contains("NotificationController(")));
+      expect(dispatchCode, isNot(contains("NotificationScope(")));
+    });
+
+    test('generateCode respects CodeSnippetScope.channelsOnly', () {
+      final studioSetup = StudioSetup.withDefaults();
+      const draft = NotificationDraft();
+
+      final channelsCode = generateCode(
+        setup: studioSetup,
+        draft: draft,
+        scope: CodeSnippetScope.channelsOnly,
+      );
+
+      expect(
+        channelsCode,
+        contains("final channels = <String, NotificationChannel>{"),
+      );
+      expect(channelsCode, isNot(contains("controller.show(")));
+      expect(channelsCode, isNot(contains("NotificationScope(")));
     });
   });
 
@@ -400,6 +439,80 @@ void main() {
 
       expect(appliedTheme, isNotNull);
       expect(appliedStyleType, equals(FilledQueueStyle));
+    });
+  });
+
+  group('EventLogPanel Observability Tests', () {
+    testWidgets('Renders empty state, updates on events, and expands inspector',
+        (final tester) async {
+      final controller = NotificationController(
+        queues: {const NotificationQueue()},
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NotificationScope(
+              controller: controller,
+              child: const SizedBox(
+                width: 320,
+                height: 600,
+                child: EventLogPanel(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('EVENTS'), findsOneWidget);
+      expect(find.text('Waiting for events…'), findsOneWidget);
+
+      // Enqueue notification via controller
+      controller.show(
+        const AppNotification(
+          id: 'test-evt-1',
+          message: 'Real-time telemetry item',
+          channelName: 'info',
+        ),
+      );
+      await tester.pump();
+
+      // Should show Queued tile and active badge
+      expect(find.text('Queued'), findsOneWidget);
+      expect(find.text('1 active'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(EventLogPanel),
+          matching: find.text('Real-time telemetry item'),
+        ),
+        findsOneWidget,
+      );
+
+      // Tap on event tile to expand Diagnostics drawer
+      await tester.tap(find.text('Queued'));
+      await tester.pump();
+
+      expect(find.text('DIAGNOSTICS'), findsOneWidget);
+      expect(find.text('test-evt-1'), findsOneWidget);
+
+      // Tap 'Alerts' filter pill - this event is lifecycle so list empties
+      await tester.tap(find.text('Alerts'));
+      await tester.pump();
+
+      expect(find.text('No events match filter'), findsOneWidget);
+
+      // Tap 'Flow' filter pill - Queued event reappears
+      await tester.tap(find.text('Flow'));
+      await tester.pump();
+
+      expect(find.text('Queued'), findsOneWidget);
+
+      // Tap 'All' to restore
+      await tester.tap(find.text('All'));
+      await tester.pump();
+      expect(find.text('Queued'), findsOneWidget);
+
+      controller.dispose();
     });
   });
 }

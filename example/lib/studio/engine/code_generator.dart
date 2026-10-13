@@ -6,50 +6,108 @@ import '../models/channel_setup.dart';
 import '../models/queue_setup.dart';
 import '../models/studio_setup.dart';
 
+/// What scope of Dart code to generate.
+enum CodeSnippetScope {
+  /// Complete controller, scope, channels, and dispatch setup.
+  fullSetup('Full Setup', Icons.settings_suggest_outlined),
+
+  /// Just the `controller.show(AppNotification(...))` dispatch statement.
+  dispatchOnly('Dispatch Only', Icons.bolt_rounded),
+
+  /// Just the `NotificationChannel` map configuration.
+  channelsOnly('Channels', Icons.tune_rounded),
+
+  /// Just the `NotificationQueue` baseline definitions.
+  queuesOnly('Queues', Icons.view_quilt_outlined);
+
+  const CodeSnippetScope(this.label, this.icon);
+  final String label;
+  final IconData icon;
+}
+
 /// Generates a copy-pasteable Dart code snippet from the current
 /// [StudioSetup] and [NotificationDraft].
 String generateCode({
   required final StudioSetup setup,
   required final NotificationDraft draft,
+  final CodeSnippetScope scope = CodeSnippetScope.fullSetup,
 }) {
-  final buf = StringBuffer('// NFQ Studio — Generated Code (v0.5.0)\n')
-    ..writeln()
-    ..writeln('final controller = NotificationController(')
-    ..writeln('  queues: {');
+  final buf = StringBuffer();
 
-  for (final entry in setup.queues.entries) {
-    _writeQueue(buf, entry.key, entry.value);
+  switch (scope) {
+    case CodeSnippetScope.dispatchOnly:
+      _writeDispatch(buf, draft);
+      break;
+
+    case CodeSnippetScope.channelsOnly:
+      buf
+        ..writeln('// Channel Configurations')
+        ..writeln('final channels = <String, NotificationChannel>{');
+      for (final channel in setup.channels.values) {
+        _writeChannel(buf, channel);
+      }
+      buf.writeln('};');
+      break;
+
+    case CodeSnippetScope.queuesOnly:
+      buf
+        ..writeln('// Queue Baseline Configurations')
+        ..writeln('final queues = <QueuePosition, NotificationQueue>{');
+      for (final entry in setup.queues.entries) {
+        _writeQueue(buf, entry.key, entry.value);
+      }
+      buf.writeln('};');
+      break;
+
+    case CodeSnippetScope.fullSetup:
+      buf
+        ..writeln('// NFQ Studio — Generated Code (v0.5.0)\n')
+        ..writeln('final controller = NotificationController(')
+        ..writeln('  queues: {');
+
+      for (final entry in setup.queues.entries) {
+        _writeQueue(buf, entry.key, entry.value);
+      }
+
+      buf
+        ..writeln('  },')
+        ..writeln('  channels: {');
+
+      for (final channel in setup.channels.values) {
+        _writeChannel(buf, channel);
+      }
+
+      buf.writeln('  },');
+
+      if (setup.enableDynamicChannelParking) {
+        buf.writeln('  enableDynamicChannelParking: true,');
+      }
+      if (setup.maxHistoryEntries != 0) {
+        buf.writeln('  maxHistoryEntries: ${setup.maxHistoryEntries},');
+      }
+
+      buf
+        ..writeln(');')
+        ..writeln()
+        ..writeln('// 1. Attach NotificationScope to your widget tree:')
+        ..writeln('// MaterialApp(')
+        ..writeln('//   builder: (context, child) => NotificationScope(')
+        ..writeln('//     controller: controller,')
+        ..writeln('//     child: child!,')
+        ..writeln('//   ),')
+        ..writeln('// );')
+        ..writeln()
+        ..writeln('// 2. Dispatch a notification:');
+
+      _writeDispatch(buf, draft);
+      break;
   }
 
+  return buf.toString();
+}
+
+void _writeDispatch(final StringBuffer buf, final NotificationDraft draft) {
   buf
-    ..writeln('  },')
-    ..writeln('  channels: {');
-
-  for (final channel in setup.channels.values) {
-    _writeChannel(buf, channel);
-  }
-
-  buf.writeln('  },');
-
-  if (setup.enableDynamicChannelParking) {
-    buf.writeln('  enableDynamicChannelParking: true,');
-  }
-  if (setup.maxHistoryEntries != 0) {
-    buf.writeln('  maxHistoryEntries: ${setup.maxHistoryEntries},');
-  }
-
-  buf
-    ..writeln(');')
-    ..writeln()
-    ..writeln('// 1. Attach NotificationScope to your widget tree:')
-    ..writeln('// MaterialApp(')
-    ..writeln('//   builder: (context, child) => NotificationScope(')
-    ..writeln('//     controller: controller,')
-    ..writeln('//     child: child!,')
-    ..writeln('//   ),')
-    ..writeln('// );')
-    ..writeln()
-    ..writeln('// 2. Dispatch a notification:')
     ..writeln('controller.show(')
     ..writeln('  AppNotification(')
     ..writeln("    title: '${draft.title}',")
@@ -107,8 +165,6 @@ String generateCode({
   buf
     ..writeln(');')
     ..writeln();
-
-  return buf.toString();
 }
 
 void _writeQueue(
