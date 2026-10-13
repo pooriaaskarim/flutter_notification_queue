@@ -88,6 +88,8 @@ Complexity Tiers:
 | **A-04** | Encapsulate `ConfigurationManager` fields (make private, enforce immutability) | 🟢 P2 | 🟢 Low | 📅 Pending | `lib/src/core/configuration_manager.dart` |
 | **A-05** | Add `NotificationWidget? get notification` accessor to sealed `NotificationEvent` | 🟢 P2 | 🟢 Low | 📅 Pending | `lib/src/core/notification_event.dart`, `lib/src/core/history_logger.dart` |
 | **A-06** | Replace static mutable `_idCounter` with instance-scoped ID generator | 🟢 P2 | 🟢 Low | 📅 Pending | `lib/src/notification/notification.dart` |
+| **A-07** | Enforce 3-Tier Hierarchy: Deprecate per-notification `dragBehavior` physics overrides | 🟡 P1 | 🟡 Medium | 📅 Pending | `lib/src/notification/app_notification.dart`, `lib/src/notification/notification.dart` |
+| **A-08** | Migrate channel & notification theming to `NotificationThemeData`; eliminate loose scalar colors | 🟡 P1 | 🟡 Medium | 📅 Pending | `lib/src/notification_channel/notification_channel.dart`, `lib/src/notification/app_notification.dart` |
 
 ---
 
@@ -133,6 +135,13 @@ Complexity Tiers:
   * Extract interaction plugins into dedicated library units under `lib/src/notification/interaction/`.
   * Export public plugins cleanly through `lib/src/notification/plugins.dart`.
   * Enforce clear encapsulation boundaries with `@internal` annotations where appropriate.
+
+### A-08: Theme Token Migration & Loose Color Deprecation
+* **Target Release**: v0.6.0 (with deprecations in v0.5.x)
+* **Objective**: Replace fragmented scalar `Color?` fields on `AppNotification` and `NotificationChannel` with cohesive, dark-mode reactive `NotificationThemeData`.
+* **Migration Plan**:
+  * **Phase 1 (v0.5.x)**: Annotate `color`, `backgroundColor`, and `foregroundColor` on `AppNotification` and `NotificationChannel` with `@Deprecated`. Synthesize an internal `NotificationThemeData` fallback to maintain 100% backward compatibility.
+  * **Phase 2 (v0.6.0)**: Remove loose scalar parameters and provide standard migration documentation in `doc/migration_theming.md`.
 
 ### F-06: Focus Traversal & Semantic Accessibility
 * **Target Release**: v0.6.x
