@@ -10,7 +10,6 @@ import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_text_field.dart';
 import '../../widgets/studio_toggle_tile.dart';
-import '../../widgets/style_archetype_selector.dart';
 import '../../widgets/theme_designer_dialog.dart';
 
 class ChannelTile extends StatelessWidget {
@@ -137,19 +136,8 @@ class _TileContent extends StatelessWidget {
                     ),
                   ),
             ),
-            StyleArchetypeSelector(
-              selectedType: setup.styleType,
-              badgeLabel: 'CHANNEL OVERRIDE',
-              showInheritDefault: true,
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateChannel(
-                      setup.name,
-                      setup.copyWith(styleType: () => v),
-                    ),
-                  ),
-            ),
             const SizedBox(height: 12),
-            // ── Theme & Archetype Designer ──
+            // ── Theme Designer ──
             _ChannelThemeConfigTile(setup: setup),
             const SizedBox(height: 12),
             StudioColorSelectionTile(
@@ -274,41 +262,46 @@ class _ChannelThemeConfigTile extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  onPressed: () => ThemeDesignerDialog.show(
-                    context,
-                    title: 'Configure Theme: #${setup.name}',
-                    channelName: setup.name,
-                    initialTheme:
-                        setup.theme ?? setup.toNotificationChannel().theme,
-                    initialStyleType: setup.styleType,
-                    previewTitle: setup.name.toUpperCase(),
-                    previewMessage:
-                        setup.description ?? 'Channel notification preview.',
-                    previewIcon: setup.iconPreset.toWidget() ??
-                        const Icon(Icons.notifications_outlined),
-                    onApply: (final newTheme, final newStyleType) {
-                      final current = context
-                              .read<SetupBloc>()
-                              .state
-                              .setup
-                              .channels[setup.name] ??
-                          setup;
-                      context.read<SetupBloc>().add(
-                            UpdateChannel(
-                              setup.name,
-                              current.copyWith(
-                                theme: () => newTheme,
-                                styleType: () => newStyleType,
-                                color: () => newTheme?.accentColor,
-                                foregroundColor: () =>
-                                    newTheme?.foregroundColor,
-                                backgroundColor: () =>
-                                    newTheme?.backgroundColor,
+                  onPressed: () {
+                    final setupState = context.read<SetupBloc>().state;
+                    final targetPos =
+                        setup.position ?? setupState.activeQueuePosition;
+                    final targetQueue = setupState.setup.queues[targetPos];
+                    ThemeDesignerDialog.show(
+                      context,
+                      title: 'Configure Theme: #${setup.name}',
+                      channelName: setup.name,
+                      initialTheme:
+                          setup.theme ?? setup.toNotificationChannel().theme,
+                      initialStyleType: targetQueue?.styleType,
+                      previewTitle: setup.name.toUpperCase(),
+                      previewMessage:
+                          setup.description ?? 'Channel notification preview.',
+                      previewIcon: setup.iconPreset.toWidget() ??
+                          const Icon(Icons.notifications_outlined),
+                      onApply: (final newTheme, final _) {
+                        final current = context
+                                .read<SetupBloc>()
+                                .state
+                                .setup
+                                .channels[setup.name] ??
+                            setup;
+                        context.read<SetupBloc>().add(
+                              UpdateChannel(
+                                setup.name,
+                                current.copyWith(
+                                  theme: () => newTheme,
+                                  color: () => newTheme?.accentColor,
+                                  foregroundColor: () =>
+                                      newTheme?.foregroundColor,
+                                  backgroundColor: () =>
+                                      newTheme?.backgroundColor,
+                                ),
                               ),
-                            ),
-                          );
-                    },
-                  ),
+                            );
+                      },
+                    );
+                  },
                 ),
               ),
               if (hasCustomTheme) ...[

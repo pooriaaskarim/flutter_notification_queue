@@ -28,10 +28,10 @@ A developer exploring the studio must intuitively understand how the library ope
 2. **`NotificationChannel` (The Routing Engine)**:
    - Categorizes alerts by domain (`info`, `billing`, `orders`, `security`).
    - Declares the default target `QueuePosition` and parking policies.
-   - Supplies shared channel theme and archetype defaults.
+   - Supplies shared channel theme (chromatic tokens and typography).
 3. **`NotificationQueue` (The Spatial Container)**:
    - Anchored to one of the 9 screen positions (`QueuePosition.topLeft`, `topCenter`, etc.).
-   - Governs stack capacity (`maxStackSize`), physics, spacing, margins, and gesture behaviors (`Dismiss`, `Snooze`, `Pin`, `Relocate`).
+   - Governs stack capacity (`maxStackSize`), physics, spacing, margins, spatial card archetype (`QueueStyle`), and gesture behaviors (`Dismiss`, `Snooze`, `Pin`, `Relocate`).
 4. **`NotificationController` & `NotificationScope` (The Surface Owner)**:
    - `NotificationController` owns the reactive state and contextless dispatch API.
    - `NotificationScope` attaches to the widget tree and manages overlay portals.
@@ -50,7 +50,7 @@ A developer exploring the studio must intuitively understand how the library ope
 *Structural layout and chromatic skinning must remain strictly decoupled.*
 - **Gear 1: Style Anatomy (`QueueStyle`)**:
   - Controls geometry, borders, opacity, layout archetypes (`FilledQueueStyle`, `OutlinedQueueStyle`, `FlatQueueStyle`).
-  - Set at the queue level (baseline) or overridden at channel scope (semantic domain archetype).
+  - Set strictly at the queue level, governing all notification cards within that spatial container.
 - **Gear 2: Theme Chromatics (`NotificationThemeData`)**:
   - Controls color tokens: `accentColor`, `backgroundColor`, `foregroundColor`, `borderRadius`, `elevation`.
   - Governed at the channel or inherited globally, with optional experimental accent tint (`accentColor`) supported on `AppNotification` for content-driven dynamic colors.

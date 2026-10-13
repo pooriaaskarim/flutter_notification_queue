@@ -29,7 +29,6 @@ class ChannelSetup extends Equatable {
     this.foregroundColor,
     this.backgroundColor,
     this.theme,
-    this.styleType,
     this.position,
     this.dismissSeconds = 5,
     this.iconPreset = ChannelIconPreset.none,
@@ -54,10 +53,6 @@ class ChannelSetup extends Equatable {
   /// Cohesive theme tokens configuring visual appearance.
   final NotificationThemeData? theme;
 
-  /// Structural card archetype override for this channel.
-  /// `null` = follow queue style.
-  final Type? styleType;
-
   /// Which queue position this channel's notifications bind to.
   /// `null` = use the system's default queue.
   final QueuePosition? position;
@@ -78,7 +73,6 @@ class ChannelSetup extends Equatable {
     final Color? Function()? foregroundColor,
     final Color? Function()? backgroundColor,
     final NotificationThemeData? Function()? theme,
-    final Type? Function()? styleType,
     final QueuePosition? Function()? position,
     final int? Function()? dismissSeconds,
     final ChannelIconPreset? iconPreset,
@@ -93,20 +87,12 @@ class ChannelSetup extends Equatable {
         backgroundColor:
             backgroundColor != null ? backgroundColor() : this.backgroundColor,
         theme: theme != null ? theme() : this.theme,
-        styleType: styleType != null ? styleType() : this.styleType,
         position: position != null ? position() : this.position,
         dismissSeconds:
             dismissSeconds != null ? dismissSeconds() : this.dismissSeconds,
         iconPreset: iconPreset ?? this.iconPreset,
         enabled: enabled ?? this.enabled,
       );
-
-  static QueueStyle? _resolveStyle(final Type? type) => switch (type) {
-        == FilledQueueStyle => const FilledQueueStyle(),
-        == OutlinedQueueStyle => const OutlinedQueueStyle(),
-        == FlatQueueStyle => const FlatQueueStyle(),
-        _ => null,
-      };
 
   /// Builds the library [NotificationChannel] from this setup.
   NotificationChannel toNotificationChannel() {
@@ -122,7 +108,6 @@ class ChannelSetup extends Equatable {
       name: name,
       description: description,
       theme: effectiveTheme,
-      style: _resolveStyle(styleType),
       position: position,
       defaultDismissDuration:
           dismissSeconds != null ? Duration(seconds: dismissSeconds!) : null,
@@ -139,7 +124,6 @@ class ChannelSetup extends Equatable {
         foregroundColor,
         backgroundColor,
         theme,
-        styleType,
         position,
         dismissSeconds,
         iconPreset,

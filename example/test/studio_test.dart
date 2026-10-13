@@ -17,20 +17,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ChannelSetup Model & Mapping Tests', () {
-    test('toNotificationChannel propagates theme and style override', () {
+    test('toNotificationChannel propagates theme and loose colors', () {
       const channelSetup = ChannelSetup(
         name: 'billing',
         color: Color(0xFF6366F1),
         foregroundColor: Color(0xFFFFFFFF),
         backgroundColor: Color(0xFF1E1B4B),
-        styleType: FilledQueueStyle,
       );
       final channel = channelSetup.toNotificationChannel();
       expect(channel.theme, isNotNull);
       expect(channel.theme!.accentColor, equals(const Color(0xFF6366F1)));
       expect(channel.theme!.foregroundColor, equals(const Color(0xFFFFFFFF)));
       expect(channel.theme!.backgroundColor, equals(const Color(0xFF1E1B4B)));
-      expect(channel.style, isA<FilledQueueStyle>());
     });
   });
 
@@ -104,7 +102,6 @@ void main() {
           'billing': ChannelSetup(
             name: 'billing',
             color: Color(0xFF6366F1),
-            styleType: FilledQueueStyle,
           ),
         },
       );
@@ -133,7 +130,7 @@ void main() {
         contains('targetPosition: QueuePosition.bottomRight,'),
       );
       expect(codeSnippet, contains('NotificationThemeData('));
-      expect(codeSnippet, contains('const FilledQueueStyle()'));
+      expect(codeSnippet, contains('FilledQueueStyle('));
     });
 
     test('generateCode emits notification payload theme override when set', () {

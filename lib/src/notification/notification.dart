@@ -524,7 +524,7 @@ class NotificationWidgetState extends State<NotificationWidget>
       _lastBrightness = brightness;
       theme = NotificationTheme.resolveWith(
         context,
-        widget.channel.style ?? widget.queue.style,
+        widget.queue.style,
         widget,
       );
     }
@@ -548,7 +548,6 @@ class NotificationWidgetState extends State<NotificationWidget>
       widget.isPinnedNotifier.addListener(_handlePinChanged);
     }
     if (oldWidget.accentColor != widget.accentColor ||
-        oldWidget.channel.style != widget.channel.style ||
         oldWidget.queue.style != widget.queue.style ||
         // ignore: deprecated_member_use_from_same_package
         oldWidget.color != widget.color ||
@@ -558,7 +557,7 @@ class NotificationWidgetState extends State<NotificationWidget>
         oldWidget.foregroundColor != widget.foregroundColor) {
       theme = NotificationTheme.resolveWith(
         context,
-        widget.channel.style ?? widget.queue.style,
+        widget.queue.style,
         widget,
       );
     }

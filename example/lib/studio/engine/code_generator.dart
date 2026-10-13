@@ -228,10 +228,6 @@ void _writeChannel(final StringBuffer buf, final ChannelSetup c) {
     _writeThemeSnippet(buf, theme, indent: '    ');
   }
 
-  if (c.styleType != null) {
-    buf.writeln('      style: const ${_styleClassName(c.styleType!)}(),');
-  }
-
   if (c.position != null) {
     buf.writeln(
       '      position: QueuePosition.${c.position!.name},',

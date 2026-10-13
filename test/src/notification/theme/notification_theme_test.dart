@@ -261,7 +261,7 @@ void main() {
     );
 
     testWidgets(
-      'Channel style archetype overrides queue baseline style',
+      'Queue style archetype governs physical shape and geometry',
       (final tester) async {
         late NotificationTheme resolved;
 
@@ -273,22 +273,21 @@ void main() {
                   message: 'Outlined test',
                   configuration: ConfigurationManager(
                     queues: {
-                      const NotificationQueue(style: FlatQueueStyle()),
-                    },
-                    channels: {
-                      const NotificationChannel(
-                        name: 'default',
+                      const NotificationQueue(
                         style: OutlinedQueueStyle(
                           borderRadius: BorderRadius.all(Radius.circular(16)),
                         ),
                       ),
+                    },
+                    channels: {
+                      const NotificationChannel(name: 'default'),
                     },
                   ),
                 );
 
                 resolved = NotificationTheme.resolveWith(
                   context,
-                  const FlatQueueStyle(),
+                  widget.queue.style,
                   widget,
                 );
                 return const SizedBox();

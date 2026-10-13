@@ -8,7 +8,6 @@ import '../studio_theme.dart';
 import 'studio_color_selection_tile.dart';
 import 'studio_section_header.dart';
 import 'studio_slider_tile.dart';
-import 'style_archetype_selector.dart';
 
 /// A responsive Theme & Style Designer dialog / bottom sheet.
 ///
@@ -717,20 +716,8 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
   Widget _buildControls() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Active Physical Structure (Gear 1) ──
-          if (!widget.isNotificationOverride) ...[
-            StyleArchetypeSelector(
-              label: 'CHANNEL STRUCTURE ARCHETYPE (GEAR 1)',
-              badgeLabel: 'CHANNEL',
-              selectedType: _styleType,
-              showInheritDefault: true,
-              onChanged: (final v) => setState(() => _styleType = v),
-            ),
-            const SizedBox(height: 16),
-          ],
-
-        // ── Presets & Seed Colors ──
-        const StudioSectionHeader(title: 'COLOR PALETTE PRESETS'),
+          // ── Presets & Seed Colors ──
+          const StudioSectionHeader(title: 'COLOR PALETTE PRESETS'),
         Wrap(
           spacing: 8,
           runSpacing: 8,

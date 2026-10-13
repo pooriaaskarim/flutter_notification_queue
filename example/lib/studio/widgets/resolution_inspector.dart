@@ -23,20 +23,14 @@ class ResolutionInspector extends StatelessWidget {
 
     // 1. Resolve Gear 1: Physical Style
     final channelSetup = setupState.setup.channels[draft.channelName];
-    final queueSetup = setupState.setup.queues[setupState.activeQueuePosition];
+    final queuePosition = draft.positionOverride ??
+        channelSetup?.position ??
+        setupState.activeQueuePosition;
+    final queueSetup = setupState.setup.queues[queuePosition];
 
     final queueStyleType = queueSetup?.styleType ?? FilledQueueStyle;
-    final channelStyleType = channelSetup?.styleType;
-
-    final String effectiveStyleName;
-    final String styleResolutionSource;
-    if (channelStyleType != null) {
-      effectiveStyleName = _styleName(channelStyleType);
-      styleResolutionSource = 'Channel (#${draft.channelName})';
-    } else {
-      effectiveStyleName = _styleName(queueStyleType);
-      styleResolutionSource = 'Queue Baseline';
-    }
+    final String effectiveStyleName = _styleName(queueStyleType);
+    final String styleResolutionSource = 'Queue (${queuePosition.name})';
 
     // 2. Resolve Gear 2: Chromatic Theme
     final hasNotificationAccent = draft.accentColorOverride != null;
