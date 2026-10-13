@@ -24,7 +24,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Creates an immutable [NotificationThemeData] token bundle.
   const NotificationThemeData({
     this.color,
-    this.shadowColor,
     this.titleTextStyle,
     this.messageTextStyle,
     this.iconTheme,
@@ -44,7 +43,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     };
     return NotificationThemeData(
       color: tokenColor,
-      shadowColor: colorScheme.shadow,
     );
   }
 
@@ -85,9 +83,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Primary color token driving notification status, borders, and fills.
   final Color? color;
 
-  /// Elevation drop shadow tint.
-  final Color? shadowColor;
-
   /// Typography styling for the header title.
   final TextStyle? titleTextStyle;
 
@@ -102,14 +97,12 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   @override
   NotificationThemeData copyWith({
     final Color? color,
-    final Color? shadowColor,
     final TextStyle? titleTextStyle,
     final TextStyle? messageTextStyle,
     final IconThemeData? iconTheme,
   }) =>
       NotificationThemeData(
         color: color ?? this.color,
-        shadowColor: shadowColor ?? this.shadowColor,
         titleTextStyle: titleTextStyle ?? this.titleTextStyle,
         messageTextStyle: messageTextStyle ?? this.messageTextStyle,
         iconTheme: iconTheme ?? this.iconTheme,
@@ -125,7 +118,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     }
     return copyWith(
       color: other.color,
-      shadowColor: other.shadowColor,
       titleTextStyle: other.titleTextStyle,
       messageTextStyle: other.messageTextStyle,
       iconTheme: other.iconTheme,
@@ -142,7 +134,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     }
     return NotificationThemeData(
       color: Color.lerp(color, other.color, t),
-      shadowColor: Color.lerp(shadowColor, other.shadowColor, t),
       titleTextStyle: TextStyle.lerp(titleTextStyle, other.titleTextStyle, t),
       messageTextStyle:
           TextStyle.lerp(messageTextStyle, other.messageTextStyle, t),
@@ -156,7 +147,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       other is NotificationThemeData &&
           runtimeType == other.runtimeType &&
           color == other.color &&
-          shadowColor == other.shadowColor &&
           titleTextStyle == other.titleTextStyle &&
           messageTextStyle == other.messageTextStyle &&
           iconTheme == other.iconTheme;
@@ -164,13 +154,11 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   @override
   int get hashCode => Object.hash(
         color,
-        shadowColor,
         titleTextStyle,
         messageTextStyle,
         iconTheme,
       );
 
   @override
-  String toString() =>
-      'NotificationThemeData(color: $color, shadowColor: $shadowColor)';
+  String toString() => 'NotificationThemeData(color: $color)';
 }

@@ -8,13 +8,11 @@ void main() {
     test('instantiates with specified tokens', () {
       const data = NotificationThemeData(
         color: Color(0xFF112233),
-        shadowColor: Color(0xFF000000),
         titleTextStyle: TextStyle(fontSize: 16),
         messageTextStyle: TextStyle(fontSize: 14),
       );
 
       expect(data.color, equals(const Color(0xFF112233)));
-      expect(data.shadowColor, equals(const Color(0xFF000000)));
       expect(data.titleTextStyle?.fontSize, equals(16));
       expect(data.messageTextStyle?.fontSize, equals(14));
     });
@@ -22,15 +20,12 @@ void main() {
     test('value equality and hashCode', () {
       const a = NotificationThemeData(
         color: Color(0xFF123456),
-        shadowColor: Color(0xFF000000),
       );
       const b = NotificationThemeData(
         color: Color(0xFF123456),
-        shadowColor: Color(0xFF000000),
       );
       const c = NotificationThemeData(
         color: Color(0xFF654321),
-        shadowColor: Color(0xFF000000),
       );
 
       expect(a, equals(b));
@@ -41,28 +36,24 @@ void main() {
     test('copyWith updates specified fields', () {
       const original = NotificationThemeData(
         color: Color(0xFF111111),
-        shadowColor: Color(0xFF222222),
       );
       final updated = original.copyWith(
         color: const Color(0xFF333333),
       );
 
       expect(updated.color, equals(const Color(0xFF333333)));
-      expect(updated.shadowColor, equals(const Color(0xFF222222)));
     });
 
     test('merge overrides non-null properties from other', () {
       const base = NotificationThemeData(
         color: Color(0xFF111111),
-        shadowColor: Color(0xFF222222),
       );
       const patch = NotificationThemeData(
-        shadowColor: Color(0xFF444444),
+        color: Color(0xFF444444),
       );
 
       final merged = base.merge(patch);
-      expect(merged.color, equals(const Color(0xFF111111)));
-      expect(merged.shadowColor, equals(const Color(0xFF444444)));
+      expect(merged.color, equals(const Color(0xFF444444)));
       expect(base.merge(null), equals(base));
     });
 

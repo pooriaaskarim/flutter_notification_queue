@@ -341,9 +341,5 @@ void _writeThemeSnippet(
   if (color != null) {
     buf.writeln('$indent    color: Color(${_colorHex(color)}),');
   }
-  final shadow = theme.shadowColor;
-  if (shadow != null) {
-    buf.writeln('$indent    shadowColor: Color(${_colorHex(shadow)}),');
-  }
   buf.writeln('$indent  ),');
 }

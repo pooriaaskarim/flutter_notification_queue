@@ -39,9 +39,7 @@ class NotificationTheme {
         notification.accentColor ??
         cTheme?.color ??
         ambientExtension?.color;
-    final tokenShadowColor = cTheme?.shadowColor ??
-        ambientExtension?.shadowColor ??
-        themeData.shadowColor;
+    final tokenShadowColor = themeData.shadowColor;
     final titleTextStyle = cTheme?.titleTextStyle ??
         ambientExtension?.titleTextStyle;
     final messageTextStyle = cTheme?.messageTextStyle ??
