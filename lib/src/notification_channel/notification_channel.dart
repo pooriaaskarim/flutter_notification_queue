@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
 import '../enums/enums.dart';
+import '../notification/theme/notification_theme_data.dart';
+import '../notification_queue/notification_queue.dart' show QueueStyle;
 
 const infoColor = Color(0xFF51B4F9);
 const warningColor = Color(0xFFC97725);
@@ -23,6 +25,8 @@ class NotificationChannel {
     final bool enabled = true,
     final bool vibrate = false,
     final NotificationPriority defaultPriority = NotificationPriority.normal,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
   }) =>
       NotificationChannel(
         name: 'default',
@@ -36,6 +40,8 @@ class NotificationChannel {
         position: position,
         vibrate: vibrate,
         defaultPriority: defaultPriority,
+        theme: theme,
+        style: style,
       );
 
   factory NotificationChannel.successChannel({
@@ -49,6 +55,8 @@ class NotificationChannel {
     final bool enabled = true,
     final bool vibrate = false,
     final NotificationPriority defaultPriority = NotificationPriority.normal,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
   }) =>
       NotificationChannel(
         name: 'success',
@@ -62,6 +70,8 @@ class NotificationChannel {
         enabled: enabled,
         vibrate: vibrate,
         defaultPriority: defaultPriority,
+        theme: theme,
+        style: style,
       );
 
   factory NotificationChannel.infoChannel({
@@ -75,6 +85,8 @@ class NotificationChannel {
     final bool enabled = true,
     final bool vibrate = false,
     final NotificationPriority defaultPriority = NotificationPriority.low,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
   }) =>
       NotificationChannel(
         name: 'info',
@@ -88,6 +100,8 @@ class NotificationChannel {
         enabled: enabled,
         vibrate: vibrate,
         defaultPriority: defaultPriority,
+        theme: theme,
+        style: style,
       );
 
   factory NotificationChannel.errorChannel({
@@ -101,6 +115,8 @@ class NotificationChannel {
     final bool enabled = true,
     final bool vibrate = false,
     final NotificationPriority defaultPriority = NotificationPriority.high,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
   }) =>
       NotificationChannel(
         name: 'error',
@@ -114,6 +130,8 @@ class NotificationChannel {
         enabled: enabled,
         vibrate: vibrate,
         defaultPriority: defaultPriority,
+        theme: theme,
+        style: style,
       );
 
   factory NotificationChannel.warningChannel({
@@ -127,6 +145,8 @@ class NotificationChannel {
     final bool enabled = true,
     final bool vibrate = false,
     final NotificationPriority defaultPriority = NotificationPriority.normal,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
   }) =>
       NotificationChannel(
         name: 'warning',
@@ -140,6 +160,8 @@ class NotificationChannel {
         enabled: enabled,
         vibrate: vibrate,
         defaultPriority: defaultPriority,
+        theme: theme,
+        style: style,
       );
   const NotificationChannel({
     required this.name,
@@ -147,6 +169,8 @@ class NotificationChannel {
     this.position,
     this.enabled = true,
     this.vibrate = true,
+    this.theme,
+    this.style,
     this.defaultColor,
     this.defaultForegroundColor,
     this.defaultBackgroundColor,
@@ -229,12 +253,26 @@ class NotificationChannel {
   /// Default priority of channel notifications.
   final NotificationPriority defaultPriority;
 
+  /// Theme tokens configuring the visual appearance of notifications routed
+  /// through this channel.
+  final NotificationThemeData? theme;
+
+  /// Structural card archetype override for notifications routed through this
+  /// channel.
+  ///
+  /// When non-null, overrides the queue's default [QueueStyle].
+  final QueueStyle? style;
+
   /// Default notification color of the channel.
   ///
   /// Colors icon, borders and filled [QueueStyle]s' background color.
   /// [NotificationWidget]s can override with [NotificationWidget.color].
   /// Filled [QueueStyle]s will color notification body and foreground
   /// according to this.
+  @Deprecated(
+    'Use theme: NotificationThemeData(accentColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? defaultColor;
 
   /// Default foreground color of channel notifications.
@@ -244,6 +282,10 @@ class NotificationChannel {
   /// [NotificationWidget.foregroundColor].
   /// Filled [QueueStyle]s will ignore foreground color and color notification
   /// foreground using a high-contrast color to [defaultColor].
+  @Deprecated(
+    'Use theme: NotificationThemeData(foregroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? defaultForegroundColor;
 
   /// Default background color of [NotificationChannel]'s
@@ -254,10 +296,50 @@ class NotificationChannel {
   /// [NotificationWidget.backgroundColor].
   /// Filled [QueueStyle]s will ignore background color and color notification
   /// body with [defaultColor].
+  @Deprecated(
+    'Use theme: NotificationThemeData(backgroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? defaultBackgroundColor;
 
   /// Default channel Icon
   final Widget? defaultIcon;
+
+  /// Creates a copy of this [NotificationChannel] with the given fields
+  /// replaced.
+  NotificationChannel copyWith({
+    final String? name,
+    final String? description,
+    final QueuePosition? position,
+    final bool? enabled,
+    final bool? vibrate,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
+    final Color? defaultColor,
+    final Color? defaultForegroundColor,
+    final Color? defaultBackgroundColor,
+    final Widget? defaultIcon,
+    final Duration? defaultDismissDuration,
+    final NotificationPriority? defaultPriority,
+  }) =>
+      NotificationChannel(
+        name: name ?? this.name,
+        description: description ?? this.description,
+        position: position ?? this.position,
+        enabled: enabled ?? this.enabled,
+        vibrate: vibrate ?? this.vibrate,
+        theme: theme ?? this.theme,
+        style: style ?? this.style,
+        defaultColor: defaultColor ?? this.defaultColor,
+        defaultForegroundColor:
+            defaultForegroundColor ?? this.defaultForegroundColor,
+        defaultBackgroundColor:
+            defaultBackgroundColor ?? this.defaultBackgroundColor,
+        defaultIcon: defaultIcon ?? this.defaultIcon,
+        defaultDismissDuration:
+            defaultDismissDuration ?? this.defaultDismissDuration,
+        defaultPriority: defaultPriority ?? this.defaultPriority,
+      );
 
   @override
   String toString() =>

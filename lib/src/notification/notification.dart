@@ -15,6 +15,9 @@ import '../notification_channel/notification_channel.dart';
 import '../notification_queue/notification_queue.dart';
 import '../types/type_defs.dart';
 import '../utils/utils.dart';
+import 'theme/notification_theme_data.dart';
+
+export 'theme/notification_theme_data.dart';
 
 part 'app_notification.dart';
 part 'interaction/drag_gesture_context.dart';
@@ -86,6 +89,8 @@ class NotificationWidget extends StatefulWidget {
     final Color? color,
     final Color? foregroundColor,
     final Color? backgroundColor,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
     final Duration? dismissDuration,
     final bool permanent = false,
     final NotificationBuilder? builder,
@@ -136,6 +141,8 @@ class NotificationWidget extends StatefulWidget {
       color: color,
       foregroundColor: foregroundColor,
       backgroundColor: backgroundColor,
+      theme: theme,
+      style: style,
       dismissDuration: resolvedDismissDuration,
       builder: builder,
       priority: priority,
@@ -158,6 +165,8 @@ class NotificationWidget extends StatefulWidget {
     this.color,
     this.foregroundColor,
     this.backgroundColor,
+    this.theme,
+    this.style,
     this.dismissDuration,
     this.tapBehavior,
     this.dragBehavior,
@@ -282,6 +291,10 @@ class NotificationWidget extends StatefulWidget {
   /// If null, defaults to Notification Channels
   /// [NotificationChannel.defaultColor] and if that's null
   /// [Theme.of(Context).colorScheme.primary].
+  @Deprecated(
+    'Use theme: NotificationThemeData(accentColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? color;
 
   /// Notification foreground color.
@@ -291,6 +304,10 @@ class NotificationWidget extends StatefulWidget {
   /// If null, defaults to Notification Channels
   /// [NotificationChannel.defaultForegroundColor] and if that's null
   /// [Theme.of(Context).colorScheme.onSurface].
+  @Deprecated(
+    'Use theme: NotificationThemeData(foregroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? foregroundColor;
 
   /// Notification background color
@@ -300,7 +317,17 @@ class NotificationWidget extends StatefulWidget {
   /// [NotificationChannel.defaultBackgroundColor] and if that's not provided
   /// (null value or Unregistered [NotificationChannel]),
   /// [Theme.of(Context).colorScheme.surface].
+  @Deprecated(
+    'Use theme: NotificationThemeData(backgroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? backgroundColor;
+
+  /// Optional cohesive theme tokens overriding channel-level theme.
+  final NotificationThemeData? theme;
+
+  /// Optional structural card archetype overriding channel or queue style.
+  final QueueStyle? style;
 
   /// Notification dismiss duration.
   ///
@@ -502,7 +529,7 @@ class NotificationWidgetState extends State<NotificationWidget>
       _lastBrightness = brightness;
       theme = NotificationTheme.resolveWith(
         context,
-        widget.queue.style,
+        widget.style ?? widget.channel.style ?? widget.queue.style,
         widget,
       );
     }
@@ -524,6 +551,20 @@ class NotificationWidgetState extends State<NotificationWidget>
     if (oldWidget.isPinnedNotifier != widget.isPinnedNotifier) {
       oldWidget.isPinnedNotifier.removeListener(_handlePinChanged);
       widget.isPinnedNotifier.addListener(_handlePinChanged);
+    }
+    if (oldWidget.theme != widget.theme ||
+        oldWidget.style != widget.style ||
+        // ignore: deprecated_member_use_from_same_package
+        oldWidget.color != widget.color ||
+        // ignore: deprecated_member_use_from_same_package
+        oldWidget.backgroundColor != widget.backgroundColor ||
+        // ignore: deprecated_member_use_from_same_package
+        oldWidget.foregroundColor != widget.foregroundColor) {
+      theme = NotificationTheme.resolveWith(
+        context,
+        widget.style ?? widget.channel.style ?? widget.queue.style,
+        widget,
+      );
     }
   }
 
@@ -724,10 +765,11 @@ class NotificationWidgetState extends State<NotificationWidget>
                                   spacing: 8,
                                   children: [
                                     IconTheme(
-                                      data: IconThemeData(
-                                        color: theme.color,
-                                        size: 24,
-                                      ),
+                                      data: theme.iconTheme ??
+                                          IconThemeData(
+                                            color: theme.color,
+                                            size: 24,
+                                          ),
                                       child: widget.icon ??
                                           widget.channel.defaultIcon ??
                                           const SizedBox.shrink(),
@@ -735,11 +777,12 @@ class NotificationWidgetState extends State<NotificationWidget>
                                     Expanded(
                                       child: Text(
                                         widget.message,
-                                        style: theme
-                                            .themeData.textTheme.bodyMedium
-                                            ?.copyWith(
-                                          color: theme.foregroundColor,
-                                        ),
+                                        style: theme.messageTextStyle ??
+                                            theme
+                                                .themeData.textTheme.bodyMedium
+                                                ?.copyWith(
+                                              color: theme.foregroundColor,
+                                            ),
                                         maxLines: isExpanded ? 10 : 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -785,10 +828,11 @@ class NotificationWidgetState extends State<NotificationWidget>
           textDirection: Utils.estimateDirectionOfText(widget.title ?? ''),
           child: Text(
             widget.title ?? '',
-            style: theme.themeData.textTheme.titleMedium?.copyWith(
-              color: theme.foregroundColor,
-              fontWeight: FontWeight.bold,
-            ),
+            style: theme.titleTextStyle ??
+                theme.themeData.textTheme.titleMedium?.copyWith(
+                  color: theme.foregroundColor,
+                  fontWeight: FontWeight.bold,
+                ),
             maxLines: isExpanded ? 5 : null,
             overflow: TextOverflow.ellipsis,
           ),

@@ -13,6 +13,7 @@ This document outlines the architectural changes, removals, and deprecation path
 | **`AppNotification.position`** | 🟡 Deprecated | Deprecated on data payloads. Use `NotificationChannel.position` or `controller.show(..., targetPosition:)`. |
 | **Per-Notification Gestures** | 🟡 Deprecated | `dragBehavior` and `longPressDragBehavior` on `AppNotification` are deprecated. Viewport gestures belong on `NotificationQueue`. |
 | **`initialIsPinned` & `snoozedAt`** | 🟡 Deprecated | Deprecated on `AppNotification`. Use `permanent: true` or `controller.pin(id)`. |
+| **`NotificationThemeData` & Styling** | 🟢 New / 🟡 Deprecated | Introduced `NotificationThemeData` and `style` on Channel/Notification; deprecated loose scalar colors (`color`, `defaultColor`, etc.). |
 | **Experimental Drag Intents** | 🔵 Annotated | `Pin<T>`, `Snooze<T>`, and `CustomAction<T>` are annotated `@experimental`. |
 
 ---
@@ -132,8 +133,44 @@ controller.unpin(notif.id!);
 
 ---
 
-## 5. Upcoming in v0.6.0 (Theme Token Architecture)
+## 5. Theme Token Architecture (`NotificationThemeData`)
 
-In **v0.6.0**, loose scalar color fields (`color`, `backgroundColor`, `foregroundColor` on `AppNotification`, and `defaultColor` on `NotificationChannel`) will be replaced by a unified, dark-mode reactive **`NotificationThemeData`**. 
+### Rationale
+Loose, unvalidated scalar color properties (`color`, `backgroundColor`, `foregroundColor` on `AppNotification`, and `defaultColor`, etc. on `NotificationChannel`) fail to react dynamically to dark/light mode switches, introduce WCAG contrast hazards, and lack token representation for typography, shapes, and borders.
 
-See [Theme Token Architecture Specification](planning/theme_token_architecture_spec.md) for preview details.
+In **v0.5.0**, loose color fields are marked `@Deprecated` (scheduled for removal in `v0.6.0`). The unified, dark-mode reactive **`NotificationThemeData`** and archetype **`QueueStyle`** overrides are now standard.
+
+### Migration
+
+```dart
+// ⚠️ DEPRECATED (v0.5.x)
+NotificationChannel(
+  name: 'billing',
+  defaultColor: Color(0xFF6366F1),
+  defaultBackgroundColor: Colors.black,
+);
+
+// ✅ RECOMMENDED (v0.5.0+)
+NotificationChannel(
+  name: 'billing',
+  theme: NotificationThemeData.fromSeed(
+    seedColor: const Color(0xFF6366F1),
+    brightness: Brightness.dark,
+  ),
+  style: const FilledQueueStyle(), // Optional archetype override
+);
+
+// Per-notification theme tokens:
+controller.show(
+  AppNotification(
+    message: 'Spotify: Playing Track',
+    theme: const NotificationThemeData(
+      accentColor: Color(0xFF1DB954),
+      backgroundColor: Color(0xFF121212),
+      foregroundColor: Colors.white,
+    ),
+  ),
+);
+```
+
+See [Theme Token Architecture Specification](planning/theme_token_architecture_spec.md) for full details.

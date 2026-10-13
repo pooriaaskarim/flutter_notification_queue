@@ -63,6 +63,8 @@ class AppNotification {
     this.color,
     this.foregroundColor,
     this.backgroundColor,
+    this.theme,
+    this.style,
     this.dismissDuration,
     this.permanent = false,
     this.initialIsPinned = false,
@@ -145,19 +147,37 @@ class AppNotification {
   /// Main accent color used for icons, borders, and body highlights.
   ///
   /// If `null`, falls back to the channel's default color or theme primary.
+  @Deprecated(
+    'Use theme: NotificationThemeData(accentColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? color;
 
   /// Foreground text, action button, and progress indicator color.
   ///
   /// If `null`, falls back to the channel's default foreground color or theme
   /// `onSurface`.
+  @Deprecated(
+    'Use theme: NotificationThemeData(foregroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? foregroundColor;
 
   /// Card body background color.
   ///
   /// If `null`, falls back to the channel's default background color or theme
   /// `surface`.
+  @Deprecated(
+    'Use theme: NotificationThemeData(backgroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? backgroundColor;
+
+  /// Optional cohesive theme tokens overriding channel-level theme.
+  final NotificationThemeData? theme;
+
+  /// Optional structural card archetype overriding channel or queue style.
+  final QueueStyle? style;
 
   /// Auto-dismiss timer duration for this notification.
   ///
@@ -211,9 +231,14 @@ class AppNotification {
         dragBehavior: dragBehavior,
         longPressDragBehavior: longPressDragBehavior,
         icon: icon,
+        // ignore: deprecated_member_use_from_same_package
         color: color,
+        // ignore: deprecated_member_use_from_same_package
         foregroundColor: foregroundColor,
+        // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor,
+        theme: theme,
+        style: style,
         dismissDuration: dismissDuration,
         permanent: permanent,
         builder: builder,
@@ -241,6 +266,8 @@ class AppNotification {
     final Color? color,
     final Color? foregroundColor,
     final Color? backgroundColor,
+    final NotificationThemeData? theme,
+    final QueueStyle? style,
     final Duration? dismissDuration,
     final bool? permanent,
     final bool? initialIsPinned,
@@ -261,9 +288,14 @@ class AppNotification {
             longPressDragBehavior ?? this.longPressDragBehavior,
         groupKey: groupKey ?? this.groupKey,
         icon: icon ?? this.icon,
+        // ignore: deprecated_member_use_from_same_package
         color: color ?? this.color,
+        // ignore: deprecated_member_use_from_same_package
         foregroundColor: foregroundColor ?? this.foregroundColor,
+        // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor ?? this.backgroundColor,
+        theme: theme ?? this.theme,
+        style: style ?? this.style,
         dismissDuration: dismissDuration ?? this.dismissDuration,
         permanent: permanent ?? this.permanent,
         initialIsPinned: initialIsPinned ?? this.initialIsPinned,

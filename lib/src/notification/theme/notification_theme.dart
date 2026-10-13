@@ -12,6 +12,10 @@ class NotificationTheme {
     required this.borderRadius,
     required this.shape,
     required this.border,
+    this.titleTextStyle,
+    this.messageTextStyle,
+    this.iconTheme,
+    this.theme,
   });
 
   factory NotificationTheme.resolveWith(
@@ -21,64 +25,124 @@ class NotificationTheme {
   ) {
     final themeData = Theme.of(context);
     final colorScheme = themeData.colorScheme;
+    final ambientExtension = themeData.extension<NotificationThemeData>();
+
+    // 1. Resolve structural Archetype (Style):
+    final effectiveStyle = notification.style ??
+        notification.channel.style ??
+        style;
+
+    // 2. Cascade theme tokens:
+    final nTheme = notification.theme;
+    final cTheme = notification.channel.theme;
+
+    final tokenAccent = nTheme?.accentColor ??
+        cTheme?.accentColor ??
+        ambientExtension?.accentColor;
+    final tokenBackground = nTheme?.backgroundColor ??
+        cTheme?.backgroundColor ??
+        ambientExtension?.backgroundColor;
+    final tokenForeground = nTheme?.foregroundColor ??
+        cTheme?.foregroundColor ??
+        ambientExtension?.foregroundColor;
+    final tokenBorderColor = nTheme?.borderColor ??
+        cTheme?.borderColor ??
+        ambientExtension?.borderColor;
+    final tokenBorderWidth = nTheme?.borderWidth ??
+        cTheme?.borderWidth ??
+        ambientExtension?.borderWidth;
+    final tokenBorderRadius = nTheme?.borderRadius ??
+        cTheme?.borderRadius ??
+        ambientExtension?.borderRadius ??
+        effectiveStyle.borderRadius;
+    final tokenElevation = nTheme?.elevation ??
+        cTheme?.elevation ??
+        ambientExtension?.elevation ??
+        effectiveStyle.elevation;
+    final tokenShadowColor = nTheme?.shadowColor ??
+        cTheme?.shadowColor ??
+        ambientExtension?.shadowColor ??
+        themeData.shadowColor;
+    final titleTextStyle = nTheme?.titleTextStyle ??
+        cTheme?.titleTextStyle ??
+        ambientExtension?.titleTextStyle;
+    final messageTextStyle = nTheme?.messageTextStyle ??
+        cTheme?.messageTextStyle ??
+        ambientExtension?.messageTextStyle;
+    final iconTheme = nTheme?.iconTheme ??
+        cTheme?.iconTheme ??
+        ambientExtension?.iconTheme;
+
+    // Fallbacks to deprecated scalar color properties:
+    // ignore: deprecated_member_use_from_same_package
+    final fallbackColor =
+        notification.color ?? notification.channel.defaultColor;
+    // ignore: deprecated_member_use_from_same_package
+    final fallbackBg = notification.backgroundColor ??
+        notification.channel.defaultBackgroundColor;
+    // ignore: deprecated_member_use_from_same_package
+    final fallbackFg = notification.foregroundColor ??
+        notification.channel.defaultForegroundColor;
+
+    final candidateColor = tokenAccent ?? fallbackColor;
+    final candidateBg = tokenBackground ?? fallbackBg;
+    final candidateFg = tokenForeground ?? fallbackFg;
 
     final Color color;
     final Color backgroundColor;
     final Color foregroundColor;
-    final Color shadowColor = themeData.shadowColor;
     final ShapeBorder? shapeBorder;
     final BoxBorder? border;
-    final borderRadius = style.borderRadius;
-    final elevation = style.elevation;
-    final opacity = style.opacity;
-    switch (style) {
+    final opacity = effectiveStyle.opacity;
+
+    switch (effectiveStyle) {
       case FilledQueueStyle():
-        backgroundColor = notification.color ??
-            notification.channel.defaultColor ??
-            colorScheme.primary;
-        color = foregroundColor = (backgroundColor.computeLuminance() > 0.5
-            ? Colors.black
-            : Colors.white);
-        shapeBorder = RoundedSuperellipseBorder(
-          borderRadius: borderRadius,
-        );
+        backgroundColor = candidateBg ?? candidateColor ?? colorScheme.primary;
+        color = candidateColor ??
+            (backgroundColor.computeLuminance() > 0.5
+                ? Colors.black
+                : Colors.white);
+        foregroundColor = candidateFg ??
+            (backgroundColor.computeLuminance() > 0.5
+                ? Colors.black
+                : Colors.white);
+        shapeBorder = tokenBorderColor != null
+            ? RoundedSuperellipseBorder(
+                borderRadius: tokenBorderRadius,
+                side: BorderSide(
+                  color: tokenBorderColor,
+                  width: tokenBorderWidth ?? 1.0,
+                ),
+              )
+            : RoundedSuperellipseBorder(
+                borderRadius: tokenBorderRadius,
+              );
         border = null;
+
       case OutlinedQueueStyle():
-        color = notification.color ??
-            notification.channel.defaultColor ??
-            colorScheme.primary;
-        foregroundColor = notification.foregroundColor ??
-            notification.channel.defaultForegroundColor ??
-            colorScheme.onSurface;
-        backgroundColor = notification.backgroundColor ??
-            notification.channel.defaultBackgroundColor ??
-            colorScheme.surface;
+        color = candidateColor ?? colorScheme.primary;
+        foregroundColor = candidateFg ?? colorScheme.onSurface;
+        backgroundColor = candidateBg ?? colorScheme.surface;
         shapeBorder = RoundedRectangleBorder(
-          borderRadius: borderRadius,
+          borderRadius: tokenBorderRadius,
           side: BorderSide(
-            color: color,
-            width: 1.0,
+            color: tokenBorderColor ?? color,
+            width: tokenBorderWidth ?? 1.0,
           ),
         );
         border = null;
 
       case FlatQueueStyle():
-        color = notification.color ??
-            notification.channel.defaultColor ??
-            colorScheme.onSurface;
-        foregroundColor = notification.foregroundColor ??
-            notification.channel.defaultForegroundColor ??
-            colorScheme.onSurface;
-        backgroundColor = notification.backgroundColor ??
-            notification.channel.defaultBackgroundColor ??
-            colorScheme.surface;
+        color = candidateColor ?? colorScheme.onSurface;
+        foregroundColor = candidateFg ?? colorScheme.onSurface;
+        backgroundColor = candidateBg ?? colorScheme.surface;
         shapeBorder = RoundedRectangleBorder(
-          borderRadius: borderRadius,
+          borderRadius: tokenBorderRadius,
         );
         border = BorderDirectional(
           start: BorderSide(
-            color: color,
-            width: 4,
+            color: tokenBorderColor ?? color,
+            width: tokenBorderWidth ?? 4,
           ),
         );
     }
@@ -87,12 +151,16 @@ class NotificationTheme {
       color: color,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
-      shadowColor: shadowColor,
-      borderRadius: borderRadius,
-      elevation: elevation,
+      shadowColor: tokenShadowColor,
+      borderRadius: tokenBorderRadius,
+      elevation: tokenElevation,
       opacity: opacity,
       border: border,
       shape: shapeBorder,
+      titleTextStyle: titleTextStyle,
+      messageTextStyle: messageTextStyle,
+      iconTheme: iconTheme,
+      theme: nTheme ?? cTheme ?? ambientExtension,
     );
   }
 
@@ -115,7 +183,7 @@ class NotificationTheme {
   /// with [color].
   final Color backgroundColor;
 
-  /// Notification shadow color, derived from [ThemeData.shadowColor].
+  /// Notification shadow color, derived from [ThemeData.shadowColor] or tokens.
   final Color shadowColor;
 
   final ShapeBorder? shape;
@@ -123,4 +191,17 @@ class NotificationTheme {
   final double elevation;
   final double opacity;
   final BorderRadiusGeometry borderRadius;
+
+  /// Typography styling override for the notification title.
+  final TextStyle? titleTextStyle;
+
+  /// Typography styling override for the notification message.
+  final TextStyle? messageTextStyle;
+
+  /// Icon theme override for the leading icon.
+  final IconThemeData? iconTheme;
+
+  /// Effective [NotificationThemeData] token bundle resolved for this
+  /// notification.
+  final NotificationThemeData? theme;
 }
