@@ -172,9 +172,6 @@ class QueueSetup extends Equatable {
     if (dragBehaviorType == Pin) {
       return const Pin();
     }
-    if (dragBehaviorType == Archive) {
-      return const Archive();
-    }
     if (dragBehaviorType == Relocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
@@ -201,9 +198,6 @@ class QueueSetup extends Equatable {
     }
     if (longPressBehaviorType == Pin) {
       return const Pin();
-    }
-    if (longPressBehaviorType == Archive) {
-      return const Archive();
     }
     if (longPressBehaviorType == Relocate) {
       return relocateTargets.isEmpty

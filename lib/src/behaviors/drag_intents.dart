@@ -22,15 +22,6 @@ final class Pin<T> extends QueueNotificationBehavior<T> {
   });
 }
 
-/// Archives the notification, removing it from the queue and triggering
-/// a semantic archive callback.
-final class Archive<T> extends QueueNotificationBehavior<T> {
-  const Archive({
-    super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
-    super.springPhysics = const SpringPhysicsConfiguration.premium(),
-  });
-}
-
 /// Triggers a developer-defined custom action identified by a unique action
 /// label.
 final class CustomAction<T> extends QueueNotificationBehavior<T> {

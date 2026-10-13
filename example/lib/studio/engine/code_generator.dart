@@ -246,9 +246,6 @@ String _behaviorSnippet(final Type t, final QueueSetup q, final bool isDrag) {
   if (t == Pin) {
     return 'const Pin()';
   }
-  if (t == Archive) {
-    return 'const Archive()';
-  }
   if (t == Relocate) {
     return q.relocateTargets.isEmpty
         ? 'Relocate.to({}) // ERROR: Relocation targets must not be empty!'

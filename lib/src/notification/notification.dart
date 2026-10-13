@@ -23,7 +23,6 @@ part 'interaction/overlays/dismissal_targets.dart';
 part 'interaction/overlays/intent_targets.dart';
 part 'interaction/overlays/relocation_targets.dart';
 part 'interaction/overlays/reorder_targets.dart';
-part 'interaction/plugins/archive.dart';
 part 'interaction/plugins/base.dart';
 part 'interaction/plugins/custom_action.dart';
 part 'interaction/plugins/dismiss.dart';
