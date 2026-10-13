@@ -252,16 +252,8 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     });
   }
 
-  QueueStyle? _resolveStyle(final Type? type) => switch (type) {
-        == FilledQueueStyle => const FilledQueueStyle(),
-        == OutlinedQueueStyle => const OutlinedQueueStyle(),
-        == FlatQueueStyle => const FlatQueueStyle(),
-        _ => null,
-      };
-
   void _testFire() {
     final theme = _buildCurrentTheme();
-    final style = _resolveStyle(_styleType);
     final channelName = widget.channelName ?? 'default';
 
     NotificationScope.of(context).show(
@@ -270,7 +262,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
         message: widget.previewMessage,
         channelName: channelName,
         theme: theme,
-        style: style,
         action: NotificationAction.button(
           label: 'DISMISS',
           onPressed: () {},
@@ -726,15 +717,17 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
   Widget _buildControls() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-        // ── Active Physical Structure (Gear 1) ──
-        StyleArchetypeSelector(
-          label: 'STRUCTURE ARCHETYPE (GEAR 1)',
-          badgeLabel: widget.channelName != null ? 'CHANNEL' : 'OVERRIDE',
-          selectedType: _styleType,
-          showInheritDefault: true,
-          onChanged: (final v) => setState(() => _styleType = v),
-        ),
-        const SizedBox(height: 16),
+          // ── Active Physical Structure (Gear 1) ──
+          if (!widget.isNotificationOverride) ...[
+            StyleArchetypeSelector(
+              label: 'CHANNEL STRUCTURE ARCHETYPE (GEAR 1)',
+              badgeLabel: 'CHANNEL',
+              selectedType: _styleType,
+              showInheritDefault: true,
+              onChanged: (final v) => setState(() => _styleType = v),
+            ),
+            const SizedBox(height: 16),
+          ],
 
         // ── Presets & Seed Colors ──
         const StudioSectionHeader(title: 'COLOR PALETTE PRESETS'),

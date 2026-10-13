@@ -265,53 +265,7 @@ void main() {
     );
 
     testWidgets(
-      'Notification style archetype overrides channel style and queue style',
-      (final tester) async {
-        late NotificationTheme resolved;
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Builder(
-              builder: (final context) {
-                final widget = NotificationWidget(
-                  message: 'Filled test',
-                  style: const FilledQueueStyle(
-                    borderRadius: BorderRadius.all(Radius.circular(20)),
-                  ),
-                  configuration: ConfigurationManager(
-                    queues: {
-                      const NotificationQueue(style: FlatQueueStyle()),
-                    },
-                    channels: {
-                      const NotificationChannel(
-                        name: 'default',
-                        style: OutlinedQueueStyle(),
-                      ),
-                    },
-                  ),
-                );
-
-                resolved = NotificationTheme.resolveWith(
-                  context,
-                  const FlatQueueStyle(),
-                  widget,
-                );
-                return const SizedBox();
-              },
-            ),
-          ),
-        );
-
-        expect(
-          resolved.borderRadius,
-          equals(const BorderRadius.all(Radius.circular(20))),
-        );
-        expect(resolved.shape, isA<RoundedSuperellipseBorder>());
-      },
-    );
-
-    testWidgets(
-      'Channel style overrides queue style when notification style is null',
+      'Channel style archetype overrides queue baseline style',
       (final tester) async {
         late NotificationTheme resolved;
 

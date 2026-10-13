@@ -28,9 +28,7 @@ class NotificationTheme {
     final ambientExtension = themeData.extension<NotificationThemeData>();
 
     // 1. Resolve structural Archetype (Style):
-    final effectiveStyle = notification.style ??
-        notification.channel.style ??
-        style;
+    final effectiveStyle = notification.channel.style ?? style;
 
     // 2. Cascade theme tokens:
     final nTheme = notification.theme;

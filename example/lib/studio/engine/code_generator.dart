@@ -124,12 +124,6 @@ void _writeDispatch(final StringBuffer buf, final NotificationDraft draft) {
     buf.writeln('    permanent: true,');
   }
 
-  if (draft.styleOverride != null) {
-    buf.writeln(
-      '    style: const ${_styleClassName(draft.styleOverride!)}(),',
-    );
-  }
-
   if (draft.themeOverride != null) {
     _writeThemeSnippet(buf, draft.themeOverride!, indent: '  ');
   }

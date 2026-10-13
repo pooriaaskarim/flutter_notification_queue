@@ -11,7 +11,6 @@ import '../../widgets/studio_section_header.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_text_field.dart';
 import '../../widgets/studio_toggle_tile.dart';
-import '../../widgets/style_archetype_selector.dart';
 import '../../widgets/theme_designer_dialog.dart';
 
 class PreviewSection extends StatelessWidget {
@@ -133,17 +132,6 @@ class PreviewSection extends StatelessWidget {
           onChanged: (final v) =>
               context.read<NotificationBloc>().add(UpdateMessage(v)),
         ),
-        // ── Gear 1: Notification Style Archetype Override ──
-        StyleArchetypeSelector(
-          label: 'ALERT STYLE ARCHETYPE',
-          badgeLabel: 'ALERT OVERRIDE',
-          selectedType: draft.styleOverride,
-          showInheritDefault: true,
-          onChanged: (final v) =>
-              context.read<NotificationBloc>().add(UpdateStyleOverride(v)),
-        ),
-        const SizedBox(height: 12),
-
         // ── Gear 2: Notification Theme Override ──
         _NotificationThemeOverrideTile(
           draft: draft,
@@ -504,8 +492,7 @@ class _NotificationThemeOverrideTile extends StatelessWidget {
                     title: 'Notification Theme Override',
                     channelName: draft.channelName,
                     initialTheme: draft.themeOverride ?? baseTheme,
-                    initialStyleType:
-                        draft.styleOverride ?? channelSetup?.styleType,
+                    initialStyleType: channelSetup?.styleType,
                     previewTitle: draft.title.isNotEmpty
                         ? draft.title
                         : 'Preview Notification',
@@ -513,13 +500,10 @@ class _NotificationThemeOverrideTile extends StatelessWidget {
                         ? draft.message
                         : 'Custom styled notification card preview.',
                     isNotificationOverride: true,
-                    onApply: (final newTheme, final newStyleType) {
+                    onApplyTheme: (final newTheme) {
                       context
                           .read<NotificationBloc>()
                           .add(UpdateThemeOverride(newTheme));
-                      context
-                          .read<NotificationBloc>()
-                          .add(UpdateStyleOverride(newStyleType));
                     },
                   ),
                 ),

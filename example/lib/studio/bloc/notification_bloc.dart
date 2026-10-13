@@ -66,11 +66,6 @@ final class UpdateThemeOverride extends StudioNotificationEvent {
   final NotificationThemeData? theme;
 }
 
-final class UpdateStyleOverride extends StudioNotificationEvent {
-  const UpdateStyleOverride(this.styleType);
-  final Type? styleType;
-}
-
 final class UpdateDragBehaviorOverride extends StudioNotificationEvent {
   const UpdateDragBehaviorOverride(this.type);
   final Type? type;
@@ -107,7 +102,6 @@ class NotificationDraft {
     this.permanent = false,
     final bool? initialIsPinned,
     this.themeOverride,
-    this.styleOverride,
     this.dragBehaviorOverrideType,
     this.snoozeDurationSeconds = 5,
   }) : _initialIsPinned = initialIsPinned ?? permanent;
@@ -138,10 +132,6 @@ class NotificationDraft {
   /// One-off [NotificationThemeData] palette override for preview card.
   final NotificationThemeData? themeOverride;
 
-  /// One-off [QueueStyle] type override for preview card (e.g.
-  /// [FilledQueueStyle]).
-  final Type? styleOverride;
-
   /// Optional per-notification drag behavior override.
   final Type? dragBehaviorOverrideType;
 
@@ -160,7 +150,6 @@ class NotificationDraft {
     final bool? permanent,
     final bool? initialIsPinned,
     final NotificationThemeData? Function()? themeOverride,
-    final Type? Function()? styleOverride,
     final Type? Function()? dragBehaviorOverrideType,
     final int? snoozeDurationSeconds,
   }) =>
@@ -179,8 +168,6 @@ class NotificationDraft {
         permanent: permanent ?? initialIsPinned ?? this.permanent,
         themeOverride:
             themeOverride != null ? themeOverride() : this.themeOverride,
-        styleOverride:
-            styleOverride != null ? styleOverride() : this.styleOverride,
         dragBehaviorOverrideType: dragBehaviorOverrideType != null
             ? dragBehaviorOverrideType()
             : this.dragBehaviorOverrideType,
@@ -241,10 +228,6 @@ class NotificationBloc
       (final event, final emit) =>
           emit(state.copyWith(themeOverride: () => event.theme)),
     );
-    on<UpdateStyleOverride>(
-      (final event, final emit) =>
-          emit(state.copyWith(styleOverride: () => event.styleType)),
-    );
     on<UpdateDragBehaviorOverride>(
       (final event, final emit) => emit(
         state.copyWith(dragBehaviorOverrideType: () => event.type),
@@ -287,16 +270,6 @@ class NotificationBloc
         channelSetup?.position ??
         setupBloc.state.activeQueuePosition;
 
-    QueueStyle? resolvedStyle;
-    if (draft.styleOverride != null) {
-      resolvedStyle = switch (draft.styleOverride) {
-        == FilledQueueStyle => const FilledQueueStyle(),
-        == OutlinedQueueStyle => const OutlinedQueueStyle(),
-        == FlatQueueStyle => const FlatQueueStyle(),
-        _ => null,
-      };
-    }
-
     // Fire notification via NotificationController with targetPosition routing
     setupBloc.controller.show(
       AppNotification(
@@ -305,7 +278,6 @@ class NotificationBloc
         channelName: draft.channelName,
         priority: draft.priority,
         permanent: draft.permanent,
-        style: resolvedStyle,
         theme: draft.themeOverride,
         action: action,
         tapBehavior: tapBehavior,

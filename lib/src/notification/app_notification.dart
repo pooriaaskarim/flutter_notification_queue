@@ -64,7 +64,6 @@ class AppNotification {
     this.foregroundColor,
     this.backgroundColor,
     this.theme,
-    this.style,
     this.dismissDuration,
     this.permanent = false,
     this.initialIsPinned = false,
@@ -176,9 +175,6 @@ class AppNotification {
   /// Optional cohesive theme tokens overriding channel-level theme.
   final NotificationThemeData? theme;
 
-  /// Optional structural card archetype overriding channel or queue style.
-  final QueueStyle? style;
-
   /// Auto-dismiss timer duration for this notification.
   ///
   /// When `null` and [permanent] is `false`, the notification uses the default
@@ -238,7 +234,6 @@ class AppNotification {
         // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor,
         theme: theme,
-        style: style,
         dismissDuration: dismissDuration,
         permanent: permanent,
         builder: builder,
@@ -267,7 +262,6 @@ class AppNotification {
     final Color? foregroundColor,
     final Color? backgroundColor,
     final NotificationThemeData? theme,
-    final QueueStyle? style,
     final Duration? dismissDuration,
     final bool? permanent,
     final bool? initialIsPinned,
@@ -295,7 +289,6 @@ class AppNotification {
         // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor ?? this.backgroundColor,
         theme: theme ?? this.theme,
-        style: style ?? this.style,
         dismissDuration: dismissDuration ?? this.dismissDuration,
         permanent: permanent ?? this.permanent,
         initialIsPinned: initialIsPinned ?? this.initialIsPinned,

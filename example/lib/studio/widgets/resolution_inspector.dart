@@ -27,14 +27,10 @@ class ResolutionInspector extends StatelessWidget {
 
     final queueStyleType = queueSetup?.styleType ?? FilledQueueStyle;
     final channelStyleType = channelSetup?.styleType;
-    final notificationStyleType = draft.styleOverride;
 
     final String effectiveStyleName;
     final String styleResolutionSource;
-    if (notificationStyleType != null) {
-      effectiveStyleName = _styleName(notificationStyleType);
-      styleResolutionSource = 'Alert Override';
-    } else if (channelStyleType != null) {
+    if (channelStyleType != null) {
       effectiveStyleName = _styleName(channelStyleType);
       styleResolutionSource = 'Channel (#${draft.channelName})';
     } else {

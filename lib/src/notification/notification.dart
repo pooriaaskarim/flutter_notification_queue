@@ -90,7 +90,6 @@ class NotificationWidget extends StatefulWidget {
     final Color? foregroundColor,
     final Color? backgroundColor,
     final NotificationThemeData? theme,
-    final QueueStyle? style,
     final Duration? dismissDuration,
     final bool permanent = false,
     final NotificationBuilder? builder,
@@ -142,7 +141,6 @@ class NotificationWidget extends StatefulWidget {
       foregroundColor: foregroundColor,
       backgroundColor: backgroundColor,
       theme: theme,
-      style: style,
       dismissDuration: resolvedDismissDuration,
       builder: builder,
       priority: priority,
@@ -166,7 +164,6 @@ class NotificationWidget extends StatefulWidget {
     this.foregroundColor,
     this.backgroundColor,
     this.theme,
-    this.style,
     this.dismissDuration,
     this.tapBehavior,
     this.dragBehavior,
@@ -325,9 +322,6 @@ class NotificationWidget extends StatefulWidget {
 
   /// Optional cohesive theme tokens overriding channel-level theme.
   final NotificationThemeData? theme;
-
-  /// Optional structural card archetype overriding channel or queue style.
-  final QueueStyle? style;
 
   /// Notification dismiss duration.
   ///
@@ -529,7 +523,7 @@ class NotificationWidgetState extends State<NotificationWidget>
       _lastBrightness = brightness;
       theme = NotificationTheme.resolveWith(
         context,
-        widget.style ?? widget.channel.style ?? widget.queue.style,
+        widget.channel.style ?? widget.queue.style,
         widget,
       );
     }
@@ -553,7 +547,8 @@ class NotificationWidgetState extends State<NotificationWidget>
       widget.isPinnedNotifier.addListener(_handlePinChanged);
     }
     if (oldWidget.theme != widget.theme ||
-        oldWidget.style != widget.style ||
+        oldWidget.channel.style != widget.channel.style ||
+        oldWidget.queue.style != widget.queue.style ||
         // ignore: deprecated_member_use_from_same_package
         oldWidget.color != widget.color ||
         // ignore: deprecated_member_use_from_same_package
@@ -562,7 +557,7 @@ class NotificationWidgetState extends State<NotificationWidget>
         oldWidget.foregroundColor != widget.foregroundColor) {
       theme = NotificationTheme.resolveWith(
         context,
-        widget.style ?? widget.channel.style ?? widget.queue.style,
+        widget.channel.style ?? widget.queue.style,
         widget,
       );
     }
