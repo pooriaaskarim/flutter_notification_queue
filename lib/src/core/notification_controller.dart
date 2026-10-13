@@ -8,7 +8,10 @@ abstract class NotificationScopeState {
   Stream<NotificationEvent> get events;
 
   /// Enqueues [notification] for display.
-  void show(final AppNotification notification);
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  });
 
   /// Dismisses the notification described by [notification] by matching its id.
   void dismiss(
@@ -202,9 +205,15 @@ class NotificationController {
 
   /// Enqueues [notification] for display.
   ///
+  /// Optionally supply [targetPosition] to route the notification to a
+  /// specific queue position, overriding channel defaults.
+  ///
   /// Throws [StateError] if no `NotificationScope` is currently attached.
   /// Use [tryShow] for race conditions where the scope may not yet be mounted.
-  void show(final AppNotification notification) {
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
     if (!isAttached) {
       throw StateError(
         'Cannot show notification: No NotificationScope is currently attached '
@@ -212,18 +221,24 @@ class NotificationController {
         'in the widget tree with this controller.',
       );
     }
-    _attachedState!.show(notification);
+    _attachedState!.show(notification, targetPosition: targetPosition);
   }
 
   /// Enqueues [notification] if a `NotificationScope` is attached; silently
   /// no-ops otherwise.
   ///
+  /// Optionally supply [targetPosition] to route the notification to a
+  /// specific queue position, overriding channel defaults.
+  ///
   /// Follows Dart's `tryXxx` convention: the safe, non-throwing alternative.
   /// Use this for app-startup race conditions where a BLoC or service may emit
   /// a notification before the first frame renders the scope.
-  void tryShow(final AppNotification notification) {
+  void tryShow(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
     if (isAttached) {
-      show(notification);
+      show(notification, targetPosition: targetPosition);
     }
   }
 

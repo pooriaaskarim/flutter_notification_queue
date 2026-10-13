@@ -92,6 +92,11 @@ class AppNotification {
   ///
   /// When `null`, the position is resolved from the channel's configured
   /// position or the default queue position.
+  @Deprecated(
+    'Do not specify position on data payloads. '
+    'Route via NotificationChannel.position, or supply targetPosition to '
+    'NotificationController.show(). Scheduled for removal in v0.6.0.',
+  )
   final QueuePosition? position;
 
   /// Optional priority rank override for queue triage and backpressure.
@@ -110,9 +115,19 @@ class AppNotification {
   /// Per-notification override for drag interaction behavior.
   ///
   /// When set, this takes precedence over the queue's default [DragBehavior].
+  @Deprecated(
+    'Queue-level viewport gesture physics should not be overridden per '
+    'notification. Configure dragBehavior on NotificationQueue, or use '
+    'explicit action buttons. Scheduled for removal in v0.6.0.',
+  )
   final DragBehavior? dragBehavior;
 
   /// Per-notification override for long-press drag interaction behavior.
+  @Deprecated(
+    'Queue-level viewport gesture physics should not be overridden per '
+    'notification. Configure longPressDragBehavior on NotificationQueue. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final LongPressDragBehavior? longPressDragBehavior;
 
   /// Optional grouping key for bundling notifications into stack pills.
@@ -158,9 +173,17 @@ class AppNotification {
   /// Whether the notification starts in a pinned state upon initial display.
   ///
   /// Pinned notifications are immune to auto-dismiss timers and swipe dismiss.
+  @Deprecated(
+    'Use permanent: true or controller.pin(id) to manage persistent '
+    'notifications. Scheduled for removal in v0.6.0.',
+  )
   final bool initialIsPinned;
 
   /// Optional timestamp recording when this notification was snoozed.
+  @Deprecated(
+    'snoozedAt is internal runtime state managed by QueueCoordinator. '
+    'Do not pass in public constructor. Scheduled for removal in v0.6.0.',
+  )
   final DateTime? snoozedAt;
 
   /// Custom builder for customizing the card indicator or stack appearance.
@@ -175,13 +198,14 @@ class AppNotification {
   NotificationWidget toWidget([
     final ConfigurationManager? configuration,
     final QueueCoordinator? coordinator,
+    final QueuePosition? targetPosition,
   ]) =>
       NotificationWidget(
         message: message,
         id: id,
         channelName: channelName,
         title: title,
-        position: position,
+        position: targetPosition ?? position,
         action: action,
         tapBehavior: tapBehavior,
         dragBehavior: dragBehavior,

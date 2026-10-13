@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 class _FakeNotificationScopeState implements NotificationScopeState {
   final _eventController = StreamController<NotificationEvent>.broadcast();
   final List<AppNotification> shownNotifications = [];
+  final List<QueuePosition?> shownPositions = [];
   final List<AppNotification> dismissedNotifications = [];
   bool dismissedAll = false;
   bool dismissedNewest = false;
@@ -23,8 +24,12 @@ class _FakeNotificationScopeState implements NotificationScopeState {
   Stream<NotificationEvent> get events => _eventController.stream;
 
   @override
-  void show(final AppNotification notification) {
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
     shownNotifications.add(notification);
+    shownPositions.add(targetPosition);
   }
 
   @override
@@ -320,6 +325,28 @@ void main() {
       } finally {
         FlutterError.onError = originalHandler;
       }
+    });
+
+    test('show and tryShow forward targetPosition to attached scope', () {
+      final controller = NotificationController(
+        queues: {const NotificationQueue()},
+      );
+      final fakeScope = _FakeNotificationScopeState();
+      controller.attach(fakeScope);
+      addTearDown(controller.dispose);
+
+      const notif1 = AppNotification(message: 'Default routing');
+      const notif2 = AppNotification(message: 'Targeted routing');
+
+      controller
+        ..show(notif1)
+        ..show(notif2, targetPosition: QueuePosition.bottomCenter)
+        ..tryShow(notif1, targetPosition: QueuePosition.topRight);
+
+      expect(fakeScope.shownNotifications.length, equals(3));
+      expect(fakeScope.shownPositions[0], isNull);
+      expect(fakeScope.shownPositions[1], equals(QueuePosition.bottomCenter));
+      expect(fakeScope.shownPositions[2], equals(QueuePosition.topRight));
     });
   });
 }

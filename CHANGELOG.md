@@ -14,8 +14,12 @@
 - **Lifecycle & Chaining Unit Tests**: Added unit tests covering `NotificationController` and `QueueCoordinator` disposal idempotency, snooze timer cancellation on detach/dispose, and `FlutterError.onError` preservation.
 
 ### Code Quality & Documentation
-- **Resolved Codebase TODOs**: Clarified and documented rationale for per-notification gesture interaction overrides in `AppNotification`, theme shadow color derivation in `NotificationTheme`, and duration permanence rules in `NotificationWidget`.
+### Architectural Governance & Migration Phase 1
+- **Contextual Dispatch-Time Routing (`targetPosition`)**: Added `targetPosition` parameter to `NotificationController.show()`, `controller.tryShow()`, and `QueueCoordinator.show()`, enabling callers to specify placement contextually without hardcoding coordinates on data payloads.
 - **Architectural Hierarchy & Removal of Archiving**: Removed phantom `Archive<T>` drag intent and plugin. Standardized on the 3-tier hierarchy (Queue for physics/layout, Channel for semantics/defaults, Notification for payload content).
+- **Payload Deprecation Window (v0.5.x $\rightarrow$ v0.6.0)**: Marked `AppNotification.position`, `dragBehavior`, `longPressDragBehavior`, `initialIsPinned`, and `snoozedAt` as `@Deprecated` with non-breaking fallbacks, initiating the transition to a pure data payload.
+- **Multi-Window Layout Modernization**: Migrated `_QueueOverlayLayoutDelegate` from `PlatformDispatcher.instance.implicitView` to context-aware `View.maybeOf(context)`, future-proofing for multi-window Flutter.
+- **Experimental Drag Intents**: Annotated `Pin<T>`, `Snooze<T>`, and `CustomAction<T>` with `@experimental`.
 
 ### Studio & Tooling
 - **Snooze & Pin Studio Integration**: Added interactive configurator controls, live preview actions, and dedicated demo scenarios for Snooze duration and Pin toggling.

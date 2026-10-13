@@ -189,8 +189,17 @@ class QueueCoordinator implements NotificationScopeState {
   }
 
   @override
-  void show(final AppNotification notification) {
-    queue(notification.toWidget(configuration, this));
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
+    queue(
+      notification.toWidget(
+        configuration,
+        this,
+        targetPosition,
+      ),
+    );
   }
 
   // ── Dismiss ──────────────────────────────────────────────────────────────
