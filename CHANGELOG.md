@@ -15,6 +15,11 @@
 
 ### Code Quality & Documentation
 - **Resolved Codebase TODOs**: Clarified and documented rationale for per-notification gesture interaction overrides in `AppNotification`, theme shadow color derivation in `NotificationTheme`, and duration permanence rules in `NotificationWidget`.
+- **Architectural Hierarchy & Removal of Archiving**: Removed phantom `Archive<T>` drag intent and plugin. Standardized on the 3-tier hierarchy (Queue for physics/layout, Channel for semantics/defaults, Notification for payload content).
+
+### Studio & Tooling
+- **Snooze & Pin Studio Integration**: Added interactive configurator controls, live preview actions, and dedicated demo scenarios for Snooze duration and Pin toggling.
+- **Multi-Platform Toolchain**: Modernized Gradle build configuration and added unified multi-platform launcher script (`example/scripts/run.sh`).
 
 ## [0.4.1] - 2026-09-12
 
