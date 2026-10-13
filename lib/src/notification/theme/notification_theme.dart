@@ -35,18 +35,9 @@ class NotificationTheme {
     // 2. Cascade theme tokens:
     final cTheme = notification.channel.theme;
 
-    final tokenAccent = notification.accentColor ??
-        cTheme?.accentColor ??
-        ambientExtension?.accentColor;
-    final tokenBackground = cTheme?.backgroundColor ??
-        ambientExtension?.backgroundColor;
-    final tokenForeground = cTheme?.foregroundColor ??
-        ambientExtension?.foregroundColor;
-    final tokenBorderColor = cTheme?.borderColor ??
-        ambientExtension?.borderColor;
-    final tokenBorderWidth = effectiveStyle.borderWidth;
-    final tokenBorderRadius = effectiveStyle.borderRadius;
-    final tokenElevation = effectiveStyle.elevation;
+    final tokenColor = notification.accentColor ??
+        cTheme?.color ??
+        ambientExtension?.color;
     final tokenShadowColor = cTheme?.shadowColor ??
         ambientExtension?.shadowColor ??
         themeData.shadowColor;
@@ -61,16 +52,8 @@ class NotificationTheme {
     // ignore: deprecated_member_use_from_same_package
     final fallbackColor =
         notification.color ?? notification.channel.defaultColor;
-    // ignore: deprecated_member_use_from_same_package
-    final fallbackBg = notification.backgroundColor ??
-        notification.channel.defaultBackgroundColor;
-    // ignore: deprecated_member_use_from_same_package
-    final fallbackFg = notification.foregroundColor ??
-        notification.channel.defaultForegroundColor;
 
-    final candidateColor = tokenAccent ?? fallbackColor;
-    final candidateBg = tokenBackground ?? fallbackBg;
-    final candidateFg = tokenForeground ?? fallbackFg;
+    final candidateColor = tokenColor ?? fallbackColor;
 
     final Color color;
     final Color backgroundColor;
@@ -78,58 +61,55 @@ class NotificationTheme {
     final ShapeBorder? shapeBorder;
     final BoxBorder? border;
     final opacity = effectiveStyle.opacity;
+    final tokenBorderRadius = effectiveStyle.borderRadius;
+    final tokenBorderWidth = effectiveStyle.borderWidth;
+    final tokenElevation = effectiveStyle.elevation;
 
     switch (effectiveStyle) {
       case FilledQueueStyle():
-        backgroundColor = candidateBg ?? candidateColor ?? colorScheme.primary;
-        color = candidateColor ??
-            (backgroundColor.computeLuminance() > 0.5
-                ? Colors.black
-                : Colors.white);
-        foregroundColor = candidateFg ??
-            (backgroundColor.computeLuminance() > 0.5
-                ? Colors.black
-                : Colors.white);
-        shapeBorder = tokenBorderColor != null
-            ? RoundedSuperellipseBorder(
-                borderRadius: tokenBorderRadius,
-                side: BorderSide(
-                  color: tokenBorderColor,
-                  width: tokenBorderWidth ?? 1.0,
-                ),
-              )
-            : RoundedSuperellipseBorder(
-                borderRadius: tokenBorderRadius,
-              );
+        color = candidateColor ?? colorScheme.primary;
+        backgroundColor = color;
+        foregroundColor = (backgroundColor.computeLuminance() > 0.5
+            ? Colors.black
+            : Colors.white);
+        shapeBorder = RoundedSuperellipseBorder(
+          borderRadius: tokenBorderRadius,
+        );
         border = null;
 
       case OutlinedQueueStyle():
         color = candidateColor ?? colorScheme.primary;
-        foregroundColor = candidateFg ?? colorScheme.onSurface;
-        backgroundColor = candidateBg ?? colorScheme.surface;
+        foregroundColor = colorScheme.onSurface;
+        backgroundColor = colorScheme.surface;
         shapeBorder = RoundedRectangleBorder(
           borderRadius: tokenBorderRadius,
           side: BorderSide(
-            color: tokenBorderColor ?? color,
+            color: color,
             width: tokenBorderWidth ?? 1.0,
           ),
         );
         border = null;
 
       case FlatQueueStyle():
-        color = candidateColor ?? colorScheme.onSurface;
-        foregroundColor = candidateFg ?? colorScheme.onSurface;
-        backgroundColor = candidateBg ?? colorScheme.surface;
+        color = candidateColor ?? colorScheme.primary;
+        foregroundColor = colorScheme.onSurface;
+        backgroundColor = colorScheme.surface;
         shapeBorder = RoundedRectangleBorder(
           borderRadius: tokenBorderRadius,
         );
         border = BorderDirectional(
           start: BorderSide(
-            color: tokenBorderColor ?? color,
+            color: color,
             width: tokenBorderWidth ?? 4.0,
           ),
         );
     }
+
+    final resolvedIconTheme = (iconTheme ?? const IconThemeData()).copyWith(
+      color: iconTheme?.color ??
+          (effectiveStyle is FilledQueueStyle ? foregroundColor : color),
+    );
+
     return NotificationTheme._(
       themeData: themeData,
       color: color,
@@ -145,7 +125,7 @@ class NotificationTheme {
       borderWidth: tokenBorderWidth,
       titleTextStyle: titleTextStyle,
       messageTextStyle: messageTextStyle,
-      iconTheme: iconTheme,
+      iconTheme: resolvedIconTheme,
       theme: cTheme ?? ambientExtension,
     );
   }

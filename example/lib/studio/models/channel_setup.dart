@@ -97,11 +97,9 @@ class ChannelSetup extends Equatable {
   /// Builds the library [NotificationChannel] from this setup.
   NotificationChannel toNotificationChannel() {
     final effectiveTheme = theme ??
-        (color != null || foregroundColor != null || backgroundColor != null
+        (color != null
             ? NotificationThemeData(
-                accentColor: color,
-                foregroundColor: foregroundColor,
-                backgroundColor: backgroundColor,
+                color: color,
               )
             : null);
     return NotificationChannel(

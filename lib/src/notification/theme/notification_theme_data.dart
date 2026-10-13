@@ -7,30 +7,29 @@ import '../../enums/enums.dart';
 /// Immutable theme tokens defining colors, typography, and icons
 /// for notifications.
 ///
-/// [NotificationThemeData] allows channels and notifications to be themed
-/// consistently across light and dark modes, adhering to design system tokens.
+/// In accordance with the parametric design system, [color] (or [accentColor])
+/// acts as the primary visual driver for brand and status. How this color is
+/// distributed (solid card fill, outline stroke, or leading accent bar) is
+/// governed deterministically by the active [QueueStyle] archetype.
 ///
 /// It extends [ThemeExtension] so it can be registered globally in
 /// [ThemeData.extensions] or configured per [NotificationChannel] and per
 /// [AppNotification].
 ///
 /// Use factory constructors like [NotificationThemeData.fromColorScheme] or
-/// [NotificationThemeData.fromSeed] to automatically generate cohesive,
-/// accessible palettes.
+/// [NotificationThemeData.fromSeed] to automatically generate cohesive
+/// palettes.
 @immutable
 class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Creates an immutable [NotificationThemeData] token bundle.
   const NotificationThemeData({
-    final Color? accentColor,
     final Color? color,
-    this.backgroundColor,
-    this.foregroundColor,
-    this.borderColor,
+    final Color? accentColor,
     this.shadowColor,
     this.titleTextStyle,
     this.messageTextStyle,
     this.iconTheme,
-  }) : accentColor = accentColor ?? color;
+  }) : color = color ?? accentColor;
 
   /// Creates a [NotificationThemeData] configured from a Material 3
   /// [ColorScheme].
@@ -38,28 +37,14 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     final ColorScheme colorScheme, {
     final NotificationPriority priority = NotificationPriority.normal,
   }) {
-    final (accent, bg, fg) = switch (priority) {
-      NotificationPriority.critical || NotificationPriority.high => (
-          colorScheme.error,
-          colorScheme.errorContainer,
-          colorScheme.onErrorContainer,
-        ),
-      NotificationPriority.low => (
-          colorScheme.secondary,
-          colorScheme.surfaceContainerHighest,
-          colorScheme.onSurfaceVariant,
-        ),
-      NotificationPriority.normal => (
-          colorScheme.primary,
-          colorScheme.surface,
-          colorScheme.onSurface,
-        ),
+    final tokenColor = switch (priority) {
+      NotificationPriority.critical || NotificationPriority.high =>
+        colorScheme.error,
+      NotificationPriority.low => colorScheme.secondary,
+      NotificationPriority.normal => colorScheme.primary,
     };
     return NotificationThemeData(
-      accentColor: accent,
-      backgroundColor: bg,
-      foregroundColor: fg,
-      borderColor: colorScheme.outlineVariant,
+      color: tokenColor,
       shadowColor: colorScheme.shadow,
     );
   }
@@ -79,69 +64,30 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   }
 
   /// Preset for success notifications with green accent.
-  factory NotificationThemeData.success(final BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return NotificationThemeData(
-      accentColor: const Color(0xFF2D7512),
-      backgroundColor:
-          isDark ? const Color(0xFF132210) : const Color(0xFFEDF7ED),
-      foregroundColor:
-          isDark ? const Color(0xFFB7F5A2) : const Color(0xFF1E4620),
-      borderColor: const Color(0xFF2D7512).withValues(alpha: 0.3),
-    );
-  }
+  factory NotificationThemeData.success([final BuildContext? _]) =>
+      const NotificationThemeData(color: Color(0xFF2D7512));
 
-  /// Preset for error notifications with error accent from ambient [Theme].
-  factory NotificationThemeData.error(final BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return NotificationThemeData(
-      accentColor: scheme.error,
-      backgroundColor: scheme.errorContainer,
-      foregroundColor: scheme.onErrorContainer,
-      borderColor: scheme.error.withValues(alpha: 0.3),
-    );
-  }
+  /// Preset for error notifications with error accent.
+  factory NotificationThemeData.error([final BuildContext? context]) =>
+      NotificationThemeData(
+        color: context != null
+            ? Theme.of(context).colorScheme.error
+            : const Color(0xFFD03332),
+      );
 
   /// Preset for warning notifications with amber/orange accent.
-  factory NotificationThemeData.warning(final BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return NotificationThemeData(
-      accentColor: const Color(0xFFC97725),
-      backgroundColor:
-          isDark ? const Color(0xFF2B1D0E) : const Color(0xFFFFF4E5),
-      foregroundColor:
-          isDark ? const Color(0xFFFFD19A) : const Color(0xFF663C00),
-      borderColor: const Color(0xFFC97725).withValues(alpha: 0.3),
-    );
-  }
+  factory NotificationThemeData.warning([final BuildContext? _]) =>
+      const NotificationThemeData(color: Color(0xFFC97725));
 
   /// Preset for informational notifications with blue accent.
-  factory NotificationThemeData.info(final BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return NotificationThemeData(
-      accentColor: const Color(0xFF51B4F9),
-      backgroundColor:
-          isDark ? const Color(0xFF0F2231) : const Color(0xFFE8F4FD),
-      foregroundColor:
-          isDark ? const Color(0xFFBCE1FD) : const Color(0xFF0D3C61),
-      borderColor: const Color(0xFF51B4F9).withValues(alpha: 0.3),
-    );
-  }
+  factory NotificationThemeData.info([final BuildContext? _]) =>
+      const NotificationThemeData(color: Color(0xFF51B4F9));
 
-  /// Primary accent color used for icons, progress bars, and status borders.
-  final Color? accentColor;
+  /// Primary color token driving notification status, borders, and fills.
+  final Color? color;
 
-  /// Convenience alias for [accentColor].
-  Color? get color => accentColor;
-
-  /// Card body surface color.
-  final Color? backgroundColor;
-
-  /// Primary text and icon color on top of [backgroundColor].
-  final Color? foregroundColor;
-
-  /// Card outline border color.
-  final Color? borderColor;
+  /// Convenience alias for [color].
+  Color? get accentColor => color;
 
   /// Elevation drop shadow tint.
   final Color? shadowColor;
@@ -159,21 +105,15 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// replaced.
   @override
   NotificationThemeData copyWith({
-    final Color? accentColor,
     final Color? color,
-    final Color? backgroundColor,
-    final Color? foregroundColor,
-    final Color? borderColor,
+    final Color? accentColor,
     final Color? shadowColor,
     final TextStyle? titleTextStyle,
     final TextStyle? messageTextStyle,
     final IconThemeData? iconTheme,
   }) =>
       NotificationThemeData(
-        accentColor: accentColor ?? color ?? this.accentColor,
-        backgroundColor: backgroundColor ?? this.backgroundColor,
-        foregroundColor: foregroundColor ?? this.foregroundColor,
-        borderColor: borderColor ?? this.borderColor,
+        color: color ?? accentColor ?? this.color,
         shadowColor: shadowColor ?? this.shadowColor,
         titleTextStyle: titleTextStyle ?? this.titleTextStyle,
         messageTextStyle: messageTextStyle ?? this.messageTextStyle,
@@ -189,10 +129,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       return this;
     }
     return copyWith(
-      accentColor: other.accentColor,
-      backgroundColor: other.backgroundColor,
-      foregroundColor: other.foregroundColor,
-      borderColor: other.borderColor,
+      color: other.color,
       shadowColor: other.shadowColor,
       titleTextStyle: other.titleTextStyle,
       messageTextStyle: other.messageTextStyle,
@@ -209,10 +146,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       return this;
     }
     return NotificationThemeData(
-      accentColor: Color.lerp(accentColor, other.accentColor, t),
-      backgroundColor: Color.lerp(backgroundColor, other.backgroundColor, t),
-      foregroundColor: Color.lerp(foregroundColor, other.foregroundColor, t),
-      borderColor: Color.lerp(borderColor, other.borderColor, t),
+      color: Color.lerp(color, other.color, t),
       shadowColor: Color.lerp(shadowColor, other.shadowColor, t),
       titleTextStyle: TextStyle.lerp(titleTextStyle, other.titleTextStyle, t),
       messageTextStyle:
@@ -226,10 +160,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       identical(this, other) ||
       other is NotificationThemeData &&
           runtimeType == other.runtimeType &&
-          accentColor == other.accentColor &&
-          backgroundColor == other.backgroundColor &&
-          foregroundColor == other.foregroundColor &&
-          borderColor == other.borderColor &&
+          color == other.color &&
           shadowColor == other.shadowColor &&
           titleTextStyle == other.titleTextStyle &&
           messageTextStyle == other.messageTextStyle &&
@@ -237,10 +168,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
 
   @override
   int get hashCode => Object.hash(
-        accentColor,
-        backgroundColor,
-        foregroundColor,
-        borderColor,
+        color,
         shadowColor,
         titleTextStyle,
         messageTextStyle,
@@ -249,7 +177,5 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
 
   @override
   String toString() =>
-      'NotificationThemeData(accentColor: $accentColor, '
-      'backgroundColor: $backgroundColor, '
-      'foregroundColor: $foregroundColor)';
+      'NotificationThemeData(color: $color, shadowColor: $shadowColor)';
 }

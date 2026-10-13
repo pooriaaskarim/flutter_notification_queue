@@ -17,18 +17,15 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('ChannelSetup Model & Mapping Tests', () {
-    test('toNotificationChannel propagates theme and loose colors', () {
+    test('toNotificationChannel propagates theme and color', () {
       const channelSetup = ChannelSetup(
         name: 'billing',
         color: Color(0xFF6366F1),
-        foregroundColor: Color(0xFFFFFFFF),
-        backgroundColor: Color(0xFF1E1B4B),
       );
       final channel = channelSetup.toNotificationChannel();
       expect(channel.theme, isNotNull);
+      expect(channel.theme!.color, equals(const Color(0xFF6366F1)));
       expect(channel.theme!.accentColor, equals(const Color(0xFF6366F1)));
-      expect(channel.theme!.foregroundColor, equals(const Color(0xFFFFFFFF)));
-      expect(channel.theme!.backgroundColor, equals(const Color(0xFF1E1B4B)));
     });
   });
 

@@ -291,11 +291,7 @@ class _ChannelThemeConfigTile extends StatelessWidget {
                                 setup.name,
                                 current.copyWith(
                                   theme: () => newTheme,
-                                  color: () => newTheme?.accentColor,
-                                  foregroundColor: () =>
-                                      newTheme?.foregroundColor,
-                                  backgroundColor: () =>
-                                      newTheme?.backgroundColor,
+                                  color: () => newTheme?.color,
                                 ),
                               ),
                             );

@@ -139,9 +139,6 @@ class ThemeDesignerDialog extends StatefulWidget {
 
 class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
   late Color? _accentColor;
-  late Color? _backgroundColor;
-  late Color? _foregroundColor;
-  late Color? _borderColor;
   late Type? _styleType;
   bool _previewDarkSurface = true;
 
@@ -160,78 +157,37 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
   void initState() {
     super.initState();
     final t = widget.initialTheme;
-    _accentColor = t?.accentColor;
-    _backgroundColor = t?.backgroundColor;
-    _foregroundColor = t?.foregroundColor;
-    _borderColor = t?.borderColor;
+    _accentColor = t?.color;
     _styleType = widget.initialStyleType;
   }
 
   NotificationThemeData? _buildCurrentTheme() {
-    final hasCustom = _accentColor != null ||
-        _backgroundColor != null ||
-        _foregroundColor != null ||
-        _borderColor != null;
-
-    if (!hasCustom && widget.isNotificationOverride) {
+    if (_accentColor == null && widget.isNotificationOverride) {
       return null;
     }
 
     return NotificationThemeData(
-      accentColor: _accentColor,
-      backgroundColor: _backgroundColor,
-      foregroundColor: _foregroundColor,
-      borderColor: _borderColor,
+      color: _accentColor,
     );
   }
 
   void _applySeedColor(final Color seed) {
-    final isDark = _previewDarkSurface;
-    final derived = NotificationThemeData.fromSeed(
-      seedColor: seed,
-      brightness: isDark ? Brightness.dark : Brightness.light,
-    );
-
     setState(() {
-      _accentColor = derived.accentColor;
-      _backgroundColor = derived.backgroundColor;
-      _foregroundColor = derived.foregroundColor;
-      _borderColor = derived.borderColor;
+      _accentColor = seed;
     });
   }
 
   void _applyPreset(final String preset) {
-    final isDark = _previewDarkSurface;
     setState(() {
       switch (preset) {
         case 'success':
           _accentColor = const Color(0xFF2D7512);
-          _backgroundColor =
-              isDark ? const Color(0xFF132210) : const Color(0xFFEDF7ED);
-          _foregroundColor =
-              isDark ? const Color(0xFFB7F5A2) : const Color(0xFF1E4620);
-          _borderColor = const Color(0xFF2D7512).withValues(alpha: 0.3);
         case 'error':
           _accentColor = const Color(0xFFD03332);
-          _backgroundColor =
-              isDark ? const Color(0xFF291010) : const Color(0xFFFDE8E8);
-          _foregroundColor =
-              isDark ? const Color(0xFFFCA5A5) : const Color(0xFF771D1D);
-          _borderColor = const Color(0xFFD03332).withValues(alpha: 0.3);
         case 'warning':
           _accentColor = const Color(0xFFC97725);
-          _backgroundColor =
-              isDark ? const Color(0xFF2B1D0E) : const Color(0xFFFFF4E5);
-          _foregroundColor =
-              isDark ? const Color(0xFFFFD19A) : const Color(0xFF663C00);
-          _borderColor = const Color(0xFFC97725).withValues(alpha: 0.3);
         case 'info':
           _accentColor = const Color(0xFF51B4F9);
-          _backgroundColor =
-              isDark ? const Color(0xFF0F2231) : const Color(0xFFE8F4FD);
-          _foregroundColor =
-              isDark ? const Color(0xFFBCE1FD) : const Color(0xFF0D3C61);
-          _borderColor = const Color(0xFF51B4F9).withValues(alpha: 0.3);
       }
     });
   }
@@ -266,15 +222,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     final accentHex = _accentColor != null
         ? '0x${_accentColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
         : null;
-    final bgHex = _backgroundColor != null
-        ? '0x${_backgroundColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
-        : null;
-    final fgHex = _foregroundColor != null
-        ? '0x${_foregroundColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
-        : null;
-    final borderHex = _borderColor != null
-        ? '0x${_borderColor!.toARGB32().toRadixString(16).padLeft(8, '0')}'
-        : null;
 
     final buf = StringBuffer();
     if (_styleType != null) {
@@ -293,16 +240,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
       ..writeln('// Gear 2: Chromatics Theme Tokens')
       ..writeln('const theme = NotificationThemeData(');
     if (accentHex != null) {
-      buf.writeln('  accentColor: Color($accentHex),');
-    }
-    if (bgHex != null) {
-      buf.writeln('  backgroundColor: Color($bgHex),');
-    }
-    if (fgHex != null) {
-      buf.writeln('  foregroundColor: Color($fgHex),');
-    }
-    if (borderHex != null) {
-      buf.writeln('  borderColor: Color($borderHex),');
+      buf.writeln('  color: Color($accentHex),');
     }
     buf.write(');');
 
@@ -551,43 +489,35 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     const resolvedElevation = 3.0;
 
     if (_styleType == FilledQueueStyle) {
-      cardBg = _backgroundColor ?? accent;
+      cardBg = accent;
       final autoFg =
           cardBg.computeLuminance() > 0.5 ? Colors.black : Colors.white;
-      cardFg = _foregroundColor ?? autoFg;
+      cardFg = autoFg;
       iconColor = cardFg;
-      shapeBorder = _borderColor != null
-          ? RoundedSuperellipseBorder(
-              borderRadius: resolvedRadius,
-              side: BorderSide(color: _borderColor!, width: 1.0),
-            )
-          : RoundedSuperellipseBorder(borderRadius: resolvedRadius);
+      shapeBorder = RoundedSuperellipseBorder(borderRadius: resolvedRadius);
       directionalBorder = null;
     } else if (_styleType == FlatQueueStyle) {
-      cardBg = _backgroundColor ?? surfaceBg;
-      cardFg = _foregroundColor ?? surfaceFg;
+      cardBg = surfaceBg;
+      cardFg = surfaceFg;
       iconColor = accent;
       shapeBorder = RoundedRectangleBorder(borderRadius: resolvedRadius);
       directionalBorder = BorderDirectional(
         start: BorderSide(
-          color: _borderColor ?? accent,
+          color: accent,
           width: 4.0,
         ),
       );
     } else {
       // OutlinedQueueStyle or default
-      cardBg = _backgroundColor ?? surfaceBg;
-      cardFg = _foregroundColor ?? surfaceFg;
+      cardBg = surfaceBg;
+      cardFg = surfaceFg;
       iconColor = accent;
-      final borderCol = _borderColor ??
-          (_styleType == OutlinedQueueStyle
-              ? accent
-              : (isDark ? Colors.white12 : Colors.black12));
+      final borderCol = _styleType == OutlinedQueueStyle
+          ? accent
+          : (isDark ? Colors.white12 : Colors.black12);
       shapeBorder = RoundedRectangleBorder(
         borderRadius: resolvedRadius,
-        side: _styleType == OutlinedQueueStyle || _borderColor != null
-            ? BorderSide(color: borderCol, width: 1.0)
-            : BorderSide.none,
+        side: BorderSide(color: borderCol, width: 1.0),
       );
       directionalBorder = null;
     }
@@ -755,34 +685,15 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
         ),
         const SizedBox(height: 16),
 
-        // ── Fine-Tuned Chromatic Tokens (Gear 2) ──
-        const StudioSectionHeader(title: 'FINE-TUNED CHROMATICS (GEAR 2)'),
+        // ── Chromatic Token (Gear 2) ──
+        const StudioSectionHeader(title: 'CHROMATICS THEME TOKEN (GEAR 2)'),
         StudioColorSelectionTile(
-          label: 'ACCENT COLOR',
+          label: 'ACCENT / STATUS COLOR',
           value: _accentColor,
           onChanged: (final v) => setState(() => _accentColor = v),
         ),
-        const SizedBox(height: 10),
-        StudioColorSelectionTile(
-          label: 'BACKGROUND COLOR',
-          value: _backgroundColor,
-          onChanged: (final v) => setState(() => _backgroundColor = v),
-        ),
-        const SizedBox(height: 10),
-        StudioColorSelectionTile(
-          label: 'FOREGROUND / TEXT COLOR',
-          value: _foregroundColor,
-          onChanged: (final v) => setState(() => _foregroundColor = v),
-        ),
-        const SizedBox(height: 10),
-        StudioColorSelectionTile(
-          label: 'BORDER COLOR',
-          value: _borderColor,
-          onChanged: (final v) => setState(() => _borderColor = v),
-        ),
         const SizedBox(height: 16),
 
-        const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -803,9 +714,11 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Physical geometry (radius, elevation, padding, '
-                  'stroke width) is anchored to the NotificationQueue '
-                  'via QueueStyle.',
+                  'Under the parametric model, the accent color drives '
+                  'brand and status. The active QueueStyle archetype '
+                  '(Filled, Outlined, Flat) deterministically distributes it '
+                  'while guaranteeing WCAG contrast and ambient surface '
+                  'consistency.',
                   style: TextStyle(
                     fontSize: 11,
                     color: StudioTheme.colorScheme.onSurface

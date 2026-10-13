@@ -8,9 +8,6 @@ void main() {
     test('instantiates with specified tokens and color alias', () {
       const data = NotificationThemeData(
         color: Color(0xFF112233),
-        backgroundColor: Color(0xFF445566),
-        foregroundColor: Color(0xFF778899),
-        borderColor: Color(0xFFAABBCC),
         shadowColor: Color(0xFF000000),
         titleTextStyle: TextStyle(fontSize: 16),
         messageTextStyle: TextStyle(fontSize: 14),
@@ -18,9 +15,6 @@ void main() {
 
       expect(data.accentColor, equals(const Color(0xFF112233)));
       expect(data.color, equals(const Color(0xFF112233)));
-      expect(data.backgroundColor, equals(const Color(0xFF445566)));
-      expect(data.foregroundColor, equals(const Color(0xFF778899)));
-      expect(data.borderColor, equals(const Color(0xFFAABBCC)));
       expect(data.shadowColor, equals(const Color(0xFF000000)));
       expect(data.titleTextStyle?.fontSize, equals(16));
       expect(data.messageTextStyle?.fontSize, equals(14));
@@ -28,16 +22,16 @@ void main() {
 
     test('value equality and hashCode', () {
       const a = NotificationThemeData(
-        accentColor: Color(0xFF123456),
-        borderColor: Color(0xFFAABBCC),
+        color: Color(0xFF123456),
+        shadowColor: Color(0xFF000000),
       );
       const b = NotificationThemeData(
         accentColor: Color(0xFF123456),
-        borderColor: Color(0xFFAABBCC),
+        shadowColor: Color(0xFF000000),
       );
       const c = NotificationThemeData(
-        accentColor: Color(0xFF654321),
-        borderColor: Color(0xFFAABBCC),
+        color: Color(0xFF654321),
+        shadowColor: Color(0xFF000000),
       );
 
       expect(a, equals(b));
@@ -47,50 +41,44 @@ void main() {
 
     test('copyWith updates specified fields', () {
       const original = NotificationThemeData(
-        accentColor: Color(0xFF111111),
-        borderColor: Color(0xFF222222),
+        color: Color(0xFF111111),
+        shadowColor: Color(0xFF222222),
       );
       final updated = original.copyWith(
-        accentColor: const Color(0xFF222222),
-        backgroundColor: const Color(0xFF333333),
+        color: const Color(0xFF333333),
       );
 
-      expect(updated.accentColor, equals(const Color(0xFF222222)));
-      expect(updated.backgroundColor, equals(const Color(0xFF333333)));
-      expect(updated.borderColor, equals(const Color(0xFF222222)));
+      expect(updated.color, equals(const Color(0xFF333333)));
+      expect(updated.accentColor, equals(const Color(0xFF333333)));
+      expect(updated.shadowColor, equals(const Color(0xFF222222)));
     });
 
     test('merge overrides non-null properties from other', () {
       const base = NotificationThemeData(
-        accentColor: Color(0xFF111111),
-        backgroundColor: Color(0xFF222222),
-        borderColor: Color(0xFF333333),
+        color: Color(0xFF111111),
+        shadowColor: Color(0xFF222222),
       );
       const patch = NotificationThemeData(
-        backgroundColor: Color(0xFF999999),
-        borderColor: Color(0xFF444444),
+        shadowColor: Color(0xFF444444),
       );
 
       final merged = base.merge(patch);
-      expect(merged.accentColor, equals(const Color(0xFF111111)));
-      expect(merged.backgroundColor, equals(const Color(0xFF999999)));
-      expect(merged.borderColor, equals(const Color(0xFF444444)));
+      expect(merged.color, equals(const Color(0xFF111111)));
+      expect(merged.shadowColor, equals(const Color(0xFF444444)));
       expect(base.merge(null), equals(base));
     });
 
     test('lerp interpolates between two instances', () {
       const a = NotificationThemeData(
-        accentColor: Color(0xFF000000),
-        borderColor: Color(0xFF000000),
+        color: Color(0xFF000000),
       );
       const b = NotificationThemeData(
-        accentColor: Color(0xFFFFFFFF),
-        borderColor: Color(0xFFFFFFFF),
+        color: Color(0xFFFFFFFF),
       );
 
       final mid = a.lerp(b, 0.5);
       expect(
-        mid.accentColor,
+        mid.color,
         equals(
           Color.lerp(const Color(0xFF000000), const Color(0xFFFFFFFF), 0.5),
         ),
@@ -105,24 +93,19 @@ void main() {
         scheme,
         priority: NotificationPriority.normal,
       );
-      expect(normal.accentColor, equals(scheme.primary));
-      expect(normal.backgroundColor, equals(scheme.surface));
-      expect(normal.foregroundColor, equals(scheme.onSurface));
+      expect(normal.color, equals(scheme.primary));
 
       final critical = NotificationThemeData.fromColorScheme(
         scheme,
         priority: NotificationPriority.critical,
       );
-      expect(critical.accentColor, equals(scheme.error));
-      expect(critical.backgroundColor, equals(scheme.errorContainer));
-      expect(critical.foregroundColor, equals(scheme.onErrorContainer));
+      expect(critical.color, equals(scheme.error));
 
       final low = NotificationThemeData.fromColorScheme(
         scheme,
         priority: NotificationPriority.low,
       );
-      expect(low.accentColor, equals(scheme.secondary));
-      expect(low.backgroundColor, equals(scheme.surfaceContainerHighest));
+      expect(low.color, equals(scheme.secondary));
     });
 
     test('fromSeed creates expected theme data', () {
@@ -130,8 +113,7 @@ void main() {
         seedColor: Colors.amber,
         brightness: Brightness.dark,
       );
-      expect(data.accentColor, isNotNull);
-      expect(data.backgroundColor, isNotNull);
+      expect(data.color, isNotNull);
     });
 
     testWidgets('semantic factories build contextual palettes', (
@@ -155,26 +137,23 @@ void main() {
       final warning = NotificationThemeData.warning(buildContext);
       final info = NotificationThemeData.info(buildContext);
 
-      expect(success.accentColor, equals(const Color(0xFF2D7512)));
+      expect(success.color, equals(const Color(0xFF2D7512)));
       expect(
-        error.accentColor,
+        error.color,
         equals(Theme.of(buildContext).colorScheme.error),
       );
-      expect(warning.accentColor, equals(const Color(0xFFC97725)));
-      expect(info.accentColor, equals(const Color(0xFF51B4F9)));
+      expect(warning.color, equals(const Color(0xFFC97725)));
+      expect(info.color, equals(const Color(0xFF51B4F9)));
     });
   });
 
   group('Hierarchical Theme & Style Cascade', () {
     testWidgets(
-      'Notification accentColor overrides channel accentColor '
-      'while keeping channel chromatic tokens',
+      'Notification color overrides channel color in Flat style',
       (final tester) async {
         late NotificationTheme resolved;
         const channelTheme = NotificationThemeData(
-          accentColor: Color(0xFFFF0000),
-          backgroundColor: Color(0xFF110000),
-          foregroundColor: Color(0xFFFFEEEE),
+          color: Color(0xFFFF0000),
         );
 
         await tester.pumpWidget(
@@ -206,20 +185,20 @@ void main() {
           ),
         );
 
+        final colorScheme =
+            Theme.of(tester.element(find.byType(SizedBox))).colorScheme;
         expect(resolved.color, equals(const Color(0xFF00FF00)));
-        expect(resolved.backgroundColor, equals(const Color(0xFF110000)));
-        expect(resolved.foregroundColor, equals(const Color(0xFFFFEEEE)));
+        expect(resolved.backgroundColor, equals(colorScheme.surface));
+        expect(resolved.foregroundColor, equals(colorScheme.onSurface));
       },
     );
 
     testWidgets(
-      'Channel theme overrides ambient theme when notification has no theme',
+      'Filled style fills card body and computes contrast foreground',
       (final tester) async {
         late NotificationTheme resolved;
         const channelTheme = NotificationThemeData(
-          accentColor: Color(0xFF123456),
-          backgroundColor: Color(0xFF654321),
-          foregroundColor: Color(0xFFABCDEF),
+          color: Color(0xFF2D7512), // Dark green
         );
 
         await tester.pumpWidget(
@@ -227,7 +206,7 @@ void main() {
             home: Builder(
               builder: (final context) {
                 final widget = NotificationWidget(
-                  message: 'Test message',
+                  message: 'Filled test',
                   configuration: ConfigurationManager(
                     queues: {const NotificationQueue()},
                     channels: {
@@ -241,7 +220,7 @@ void main() {
 
                 resolved = NotificationTheme.resolveWith(
                   context,
-                  const FlatQueueStyle(),
+                  const FilledQueueStyle(),
                   widget,
                 );
                 return const SizedBox();
@@ -250,9 +229,57 @@ void main() {
           ),
         );
 
-        expect(resolved.color, equals(const Color(0xFF123456)));
-        expect(resolved.backgroundColor, equals(const Color(0xFF654321)));
-        expect(resolved.foregroundColor, equals(const Color(0xFFABCDEF)));
+        expect(resolved.color, equals(const Color(0xFF2D7512)));
+        expect(resolved.backgroundColor, equals(const Color(0xFF2D7512)));
+        // Dark green has luminance < 0.5, so foreground should be white
+        expect(resolved.foregroundColor, equals(Colors.white));
+      },
+    );
+
+    testWidgets(
+      'Outlined style uses ambient surface/onSurface and strokes border with color',
+      (final tester) async {
+        late NotificationTheme resolved;
+        const channelTheme = NotificationThemeData(
+          color: Color(0xFF0000FF),
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (final context) {
+                final widget = NotificationWidget(
+                  message: 'Outlined test',
+                  configuration: ConfigurationManager(
+                    queues: {const NotificationQueue()},
+                    channels: {
+                      const NotificationChannel(
+                        name: 'default',
+                        theme: channelTheme,
+                      ),
+                    },
+                  ),
+                );
+
+                resolved = NotificationTheme.resolveWith(
+                  context,
+                  const OutlinedQueueStyle(),
+                  widget,
+                );
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+
+        expect(resolved.color, equals(const Color(0xFF0000FF)));
+        final colorScheme =
+            Theme.of(tester.element(find.byType(SizedBox))).colorScheme;
+        expect(resolved.backgroundColor, equals(colorScheme.surface));
+        expect(resolved.foregroundColor, equals(colorScheme.onSurface));
+        expect(resolved.shape, isA<RoundedRectangleBorder>());
+        final shape = resolved.shape! as RoundedRectangleBorder;
+        expect(shape.side.color, equals(const Color(0xFF0000FF)));
       },
     );
 
@@ -307,53 +334,11 @@ void main() {
     );
 
     testWidgets(
-      'Deprecated loose colors fallback gracefully when theme is null',
-      (final tester) async {
-        late NotificationTheme resolved;
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Builder(
-              builder: (final context) {
-                // ignore: deprecated_member_use_from_same_package
-                final widget = NotificationWidget(
-                  message: 'Legacy colors test',
-                  color: const Color(0xFF770077),
-                  backgroundColor: const Color(0xFF220022),
-                  foregroundColor: const Color(0xFFFF88FF),
-                  configuration: ConfigurationManager(
-                    queues: {const NotificationQueue()},
-                    channels: {
-                      const NotificationChannel(name: 'default'),
-                    },
-                  ),
-                );
-
-                resolved = NotificationTheme.resolveWith(
-                  context,
-                  const FlatQueueStyle(),
-                  widget,
-                );
-                return const SizedBox();
-              },
-            ),
-          ),
-        );
-
-        expect(resolved.color, equals(const Color(0xFF770077)));
-        expect(resolved.backgroundColor, equals(const Color(0xFF220022)));
-        expect(resolved.foregroundColor, equals(const Color(0xFFFF88FF)));
-      },
-    );
-
-    testWidgets(
       'Picks up ambient ThemeData ThemeExtension when available',
       (final tester) async {
         late NotificationTheme resolved;
         const extensionTheme = NotificationThemeData(
-          accentColor: Color(0xFF990099),
-          backgroundColor: Color(0xFF330033),
-          foregroundColor: Color(0xFFFFAAFF),
+          color: Color(0xFF990099),
         );
 
         await tester.pumpWidget(
@@ -385,8 +370,6 @@ void main() {
         );
 
         expect(resolved.color, equals(const Color(0xFF990099)));
-        expect(resolved.backgroundColor, equals(const Color(0xFF330033)));
-        expect(resolved.foregroundColor, equals(const Color(0xFFFFAAFF)));
       },
     );
 

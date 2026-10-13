@@ -217,11 +217,9 @@ void _writeChannel(final StringBuffer buf, final ChannelSetup c) {
   }
 
   final theme = c.theme ??
-      (c.color != null || c.foregroundColor != null || c.backgroundColor != null
+      (c.color != null
           ? NotificationThemeData(
-              accentColor: c.color,
-              foregroundColor: c.foregroundColor,
-              backgroundColor: c.backgroundColor,
+              color: c.color,
             )
           : null);
   if (theme != null) {
@@ -339,21 +337,13 @@ void _writeThemeSnippet(
   required final String indent,
 }) {
   buf.writeln('$indent  theme: const NotificationThemeData(');
-  final accent = theme.accentColor;
-  if (accent != null) {
-    buf.writeln('$indent    accentColor: Color(${_colorHex(accent)}),');
+  final color = theme.color;
+  if (color != null) {
+    buf.writeln('$indent    color: Color(${_colorHex(color)}),');
   }
-  final bg = theme.backgroundColor;
-  if (bg != null) {
-    buf.writeln('$indent    backgroundColor: Color(${_colorHex(bg)}),');
-  }
-  final fg = theme.foregroundColor;
-  if (fg != null) {
-    buf.writeln('$indent    foregroundColor: Color(${_colorHex(fg)}),');
-  }
-  final border = theme.borderColor;
-  if (border != null) {
-    buf.writeln('$indent    borderColor: Color(${_colorHex(border)}),');
+  final shadow = theme.shadowColor;
+  if (shadow != null) {
+    buf.writeln('$indent    shadowColor: Color(${_colorHex(shadow)}),');
   }
   buf.writeln('$indent  ),');
 }
