@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -35,44 +34,13 @@ class _StudioShell extends StatefulWidget {
 
 class _StudioShellState extends State<_StudioShell> {
   int _tabIndex = 0;
-  bool _isFabVisible = true;
-  Timer? _hideTimer;
-
-  @override
-  void dispose() {
-    _hideTimer?.cancel();
-    super.dispose();
-  }
-
-  void _onUserScroll(final UserScrollNotification notification) {
-    if (notification.direction == ScrollDirection.reverse) {
-      _hideTimer?.cancel();
-      if (_isFabVisible) {
-        setState(() => _isFabVisible = false);
-      }
-    } else if (notification.direction == ScrollDirection.forward) {
-      _hideTimer?.cancel();
-      if (!_isFabVisible) {
-        setState(() => _isFabVisible = true);
-      }
-    } else if (notification.direction == ScrollDirection.idle) {
-      _scheduleFabShow();
-    }
-  }
-
-  void _scheduleFabShow() {
-    _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(milliseconds: 1000), () {
-      if (mounted && !_isFabVisible) {
-        setState(() => _isFabVisible = true);
-      }
-    });
-  }
 
   @override
   Widget build(final BuildContext context) => LayoutBuilder(
         builder: (final context, final constraints) {
           final isNarrow = constraints.maxWidth <= 1000;
+          final colorScheme = Theme.of(context).colorScheme;
+
           return CallbackShortcuts(
             bindings: {
               const SingleActivator(LogicalKeyboardKey.enter, meta: true): () {
@@ -86,28 +54,60 @@ class _StudioShellState extends State<_StudioShell> {
             child: Scaffold(
               extendBodyBehindAppBar: true,
               appBar: AppBar(
-                title: const Row(
+                title: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'NFQ STUDIO',
+                      isNarrow ? 'NFQ' : 'NFQ STUDIO',
                       style: TextStyle(
-                        letterSpacing: 3,
+                        letterSpacing: isNarrow ? 1.2 : 3,
                         fontWeight: FontWeight.w900,
-                        fontSize: 18,
+                        fontSize: isNarrow ? 16 : 18,
                       ),
                     ),
-                    SizedBox(width: 8),
-                    _VersionBadge(),
+                    const SizedBox(width: 6),
+                    const _VersionBadge(),
                   ],
                 ),
-                centerTitle: true,
-                backgroundColor: Theme.of(context)
-                    .colorScheme
-                    .surface
-                    .withValues(alpha: 0.85),
+                centerTitle: !isNarrow,
+                backgroundColor: colorScheme.surface.withValues(alpha: 0.88),
                 elevation: 0,
                 actions: [
+                  if (isNarrow) ...[
+                    // Mobile Primary CTA: Fire Draft
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colorScheme.primary,
+                        foregroundColor: colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        visualDensity: VisualDensity.compact,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: const Icon(Icons.bolt_rounded, size: 15),
+                      label: const Text(
+                        'FIRE',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                      onPressed: () => context
+                          .read<NotificationBloc>()
+                          .add(const FirePreview()),
+                    ),
+                    const SizedBox(width: 4),
+                    // Mobile Presets Launcher
+                    Tooltip(
+                      message: 'Quick Presets',
+                      child: IconButton(
+                        icon: const Icon(Icons.flash_on_outlined, size: 20),
+                        onPressed: () => QuickFireCockpit.showModal(context),
+                      ),
+                    ),
+                  ],
                   IconButton(
                     onPressed: () => ProjectInfoDialog.show(context),
                     icon: const Icon(Icons.info_outline, size: 20),
@@ -127,7 +127,7 @@ class _StudioShellState extends State<_StudioShell> {
                       tooltip: 'Toggle Theme',
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                 ],
               ),
               body: Stack(
@@ -136,7 +136,7 @@ class _StudioShellState extends State<_StudioShell> {
                   SafeArea(
                     child: Column(
                       children: [
-                        const QuickFireCockpit(),
+                        if (!isNarrow) const QuickFireCockpit(),
                         Expanded(
                           child: isNarrow ? _narrowLayout() : _wideLayout(),
                         ),
@@ -145,55 +145,30 @@ class _StudioShellState extends State<_StudioShell> {
                   ),
                 ],
               ),
-            floatingActionButton: isNarrow && _tabIndex == 0
-                ? AnimatedSlide(
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                    offset: _isFabVisible ? Offset.zero : const Offset(0, 2),
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 200),
-                      opacity: _isFabVisible ? 0.85 : 0.0,
-                      child: FloatingActionButton(
-                        onPressed: () {
-                          context
-                              .read<NotificationBloc>()
-                              .add(const FirePreview());
-                        },
-                        backgroundColor:
-                            StudioTheme.colorScheme.primaryContainer,
-                        foregroundColor:
-                            StudioTheme.colorScheme.onPrimaryContainer,
-                        elevation: 4,
-                        tooltip: 'Fire Notification',
-                        child: const Icon(Icons.send_rounded, size: 20),
-                      ),
-                    ),
-                  )
-                : null,
-            bottomNavigationBar: isNarrow
-                ? BottomNavigationBar(
-                    currentIndex: _tabIndex,
-                    onTap: (final i) => setState(() => _tabIndex = i),
-                    backgroundColor: StudioTheme.colorScheme.surface,
-                    selectedItemColor: StudioTheme.colorScheme.primary,
-                    unselectedItemColor: StudioTheme.colorScheme.onSurface
-                        .withValues(alpha: 0.38),
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.tune),
-                        label: 'Configure',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.code),
-                        label: 'Code',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(Icons.stream_rounded),
-                        label: 'Events',
-                      ),
-                    ],
-                  )
-                : null,
+              bottomNavigationBar: isNarrow
+                  ? BottomNavigationBar(
+                      currentIndex: _tabIndex,
+                      onTap: (final i) => setState(() => _tabIndex = i),
+                      backgroundColor: StudioTheme.colorScheme.surface,
+                      selectedItemColor: StudioTheme.colorScheme.primary,
+                      unselectedItemColor: StudioTheme.colorScheme.onSurface
+                          .withValues(alpha: 0.38),
+                      items: const [
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.tune),
+                          label: 'Configure',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.code),
+                          label: 'Code',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(Icons.stream_rounded),
+                          label: 'Events',
+                        ),
+                      ],
+                    )
+                  : null,
             ),
           );
         },
@@ -215,19 +190,13 @@ class _StudioShellState extends State<_StudioShell> {
         ],
       );
 
-  Widget _narrowLayout() => NotificationListener<UserScrollNotification>(
-        onNotification: (final notification) {
-          _onUserScroll(notification);
-          return false;
-        },
-        child: IndexedStack(
-          index: _tabIndex,
-          children: const [
-            ConfiguratorPanel(),
-            CodeEditorPanel(),
-            EventLogPanel(),
-          ],
-        ),
+  Widget _narrowLayout() => IndexedStack(
+        index: _tabIndex,
+        children: const [
+          ConfiguratorPanel(),
+          CodeEditorPanel(),
+          EventLogPanel(),
+        ],
       );
 }
 

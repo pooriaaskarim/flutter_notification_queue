@@ -341,9 +341,9 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
-        final fabFinder = find.byType(FloatingActionButton);
-        expect(fabFinder, findsOneWidget);
-        expect(find.byTooltip('Fire Notification'), findsOneWidget);
+        final fireButton = find.widgetWithText(FilledButton, 'FIRE');
+        expect(fireButton, findsOneWidget);
+        expect(find.byTooltip('Quick Presets'), findsOneWidget);
 
         addTearDown(() {
           notificationBloc.close();
@@ -351,9 +351,15 @@ void main() {
           studioBloc.close();
         });
 
-        await tester.tap(fabFinder);
+        await tester.tap(fireButton);
         await tester.pump();
         expect(find.byType(NotificationWidget), findsOneWidget);
+
+        // Tap Quick Presets icon to verify bottom sheet opens
+        await tester.tap(find.byTooltip('Quick Presets'));
+        await tester.pumpAndSettle();
+        expect(find.text('QUICK FIRE COCKPIT'), findsOneWidget);
+        expect(find.text('PRESET SCENARIOS'), findsOneWidget);
 
         await tester.pumpWidget(const SizedBox());
       },
