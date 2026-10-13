@@ -140,7 +140,9 @@ class ResolutionInspector extends StatelessWidget {
                   ),
                 ),
                 child: Text(
-                  effectiveStyleName,
+                  '$effectiveStyleName '
+                  '(r:${queueSetup?.borderRadius.toInt() ?? 8} '
+                  'e:${queueSetup?.elevation.toInt() ?? 3})',
                   style: const TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,

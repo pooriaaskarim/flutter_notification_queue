@@ -264,13 +264,19 @@ String _styleClassName(final Type t) => switch (t) {
       _ => t.toString(),
     };
 
-String _styleSnippet(final QueueSetup q) =>
-    '${_styleClassName(q.styleType)}(\n'
-    '        opacity: ${q.opacity},\n'
-    '        elevation: ${q.elevation},\n'
-    '        borderRadius: '
-    'BorderRadius.circular(${q.borderRadius}),\n'
-    '      )';
+String _styleSnippet(final QueueSetup q) {
+  final buf = StringBuffer('${_styleClassName(q.styleType)}(\n')
+    ..writeln('        opacity: ${q.opacity},')
+    ..writeln('        elevation: ${q.elevation},')
+    ..writeln(
+      '        borderRadius: BorderRadius.circular(${q.borderRadius}),',
+    );
+  if (q.padding != null) {
+    buf.writeln('        padding: const EdgeInsets.all(${q.padding}),');
+  }
+  buf.write('      )');
+  return buf.toString();
+}
 
 String _transitionSnippet(final Type t) => switch (t) {
       == SlideTransitionStrategy => 'const SlideTransitionStrategy()',

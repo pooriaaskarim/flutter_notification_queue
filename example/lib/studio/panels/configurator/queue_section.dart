@@ -360,30 +360,102 @@ class _QueueEditorState extends State<_QueueEditor> {
             showInheritDefault: false,
             onChanged: (final v) {
               if (v != null) {
+                final defaultRadius = v == FlatQueueStyle ? 0.0 : 8.0;
                 context.read<SetupBloc>().add(
                       UpdateQueue(
                         position,
-                        setup.copyWith(styleType: v),
+                        setup.copyWith(
+                          styleType: v,
+                          borderRadius: defaultRadius,
+                        ),
                       ),
                     );
               }
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+
+          // ── Queue Container Geometry (QueueStyle) ──
+          const StudioSectionHeader(title: 'CONTAINER GEOMETRY (QUEUE STYLE)'),
           StudioSliderTile(
-            label: 'MAX VISIBLE NOTIFICATIONS',
-            value: setup.maxStackSize.toDouble(),
-            min: 1,
-            max: 10,
-            divisions: 9,
+            label: 'CORNER RADIUS (PX)',
+            value: setup.borderRadius,
+            min: 0,
+            max: 24,
+            divisions: 24,
             onChanged: (final v) => context.read<SetupBloc>().add(
                   UpdateQueue(
                     position,
-                    setup.copyWith(maxStackSize: v.round()),
+                    setup.copyWith(borderRadius: v),
                   ),
                 ),
           ),
           const SizedBox(height: 12),
+          StudioSliderTile(
+            label: 'ELEVATION (SHADOW DEPTH)',
+            value: setup.elevation,
+            min: 0,
+            max: 12,
+            divisions: 12,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(elevation: v),
+                  ),
+                ),
+          ),
+          const SizedBox(height: 12),
+          StudioSliderTile(
+            label: 'CONTAINER OPACITY',
+            value: setup.opacity,
+            min: 0.1,
+            max: 1.0,
+            divisions: 18,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(
+                      opacity: double.parse(v.toStringAsFixed(2)),
+                    ),
+                  ),
+                ),
+          ),
+          const SizedBox(height: 12),
+          StudioToggleTile(
+            label: 'CUSTOM CARD PADDING',
+            value: setup.padding != null,
+            onChanged: (final enable) {
+              context.read<SetupBloc>().add(
+                    UpdateQueue(
+                      position,
+                      setup.copyWith(
+                        padding: enable ? 8.0 : null,
+                        clearPadding: !enable,
+                      ),
+                    ),
+                  );
+            },
+          ),
+          if (setup.padding != null) ...[
+            const SizedBox(height: 12),
+            StudioSliderTile(
+              label: 'CARD INTERNAL PADDING (PX)',
+              value: setup.padding!,
+              min: 0,
+              max: 24,
+              divisions: 24,
+              onChanged: (final v) => context.read<SetupBloc>().add(
+                    UpdateQueue(
+                      position,
+                      setup.copyWith(padding: v),
+                    ),
+                  ),
+            ),
+          ],
+          const SizedBox(height: 16),
+
+          // ── Bounds & Strategy ──
+          const StudioSectionHeader(title: 'BOUNDS & TRANSITION'),
           StudioToggleTile(
             label: 'CUSTOM MAX WIDTH',
             value: setup.maxWidth != null,
@@ -709,6 +781,67 @@ class _QueueEditorState extends State<_QueueEditor> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── Stack Geometry & Margins ──
+        const StudioSectionHeader(title: 'STACK SPACING & MARGINS'),
+        StudioSliderTile(
+          label: 'INTER-CARD SPACING (PX)',
+          value: setup.spacing,
+          min: 0,
+          max: 24,
+          divisions: 24,
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(spacing: v),
+                ),
+              ),
+        ),
+        const SizedBox(height: 12),
+        StudioSliderTile(
+          label: 'VERTICAL SCREEN MARGIN (PX)',
+          value: setup.verticalMargin,
+          min: 0,
+          max: 64,
+          divisions: 32,
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(verticalMargin: v),
+                ),
+              ),
+        ),
+        const SizedBox(height: 12),
+        StudioSliderTile(
+          label: 'HORIZONTAL SCREEN MARGIN (PX)',
+          value: setup.horizontalMargin,
+          min: 0,
+          max: 64,
+          divisions: 32,
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(horizontalMargin: v),
+                ),
+              ),
+        ),
+        const SizedBox(height: 12),
+        StudioSliderTile(
+          label: 'MAX VISIBLE NOTIFICATIONS',
+          value: setup.maxStackSize.toDouble(),
+          min: 1,
+          max: 10,
+          divisions: 9,
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(maxStackSize: v.round()),
+                ),
+              ),
+        ),
+        const SizedBox(height: 16),
+
+        // ── Bundling & Grouping ──
+        const StudioSectionHeader(title: 'GROUPING & BUNDLING'),
         StudioToggleTile(
           label: 'ENABLE BUNDLING',
           value: setup.groupingEnabled,

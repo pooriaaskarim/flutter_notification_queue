@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:flutter/material.dart' show BorderRadius, EdgeInsets;
+import 'package:flutter/material.dart'
+    show BorderRadius, EdgeInsets, EdgeInsetsGeometry;
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
 /// The immutable setup for a single [NotificationQueue].
@@ -13,6 +14,7 @@ class QueueSetup extends Equatable {
     this.opacity = 0.7,
     this.elevation = 3.0,
     this.borderRadius = 8.0,
+    this.padding,
     this.transitionType = SlideTransitionStrategy,
     this.maxStackSize = 3,
     this.spacing = 4.0,
@@ -37,6 +39,7 @@ class QueueSetup extends Equatable {
   final double opacity;
   final double elevation;
   final double borderRadius;
+  final double? padding;
 
   // ── Animation ──
   final Type transitionType;
@@ -79,6 +82,8 @@ class QueueSetup extends Equatable {
     final double? opacity,
     final double? elevation,
     final double? borderRadius,
+    final double? padding,
+    final bool clearPadding = false,
     final Type? transitionType,
     final int? maxStackSize,
     final double? spacing,
@@ -103,6 +108,7 @@ class QueueSetup extends Equatable {
         opacity: opacity ?? this.opacity,
         elevation: elevation ?? this.elevation,
         borderRadius: borderRadius ?? this.borderRadius,
+        padding: clearPadding ? null : (padding ?? this.padding),
         transitionType: transitionType ?? this.transitionType,
         maxStackSize: maxStackSize ?? this.maxStackSize,
         spacing: spacing ?? this.spacing,
@@ -127,6 +133,9 @@ class QueueSetup extends Equatable {
 
   // ── Library Mapping Helpers ──
 
+  EdgeInsetsGeometry? get _padding =>
+      padding != null ? EdgeInsets.all(padding!) : null;
+
   /// Builds the [QueueStyle] for this setup.
   QueueStyle toQueueStyle() {
     if (styleType == FlatQueueStyle) {
@@ -134,6 +143,7 @@ class QueueSetup extends Equatable {
         opacity: opacity,
         elevation: elevation,
         borderRadius: _borderRadius,
+        padding: _padding,
       );
     }
     if (styleType == OutlinedQueueStyle) {
@@ -141,12 +151,14 @@ class QueueSetup extends Equatable {
         opacity: opacity,
         elevation: elevation,
         borderRadius: _borderRadius,
+        padding: _padding,
       );
     }
     return FilledQueueStyle(
       opacity: opacity,
       elevation: elevation,
       borderRadius: _borderRadius,
+      padding: _padding,
     );
   }
 
@@ -273,6 +285,7 @@ class QueueSetup extends Equatable {
         opacity,
         elevation,
         borderRadius,
+        padding,
         transitionType,
         maxStackSize,
         spacing,
