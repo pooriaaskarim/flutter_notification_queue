@@ -16,6 +16,7 @@ class NotificationTheme {
     this.borderWidth,
     this.titleTextStyle,
     this.messageTextStyle,
+    this.actionTextStyle,
     this.iconTheme,
     this.theme,
   });
@@ -44,6 +45,8 @@ class NotificationTheme {
         ambientExtension?.titleTextStyle;
     final messageTextStyle = cTheme?.messageTextStyle ??
         ambientExtension?.messageTextStyle;
+    final actionTextStyle = cTheme?.actionTextStyle ??
+        ambientExtension?.actionTextStyle;
     final iconTheme = cTheme?.iconTheme ??
         ambientExtension?.iconTheme;
 
@@ -124,6 +127,7 @@ class NotificationTheme {
       borderWidth: tokenBorderWidth,
       titleTextStyle: titleTextStyle,
       messageTextStyle: messageTextStyle,
+      actionTextStyle: actionTextStyle,
       iconTheme: resolvedIconTheme,
       theme: cTheme ?? ambientExtension,
     );
@@ -168,6 +172,9 @@ class NotificationTheme {
 
   /// Typography styling override for the notification message.
   final TextStyle? messageTextStyle;
+
+  /// Typography styling override for the action button label.
+  final TextStyle? actionTextStyle;
 
   /// Icon theme override for the leading icon.
   final IconThemeData? iconTheme;

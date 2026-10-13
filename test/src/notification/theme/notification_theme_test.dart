@@ -10,19 +10,24 @@ void main() {
         color: Color(0xFF112233),
         titleTextStyle: TextStyle(fontSize: 16),
         messageTextStyle: TextStyle(fontSize: 14),
+        actionTextStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
       );
 
       expect(data.color, equals(const Color(0xFF112233)));
       expect(data.titleTextStyle?.fontSize, equals(16));
       expect(data.messageTextStyle?.fontSize, equals(14));
+      expect(data.actionTextStyle?.fontSize, equals(12));
+      expect(data.actionTextStyle?.fontWeight, equals(FontWeight.bold));
     });
 
     test('value equality and hashCode', () {
       const a = NotificationThemeData(
         color: Color(0xFF123456),
+        actionTextStyle: TextStyle(fontSize: 12),
       );
       const b = NotificationThemeData(
         color: Color(0xFF123456),
+        actionTextStyle: TextStyle(fontSize: 12),
       );
       const c = NotificationThemeData(
         color: Color(0xFF654321),
@@ -39,30 +44,37 @@ void main() {
       );
       final updated = original.copyWith(
         color: const Color(0xFF333333),
+        actionTextStyle: const TextStyle(fontSize: 13),
       );
 
       expect(updated.color, equals(const Color(0xFF333333)));
+      expect(updated.actionTextStyle?.fontSize, equals(13));
     });
 
     test('merge overrides non-null properties from other', () {
       const base = NotificationThemeData(
         color: Color(0xFF111111),
+        actionTextStyle: TextStyle(fontSize: 12),
       );
       const patch = NotificationThemeData(
         color: Color(0xFF444444),
+        actionTextStyle: TextStyle(fontSize: 14),
       );
 
       final merged = base.merge(patch);
       expect(merged.color, equals(const Color(0xFF444444)));
+      expect(merged.actionTextStyle?.fontSize, equals(14));
       expect(base.merge(null), equals(base));
     });
 
     test('lerp interpolates between two instances', () {
       const a = NotificationThemeData(
         color: Color(0xFF000000),
+        actionTextStyle: TextStyle(fontSize: 10),
       );
       const b = NotificationThemeData(
         color: Color(0xFFFFFFFF),
+        actionTextStyle: TextStyle(fontSize: 20),
       );
 
       final mid = a.lerp(b, 0.5);
@@ -72,6 +84,7 @@ void main() {
           Color.lerp(const Color(0xFF000000), const Color(0xFFFFFFFF), 0.5),
         ),
       );
+      expect(mid.actionTextStyle?.fontSize, equals(15));
       expect(a.lerp(null, 0.5), equals(a));
     });
 
@@ -371,6 +384,8 @@ void main() {
           titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           messageTextStyle:
               TextStyle(fontSize: 15, fontStyle: FontStyle.italic),
+          actionTextStyle:
+              TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
           iconTheme: IconThemeData(color: Color(0xFF118833), size: 30),
         );
 
@@ -406,6 +421,8 @@ void main() {
         expect(resolved.titleTextStyle?.fontWeight, equals(FontWeight.w900));
         expect(resolved.messageTextStyle?.fontSize, equals(15));
         expect(resolved.messageTextStyle?.fontStyle, equals(FontStyle.italic));
+        expect(resolved.actionTextStyle?.fontSize, equals(13));
+        expect(resolved.actionTextStyle?.fontWeight, equals(FontWeight.bold));
         expect(resolved.iconTheme?.color, equals(const Color(0xFF118833)));
         expect(resolved.iconTheme?.size, equals(30));
       },

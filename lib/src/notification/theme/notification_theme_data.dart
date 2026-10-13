@@ -26,6 +26,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     this.color,
     this.titleTextStyle,
     this.messageTextStyle,
+    this.actionTextStyle,
     this.iconTheme,
   });
 
@@ -89,6 +90,9 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Typography styling for the message body.
   final TextStyle? messageTextStyle;
 
+  /// Typography styling for the action button label.
+  final TextStyle? actionTextStyle;
+
   /// Theme overrides for leading and trailing icons.
   final IconThemeData? iconTheme;
 
@@ -99,12 +103,14 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     final Color? color,
     final TextStyle? titleTextStyle,
     final TextStyle? messageTextStyle,
+    final TextStyle? actionTextStyle,
     final IconThemeData? iconTheme,
   }) =>
       NotificationThemeData(
         color: color ?? this.color,
         titleTextStyle: titleTextStyle ?? this.titleTextStyle,
         messageTextStyle: messageTextStyle ?? this.messageTextStyle,
+        actionTextStyle: actionTextStyle ?? this.actionTextStyle,
         iconTheme: iconTheme ?? this.iconTheme,
       );
 
@@ -120,6 +126,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       color: other.color,
       titleTextStyle: other.titleTextStyle,
       messageTextStyle: other.messageTextStyle,
+      actionTextStyle: other.actionTextStyle,
       iconTheme: other.iconTheme,
     );
   }
@@ -137,6 +144,8 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       titleTextStyle: TextStyle.lerp(titleTextStyle, other.titleTextStyle, t),
       messageTextStyle:
           TextStyle.lerp(messageTextStyle, other.messageTextStyle, t),
+      actionTextStyle:
+          TextStyle.lerp(actionTextStyle, other.actionTextStyle, t),
       iconTheme: IconThemeData.lerp(iconTheme, other.iconTheme, t),
     );
   }
@@ -149,6 +158,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
           color == other.color &&
           titleTextStyle == other.titleTextStyle &&
           messageTextStyle == other.messageTextStyle &&
+          actionTextStyle == other.actionTextStyle &&
           iconTheme == other.iconTheme;
 
   @override
@@ -156,6 +166,7 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
         color,
         titleTextStyle,
         messageTextStyle,
+        actionTextStyle,
         iconTheme,
       );
 

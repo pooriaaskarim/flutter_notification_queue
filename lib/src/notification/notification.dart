@@ -850,8 +850,9 @@ class NotificationWidgetState extends State<NotificationWidget>
             ),
             child: Text(
               widget.action!.label!,
-              style: theme.themeData.textTheme.labelMedium
-                  ?.copyWith(color: theme.foregroundColor),
+              style: theme.actionTextStyle ??
+                  theme.themeData.textTheme.labelMedium
+                      ?.copyWith(color: theme.foregroundColor),
             ),
             onPressed: () {
               widget.action!.onPressed();
