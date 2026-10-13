@@ -7,7 +7,6 @@ import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import '../studio_theme.dart';
 import 'studio_color_selection_tile.dart';
 import 'studio_section_header.dart';
-import 'studio_slider_tile.dart';
 
 /// A responsive Theme & Style Designer dialog / bottom sheet.
 ///
@@ -143,7 +142,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
   late Color? _backgroundColor;
   late Color? _foregroundColor;
   late Color? _borderColor;
-  late double _borderWidth;
   late Type? _styleType;
   bool _previewDarkSurface = true;
 
@@ -166,7 +164,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     _backgroundColor = t?.backgroundColor;
     _foregroundColor = t?.foregroundColor;
     _borderColor = t?.borderColor;
-    _borderWidth = t?.borderWidth ?? 1.0;
     _styleType = widget.initialStyleType;
   }
 
@@ -174,8 +171,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     final hasCustom = _accentColor != null ||
         _backgroundColor != null ||
         _foregroundColor != null ||
-        _borderColor != null ||
-        _borderWidth != 1.0;
+        _borderColor != null;
 
     if (!hasCustom && widget.isNotificationOverride) {
       return null;
@@ -186,7 +182,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
       backgroundColor: _backgroundColor,
       foregroundColor: _foregroundColor,
       borderColor: _borderColor,
-      borderWidth: _borderWidth,
     );
   }
 
@@ -308,9 +303,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     }
     if (borderHex != null) {
       buf.writeln('  borderColor: Color($borderHex),');
-    }
-    if (_borderWidth != 1.0) {
-      buf.writeln('  borderWidth: $_borderWidth,');
     }
     buf.write(');');
 
@@ -567,7 +559,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
       shapeBorder = _borderColor != null
           ? RoundedSuperellipseBorder(
               borderRadius: resolvedRadius,
-              side: BorderSide(color: _borderColor!, width: _borderWidth),
+              side: BorderSide(color: _borderColor!, width: 1.0),
             )
           : RoundedSuperellipseBorder(borderRadius: resolvedRadius);
       directionalBorder = null;
@@ -579,7 +571,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
       directionalBorder = BorderDirectional(
         start: BorderSide(
           color: _borderColor ?? accent,
-          width: _borderWidth > 1.0 ? _borderWidth : 4.0,
+          width: 4.0,
         ),
       );
     } else {
@@ -591,11 +583,10 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
           (_styleType == OutlinedQueueStyle
               ? accent
               : (isDark ? Colors.white12 : Colors.black12));
-      final borderWidth = _styleType == OutlinedQueueStyle ? _borderWidth : 1.0;
       shapeBorder = RoundedRectangleBorder(
         borderRadius: resolvedRadius,
         side: _styleType == OutlinedQueueStyle || _borderColor != null
-            ? BorderSide(color: borderCol, width: borderWidth)
+            ? BorderSide(color: borderCol, width: 1.0)
             : BorderSide.none,
       );
       directionalBorder = null;
@@ -791,17 +782,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
         ),
         const SizedBox(height: 16),
 
-        // ── Stroke Tokens ──
-        const StudioSectionHeader(title: 'BORDER STROKE'),
-        StudioSliderTile(
-          label: 'BORDER WIDTH',
-          value: _borderWidth,
-          min: 0,
-          max: 4,
-          divisions: 8,
-          onChanged: (final v) => setState(() => _borderWidth = v),
-        ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
@@ -822,8 +803,9 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Physical geometry (radius, elevation, padding) is '
-                  'anchored to the NotificationQueue via QueueStyle.',
+                  'Physical geometry (radius, elevation, padding, '
+                  'stroke width) is anchored to the NotificationQueue '
+                  'via QueueStyle.',
                   style: TextStyle(
                     fontSize: 11,
                     color: StudioTheme.colorScheme.onSurface

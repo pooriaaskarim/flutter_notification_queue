@@ -274,6 +274,9 @@ String _styleSnippet(final QueueSetup q) {
   if (q.padding != null) {
     buf.writeln('        padding: const EdgeInsets.all(${q.padding}),');
   }
+  if (q.borderWidth != null) {
+    buf.writeln('        borderWidth: ${q.borderWidth},');
+  }
   buf.write('      )');
   return buf.toString();
 }
@@ -351,10 +354,6 @@ void _writeThemeSnippet(
   final border = theme.borderColor;
   if (border != null) {
     buf.writeln('$indent    borderColor: Color(${_colorHex(border)}),');
-  }
-  final borderWidth = theme.borderWidth;
-  if (borderWidth != null && borderWidth != 1.0) {
-    buf.writeln('$indent    borderWidth: $borderWidth,');
   }
   buf.writeln('$indent  ),');
 }

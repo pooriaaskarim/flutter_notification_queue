@@ -1,12 +1,10 @@
 // ignore_for_file: comment_references
 
-import 'dart:ui' show lerpDouble;
-
 import 'package:flutter/material.dart';
 
 import '../../enums/enums.dart';
 
-/// Immutable theme tokens defining colors, border stroke, typography, and icons
+/// Immutable theme tokens defining colors, typography, and icons
 /// for notifications.
 ///
 /// [NotificationThemeData] allows channels and notifications to be themed
@@ -28,7 +26,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     this.backgroundColor,
     this.foregroundColor,
     this.borderColor,
-    this.borderWidth,
     this.shadowColor,
     this.titleTextStyle,
     this.messageTextStyle,
@@ -146,9 +143,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Card outline border color.
   final Color? borderColor;
 
-  /// Card outline border stroke width.
-  final double? borderWidth;
-
   /// Elevation drop shadow tint.
   final Color? shadowColor;
 
@@ -170,7 +164,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     final Color? backgroundColor,
     final Color? foregroundColor,
     final Color? borderColor,
-    final double? borderWidth,
     final Color? shadowColor,
     final TextStyle? titleTextStyle,
     final TextStyle? messageTextStyle,
@@ -181,7 +174,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
         backgroundColor: backgroundColor ?? this.backgroundColor,
         foregroundColor: foregroundColor ?? this.foregroundColor,
         borderColor: borderColor ?? this.borderColor,
-        borderWidth: borderWidth ?? this.borderWidth,
         shadowColor: shadowColor ?? this.shadowColor,
         titleTextStyle: titleTextStyle ?? this.titleTextStyle,
         messageTextStyle: messageTextStyle ?? this.messageTextStyle,
@@ -201,7 +193,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       backgroundColor: other.backgroundColor,
       foregroundColor: other.foregroundColor,
       borderColor: other.borderColor,
-      borderWidth: other.borderWidth,
       shadowColor: other.shadowColor,
       titleTextStyle: other.titleTextStyle,
       messageTextStyle: other.messageTextStyle,
@@ -222,7 +213,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       backgroundColor: Color.lerp(backgroundColor, other.backgroundColor, t),
       foregroundColor: Color.lerp(foregroundColor, other.foregroundColor, t),
       borderColor: Color.lerp(borderColor, other.borderColor, t),
-      borderWidth: lerpDouble(borderWidth, other.borderWidth, t),
       shadowColor: Color.lerp(shadowColor, other.shadowColor, t),
       titleTextStyle: TextStyle.lerp(titleTextStyle, other.titleTextStyle, t),
       messageTextStyle:
@@ -240,7 +230,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
           backgroundColor == other.backgroundColor &&
           foregroundColor == other.foregroundColor &&
           borderColor == other.borderColor &&
-          borderWidth == other.borderWidth &&
           shadowColor == other.shadowColor &&
           titleTextStyle == other.titleTextStyle &&
           messageTextStyle == other.messageTextStyle &&
@@ -252,7 +241,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
         backgroundColor,
         foregroundColor,
         borderColor,
-        borderWidth,
         shadowColor,
         titleTextStyle,
         messageTextStyle,

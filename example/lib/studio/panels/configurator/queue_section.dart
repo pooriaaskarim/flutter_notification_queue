@@ -406,6 +406,21 @@ class _QueueEditorState extends State<_QueueEditor> {
           ),
           const SizedBox(height: 12),
           StudioSliderTile(
+            label: 'BORDER STROKE WIDTH (PX)',
+            value: setup.borderWidth ??
+                (setup.styleType == FlatQueueStyle ? 4.0 : 1.0),
+            min: 0,
+            max: 8,
+            divisions: 16,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(borderWidth: v),
+                  ),
+                ),
+          ),
+          const SizedBox(height: 12),
+          StudioSliderTile(
             label: 'CONTAINER OPACITY',
             value: setup.opacity,
             min: 0.1,

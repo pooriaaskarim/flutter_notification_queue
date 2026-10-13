@@ -13,6 +13,7 @@ class NotificationTheme {
     required this.shape,
     required this.border,
     this.padding,
+    this.borderWidth,
     this.titleTextStyle,
     this.messageTextStyle,
     this.iconTheme,
@@ -43,8 +44,7 @@ class NotificationTheme {
         ambientExtension?.foregroundColor;
     final tokenBorderColor = cTheme?.borderColor ??
         ambientExtension?.borderColor;
-    final tokenBorderWidth = cTheme?.borderWidth ??
-        ambientExtension?.borderWidth;
+    final tokenBorderWidth = effectiveStyle.borderWidth;
     final tokenBorderRadius = effectiveStyle.borderRadius;
     final tokenElevation = effectiveStyle.elevation;
     final tokenShadowColor = cTheme?.shadowColor ??
@@ -126,7 +126,7 @@ class NotificationTheme {
         border = BorderDirectional(
           start: BorderSide(
             color: tokenBorderColor ?? color,
-            width: tokenBorderWidth ?? 4,
+            width: tokenBorderWidth ?? 4.0,
           ),
         );
     }
@@ -142,6 +142,7 @@ class NotificationTheme {
       border: border,
       shape: shapeBorder,
       padding: effectiveStyle.padding,
+      borderWidth: tokenBorderWidth,
       titleTextStyle: titleTextStyle,
       messageTextStyle: messageTextStyle,
       iconTheme: iconTheme,
@@ -179,6 +180,9 @@ class NotificationTheme {
 
   /// Card internal content padding defined by the [QueueStyle].
   final EdgeInsetsGeometry? padding;
+
+  /// Card border stroke width defined by the [QueueStyle].
+  final double? borderWidth;
 
   /// Typography styling override for the notification title.
   final TextStyle? titleTextStyle;

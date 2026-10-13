@@ -15,6 +15,7 @@ class QueueSetup extends Equatable {
     this.elevation = 3.0,
     this.borderRadius = 8.0,
     this.padding,
+    this.borderWidth,
     this.transitionType = SlideTransitionStrategy,
     this.maxStackSize = 3,
     this.spacing = 4.0,
@@ -40,6 +41,7 @@ class QueueSetup extends Equatable {
   final double elevation;
   final double borderRadius;
   final double? padding;
+  final double? borderWidth;
 
   // ── Animation ──
   final Type transitionType;
@@ -84,6 +86,8 @@ class QueueSetup extends Equatable {
     final double? borderRadius,
     final double? padding,
     final bool clearPadding = false,
+    final double? borderWidth,
+    final bool clearBorderWidth = false,
     final Type? transitionType,
     final int? maxStackSize,
     final double? spacing,
@@ -109,6 +113,8 @@ class QueueSetup extends Equatable {
         elevation: elevation ?? this.elevation,
         borderRadius: borderRadius ?? this.borderRadius,
         padding: clearPadding ? null : (padding ?? this.padding),
+        borderWidth:
+            clearBorderWidth ? null : (borderWidth ?? this.borderWidth),
         transitionType: transitionType ?? this.transitionType,
         maxStackSize: maxStackSize ?? this.maxStackSize,
         spacing: spacing ?? this.spacing,
@@ -144,6 +150,7 @@ class QueueSetup extends Equatable {
         elevation: elevation,
         borderRadius: _borderRadius,
         padding: _padding,
+        borderWidth: borderWidth ?? 4.0,
       );
     }
     if (styleType == OutlinedQueueStyle) {
@@ -152,6 +159,7 @@ class QueueSetup extends Equatable {
         elevation: elevation,
         borderRadius: _borderRadius,
         padding: _padding,
+        borderWidth: borderWidth ?? 1.0,
       );
     }
     return FilledQueueStyle(
@@ -159,6 +167,7 @@ class QueueSetup extends Equatable {
       elevation: elevation,
       borderRadius: _borderRadius,
       padding: _padding,
+      borderWidth: borderWidth ?? 1.0,
     );
   }
 
@@ -286,6 +295,7 @@ class QueueSetup extends Equatable {
         elevation,
         borderRadius,
         padding,
+        borderWidth,
         transitionType,
         maxStackSize,
         spacing,
