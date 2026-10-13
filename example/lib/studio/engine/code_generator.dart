@@ -124,8 +124,13 @@ void _writeDispatch(final StringBuffer buf, final NotificationDraft draft) {
     buf.writeln('    permanent: true,');
   }
 
-  if (draft.themeOverride != null) {
-    _writeThemeSnippet(buf, draft.themeOverride!, indent: '  ');
+  if (draft.accentColorOverride != null) {
+    final hex = draft.accentColorOverride!
+        .toARGB32()
+        .toRadixString(16)
+        .padLeft(8, '0')
+        .toUpperCase();
+    buf.writeln('    accentColor: const Color(0x$hex),');
   }
 
   if (draft.actionStyle == NotificationActionStyle.button) {

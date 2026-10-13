@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
@@ -61,6 +63,11 @@ final class UpdateInitialIsPinned extends StudioNotificationEvent {
   final bool isPinned;
 }
 
+final class UpdateAccentColorOverride extends StudioNotificationEvent {
+  const UpdateAccentColorOverride(this.accentColor);
+  final Color? accentColor;
+}
+
 final class UpdateThemeOverride extends StudioNotificationEvent {
   const UpdateThemeOverride(this.theme);
   final NotificationThemeData? theme;
@@ -101,10 +108,12 @@ class NotificationDraft {
     this.priority,
     this.permanent = false,
     final bool? initialIsPinned,
-    this.themeOverride,
+    this.accentColorOverride,
+    final NotificationThemeData? themeOverride,
     this.dragBehaviorOverrideType,
     this.snoozeDurationSeconds = 5,
-  }) : _initialIsPinned = initialIsPinned ?? permanent;
+  })  : _initialIsPinned = initialIsPinned ?? permanent,
+        _themeOverride = themeOverride;
 
   final String title;
   final String message;
@@ -129,8 +138,17 @@ class NotificationDraft {
   /// Compatibility getter for legacy tests.
   bool get initialIsPinned => _initialIsPinned;
 
-  /// One-off [NotificationThemeData] palette override for preview card.
-  final NotificationThemeData? themeOverride;
+  /// Optional one-off accent color override for the notification.
+  final Color? accentColorOverride;
+
+  final NotificationThemeData? _themeOverride;
+
+  /// Backward-compatible getter for themeOverride.
+  NotificationThemeData? get themeOverride =>
+      _themeOverride ??
+      (accentColorOverride != null
+          ? NotificationThemeData(accentColor: accentColorOverride)
+          : null);
 
   /// Optional per-notification drag behavior override.
   final Type? dragBehaviorOverrideType;
@@ -149,6 +167,7 @@ class NotificationDraft {
     final NotificationPriority? Function()? priority,
     final bool? permanent,
     final bool? initialIsPinned,
+    final Color? Function()? accentColorOverride,
     final NotificationThemeData? Function()? themeOverride,
     final Type? Function()? dragBehaviorOverrideType,
     final int? snoozeDurationSeconds,
@@ -166,8 +185,13 @@ class NotificationDraft {
             : this.positionOverride,
         priority: priority != null ? priority() : this.priority,
         permanent: permanent ?? initialIsPinned ?? this.permanent,
+        accentColorOverride: accentColorOverride != null
+            ? accentColorOverride()
+            : (themeOverride != null
+                ? themeOverride()?.accentColor
+                : this.accentColorOverride),
         themeOverride:
-            themeOverride != null ? themeOverride() : this.themeOverride,
+            themeOverride != null ? themeOverride() : _themeOverride,
         dragBehaviorOverrideType: dragBehaviorOverrideType != null
             ? dragBehaviorOverrideType()
             : this.dragBehaviorOverrideType,
@@ -224,6 +248,10 @@ class NotificationBloc
       (final event, final emit) =>
           emit(state.copyWith(permanent: event.isPinned)),
     );
+    on<UpdateAccentColorOverride>(
+      (final event, final emit) =>
+          emit(state.copyWith(accentColorOverride: () => event.accentColor)),
+    );
     on<UpdateThemeOverride>(
       (final event, final emit) =>
           emit(state.copyWith(themeOverride: () => event.theme)),
@@ -278,7 +306,7 @@ class NotificationBloc
         channelName: draft.channelName,
         priority: draft.priority,
         permanent: draft.permanent,
-        theme: draft.themeOverride,
+        accentColor: draft.accentColorOverride,
         action: action,
         tapBehavior: tapBehavior,
         dismissDuration: draft.dismissSeconds != null

@@ -11,7 +11,6 @@ import '../../widgets/studio_section_header.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_text_field.dart';
 import '../../widgets/studio_toggle_tile.dart';
-import '../../widgets/theme_designer_dialog.dart';
 
 class PreviewSection extends StatelessWidget {
   const PreviewSection({
@@ -132,8 +131,8 @@ class PreviewSection extends StatelessWidget {
           onChanged: (final v) =>
               context.read<NotificationBloc>().add(UpdateMessage(v)),
         ),
-        // ── Gear 2: Notification Theme Override ──
-        _NotificationThemeOverrideTile(
+        // ── Gear 2: Notification Accent Tint Override (Experimental) ──
+        _NotificationAccentOverrideTile(
           draft: draft,
           setupState: setupState,
         ),
@@ -411,8 +410,8 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
   }
 }
 
-class _NotificationThemeOverrideTile extends StatelessWidget {
-  const _NotificationThemeOverrideTile({
+class _NotificationAccentOverrideTile extends StatelessWidget {
+  const _NotificationAccentOverrideTile({
     required this.draft,
     required this.setupState,
   });
@@ -420,16 +419,24 @@ class _NotificationThemeOverrideTile extends StatelessWidget {
   final NotificationDraft draft;
   final SetupState setupState;
 
+  static const _palette = [
+    Color(0xFF6366F1), // Indigo
+    Color(0xFF10B981), // Emerald
+    Color(0xFFF59E0B), // Amber
+    Color(0xFFEF4444), // Rose
+    Color(0xFF06B6D4), // Cyan
+    Color(0xFF8B5CF6), // Purple
+  ];
+
   @override
   Widget build(final BuildContext context) {
     final colorScheme = StudioTheme.colorScheme;
-    final hasOverride = draft.themeOverride != null;
+    final hasOverride = draft.accentColorOverride != null;
     final channelSetup = setupState.setup.channels[draft.channelName];
-    final baseTheme =
-        channelSetup?.theme ?? channelSetup?.toNotificationChannel().theme;
-    final effectiveAccent = draft.themeOverride?.accentColor ??
-        baseTheme?.accentColor ??
+    final channelAccent = channelSetup?.theme?.accentColor ??
+        channelSetup?.color ??
         colorScheme.primary;
+    final effectiveAccent = draft.accentColorOverride ?? channelAccent;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -463,8 +470,8 @@ class _NotificationThemeOverrideTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   hasOverride
-                      ? 'CHROMATICS: CUSTOM PALETTE ACTIVE'
-                      : 'CHROMATICS: INHERITED FROM #${draft.channelName}',
+                      ? 'ACCENT TINT (EXPERIMENTAL): ACTIVE'
+                      : 'ACCENT TINT: INHERITED FROM #${draft.channelName}',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -472,51 +479,51 @@ class _NotificationThemeOverrideTile extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.palette_outlined, size: 15),
-                  label: Text(
-                    hasOverride ? 'EDIT PALETTE' : 'CUSTOMIZE PALETTE',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onPressed: () => ThemeDesignerDialog.show(
-                    context,
-                    title: 'Notification Theme Override',
-                    channelName: draft.channelName,
-                    initialTheme: draft.themeOverride ?? baseTheme,
-                    initialStyleType: channelSetup?.styleType,
-                    previewTitle: draft.title.isNotEmpty
-                        ? draft.title
-                        : 'Preview Notification',
-                    previewMessage: draft.message.isNotEmpty
-                        ? draft.message
-                        : 'Custom styled notification card preview.',
-                    isNotificationOverride: true,
-                    onApplyTheme: (final newTheme) {
-                      context
-                          .read<NotificationBloc>()
-                          .add(UpdateThemeOverride(newTheme));
-                    },
-                  ),
-                ),
-              ),
-              if (hasOverride) ...[
-                const SizedBox(width: 8),
+              if (hasOverride)
                 IconButton(
-                  icon: const Icon(Icons.restart_alt, size: 18),
-                  tooltip: 'Reset to channel theme',
+                  icon: const Icon(Icons.restart_alt, size: 16),
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  tooltip: 'Reset to channel accent',
                   onPressed: () => context
                       .read<NotificationBloc>()
-                      .add(const UpdateThemeOverride(null)),
+                      .add(const UpdateAccentColorOverride(null)),
                 ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (final color in _palette) ...[
+                InkWell(
+                  onTap: () => context
+                      .read<NotificationBloc>()
+                      .add(UpdateAccentColorOverride(color)),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: draft.accentColorOverride == color
+                            ? Colors.white
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        if (draft.accentColorOverride == color)
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.6),
+                            blurRadius: 6,
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
               ],
             ],
           ),

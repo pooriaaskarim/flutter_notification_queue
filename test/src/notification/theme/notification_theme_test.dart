@@ -171,14 +171,10 @@ void main() {
 
   group('Hierarchical Theme & Style Cascade', () {
     testWidgets(
-      'Notification theme overrides channel theme and defaults',
+      'Notification accentColor overrides channel accentColor '
+      'while keeping channel chromatic tokens',
       (final tester) async {
         late NotificationTheme resolved;
-        const notificationTheme = NotificationThemeData(
-          accentColor: Color(0xFF00FF00),
-          backgroundColor: Color(0xFF001100),
-          foregroundColor: Color(0xFFEEFFEE),
-        );
         const channelTheme = NotificationThemeData(
           accentColor: Color(0xFFFF0000),
           backgroundColor: Color(0xFF110000),
@@ -191,7 +187,7 @@ void main() {
               builder: (final context) {
                 final widget = NotificationWidget(
                   message: 'Test message',
-                  theme: notificationTheme,
+                  accentColor: const Color(0xFF00FF00),
                   configuration: ConfigurationManager(
                     queues: {const NotificationQueue()},
                     channels: {
@@ -215,8 +211,8 @@ void main() {
         );
 
         expect(resolved.color, equals(const Color(0xFF00FF00)));
-        expect(resolved.backgroundColor, equals(const Color(0xFF001100)));
-        expect(resolved.foregroundColor, equals(const Color(0xFFEEFFEE)));
+        expect(resolved.backgroundColor, equals(const Color(0xFF110000)));
+        expect(resolved.foregroundColor, equals(const Color(0xFFFFEEEE)));
       },
     );
 
@@ -394,7 +390,8 @@ void main() {
     );
 
     testWidgets(
-      'Typography and iconTheme propagate through to NotificationTheme',
+      'Typography and iconTheme propagate through channel theme to '
+      'NotificationTheme',
       (final tester) async {
         late NotificationTheme resolved;
         const customTheme = NotificationThemeData(
@@ -410,7 +407,15 @@ void main() {
               builder: (final context) {
                 final widget = NotificationWidget(
                   message: 'Typography test',
-                  theme: customTheme,
+                  configuration: ConfigurationManager(
+                    queues: {const NotificationQueue()},
+                    channels: {
+                      const NotificationChannel(
+                        name: 'default',
+                        theme: customTheme,
+                      ),
+                    },
+                  ),
                 );
 
                 resolved = NotificationTheme.resolveWith(

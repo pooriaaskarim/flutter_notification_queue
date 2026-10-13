@@ -146,13 +146,10 @@ void main() {
         },
       );
       const draft = NotificationDraft(
-        title: 'Theme Override Test',
-        message: 'Has custom notification tokens',
+        title: 'Accent Override Test',
+        message: 'Has custom accent color',
         channelName: 'info',
-        themeOverride: NotificationThemeData(
-          accentColor: Color(0xFF10B981),
-          elevation: 6,
-        ),
+        accentColorOverride: Color(0xFF10B981),
       );
 
       final codeSnippet = generateCode(
@@ -160,8 +157,7 @@ void main() {
         draft: draft,
       );
 
-      expect(codeSnippet, contains('accentColor: Color(0xff10b981),'));
-      expect(codeSnippet, contains('elevation: 6.0,'));
+      expect(codeSnippet, contains('accentColor: const Color(0xFF10B981),'));
     });
 
     test('generateCode omits maxWidth property when null', () {

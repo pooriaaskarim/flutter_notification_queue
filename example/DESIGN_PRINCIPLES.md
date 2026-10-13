@@ -24,7 +24,7 @@ A developer exploring the studio must intuitively understand how the library ope
 ```
 
 1. **`AppNotification` (The Payload)**:
-   - Contains content (`title`, `message`), priorities (`high`, `normal`, `low`), optional duration (`dismissDuration`), permanent flag, and optional local chromatic override (`theme`).
+   - Contains content (`title`, `message`), priorities (`high`, `normal`, `low`), optional duration (`dismissDuration`), permanent flag, and optional experimental content accent tint (`accentColor`).
 2. **`NotificationChannel` (The Routing Engine)**:
    - Categorizes alerts by domain (`info`, `billing`, `orders`, `security`).
    - Declares the default target `QueuePosition` and parking policies.
@@ -53,7 +53,7 @@ A developer exploring the studio must intuitively understand how the library ope
   - Set at the queue level (baseline) or overridden at channel scope (semantic domain archetype).
 - **Gear 2: Theme Chromatics (`NotificationThemeData`)**:
   - Controls color tokens: `accentColor`, `backgroundColor`, `foregroundColor`, `borderRadius`, `elevation`.
-  - Driven by the channel or inherited globally, with one-off chromatic overrides supported on `AppNotification`.
+  - Governed at the channel or inherited globally, with optional experimental accent tint (`accentColor`) supported on `AppNotification` for content-driven dynamic colors.
 - The Studio must enforce this separation: changing color palettes never resets layout geometry, and switching archetypes never breaks color tokens.
 
 ### Principle III: Cause-and-Effect Proximity (Zero Feedback Distance)

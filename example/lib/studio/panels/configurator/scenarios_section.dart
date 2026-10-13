@@ -628,25 +628,20 @@ final _scenarios = [
     },
   ),
 
-  // ── 14. Dynamic Theme Tokens (v0.5.0) ──
+  // ── 14. Content Accent Tint (v0.5.0) ──
   _Scenario(
-    title: 'Dynamic Theme Tokens',
-    subtitle: 'NotificationThemeData.fromSeed — cohesive branding palette',
+    title: 'Content Accent Tint',
+    subtitle: 'AppNotification.accentColor — dynamic content-driven accent',
     icon: Icons.palette_outlined,
     color: const Color(0xFF8B5CF6),
     onFire: (final context) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       NotificationScope.of(context).show(
-        AppNotification(
-          title: 'Brand Theme Token Sync',
-          message: 'Styled using NotificationThemeData.fromSeed '
-              'with adaptive tokens.',
+        const AppNotification(
+          title: 'Content Accent Override',
+          message: 'Tints card accent without overriding channel typography.',
           channelName: 'info',
-          theme: NotificationThemeData.fromSeed(
-            seedColor: const Color(0xFF8B5CF6),
-            brightness: isDark ? Brightness.dark : Brightness.light,
-          ),
-          dismissDuration: const Duration(seconds: 8),
+          accentColor: Color(0xFF8B5CF6),
+          dismissDuration: Duration(seconds: 8),
         ),
       );
     },

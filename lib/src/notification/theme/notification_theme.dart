@@ -31,44 +31,33 @@ class NotificationTheme {
     final effectiveStyle = notification.channel.style ?? style;
 
     // 2. Cascade theme tokens:
-    final nTheme = notification.theme;
     final cTheme = notification.channel.theme;
 
-    final tokenAccent = nTheme?.accentColor ??
+    final tokenAccent = notification.accentColor ??
         cTheme?.accentColor ??
         ambientExtension?.accentColor;
-    final tokenBackground = nTheme?.backgroundColor ??
-        cTheme?.backgroundColor ??
+    final tokenBackground = cTheme?.backgroundColor ??
         ambientExtension?.backgroundColor;
-    final tokenForeground = nTheme?.foregroundColor ??
-        cTheme?.foregroundColor ??
+    final tokenForeground = cTheme?.foregroundColor ??
         ambientExtension?.foregroundColor;
-    final tokenBorderColor = nTheme?.borderColor ??
-        cTheme?.borderColor ??
+    final tokenBorderColor = cTheme?.borderColor ??
         ambientExtension?.borderColor;
-    final tokenBorderWidth = nTheme?.borderWidth ??
-        cTheme?.borderWidth ??
+    final tokenBorderWidth = cTheme?.borderWidth ??
         ambientExtension?.borderWidth;
-    final tokenBorderRadius = nTheme?.borderRadius ??
-        cTheme?.borderRadius ??
+    final tokenBorderRadius = cTheme?.borderRadius ??
         ambientExtension?.borderRadius ??
         effectiveStyle.borderRadius;
-    final tokenElevation = nTheme?.elevation ??
-        cTheme?.elevation ??
+    final tokenElevation = cTheme?.elevation ??
         ambientExtension?.elevation ??
         effectiveStyle.elevation;
-    final tokenShadowColor = nTheme?.shadowColor ??
-        cTheme?.shadowColor ??
+    final tokenShadowColor = cTheme?.shadowColor ??
         ambientExtension?.shadowColor ??
         themeData.shadowColor;
-    final titleTextStyle = nTheme?.titleTextStyle ??
-        cTheme?.titleTextStyle ??
+    final titleTextStyle = cTheme?.titleTextStyle ??
         ambientExtension?.titleTextStyle;
-    final messageTextStyle = nTheme?.messageTextStyle ??
-        cTheme?.messageTextStyle ??
+    final messageTextStyle = cTheme?.messageTextStyle ??
         ambientExtension?.messageTextStyle;
-    final iconTheme = nTheme?.iconTheme ??
-        cTheme?.iconTheme ??
+    final iconTheme = cTheme?.iconTheme ??
         ambientExtension?.iconTheme;
 
     // Fallbacks to deprecated scalar color properties:
@@ -158,7 +147,7 @@ class NotificationTheme {
       titleTextStyle: titleTextStyle,
       messageTextStyle: messageTextStyle,
       iconTheme: iconTheme,
-      theme: nTheme ?? cTheme ?? ambientExtension,
+      theme: cTheme ?? ambientExtension,
     );
   }
 

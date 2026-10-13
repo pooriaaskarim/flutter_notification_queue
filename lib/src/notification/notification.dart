@@ -89,7 +89,7 @@ class NotificationWidget extends StatefulWidget {
     final Color? color,
     final Color? foregroundColor,
     final Color? backgroundColor,
-    final NotificationThemeData? theme,
+    final Color? accentColor,
     final Duration? dismissDuration,
     final bool permanent = false,
     final NotificationBuilder? builder,
@@ -140,7 +140,7 @@ class NotificationWidget extends StatefulWidget {
       color: color,
       foregroundColor: foregroundColor,
       backgroundColor: backgroundColor,
-      theme: theme,
+      accentColor: accentColor,
       dismissDuration: resolvedDismissDuration,
       builder: builder,
       priority: priority,
@@ -163,7 +163,7 @@ class NotificationWidget extends StatefulWidget {
     this.color,
     this.foregroundColor,
     this.backgroundColor,
-    this.theme,
+    this.accentColor,
     this.dismissDuration,
     this.tapBehavior,
     this.dragBehavior,
@@ -320,8 +320,9 @@ class NotificationWidget extends StatefulWidget {
   )
   final Color? backgroundColor;
 
-  /// Optional cohesive theme tokens overriding channel-level theme.
-  final NotificationThemeData? theme;
+  /// Optional experimental accent color override.
+  @experimental
+  final Color? accentColor;
 
   /// Notification dismiss duration.
   ///
@@ -546,7 +547,7 @@ class NotificationWidgetState extends State<NotificationWidget>
       oldWidget.isPinnedNotifier.removeListener(_handlePinChanged);
       widget.isPinnedNotifier.addListener(_handlePinChanged);
     }
-    if (oldWidget.theme != widget.theme ||
+    if (oldWidget.accentColor != widget.accentColor ||
         oldWidget.channel.style != widget.channel.style ||
         oldWidget.queue.style != widget.queue.style ||
         // ignore: deprecated_member_use_from_same_package

@@ -63,7 +63,7 @@ class AppNotification {
     this.color,
     this.foregroundColor,
     this.backgroundColor,
-    this.theme,
+    this.accentColor,
     this.dismissDuration,
     this.permanent = false,
     this.initialIsPinned = false,
@@ -147,7 +147,7 @@ class AppNotification {
   ///
   /// If `null`, falls back to the channel's default color or theme primary.
   @Deprecated(
-    'Use theme: NotificationThemeData(accentColor: ...) instead. '
+    'Use accentColor instead. '
     'Scheduled for removal in v0.6.0.',
   )
   final Color? color;
@@ -157,7 +157,8 @@ class AppNotification {
   /// If `null`, falls back to the channel's default foreground color or theme
   /// `onSurface`.
   @Deprecated(
-    'Use theme: NotificationThemeData(foregroundColor: ...) instead. '
+    'Configure colors via NotificationChannel.theme. '
+    'Use accentColor for one-off content accents. '
     'Scheduled for removal in v0.6.0.',
   )
   final Color? foregroundColor;
@@ -167,13 +168,21 @@ class AppNotification {
   /// If `null`, falls back to the channel's default background color or theme
   /// `surface`.
   @Deprecated(
-    'Use theme: NotificationThemeData(backgroundColor: ...) instead. '
+    'Configure colors via NotificationChannel.theme. '
+    'Use accentColor for one-off content accents. '
     'Scheduled for removal in v0.6.0.',
   )
   final Color? backgroundColor;
 
-  /// Optional cohesive theme tokens overriding channel-level theme.
-  final NotificationThemeData? theme;
+  /// Optional experimental accent color override.
+  ///
+  /// When provided, this tint color takes precedence over the channel's
+  /// theme accent color solely for content-driven color accents (e.g. status
+  /// tags, brand colors). To maintain design system consistency, full theme
+  /// tokens (typography, borders, elevation) should be configured on
+  /// [NotificationChannel].
+  @experimental
+  final Color? accentColor;
 
   /// Auto-dismiss timer duration for this notification.
   ///
@@ -233,7 +242,7 @@ class AppNotification {
         foregroundColor: foregroundColor,
         // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor,
-        theme: theme,
+        accentColor: accentColor,
         dismissDuration: dismissDuration,
         permanent: permanent,
         builder: builder,
@@ -261,7 +270,7 @@ class AppNotification {
     final Color? color,
     final Color? foregroundColor,
     final Color? backgroundColor,
-    final NotificationThemeData? theme,
+    final Color? accentColor,
     final Duration? dismissDuration,
     final bool? permanent,
     final bool? initialIsPinned,
@@ -288,7 +297,7 @@ class AppNotification {
         foregroundColor: foregroundColor ?? this.foregroundColor,
         // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor ?? this.backgroundColor,
-        theme: theme ?? this.theme,
+        accentColor: accentColor ?? this.accentColor,
         dismissDuration: dismissDuration ?? this.dismissDuration,
         permanent: permanent ?? this.permanent,
         initialIsPinned: initialIsPinned ?? this.initialIsPinned,

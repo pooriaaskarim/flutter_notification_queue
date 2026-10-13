@@ -39,18 +39,18 @@ class ResolutionInspector extends StatelessWidget {
     }
 
     // 2. Resolve Gear 2: Chromatic Theme
-    final hasNotificationTheme = draft.themeOverride != null;
+    final hasNotificationAccent = draft.accentColorOverride != null;
     final hasChannelTheme = channelSetup?.theme != null;
     final channelColor = channelSetup?.color;
 
-    final Color effectiveAccent = draft.themeOverride?.accentColor ??
+    final Color effectiveAccent = draft.accentColorOverride ??
         channelSetup?.theme?.accentColor ??
         channelColor ??
         colorScheme.primary;
 
     final String themeResolutionSource;
-    if (hasNotificationTheme) {
-      themeResolutionSource = 'Alert Palette Override';
+    if (hasNotificationAccent) {
+      themeResolutionSource = 'Notification (accentColor)';
     } else if (hasChannelTheme || channelColor != null) {
       themeResolutionSource = 'Channel (#${draft.channelName})';
     } else {

@@ -261,7 +261,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
         title: widget.previewTitle,
         message: widget.previewMessage,
         channelName: channelName,
-        theme: theme,
+        accentColor: theme?.accentColor,
         action: NotificationAction.button(
           label: 'DISMISS',
           onPressed: () {},
