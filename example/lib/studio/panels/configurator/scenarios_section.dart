@@ -570,6 +570,63 @@ final _scenarios = [
       });
     },
   ),
+
+  // ── 12. Interactive Snooze & Return ──
+  _Scenario(
+    title: 'Interactive Snooze & Return',
+    subtitle:
+        'Drag card to edge or tap SNOOZE — hides and resurfaces after 5s.',
+    icon: Icons.snooze_rounded,
+    color: const Color(0xFFFB7185),
+    onFire: (final context) {
+      final scope = NotificationScope.of(context);
+      late final AppNotification notification;
+      notification = AppNotification(
+        title: 'Meeting in 15 Minutes',
+        message: 'Product sync with mobile core team. Tap or drag to snooze.',
+        channelName: 'info',
+        dismissDuration: const Duration(seconds: 25),
+        dragBehavior: const Snooze(duration: Duration(seconds: 5)),
+        action: NotificationAction.button(
+          label: 'SNOOZE 5s',
+          onPressed: () {
+            scope.snooze(notification, const Duration(seconds: 5));
+          },
+        ),
+      );
+      scope.show(notification);
+    },
+  ),
+
+  // ── 13. Pinned Critical Alert ──
+  _Scenario(
+    title: 'Pinned Critical Alert',
+    subtitle:
+        'Sticky card — immune to swipe dismiss & timers until unpinned.',
+    icon: Icons.push_pin_rounded,
+    color: const Color(0xFFF59E0B),
+    onFire: (final context) {
+      final scope = NotificationScope.of(context);
+      late final AppNotification notification;
+      notification = AppNotification(
+        title: '⚠ Active Security Incident',
+        message: 'Locked in place by Pin intent. Tap to acknowledge & unlock.',
+        channelName: 'warning',
+        initialIsPinned: true,
+        priority: NotificationPriority.critical,
+        dismissDuration: null,
+        action: NotificationAction.button(
+          label: 'ACKNOWLEDGE & UNPIN',
+          onPressed: () {
+            scope
+              ..unpin(notification)
+              ..dismiss(notification);
+          },
+        ),
+      );
+      scope.show(notification);
+    },
+  ),
 ];
 
 class _ScenarioTile extends StatelessWidget {

@@ -148,6 +148,9 @@ class _QueueEditor extends StatelessWidget {
   static const _behaviorTypes = [
     Disabled,
     Dismiss,
+    Snooze,
+    Pin,
+    Archive,
     Reorder,
     Relocate,
     ReorderAndRelocate,
@@ -168,6 +171,9 @@ class _QueueEditor extends StatelessWidget {
   String _formatBehaviorType(final Type t) => switch (t) {
         == Disabled => 'DISABLED',
         == Dismiss => 'DISMISS',
+        == Snooze => 'SNOOZE',
+        == Pin => 'PIN',
+        == Archive => 'ARCHIVE',
         == Reorder => 'REORDER',
         == Relocate => 'RELOCATE',
         == ReorderAndRelocate => 'REORDER & RELOCATE',
@@ -407,6 +413,22 @@ class _QueueEditor extends StatelessWidget {
                     ),
               ),
             ],
+            if (setup.dragBehaviorType == Snooze) ...[
+              const SizedBox(height: 12),
+              StudioSliderTile(
+                label: 'DRAG SNOOZE DURATION: ${setup.dragSnoozeSeconds}s',
+                value: setup.dragSnoozeSeconds.toDouble(),
+                min: 1,
+                max: 30,
+                divisions: 29,
+                onChanged: (final v) => context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(dragSnoozeSeconds: v.round()),
+                      ),
+                    ),
+              ),
+            ],
             const SizedBox(height: 12),
             StudioDropdownTile<Type>(
               label: 'LONG PRESS DRAG BEHAVIOR',
@@ -456,6 +478,22 @@ class _QueueEditor extends StatelessWidget {
                       UpdateQueue(
                         position,
                         setup.copyWith(longPressDismissZone: v),
+                      ),
+                    ),
+              ),
+            ],
+            if (setup.longPressBehaviorType == Snooze) ...[
+              const SizedBox(height: 12),
+              StudioSliderTile(
+                label: 'LONG-PRESS SNOOZE: ${setup.longPressSnoozeSeconds}s',
+                value: setup.longPressSnoozeSeconds.toDouble(),
+                min: 1,
+                max: 30,
+                divisions: 29,
+                onChanged: (final v) => context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(longPressSnoozeSeconds: v.round()),
                       ),
                     ),
               ),

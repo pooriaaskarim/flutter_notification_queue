@@ -45,6 +45,26 @@ final class SelectPreviewPosition extends StudioNotificationEvent {
   final QueuePosition? position;
 }
 
+final class UpdatePriority extends StudioNotificationEvent {
+  const UpdatePriority(this.priority);
+  final NotificationPriority? priority;
+}
+
+final class UpdateInitialIsPinned extends StudioNotificationEvent {
+  const UpdateInitialIsPinned({required this.isPinned});
+  final bool isPinned;
+}
+
+final class UpdateDragBehaviorOverride extends StudioNotificationEvent {
+  const UpdateDragBehaviorOverride(this.type);
+  final Type? type;
+}
+
+final class UpdateSnoozeDurationSeconds extends StudioNotificationEvent {
+  const UpdateSnoozeDurationSeconds(this.seconds);
+  final int seconds;
+}
+
 final class FirePreview extends StudioNotificationEvent {
   const FirePreview();
 }
@@ -67,6 +87,10 @@ class NotificationDraft {
     this.dismissSeconds = 5,
     this.channelName = 'info',
     this.positionOverride,
+    this.priority,
+    this.initialIsPinned = false,
+    this.dragBehaviorOverrideType,
+    this.snoozeDurationSeconds = 5,
   });
 
   final String title;
@@ -81,6 +105,18 @@ class NotificationDraft {
   /// Override the channel's default position. `null` = use channel default.
   final QueuePosition? positionOverride;
 
+  /// Priority rank override.
+  final NotificationPriority? priority;
+
+  /// Whether the notification starts pinned to the top.
+  final bool initialIsPinned;
+
+  /// Optional per-notification drag behavior override.
+  final Type? dragBehaviorOverrideType;
+
+  /// Duration to snooze for when Snooze is chosen.
+  final int snoozeDurationSeconds;
+
   NotificationDraft copyWith({
     final String? title,
     final String? message,
@@ -89,6 +125,10 @@ class NotificationDraft {
     final int? Function()? dismissSeconds,
     final String? channelName,
     final QueuePosition? Function()? positionOverride,
+    final NotificationPriority? Function()? priority,
+    final bool? initialIsPinned,
+    final Type? Function()? dragBehaviorOverrideType,
+    final int? snoozeDurationSeconds,
   }) =>
       NotificationDraft(
         title: title ?? this.title,
@@ -101,6 +141,13 @@ class NotificationDraft {
         positionOverride: positionOverride != null
             ? positionOverride()
             : this.positionOverride,
+        priority: priority != null ? priority() : this.priority,
+        initialIsPinned: initialIsPinned ?? this.initialIsPinned,
+        dragBehaviorOverrideType: dragBehaviorOverrideType != null
+            ? dragBehaviorOverrideType()
+            : this.dragBehaviorOverrideType,
+        snoozeDurationSeconds:
+            snoozeDurationSeconds ?? this.snoozeDurationSeconds,
       );
 }
 
@@ -140,6 +187,23 @@ class NotificationBloc
       (final event, final emit) =>
           emit(state.copyWith(positionOverride: () => event.position)),
     );
+    on<UpdatePriority>(
+      (final event, final emit) =>
+          emit(state.copyWith(priority: () => event.priority)),
+    );
+    on<UpdateInitialIsPinned>(
+      (final event, final emit) =>
+          emit(state.copyWith(initialIsPinned: event.isPinned)),
+    );
+    on<UpdateDragBehaviorOverride>(
+      (final event, final emit) => emit(
+        state.copyWith(dragBehaviorOverrideType: () => event.type),
+      ),
+    );
+    on<UpdateSnoozeDurationSeconds>(
+      (final event, final emit) =>
+          emit(state.copyWith(snoozeDurationSeconds: event.seconds)),
+    );
     on<ResetDraft>(
       (final event, final emit) => emit(const NotificationDraft()),
     );
@@ -174,6 +238,20 @@ class NotificationBloc
         effectiveLibraryPosition ??
         setupBloc.state.activeQueuePosition;
 
+    // Resolve drag behavior override
+    DragBehavior? dragBehavior;
+    if (draft.dragBehaviorOverrideType == Snooze) {
+      dragBehavior = Snooze(
+        duration: Duration(seconds: draft.snoozeDurationSeconds),
+      );
+    } else if (draft.dragBehaviorOverrideType == Pin) {
+      dragBehavior = const Pin();
+    } else if (draft.dragBehaviorOverrideType == Dismiss) {
+      dragBehavior = const Dismiss();
+    } else if (draft.dragBehaviorOverrideType == Disabled) {
+      dragBehavior = const Disabled();
+    }
+
     // Fire notification via NotificationController
     setupBloc.controller.show(
       AppNotification(
@@ -181,6 +259,9 @@ class NotificationBloc
         message: draft.message,
         channelName: draft.channelName,
         position: resolvedPosition,
+        priority: draft.priority,
+        initialIsPinned: draft.initialIsPinned,
+        dragBehavior: dragBehavior,
         action: action,
         tapBehavior: tapBehavior,
         dismissDuration: draft.dismissSeconds != null

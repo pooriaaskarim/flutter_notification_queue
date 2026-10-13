@@ -20,8 +20,10 @@ class QueueSetup extends Equatable {
     this.horizontalMargin = 36.0,
     this.dragBehaviorType = Dismiss,
     this.dragDismissZone = DismissZone.sideEdges,
+    this.dragSnoozeSeconds = 5,
     this.longPressBehaviorType = Disabled,
     this.longPressDismissZone = DismissZone.sideEdges,
+    this.longPressSnoozeSeconds = 5,
     this.relocateTargets = const {},
     this.closeButtonBehaviorType = AlwaysVisible,
     this.tapBehaviorType = TapToDismiss,
@@ -49,8 +51,10 @@ class QueueSetup extends Equatable {
   // ── Gestures ──
   final Type dragBehaviorType;
   final DismissZone dragDismissZone;
+  final int dragSnoozeSeconds;
   final Type longPressBehaviorType;
   final DismissZone longPressDismissZone;
+  final int longPressSnoozeSeconds;
   final Set<QueuePosition> relocateTargets;
   final Type closeButtonBehaviorType;
 
@@ -82,8 +86,10 @@ class QueueSetup extends Equatable {
     final double? horizontalMargin,
     final Type? dragBehaviorType,
     final DismissZone? dragDismissZone,
+    final int? dragSnoozeSeconds,
     final Type? longPressBehaviorType,
     final DismissZone? longPressDismissZone,
+    final int? longPressSnoozeSeconds,
     final Set<QueuePosition>? relocateTargets,
     final Type? closeButtonBehaviorType,
     final Type? tapBehaviorType,
@@ -104,9 +110,12 @@ class QueueSetup extends Equatable {
         horizontalMargin: horizontalMargin ?? this.horizontalMargin,
         dragBehaviorType: dragBehaviorType ?? this.dragBehaviorType,
         dragDismissZone: dragDismissZone ?? this.dragDismissZone,
+        dragSnoozeSeconds: dragSnoozeSeconds ?? this.dragSnoozeSeconds,
         longPressBehaviorType:
             longPressBehaviorType ?? this.longPressBehaviorType,
         longPressDismissZone: longPressDismissZone ?? this.longPressDismissZone,
+        longPressSnoozeSeconds:
+            longPressSnoozeSeconds ?? this.longPressSnoozeSeconds,
         relocateTargets: relocateTargets ?? this.relocateTargets,
         closeButtonBehaviorType:
             closeButtonBehaviorType ?? this.closeButtonBehaviorType,
@@ -157,6 +166,15 @@ class QueueSetup extends Equatable {
     if (dragBehaviorType == Dismiss) {
       return Dismiss(zones: dragDismissZone);
     }
+    if (dragBehaviorType == Snooze) {
+      return Snooze(duration: Duration(seconds: dragSnoozeSeconds));
+    }
+    if (dragBehaviorType == Pin) {
+      return const Pin();
+    }
+    if (dragBehaviorType == Archive) {
+      return const Archive();
+    }
     if (dragBehaviorType == Relocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
@@ -177,6 +195,15 @@ class QueueSetup extends Equatable {
   LongPressDragBehavior toLongPressBehavior(final QueuePosition position) {
     if (longPressBehaviorType == Dismiss) {
       return Dismiss(zones: longPressDismissZone);
+    }
+    if (longPressBehaviorType == Snooze) {
+      return Snooze(duration: Duration(seconds: longPressSnoozeSeconds));
+    }
+    if (longPressBehaviorType == Pin) {
+      return const Pin();
+    }
+    if (longPressBehaviorType == Archive) {
+      return const Archive();
     }
     if (longPressBehaviorType == Relocate) {
       return relocateTargets.isEmpty
@@ -259,8 +286,10 @@ class QueueSetup extends Equatable {
         horizontalMargin,
         dragBehaviorType,
         dragDismissZone,
+        dragSnoozeSeconds,
         longPressBehaviorType,
         longPressDismissZone,
+        longPressSnoozeSeconds,
         relocateTargets,
         closeButtonBehaviorType,
         tapBehaviorType,

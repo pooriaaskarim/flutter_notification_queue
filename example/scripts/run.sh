@@ -177,12 +177,12 @@ case "${1:-}" in
     flutter build web --release "${@:2}"
     ;;
   build-apk)
-    echo "🔨 Building Android debug APK..."
-    flutter build apk --debug "${@:2}"
+    echo "🔨 Building Android debug APK (arm64)..."
+    flutter build apk --debug --target-platform android-arm64 "${@:2}"
     ;;
   build-apk-release)
-    echo "🔨 Building Android release APK..."
-    flutter build apk --release "${@:2}"
+    echo "🔨 Building Android release APK (arm64)..."
+    flutter build apk --release --target-platform android-arm64 "${@:2}"
     ;;
   help|--help|-h)
     usage

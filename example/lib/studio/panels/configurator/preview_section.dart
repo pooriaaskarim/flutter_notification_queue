@@ -9,6 +9,7 @@ import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_section_header.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_text_field.dart';
+import '../../widgets/studio_toggle_tile.dart';
 
 class PreviewSection extends StatelessWidget {
   const PreviewSection({
@@ -19,6 +20,23 @@ class PreviewSection extends StatelessWidget {
 
   final SetupState setupState;
   final NotificationDraft draft;
+
+  static const _dragOverrideTypes = [
+    null,
+    Dismiss,
+    Snooze,
+    Pin,
+    Disabled,
+  ];
+
+  String _formatDragOverride(final Type? t) => switch (t) {
+        null => 'CHANNEL DEFAULT',
+        == Dismiss => 'DISMISS (SWIPE AWAY)',
+        == Snooze => 'SNOOZE (DRAG TO SNOOZE)',
+        == Pin => 'PIN (LOCK TO QUEUE)',
+        == Disabled => 'DISABLED (STICKY CARD)',
+        _ => t.toString().toUpperCase(),
+      };
 
   @override
   Widget build(final BuildContext context) {
@@ -82,6 +100,18 @@ class PreviewSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
+        // ── Priority ──
+        StudioDropdownTile<NotificationPriority?>(
+          label: 'PRIORITY TRIAGE',
+          value: draft.priority,
+          items: const [null, ...NotificationPriority.values],
+          itemLabel: (final e) =>
+              e == null ? 'CHANNEL DEFAULT' : e.name.toUpperCase(),
+          onChanged: (final v) =>
+              context.read<NotificationBloc>().add(UpdatePriority(v)),
+        ),
+        const SizedBox(height: 12),
+
         // ── Content ──
         StudioTextField(
           label: 'NOTIFICATION TITLE',
@@ -96,6 +126,41 @@ class PreviewSection extends StatelessWidget {
           maxLines: 3,
           onChanged: (final v) =>
               context.read<NotificationBloc>().add(UpdateMessage(v)),
+        ),
+        const SizedBox(height: 12),
+
+        // ── Drag Gesture Override ──
+        StudioDropdownTile<Type?>(
+          label: 'DRAG BEHAVIOR OVERRIDE',
+          value: draft.dragBehaviorOverrideType,
+          items: _dragOverrideTypes,
+          itemLabel: _formatDragOverride,
+          onChanged: (final v) => context
+              .read<NotificationBloc>()
+              .add(UpdateDragBehaviorOverride(v)),
+        ),
+        if (draft.dragBehaviorOverrideType == Snooze) ...[
+          const SizedBox(height: 12),
+          StudioSliderTile(
+            label: 'SNOOZE DURATION: ${draft.snoozeDurationSeconds}s',
+            value: draft.snoozeDurationSeconds.toDouble(),
+            min: 1,
+            max: 30,
+            divisions: 29,
+            onChanged: (final v) => context
+                .read<NotificationBloc>()
+                .add(UpdateSnoozeDurationSeconds(v.round())),
+          ),
+        ],
+        const SizedBox(height: 12),
+
+        // ── Initial Pin State ──
+        StudioToggleTile(
+          label: 'PIN INITIALLY (PREVENTS SWIPE & TIMEOUT)',
+          value: draft.initialIsPinned,
+          onChanged: (final v) => context.read<NotificationBloc>().add(
+                UpdateInitialIsPinned(isPinned: v),
+              ),
         ),
         const SizedBox(height: 12),
 
@@ -224,6 +289,7 @@ class _ProgrammaticControls extends StatefulWidget {
 
 class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
   AppNotification? _activeDemo;
+  bool _isPinned = false;
 
   void _fireDemo() {
     final id = 'demo_${DateTime.now().millisecondsSinceEpoch}';
@@ -231,13 +297,14 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
     final n = AppNotification(
       id: id,
       title: 'Programmatic Demo',
-      message: 'Keep an eye on me! I can be controlled programmatically.',
+      message: 'Keep an eye on me! I can be snoozed, pinned, or relocated.',
       channelName: channelName,
-      dismissDuration: const Duration(seconds: 15),
+      dismissDuration: const Duration(seconds: 20),
     );
     NotificationScope.of(context).show(n);
     setState(() {
       _activeDemo = n;
+      _isPinned = false;
     });
   }
 
@@ -246,7 +313,31 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
       NotificationScope.of(context).dismiss(_activeDemo!);
       setState(() {
         _activeDemo = null;
+        _isPinned = false;
       });
+    }
+  }
+
+  void _snoozeDemo() {
+    if (_activeDemo != null) {
+      NotificationScope.of(context).snooze(
+        _activeDemo!,
+        const Duration(seconds: 5),
+      );
+    }
+  }
+
+  void _togglePinDemo() {
+    if (_activeDemo == null) {
+      return;
+    }
+    final scope = NotificationScope.of(context);
+    if (_isPinned) {
+      scope.unpin(_activeDemo!);
+      setState(() => _isPinned = false);
+    } else {
+      scope.pin(_activeDemo!);
+      setState(() => _isPinned = true);
     }
   }
 
@@ -293,28 +384,43 @@ class _ProgrammaticControlsState extends State<_ProgrammaticControls> {
             ),
           )
         else
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: StudioTheme.colorScheme.error,
-                  ),
-                  icon: const Icon(Icons.close),
-                  label: const Text('DISMISS'),
-                  onPressed: _dismissDemo,
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: StudioTheme.colorScheme.error,
                 ),
+                icon: const Icon(Icons.close, size: 16),
+                label: const Text('DISMISS'),
+                onPressed: _dismissDemo,
               ),
-              if (canRelocate) ...[
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.multiple_stop),
-                    label: const Text('RELOCATE'),
-                    onPressed: _relocateDemo,
-                  ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFFB7185), // rose/snooze color
                 ),
-              ],
+                icon: const Icon(Icons.snooze_rounded, size: 16),
+                label: const Text('SNOOZE 5s'),
+                onPressed: _snoozeDemo,
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFF59E0B), // amber
+                ),
+                icon: Icon(
+                  _isPinned ? Icons.push_pin_outlined : Icons.push_pin,
+                  size: 16,
+                ),
+                label: Text(_isPinned ? 'UNPIN' : 'PIN'),
+                onPressed: _togglePinDemo,
+              ),
+              if (canRelocate)
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.multiple_stop, size: 16),
+                  label: const Text('RELOCATE'),
+                  onPressed: _relocateDemo,
+                ),
             ],
           ),
       ],

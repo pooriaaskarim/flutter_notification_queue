@@ -61,6 +61,29 @@ String generateCode({
     );
   }
 
+  if (draft.priority != null) {
+    buf.writeln(
+      '    priority: NotificationPriority.${draft.priority!.name},',
+    );
+  }
+
+  if (draft.initialIsPinned) {
+    buf.writeln('    initialIsPinned: true,');
+  }
+
+  if (draft.dragBehaviorOverrideType != null) {
+    final override = switch (draft.dragBehaviorOverrideType) {
+      == Snooze => 'const Snooze(\n'
+          '      duration: Duration(seconds: ${draft.snoozeDurationSeconds}),\n'
+          '    )',
+      == Pin => 'const Pin()',
+      == Dismiss => 'const Dismiss()',
+      == Disabled => 'const Disabled()',
+      _ => 'const ${draft.dragBehaviorOverrideType}()',
+    };
+    buf.writeln('    dragBehavior: $override,');
+  }
+
   if (draft.actionStyle == NotificationActionStyle.button) {
     buf
       ..writeln('    action: NotificationAction.button(')
@@ -215,6 +238,16 @@ String _behaviorSnippet(final Type t, final QueueSetup q, final bool isDrag) {
 
   if (t == Dismiss) {
     return 'const Dismiss(zones: DismissZone.${zone.name})';
+  }
+  if (t == Snooze) {
+    final secs = isDrag ? q.dragSnoozeSeconds : q.longPressSnoozeSeconds;
+    return 'const Snooze(duration: Duration(seconds: $secs))';
+  }
+  if (t == Pin) {
+    return 'const Pin()';
+  }
+  if (t == Archive) {
+    return 'const Archive()';
   }
   if (t == Relocate) {
     return q.relocateTargets.isEmpty

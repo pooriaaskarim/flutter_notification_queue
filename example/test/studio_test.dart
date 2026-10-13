@@ -31,9 +31,23 @@ void main() {
       final queue = setup.toNotificationQueue(QueuePosition.topLeft);
       expect(queue.maxWidth, equals(250.0));
     });
+    test('toNotificationQueue builds Snooze and Pin behaviors correctly', () {
+      const snoozeSetup = QueueSetup(
+        dragBehaviorType: Snooze,
+        dragSnoozeSeconds: 8,
+        longPressBehaviorType: Pin,
+      );
+      final queue = snoozeSetup.toNotificationQueue(QueuePosition.topLeft);
+      expect(queue.dragBehavior, isA<Snooze>());
+      expect(
+        (queue.dragBehavior as Snooze).duration,
+        equals(const Duration(seconds: 8)),
+      );
+      expect(queue.longPressDragBehavior, isA<Pin>());
+    });
   });
 
-  group('CodeGenerator maxWidth Snippet Tests', () {
+  group('CodeGenerator maxWidth & Behavior Snippet Tests', () {
     test('generateCode includes maxWidth property when set', () {
       const queueSetup = QueueSetup(maxWidth: 280.0);
       const studioSetup = StudioSetup(
@@ -54,6 +68,42 @@ void main() {
       );
 
       expect(codeSnippet, contains('maxWidth: 280.0,'));
+    });
+
+    test('generateCode emits Snooze, Priority, and initialIsPinned snippets',
+        () {
+      const queueSetup = QueueSetup(
+        dragBehaviorType: Snooze,
+        dragSnoozeSeconds: 10,
+      );
+      const studioSetup = StudioSetup(
+        queues: {
+          QueuePosition.topRight: queueSetup,
+        },
+        channels: {},
+      );
+      const draft = NotificationDraft(
+        title: 'Snooze Draft',
+        message: 'Testing Snooze',
+        channelName: 'info',
+        priority: NotificationPriority.critical,
+        initialIsPinned: true,
+        dragBehaviorOverrideType: Snooze,
+        snoozeDurationSeconds: 5,
+      );
+
+      final codeSnippet = generateCode(
+        setup: studioSetup,
+        draft: draft,
+      );
+
+      expect(
+        codeSnippet,
+        contains('const Snooze(duration: Duration(seconds: 10))'),
+      );
+      expect(codeSnippet, contains('priority: NotificationPriority.critical,'));
+      expect(codeSnippet, contains('initialIsPinned: true,'));
+      expect(codeSnippet, contains('duration: Duration(seconds: 5),'));
     });
 
     test('generateCode omits maxWidth property when null', () {
