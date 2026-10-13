@@ -346,17 +346,9 @@ void _writeThemeSnippet(
   if (border != null) {
     buf.writeln('$indent    borderColor: Color(${_colorHex(border)}),');
   }
-  final radius = theme.borderRadius;
-  if (radius is BorderRadius && radius.topLeft.x > 0) {
-    buf.writeln(
-      '$indent    borderRadius: const BorderRadius.all('
-      ' Radius.circular(${radius.topLeft.x.round()}),'
-      ' ),',
-    );
-  }
-  final elevation = theme.elevation;
-  if (elevation != null && elevation != 0) {
-    buf.writeln('$indent    elevation: $elevation,');
+  final borderWidth = theme.borderWidth;
+  if (borderWidth != null && borderWidth != 1.0) {
+    buf.writeln('$indent    borderWidth: $borderWidth,');
   }
   buf.writeln('$indent  ),');
 }

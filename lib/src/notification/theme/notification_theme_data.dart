@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../enums/enums.dart';
 
-/// Immutable theme tokens defining colors, shapes, elevation, and typography
+/// Immutable theme tokens defining colors, border stroke, typography, and icons
 /// for notifications.
 ///
 /// [NotificationThemeData] allows channels and notifications to be themed
@@ -29,8 +29,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     this.foregroundColor,
     this.borderColor,
     this.borderWidth,
-    this.borderRadius,
-    this.elevation,
     this.shadowColor,
     this.titleTextStyle,
     this.messageTextStyle,
@@ -151,12 +149,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Card outline border stroke width.
   final double? borderWidth;
 
-  /// Card corner border radius.
-  final BorderRadiusGeometry? borderRadius;
-
-  /// Shadow elevation depth.
-  final double? elevation;
-
   /// Elevation drop shadow tint.
   final Color? shadowColor;
 
@@ -179,8 +171,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     final Color? foregroundColor,
     final Color? borderColor,
     final double? borderWidth,
-    final BorderRadiusGeometry? borderRadius,
-    final double? elevation,
     final Color? shadowColor,
     final TextStyle? titleTextStyle,
     final TextStyle? messageTextStyle,
@@ -192,8 +182,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
         foregroundColor: foregroundColor ?? this.foregroundColor,
         borderColor: borderColor ?? this.borderColor,
         borderWidth: borderWidth ?? this.borderWidth,
-        borderRadius: borderRadius ?? this.borderRadius,
-        elevation: elevation ?? this.elevation,
         shadowColor: shadowColor ?? this.shadowColor,
         titleTextStyle: titleTextStyle ?? this.titleTextStyle,
         messageTextStyle: messageTextStyle ?? this.messageTextStyle,
@@ -214,8 +202,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       foregroundColor: other.foregroundColor,
       borderColor: other.borderColor,
       borderWidth: other.borderWidth,
-      borderRadius: other.borderRadius,
-      elevation: other.elevation,
       shadowColor: other.shadowColor,
       titleTextStyle: other.titleTextStyle,
       messageTextStyle: other.messageTextStyle,
@@ -237,9 +223,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
       foregroundColor: Color.lerp(foregroundColor, other.foregroundColor, t),
       borderColor: Color.lerp(borderColor, other.borderColor, t),
       borderWidth: lerpDouble(borderWidth, other.borderWidth, t),
-      borderRadius:
-          BorderRadiusGeometry.lerp(borderRadius, other.borderRadius, t),
-      elevation: lerpDouble(elevation, other.elevation, t),
       shadowColor: Color.lerp(shadowColor, other.shadowColor, t),
       titleTextStyle: TextStyle.lerp(titleTextStyle, other.titleTextStyle, t),
       messageTextStyle:
@@ -258,8 +241,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
           foregroundColor == other.foregroundColor &&
           borderColor == other.borderColor &&
           borderWidth == other.borderWidth &&
-          borderRadius == other.borderRadius &&
-          elevation == other.elevation &&
           shadowColor == other.shadowColor &&
           titleTextStyle == other.titleTextStyle &&
           messageTextStyle == other.messageTextStyle &&
@@ -272,8 +253,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
         foregroundColor,
         borderColor,
         borderWidth,
-        borderRadius,
-        elevation,
         shadowColor,
         titleTextStyle,
         messageTextStyle,
@@ -284,6 +263,5 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   String toString() =>
       'NotificationThemeData(accentColor: $accentColor, '
       'backgroundColor: $backgroundColor, '
-      'foregroundColor: $foregroundColor, '
-      'elevation: $elevation)';
+      'foregroundColor: $foregroundColor)';
 }

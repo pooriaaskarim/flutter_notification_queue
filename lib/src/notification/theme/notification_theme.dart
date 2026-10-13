@@ -12,6 +12,7 @@ class NotificationTheme {
     required this.borderRadius,
     required this.shape,
     required this.border,
+    this.padding,
     this.titleTextStyle,
     this.messageTextStyle,
     this.iconTheme,
@@ -44,12 +45,8 @@ class NotificationTheme {
         ambientExtension?.borderColor;
     final tokenBorderWidth = cTheme?.borderWidth ??
         ambientExtension?.borderWidth;
-    final tokenBorderRadius = cTheme?.borderRadius ??
-        ambientExtension?.borderRadius ??
-        effectiveStyle.borderRadius;
-    final tokenElevation = cTheme?.elevation ??
-        ambientExtension?.elevation ??
-        effectiveStyle.elevation;
+    final tokenBorderRadius = effectiveStyle.borderRadius;
+    final tokenElevation = effectiveStyle.elevation;
     final tokenShadowColor = cTheme?.shadowColor ??
         ambientExtension?.shadowColor ??
         themeData.shadowColor;
@@ -144,6 +141,7 @@ class NotificationTheme {
       opacity: opacity,
       border: border,
       shape: shapeBorder,
+      padding: effectiveStyle.padding,
       titleTextStyle: titleTextStyle,
       messageTextStyle: messageTextStyle,
       iconTheme: iconTheme,
@@ -178,6 +176,9 @@ class NotificationTheme {
   final double elevation;
   final double opacity;
   final BorderRadiusGeometry borderRadius;
+
+  /// Card internal content padding defined by the [QueueStyle].
+  final EdgeInsetsGeometry? padding;
 
   /// Typography styling override for the notification title.
   final TextStyle? titleTextStyle;

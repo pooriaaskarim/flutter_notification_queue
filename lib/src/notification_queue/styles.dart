@@ -5,10 +5,12 @@ sealed class QueueStyle {
     required this.borderRadius,
     required this.opacity,
     required this.elevation,
+    this.padding,
   });
   final BorderRadiusGeometry borderRadius;
   final double opacity;
   final double elevation;
+  final EdgeInsetsGeometry? padding;
 }
 
 final class FlatQueueStyle extends QueueStyle {
@@ -16,6 +18,7 @@ final class FlatQueueStyle extends QueueStyle {
     super.opacity = 0.7,
     super.borderRadius = BorderRadiusGeometry.zero,
     super.elevation = 3,
+    super.padding,
   });
 }
 
@@ -24,6 +27,7 @@ final class FilledQueueStyle extends QueueStyle {
     super.opacity = 0.7,
     super.borderRadius = const BorderRadius.all(Radius.circular(8)),
     super.elevation = 3,
+    super.padding,
   });
 }
 
@@ -32,5 +36,6 @@ final class OutlinedQueueStyle extends QueueStyle {
     super.opacity = 0.7,
     super.borderRadius = const BorderRadius.all(Radius.circular(8)),
     super.elevation = 3,
+    super.padding,
   });
 }

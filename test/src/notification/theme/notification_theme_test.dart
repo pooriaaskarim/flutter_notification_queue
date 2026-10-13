@@ -12,8 +12,6 @@ void main() {
         foregroundColor: Color(0xFF778899),
         borderColor: Color(0xFFAABBCC),
         borderWidth: 2.0,
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-        elevation: 6.0,
         shadowColor: Color(0xFF000000),
         titleTextStyle: TextStyle(fontSize: 16),
         messageTextStyle: TextStyle(fontSize: 14),
@@ -25,11 +23,6 @@ void main() {
       expect(data.foregroundColor, equals(const Color(0xFF778899)));
       expect(data.borderColor, equals(const Color(0xFFAABBCC)));
       expect(data.borderWidth, equals(2.0));
-      expect(
-        data.borderRadius,
-        equals(const BorderRadius.all(Radius.circular(12))),
-      );
-      expect(data.elevation, equals(6.0));
       expect(data.shadowColor, equals(const Color(0xFF000000)));
       expect(data.titleTextStyle?.fontSize, equals(16));
       expect(data.messageTextStyle?.fontSize, equals(14));
@@ -38,15 +31,15 @@ void main() {
     test('value equality and hashCode', () {
       const a = NotificationThemeData(
         accentColor: Color(0xFF123456),
-        elevation: 4.0,
+        borderWidth: 2.0,
       );
       const b = NotificationThemeData(
         accentColor: Color(0xFF123456),
-        elevation: 4.0,
+        borderWidth: 2.0,
       );
       const c = NotificationThemeData(
         accentColor: Color(0xFF654321),
-        elevation: 4.0,
+        borderWidth: 2.0,
       );
 
       expect(a, equals(b));
@@ -57,7 +50,7 @@ void main() {
     test('copyWith updates specified fields', () {
       const original = NotificationThemeData(
         accentColor: Color(0xFF111111),
-        elevation: 2.0,
+        borderWidth: 2.0,
       );
       final updated = original.copyWith(
         accentColor: const Color(0xFF222222),
@@ -66,39 +59,39 @@ void main() {
 
       expect(updated.accentColor, equals(const Color(0xFF222222)));
       expect(updated.backgroundColor, equals(const Color(0xFF333333)));
-      expect(updated.elevation, equals(2.0));
+      expect(updated.borderWidth, equals(2.0));
     });
 
     test('merge overrides non-null properties from other', () {
       const base = NotificationThemeData(
         accentColor: Color(0xFF111111),
         backgroundColor: Color(0xFF222222),
-        elevation: 3.0,
+        borderWidth: 1.0,
       );
       const patch = NotificationThemeData(
         backgroundColor: Color(0xFF999999),
-        elevation: 8.0,
+        borderWidth: 3.0,
       );
 
       final merged = base.merge(patch);
       expect(merged.accentColor, equals(const Color(0xFF111111)));
       expect(merged.backgroundColor, equals(const Color(0xFF999999)));
-      expect(merged.elevation, equals(8.0));
+      expect(merged.borderWidth, equals(3.0));
       expect(base.merge(null), equals(base));
     });
 
     test('lerp interpolates between two instances', () {
       const a = NotificationThemeData(
         accentColor: Color(0xFF000000),
-        elevation: 2.0,
+        borderWidth: 2.0,
       );
       const b = NotificationThemeData(
         accentColor: Color(0xFFFFFFFF),
-        elevation: 6.0,
+        borderWidth: 6.0,
       );
 
       final mid = a.lerp(b, 0.5);
-      expect(mid.elevation, equals(4.0));
+      expect(mid.borderWidth, equals(4.0));
       expect(a.lerp(null, 0.5), equals(a));
     });
 
@@ -276,6 +269,8 @@ void main() {
                       const NotificationQueue(
                         style: OutlinedQueueStyle(
                           borderRadius: BorderRadius.all(Radius.circular(16)),
+                          elevation: 5.0,
+                          padding: EdgeInsets.all(12),
                         ),
                       ),
                     },
@@ -300,6 +295,8 @@ void main() {
           resolved.borderRadius,
           equals(const BorderRadius.all(Radius.circular(16))),
         );
+        expect(resolved.elevation, equals(5.0));
+        expect(resolved.padding, equals(const EdgeInsets.all(12)));
         expect(resolved.shape, isA<RoundedRectangleBorder>());
       },
     );

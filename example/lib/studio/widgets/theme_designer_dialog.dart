@@ -144,8 +144,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
   late Color? _foregroundColor;
   late Color? _borderColor;
   late double _borderWidth;
-  late double _borderRadius;
-  late double _elevation;
   late Type? _styleType;
   bool _previewDarkSurface = true;
 
@@ -169,10 +167,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     _foregroundColor = t?.foregroundColor;
     _borderColor = t?.borderColor;
     _borderWidth = t?.borderWidth ?? 1.0;
-    _borderRadius = t?.borderRadius is BorderRadius
-        ? (t!.borderRadius! as BorderRadius).topLeft.x
-        : 12.0;
-    _elevation = t?.elevation ?? 4.0;
     _styleType = widget.initialStyleType;
   }
 
@@ -181,9 +175,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
         _backgroundColor != null ||
         _foregroundColor != null ||
         _borderColor != null ||
-        _borderRadius != 12.0 ||
-        _borderWidth != 1.0 ||
-        _elevation != 4.0;
+        _borderWidth != 1.0;
 
     if (!hasCustom && widget.isNotificationOverride) {
       return null;
@@ -195,8 +187,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
       foregroundColor: _foregroundColor,
       borderColor: _borderColor,
       borderWidth: _borderWidth,
-      borderRadius: BorderRadius.all(Radius.circular(_borderRadius)),
-      elevation: _elevation,
     );
   }
 
@@ -321,15 +311,6 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     }
     if (_borderWidth != 1.0) {
       buf.writeln('  borderWidth: $_borderWidth,');
-    }
-    if (_borderRadius != 12.0) {
-      buf.writeln(
-        '  borderRadius: '
-        'BorderRadius.all(Radius.circular($_borderRadius)),',
-      );
-    }
-    if (_elevation != 4.0) {
-      buf.writeln('  elevation: $_elevation,');
     }
     buf.write(');');
 
@@ -572,7 +553,10 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
     final ShapeBorder shapeBorder;
     final BoxBorder? directionalBorder;
 
-    final resolvedRadius = BorderRadius.circular(_borderRadius);
+    final resolvedRadius = _styleType == FlatQueueStyle
+        ? BorderRadius.zero
+        : const BorderRadius.all(Radius.circular(8));
+    const resolvedElevation = 3.0;
 
     if (_styleType == FilledQueueStyle) {
       cardBg = _backgroundColor ?? accent;
@@ -630,7 +614,7 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
         ),
       ),
       child: Material(
-        elevation: _elevation,
+        elevation: resolvedElevation,
         shadowColor: Colors.black.withValues(alpha: 0.35),
         color: cardBg,
         shape: shapeBorder,
@@ -807,17 +791,8 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
         ),
         const SizedBox(height: 16),
 
-        // ── Surface & Shape Tokens ──
-        const StudioSectionHeader(title: 'SURFACE & SHAPE TOKENS'),
-        StudioSliderTile(
-          label: 'CORNER RADIUS',
-          value: _borderRadius,
-          min: 0,
-          max: 24,
-          divisions: 24,
-          onChanged: (final v) => setState(() => _borderRadius = v),
-        ),
-        const SizedBox(height: 12),
+        // ── Stroke Tokens ──
+        const StudioSectionHeader(title: 'BORDER STROKE'),
         StudioSliderTile(
           label: 'BORDER WIDTH',
           value: _borderWidth,
@@ -826,14 +801,39 @@ class _ThemeDesignerDialogState extends State<ThemeDesignerDialog> {
           divisions: 8,
           onChanged: (final v) => setState(() => _borderWidth = v),
         ),
-        const SizedBox(height: 12),
-        StudioSliderTile(
-          label: 'ELEVATION',
-          value: _elevation,
-          min: 0,
-          max: 12,
-          divisions: 12,
-          onChanged: (final v) => setState(() => _elevation = v),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: StudioTheme.colorScheme.surfaceContainerHighest
+                .withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                size: 14,
+                color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Physical geometry (radius, elevation, padding) is '
+                  'anchored to the NotificationQueue via QueueStyle.',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: StudioTheme.colorScheme.onSurface
+                        .withValues(alpha: 0.6),
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

@@ -732,11 +732,11 @@ class NotificationWidgetState extends State<NotificationWidget>
                           border: theme.border,
                         ),
                         child: Padding(
-                          padding: EdgeInsetsDirectional.symmetric(
-                            vertical: isExpanded ? 8 : 4,
-                            horizontal: 4,
-                          ),
-                          // padding: EdgeInsets.all(8),
+                          padding: theme.padding ??
+                              EdgeInsetsDirectional.symmetric(
+                                vertical: isExpanded ? 8 : 4,
+                                horizontal: 4,
+                              ),
                           child: Column(
                             spacing: 4,
                             children: [
