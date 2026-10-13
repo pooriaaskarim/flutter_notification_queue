@@ -9,10 +9,10 @@ import 'package:flutter_notification_queue_example/studio/engine/code_generator.
 import 'package:flutter_notification_queue_example/studio/models/channel_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/queue_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/studio_setup.dart';
+import 'package:flutter_notification_queue_example/studio/panels/configurator/channel_tile.dart';
 import 'package:flutter_notification_queue_example/studio/panels/event_log_panel.dart';
 import 'package:flutter_notification_queue_example/studio/studio_home.dart';
 import 'package:flutter_notification_queue_example/studio/studio_theme.dart';
-import 'package:flutter_notification_queue_example/studio/widgets/theme_designer_dialog.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -355,85 +355,88 @@ void main() {
     );
   });
 
-  group('ThemeDesignerDialog Widget Tests', () {
-    testWidgets('Opens ThemeDesignerDialog and calls onApplyTheme on submit',
+  group('ChannelTile Chromatics Tests', () {
+    testWidgets('Tapping semantic preset updates channel theme and color',
         (final tester) async {
-      NotificationThemeData? appliedTheme;
+      final setupBloc = SetupBloc();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Builder(
-              builder: (final context) => ElevatedButton(
-                onPressed: () => ThemeDesignerDialog.show(
-                  context,
-                  title: 'Configure Theme',
-                  initialTheme: const NotificationThemeData(
-                    color: Color(0xFF6366F1),
-                  ),
-                  onApplyTheme: (final t) => appliedTheme = t,
+            body: SingleChildScrollView(
+              child: BlocProvider<SetupBloc>.value(
+                value: setupBloc,
+                child: const ChannelTile(
+                  setup: ChannelSetup(name: 'test_channel'),
+                  positions: [QueuePosition.topCenter],
                 ),
-                child: const Text('OPEN'),
               ),
             ),
           ),
         ),
       );
 
-      await tester.tap(find.text('OPEN'));
+      // Expand ChannelTile ExpansionTile
+      await tester.tap(find.text('test_channel'));
       await tester.pumpAndSettle();
 
-      expect(find.text('CONFIGURE THEME'), findsOneWidget);
-      expect(find.text('LIVE CARD PREVIEW'), findsOneWidget);
-      expect(find.text('APPLY THEME'), findsOneWidget);
+      expect(find.text('CHROMATICS (INHERITED DEFAULT)'), findsOneWidget);
+      expect(find.text('SUCCESS'), findsOneWidget);
 
-      await tester.tap(find.text('APPLY THEME'));
+      // Tap SUCCESS semantic preset
+      await tester.tap(find.text('SUCCESS'));
       await tester.pumpAndSettle();
 
-      expect(appliedTheme, isNotNull);
-      expect(appliedTheme!.color, equals(const Color(0xFF6366F1)));
+      final updated = setupBloc.state.setup.channels['test_channel'];
+      expect(updated?.theme?.color, equals(const Color(0xFF2D7512)));
+      expect(updated?.color, equals(const Color(0xFF2D7512)));
     });
 
-    testWidgets('ThemeDesignerDialog triggers unified onApply with styleType',
+    testWidgets('Reset button clears custom channel theme back to default',
         (final tester) async {
-      NotificationThemeData? appliedTheme;
-      Type? appliedStyleType;
+      final setupBloc = SetupBloc()
+        ..add(
+          const AddChannel(
+            ChannelSetup(
+              name: 'custom_channel',
+              theme: NotificationThemeData(color: Color(0xFFD03332)),
+              color: Color(0xFFD03332),
+            ),
+          ),
+        );
+      await tester.pumpAndSettle();
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Builder(
-              builder: (final context) => ElevatedButton(
-                onPressed: () => ThemeDesignerDialog.show(
-                  context,
-                  title: 'Configure Channel Theme',
-                  channelName: 'orders',
-                  initialTheme: const NotificationThemeData(
-                    color: Color(0xFF10B981),
+            body: SingleChildScrollView(
+              child: BlocProvider<SetupBloc>.value(
+                value: setupBloc,
+                child: const ChannelTile(
+                  setup: ChannelSetup(
+                    name: 'custom_channel',
+                    theme: NotificationThemeData(color: Color(0xFFD03332)),
+                    color: Color(0xFFD03332),
                   ),
-                  initialStyleType: FilledQueueStyle,
-                  onApply: (final theme, final styleType) {
-                    appliedTheme = theme;
-                    appliedStyleType = styleType;
-                  },
+                  positions: [QueuePosition.topCenter],
                 ),
-                child: const Text('OPEN'),
               ),
             ),
           ),
         ),
       );
 
-      await tester.tap(find.text('OPEN'));
+      // Expand ChannelTile ExpansionTile
+      await tester.tap(find.text('custom_channel'));
       await tester.pumpAndSettle();
 
-      expect(find.text('CONFIGURE CHANNEL THEME'), findsOneWidget);
-
-      await tester.tap(find.text('APPLY THEME'));
+      expect(find.byIcon(Icons.restart_alt), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.restart_alt));
       await tester.pumpAndSettle();
 
-      expect(appliedTheme, isNotNull);
-      expect(appliedStyleType, equals(FilledQueueStyle));
+      final updated = setupBloc.state.setup.channels['custom_channel'];
+      expect(updated?.theme, isNull);
+      expect(updated?.color, isNull);
     });
   });
 

@@ -10,7 +10,6 @@ import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_slider_tile.dart';
 import '../../widgets/studio_text_field.dart';
 import '../../widgets/studio_toggle_tile.dart';
-import '../../widgets/theme_designer_dialog.dart';
 
 class ChannelTile extends StatelessWidget {
   const ChannelTile({
@@ -137,19 +136,8 @@ class _TileContent extends StatelessWidget {
                   ),
             ),
             const SizedBox(height: 12),
-            // ── Theme Designer ──
+            // ── Inline Channel Chromatics ──
             _ChannelThemeConfigTile(setup: setup),
-            const SizedBox(height: 12),
-            StudioColorSelectionTile(
-              label: 'QUICK ACCENT COLOR',
-              value: setup.color,
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateChannel(
-                      setup.name,
-                      setup.copyWith(color: () => v),
-                    ),
-                  ),
-            ),
             const SizedBox(height: 12),
             StudioDropdownTile<QueuePosition?>(
               label: 'TARGET POSITION',
@@ -199,12 +187,41 @@ class _ChannelThemeConfigTile extends StatelessWidget {
   const _ChannelThemeConfigTile({required this.setup});
   final ChannelSetup setup;
 
+  static const _semanticPresets = <(String, Color?)>[
+    ('DEFAULT', null),
+    ('SUCCESS', Color(0xFF2D7512)),
+    ('ERROR', Color(0xFFD03332)),
+    ('WARNING', Color(0xFFC97725)),
+    ('INFO', Color(0xFF51B4F9)),
+  ];
+
+  void _applyColor(final BuildContext context, final Color? color) {
+    final current =
+        context.read<SetupBloc>().state.setup.channels[setup.name] ?? setup;
+    context.read<SetupBloc>().add(
+          UpdateChannel(
+            setup.name,
+            current.copyWith(
+              theme: () =>
+                  color != null ? NotificationThemeData(color: color) : null,
+              color: () => color,
+              foregroundColor: () => null,
+              backgroundColor: () => null,
+            ),
+          ),
+        );
+  }
+
   @override
   Widget build(final BuildContext context) {
     final colorScheme = StudioTheme.colorScheme;
-    final hasCustomTheme = setup.theme != null;
-    final effectiveColor =
-        setup.theme?.color ?? setup.color ?? colorScheme.primary;
+    final effectiveColor = setup.theme?.color ?? setup.color;
+    final hasCustomTheme = effectiveColor != null;
+
+    final hexCode = effectiveColor != null
+        ? '#${effectiveColor.toARGB32().toRadixString(16).substring(2)}'
+            .toUpperCase()
+        : 'INHERITED';
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -224,11 +241,12 @@ class _ChannelThemeConfigTile extends StatelessWidget {
                 width: 14,
                 height: 14,
                 decoration: BoxDecoration(
-                  color: effectiveColor,
+                  color: effectiveColor ?? colorScheme.primary,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: effectiveColor.withValues(alpha: 0.4),
+                      color: (effectiveColor ?? colorScheme.primary)
+                          .withValues(alpha: 0.4),
                       blurRadius: 6,
                     ),
                   ],
@@ -238,8 +256,8 @@ class _ChannelThemeConfigTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   hasCustomTheme
-                      ? 'CHROMATICS: CUSTOM PALETTE ACTIVE'
-                      : 'CHROMATICS: CHANNEL PALETTE',
+                      ? 'CHROMATICS ($hexCode)'
+                      : 'CHROMATICS (INHERITED DEFAULT)',
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
@@ -247,85 +265,82 @@ class _ChannelThemeConfigTile extends StatelessWidget {
                   ),
                 ),
               ),
+              if (hasCustomTheme)
+                IconButton(
+                  icon: const Icon(Icons.restart_alt, size: 16),
+                  tooltip: 'Reset to default theme',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _applyColor(context, null),
+                ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.palette_outlined, size: 15),
-                  label: Text(
-                    hasCustomTheme ? 'EDIT THEME' : 'CUSTOMIZE THEME',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: _semanticPresets.map((final preset) {
+              final label = preset.$1;
+              final color = preset.$2;
+              final isSelected = color == null
+                  ? effectiveColor == null
+                  : effectiveColor?.toARGB32() == color.toARGB32();
+
+              return InkWell(
+                onTap: () => _applyColor(context, color),
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? (color ?? colorScheme.primary).withValues(alpha: 0.18)
+                        : colorScheme.onSurface.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isSelected
+                          ? (color ?? colorScheme.primary)
+                          : colorScheme.onSurface.withValues(alpha: 0.1),
+                      width: isSelected ? 1.5 : 1.0,
                     ),
                   ),
-                  onPressed: () {
-                    final setupState = context.read<SetupBloc>().state;
-                    final targetPos =
-                        setup.position ?? setupState.activeQueuePosition;
-                    final targetQueue = setupState.setup.queues[targetPos];
-                    ThemeDesignerDialog.show(
-                      context,
-                      title: 'Configure Theme: #${setup.name}',
-                      channelName: setup.name,
-                      initialTheme:
-                          setup.theme ?? setup.toNotificationChannel().theme,
-                      initialStyleType: targetQueue?.styleType,
-                      previewTitle: setup.name.toUpperCase(),
-                      previewMessage:
-                          setup.description ?? 'Channel notification preview.',
-                      previewIcon: setup.iconPreset.toWidget() ??
-                          const Icon(Icons.notifications_outlined),
-                      onApply: (final newTheme, final _) {
-                        final current = context
-                                .read<SetupBloc>()
-                                .state
-                                .setup
-                                .channels[setup.name] ??
-                            setup;
-                        context.read<SetupBloc>().add(
-                              UpdateChannel(
-                                setup.name,
-                                current.copyWith(
-                                  theme: () => newTheme,
-                                  color: () => newTheme?.color,
-                                ),
-                              ),
-                            );
-                      },
-                    );
-                  },
-                ),
-              ),
-              if (hasCustomTheme) ...[
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.restart_alt, size: 18),
-                  tooltip: 'Reset to default theme',
-                  onPressed: () {
-                    final current = context
-                            .read<SetupBloc>()
-                            .state
-                            .setup
-                            .channels[setup.name] ??
-                        setup;
-                    context.read<SetupBloc>().add(
-                          UpdateChannel(
-                            setup.name,
-                            current.copyWith(
-                              theme: () => null,
-                              foregroundColor: () => null,
-                              backgroundColor: () => null,
-                            ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (color != null) ...[
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
                           ),
-                        );
-                  },
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight:
+                              isSelected ? FontWeight.bold : FontWeight.w500,
+                          letterSpacing: 0.4,
+                          color: isSelected
+                              ? (color ?? colorScheme.primary)
+                              : colorScheme.onSurface.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ],
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 10),
+          StudioColorSelectionTile(
+            label: 'PALETTE SWATCHES',
+            value: effectiveColor,
+            onChanged: (final v) => _applyColor(context, v),
           ),
         ],
       ),
