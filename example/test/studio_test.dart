@@ -25,7 +25,6 @@ void main() {
       final channel = channelSetup.toNotificationChannel();
       expect(channel.theme, isNotNull);
       expect(channel.theme!.color, equals(const Color(0xFF6366F1)));
-      expect(channel.theme!.accentColor, equals(const Color(0xFF6366F1)));
     });
   });
 
@@ -370,7 +369,7 @@ void main() {
                   context,
                   title: 'Configure Theme',
                   initialTheme: const NotificationThemeData(
-                    accentColor: Color(0xFF6366F1),
+                    color: Color(0xFF6366F1),
                   ),
                   onApplyTheme: (final t) => appliedTheme = t,
                 ),
@@ -392,7 +391,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(appliedTheme, isNotNull);
-      expect(appliedTheme!.accentColor, equals(const Color(0xFF6366F1)));
+      expect(appliedTheme!.color, equals(const Color(0xFF6366F1)));
     });
 
     testWidgets('ThemeDesignerDialog triggers unified onApply with styleType',
@@ -410,7 +409,7 @@ void main() {
                   title: 'Configure Channel Theme',
                   channelName: 'orders',
                   initialTheme: const NotificationThemeData(
-                    accentColor: Color(0xFF10B981),
+                    color: Color(0xFF10B981),
                   ),
                   initialStyleType: FilledQueueStyle,
                   onApply: (final theme, final styleType) {

@@ -7,10 +7,10 @@ import '../../enums/enums.dart';
 /// Immutable theme tokens defining colors, typography, and icons
 /// for notifications.
 ///
-/// In accordance with the parametric design system, [color] (or [accentColor])
-/// acts as the primary visual driver for brand and status. How this color is
-/// distributed (solid card fill, outline stroke, or leading accent bar) is
-/// governed deterministically by the active [QueueStyle] archetype.
+/// In accordance with the parametric design system, [color] acts as the
+/// primary visual driver for brand and status. How this color is distributed
+/// (solid card fill, outline stroke, or leading accent bar) is governed
+/// deterministically by the active [QueueStyle] archetype.
 ///
 /// It extends [ThemeExtension] so it can be registered globally in
 /// [ThemeData.extensions] or configured per [NotificationChannel] and per
@@ -23,13 +23,12 @@ import '../../enums/enums.dart';
 class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Creates an immutable [NotificationThemeData] token bundle.
   const NotificationThemeData({
-    final Color? color,
-    final Color? accentColor,
+    this.color,
     this.shadowColor,
     this.titleTextStyle,
     this.messageTextStyle,
     this.iconTheme,
-  }) : color = color ?? accentColor;
+  });
 
   /// Creates a [NotificationThemeData] configured from a Material 3
   /// [ColorScheme].
@@ -86,9 +85,6 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   /// Primary color token driving notification status, borders, and fills.
   final Color? color;
 
-  /// Convenience alias for [color].
-  Color? get accentColor => color;
-
   /// Elevation drop shadow tint.
   final Color? shadowColor;
 
@@ -106,14 +102,13 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
   @override
   NotificationThemeData copyWith({
     final Color? color,
-    final Color? accentColor,
     final Color? shadowColor,
     final TextStyle? titleTextStyle,
     final TextStyle? messageTextStyle,
     final IconThemeData? iconTheme,
   }) =>
       NotificationThemeData(
-        color: color ?? accentColor ?? this.color,
+        color: color ?? this.color,
         shadowColor: shadowColor ?? this.shadowColor,
         titleTextStyle: titleTextStyle ?? this.titleTextStyle,
         messageTextStyle: messageTextStyle ?? this.messageTextStyle,

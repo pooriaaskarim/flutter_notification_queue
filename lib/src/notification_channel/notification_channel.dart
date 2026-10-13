@@ -252,7 +252,7 @@ class NotificationChannel {
   /// Filled [QueueStyle]s will color notification body and foreground
   /// according to this.
   @Deprecated(
-    'Use theme: NotificationThemeData(accentColor: ...) instead. '
+    'Use theme: NotificationThemeData(color: ...) instead. '
     'Scheduled for removal in v0.6.0.',
   )
   final Color? defaultColor;

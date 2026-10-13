@@ -433,7 +433,7 @@ class _NotificationAccentOverrideTile extends StatelessWidget {
     final colorScheme = StudioTheme.colorScheme;
     final hasOverride = draft.accentColorOverride != null;
     final channelSetup = setupState.setup.channels[draft.channelName];
-    final channelAccent = channelSetup?.theme?.accentColor ??
+    final channelAccent = channelSetup?.theme?.color ??
         channelSetup?.color ??
         colorScheme.primary;
     final effectiveAccent = draft.accentColorOverride ?? channelAccent;

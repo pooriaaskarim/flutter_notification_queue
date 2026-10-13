@@ -35,7 +35,8 @@ class NotificationTheme {
     // 2. Cascade theme tokens:
     final cTheme = notification.channel.theme;
 
-    final tokenColor = notification.accentColor ??
+    final tokenColor = notification.color ??
+        notification.accentColor ??
         cTheme?.color ??
         ambientExtension?.color;
     final tokenShadowColor = cTheme?.shadowColor ??

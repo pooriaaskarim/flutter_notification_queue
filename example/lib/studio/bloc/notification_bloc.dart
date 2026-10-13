@@ -147,7 +147,7 @@ class NotificationDraft {
   NotificationThemeData? get themeOverride =>
       _themeOverride ??
       (accentColorOverride != null
-          ? NotificationThemeData(accentColor: accentColorOverride)
+          ? NotificationThemeData(color: accentColorOverride)
           : null);
 
   /// Optional per-notification drag behavior override.
@@ -188,7 +188,7 @@ class NotificationDraft {
         accentColorOverride: accentColorOverride != null
             ? accentColorOverride()
             : (themeOverride != null
-                ? themeOverride()?.accentColor
+                ? themeOverride()?.color
                 : this.accentColorOverride),
         themeOverride:
             themeOverride != null ? themeOverride() : _themeOverride,

@@ -38,7 +38,7 @@ class ResolutionInspector extends StatelessWidget {
     final channelColor = channelSetup?.color;
 
     final Color effectiveAccent = draft.accentColorOverride ??
-        channelSetup?.theme?.accentColor ??
+        channelSetup?.theme?.color ??
         channelColor ??
         colorScheme.primary;
 

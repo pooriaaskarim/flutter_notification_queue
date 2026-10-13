@@ -289,7 +289,7 @@ class NotificationWidget extends StatefulWidget {
   /// [NotificationChannel.defaultColor] and if that's null
   /// [Theme.of(Context).colorScheme.primary].
   @Deprecated(
-    'Use theme: NotificationThemeData(accentColor: ...) instead. '
+    'Use theme: NotificationThemeData(color: ...) instead. '
     'Scheduled for removal in v0.6.0.',
   )
   final Color? color;

@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('NotificationThemeData', () {
-    test('instantiates with specified tokens and color alias', () {
+    test('instantiates with specified tokens', () {
       const data = NotificationThemeData(
         color: Color(0xFF112233),
         shadowColor: Color(0xFF000000),
@@ -13,7 +13,6 @@ void main() {
         messageTextStyle: TextStyle(fontSize: 14),
       );
 
-      expect(data.accentColor, equals(const Color(0xFF112233)));
       expect(data.color, equals(const Color(0xFF112233)));
       expect(data.shadowColor, equals(const Color(0xFF000000)));
       expect(data.titleTextStyle?.fontSize, equals(16));
@@ -26,7 +25,7 @@ void main() {
         shadowColor: Color(0xFF000000),
       );
       const b = NotificationThemeData(
-        accentColor: Color(0xFF123456),
+        color: Color(0xFF123456),
         shadowColor: Color(0xFF000000),
       );
       const c = NotificationThemeData(
@@ -49,7 +48,6 @@ void main() {
       );
 
       expect(updated.color, equals(const Color(0xFF333333)));
-      expect(updated.accentColor, equals(const Color(0xFF333333)));
       expect(updated.shadowColor, equals(const Color(0xFF222222)));
     });
 

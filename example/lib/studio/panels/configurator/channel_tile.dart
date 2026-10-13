@@ -204,7 +204,7 @@ class _ChannelThemeConfigTile extends StatelessWidget {
     final colorScheme = StudioTheme.colorScheme;
     final hasCustomTheme = setup.theme != null;
     final effectiveColor =
-        setup.theme?.accentColor ?? setup.color ?? colorScheme.primary;
+        setup.theme?.color ?? setup.color ?? colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.all(12),
