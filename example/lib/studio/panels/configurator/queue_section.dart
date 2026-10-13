@@ -131,8 +131,16 @@ class QueueSection extends StatelessWidget {
   }
 }
 
-/// A specialized editor for a single [QueueSetup].
-class _QueueEditor extends StatelessWidget {
+enum _QueueCategory {
+  anatomy,
+  gestures,
+  stacking,
+}
+
+/// A specialized editor for a single [QueueSetup], organized into
+/// focused categories: Anatomy & Bounds, Gestures & Interaction,
+/// and Stacking & Grouping.
+class _QueueEditor extends StatefulWidget {
   const _QueueEditor({
     required this.position,
     required this.setup,
@@ -140,6 +148,13 @@ class _QueueEditor extends StatelessWidget {
 
   final QueuePosition position;
   final QueueSetup setup;
+
+  @override
+  State<_QueueEditor> createState() => _QueueEditorState();
+}
+
+class _QueueEditorState extends State<_QueueEditor> {
+  _QueueCategory _selectedCategory = _QueueCategory.anatomy;
 
   static const _behaviorTypes = [
     Disabled,
@@ -179,11 +194,13 @@ class _QueueEditor extends StatelessWidget {
     final colorScheme = StudioTheme.colorScheme;
     final studioSetup = context.watch<SetupBloc>().state.setup;
     final otherQueuesSlaves = studioSetup.queues.entries
-        .where((final entry) => entry.key != position)
+        .where((final entry) => entry.key != widget.position)
         .expand((final entry) => entry.value.relocateTargets)
         .toSet();
     final activePositions = studioSetup.queues.keys.toSet();
     final channels = studioSetup.channels.values.toList();
+    final setup = widget.setup;
+    final position = widget.position;
 
     return Card(
       elevation: 0,
@@ -199,44 +216,6 @@ class _QueueEditor extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (setup.dragBehaviorType == setup.longPressBehaviorType &&
-                setup.dragBehaviorType != Disabled) ...[
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.secondary.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 14,
-                      color: colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Both gestures are set to '
-                        '${_formatBehaviorType(setup.dragBehaviorType)}. '
-                        'You might want to use different behaviors for better '
-                        'interaction.',
-                        style: TextStyle(
-                          color: colorScheme.secondary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
             Row(
               children: [
                 Icon(
@@ -268,373 +247,574 @@ class _QueueEditor extends StatelessWidget {
                   ),
               ],
             ),
+            const SizedBox(height: 12),
+            // ── Category navigation pills ──
+            Row(
+              children: _QueueCategory.values.map((final cat) {
+                final isSelected = _selectedCategory == cat;
+                final (label, icon) = switch (cat) {
+                  _QueueCategory.anatomy => (
+                      'Anatomy',
+                      Icons.aspect_ratio_rounded,
+                    ),
+                  _QueueCategory.gestures => (
+                      'Gestures',
+                      Icons.touch_app_outlined,
+                    ),
+                  _QueueCategory.stacking => (
+                      'Stacking',
+                      Icons.layers_outlined,
+                    ),
+                };
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedCategory = cat),
+                      borderRadius: BorderRadius.circular(8),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? colorScheme.primary.withValues(alpha: 0.16)
+                              : colorScheme.onSurface.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected
+                                ? colorScheme.primary.withValues(alpha: 0.35)
+                                : Colors.transparent,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              icon,
+                              size: 13,
+                              color: isSelected
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              label,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: isSelected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
             const Divider(height: 24),
-            StudioSliderTile(
-              label: 'MAX VISIBLE NOTIFICATIONS',
-              value: setup.maxStackSize.toDouble(),
-              min: 1,
-              max: 10,
-              divisions: 9,
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(maxStackSize: v.round()),
-                    ),
-                  ),
-            ),
-            const SizedBox(height: 12),
-            StudioToggleTile(
-              label: 'CUSTOM MAX WIDTH',
-              value: setup.maxWidth != null,
-              onChanged: (final enable) {
-                context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(
-                          maxWidth: enable ? 360.0 : null,
-                          clearMaxWidth: !enable,
-                        ),
-                      ),
-                    );
-              },
-            ),
-            if (setup.maxWidth != null) ...[
-              const SizedBox(height: 12),
-              StudioSliderTile(
-                label: 'MAX CARD WIDTH (PX)',
-                value: setup.maxWidth!,
-                min: 200,
-                max: 600,
-                divisions: 40,
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(maxWidth: v),
-                      ),
-                    ),
-              ),
-            ],
-            StyleArchetypeSelector(
-              label: 'BASELINE STYLE ARCHETYPE',
-              badgeLabel: 'QUEUE BASELINE',
-              selectedType: setup.styleType,
-              showInheritDefault: false,
-              onChanged: (final v) {
-                if (v != null) {
-                  context.read<SetupBloc>().add(
-                        UpdateQueue(
-                          position,
-                          setup.copyWith(styleType: v),
-                        ),
-                      );
-                }
-              },
-            ),
-            const SizedBox(height: 12),
-            StudioDropdownTile<Type>(
-              label: 'TRANSITION STRATEGY',
-              value: setup.transitionType,
-              items: _transitionTypes,
-              itemLabel: (final t) => switch (t) {
-                == SlideTransitionStrategy => 'SLIDE',
-                == FadeTransitionStrategy => 'FADE',
-                == ScaleTransitionStrategy => 'SCALE',
-                _ => t
-                    .toString()
-                    .replaceAll('TransitionStrategy', '')
-                    .toUpperCase(),
-              },
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(transitionType: v),
-                    ),
-                  ),
-            ),
-            const SizedBox(height: 16),
-            const StudioSectionHeader(title: 'BEHAVIOR'),
-            StudioDropdownTile<Type>(
-              label: 'DRAG BEHAVIOR',
-              value: setup.dragBehaviorType,
-              items: _behaviorTypes.where((final e) {
-                if (e == Relocate || e == ReorderAndRelocate) {
-                  return activePositions.length < QueuePosition.values.length ||
-                      setup.dragBehaviorType == e;
-                }
-                return true;
-              }).toList(),
-              itemLabel: _formatBehaviorType,
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(dragBehaviorType: v),
-                    ),
-                  ),
-            ),
-            if (setup.dragBehaviorType == Relocate ||
-                setup.dragBehaviorType == ReorderAndRelocate) ...[
-              const SizedBox(height: 12),
-              RelocationSelector(
-                selected: setup.relocateTargets,
-                activePositions: activePositions,
-                otherQueuesSlaves: otherQueuesSlaves,
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(relocateTargets: v),
-                      ),
-                    ),
-              ),
-            ],
-            if (setup.dragBehaviorType == Dismiss) ...[
-              const SizedBox(height: 12),
-              StudioDropdownTile<DismissZone>(
-                label: 'DRAG DISMISS ZONE',
-                value: setup.dragDismissZone,
-                items: DismissZone.values,
-                itemLabel: (final e) => switch (e) {
-                  DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
-                  DismissZone.naturalDirection =>
-                    'NATURAL DIRECTION (UP / DOWN)',
-                },
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(dragDismissZone: v),
-                      ),
-                    ),
-              ),
-            ],
-            if (setup.dragBehaviorType == Snooze) ...[
-              const SizedBox(height: 12),
-              StudioSliderTile(
-                label: 'DRAG SNOOZE DURATION: ${setup.dragSnoozeSeconds}s',
-                value: setup.dragSnoozeSeconds.toDouble(),
-                min: 1,
-                max: 30,
-                divisions: 29,
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(dragSnoozeSeconds: v.round()),
-                      ),
-                    ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            StudioDropdownTile<Type>(
-              label: 'LONG PRESS DRAG BEHAVIOR',
-              value: setup.longPressBehaviorType,
-              items: _behaviorTypes.where((final e) {
-                if (e == Relocate || e == ReorderAndRelocate) {
-                  return activePositions.length < QueuePosition.values.length ||
-                      setup.longPressBehaviorType == e;
-                }
-                return true;
-              }).toList(),
-              itemLabel: _formatBehaviorType,
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(longPressBehaviorType: v),
-                    ),
-                  ),
-            ),
-            if (setup.longPressBehaviorType == Relocate ||
-                setup.longPressBehaviorType == ReorderAndRelocate) ...[
-              const SizedBox(height: 12),
-              RelocationSelector(
-                selected: setup.relocateTargets,
-                activePositions: activePositions,
-                otherQueuesSlaves: otherQueuesSlaves,
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(relocateTargets: v),
-                      ),
-                    ),
-              ),
-            ],
-            if (setup.longPressBehaviorType == Dismiss) ...[
-              const SizedBox(height: 12),
-              StudioDropdownTile<DismissZone>(
-                label: 'LONG PRESS DISMISS ZONE',
-                value: setup.longPressDismissZone,
-                items: DismissZone.values,
-                itemLabel: (final e) => switch (e) {
-                  DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
-                  DismissZone.naturalDirection =>
-                    'NATURAL DIRECTION (UP / DOWN)',
-                },
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(longPressDismissZone: v),
-                      ),
-                    ),
-              ),
-            ],
-            if (setup.longPressBehaviorType == Snooze) ...[
-              const SizedBox(height: 12),
-              StudioSliderTile(
-                label: 'LONG-PRESS SNOOZE: ${setup.longPressSnoozeSeconds}s',
-                value: setup.longPressSnoozeSeconds.toDouble(),
-                min: 1,
-                max: 30,
-                divisions: 29,
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(longPressSnoozeSeconds: v.round()),
-                      ),
-                    ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            StudioDropdownTile<Type>(
-              label: 'CLOSE BUTTON VISIBILITY',
-              value: setup.closeButtonBehaviorType,
-              items: _closeButtonTypes,
-              itemLabel: (final e) => switch (e) {
-                == AlwaysVisible => 'ALWAYS VISIBLE',
-                == VisibleOnHover => 'VISIBLE ON HOVER',
-                == Hidden => 'HIDDEN',
-                _ => e.toString().toUpperCase(),
-              },
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(closeButtonBehaviorType: v),
-                    ),
-                  ),
-            ),
-            const SizedBox(height: 12),
-            StudioDropdownTile<Type>(
-              label: 'TAP BEHAVIOR',
-              value: setup.tapBehaviorType,
-              items: _tapBehaviorTypes,
-              itemLabel: (final e) => switch (e) {
-                == TapToDismiss => 'DISMISS',
-                == TapToExpand => 'EXPAND / COLLAPSE',
-                == TapToAct => 'ACT (CALLBACK)',
-                == TapDisabled => 'DISABLED',
-                _ => e.toString().toUpperCase(),
-              },
-              onChanged: (final v) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(tapBehaviorType: v),
-                    ),
-                  ),
-            ),
-            if (setup.tapBehaviorType == TapToAct) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: colorScheme.primaryContainer.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.2),
-                  ),
+            switch (_selectedCategory) {
+              _QueueCategory.anatomy => _buildAnatomyCategory(
+                  context,
+                  position,
+                  setup,
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.code_rounded,
-                      size: 13,
-                      color: colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'In production, supply a TapToAct(onTap: fn) '
-                        'callback on the queue or per-notification.',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                    ),
-                  ],
+              _QueueCategory.gestures => _buildGesturesCategory(
+                  context,
+                  position,
+                  setup,
+                  activePositions,
+                  otherQueuesSlaves,
                 ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            const StudioSectionHeader(title: 'GROUPING'),
-            StudioToggleTile(
-              label: 'ENABLE BUNDLING',
-              value: setup.groupingEnabled,
-              onChanged: (final enable) => context.read<SetupBloc>().add(
-                    UpdateQueue(
-                      position,
-                      setup.copyWith(groupingEnabled: enable),
-                    ),
-                  ),
-            ),
-            if (setup.groupingEnabled) ...[
-              const SizedBox(height: 12),
-              StudioSliderTile(
-                label: 'BUNDLE AFTER (N CARDS)',
-                value: setup.groupingThreshold.toDouble(),
-                min: 2,
-                max: 10,
-                divisions: 8,
-                onChanged: (final v) => context.read<SetupBloc>().add(
-                      UpdateQueue(
-                        position,
-                        setup.copyWith(groupingThreshold: v.round()),
-                      ),
-                    ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+              _QueueCategory.stacking => _buildStackingCategory(
+                  context,
+                  position,
+                  setup,
                 ),
-                decoration: BoxDecoration(
-                  color: colorScheme.secondaryContainer.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.secondary.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 1),
-                      child: Icon(
-                        Icons.layers_outlined,
-                        size: 13,
-                        color: colorScheme.secondary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Cards sharing the same channelName (or groupKey) '
-                        'collapse into a bundle once their count reaches the '
-                        'threshold. Swipe the visible card — only that one '
-                        'exits. Hidden members’ timers are suspended while '
-                        'off-screen.',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: colorScheme.secondary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              _DismissGroupButton(position: position),
-            ],
+            },
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAnatomyCategory(
+    final BuildContext context,
+    final QueuePosition position,
+    final QueueSetup setup,
+  ) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          StyleArchetypeSelector(
+            label: 'BASELINE STYLE ARCHETYPE',
+            badgeLabel: 'QUEUE BASELINE',
+            selectedType: setup.styleType,
+            showInheritDefault: false,
+            onChanged: (final v) {
+              if (v != null) {
+                context.read<SetupBloc>().add(
+                      UpdateQueue(
+                        position,
+                        setup.copyWith(styleType: v),
+                      ),
+                    );
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          StudioSliderTile(
+            label: 'MAX VISIBLE NOTIFICATIONS',
+            value: setup.maxStackSize.toDouble(),
+            min: 1,
+            max: 10,
+            divisions: 9,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(maxStackSize: v.round()),
+                  ),
+                ),
+          ),
+          const SizedBox(height: 12),
+          StudioToggleTile(
+            label: 'CUSTOM MAX WIDTH',
+            value: setup.maxWidth != null,
+            onChanged: (final enable) {
+              context.read<SetupBloc>().add(
+                    UpdateQueue(
+                      position,
+                      setup.copyWith(
+                        maxWidth: enable ? 360.0 : null,
+                        clearMaxWidth: !enable,
+                      ),
+                    ),
+                  );
+            },
+          ),
+          if (setup.maxWidth != null) ...[
+            const SizedBox(height: 12),
+            StudioSliderTile(
+              label: 'MAX CARD WIDTH (PX)',
+              value: setup.maxWidth!,
+              min: 200,
+              max: 600,
+              divisions: 40,
+              onChanged: (final v) => context.read<SetupBloc>().add(
+                    UpdateQueue(
+                      position,
+                      setup.copyWith(maxWidth: v),
+                    ),
+                  ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          StudioDropdownTile<Type>(
+            label: 'TRANSITION STRATEGY',
+            value: setup.transitionType,
+            items: _transitionTypes,
+            itemLabel: (final t) => switch (t) {
+              == SlideTransitionStrategy => 'SLIDE',
+              == FadeTransitionStrategy => 'FADE',
+              == ScaleTransitionStrategy => 'SCALE',
+              _ => t
+                  .toString()
+                  .replaceAll('TransitionStrategy', '')
+                  .toUpperCase(),
+            },
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(transitionType: v),
+                  ),
+                ),
+          ),
+        ],
+      );
+
+  Widget _buildGesturesCategory(
+    final BuildContext context,
+    final QueuePosition position,
+    final QueueSetup setup,
+    final Set<QueuePosition> activePositions,
+    final Set<QueuePosition> otherQueuesSlaves,
+  ) {
+    final colorScheme = StudioTheme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (setup.dragBehaviorType == setup.longPressBehaviorType &&
+            setup.dragBehaviorType != Disabled) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: colorScheme.secondary.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: colorScheme.secondary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Both gestures are set to '
+                    '${_formatBehaviorType(setup.dragBehaviorType)}. '
+                    'You might want to use different behaviors for better '
+                    'interaction.',
+                    style: TextStyle(
+                      color: colorScheme.secondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        StudioDropdownTile<Type>(
+          label: 'DRAG BEHAVIOR',
+          value: setup.dragBehaviorType,
+          items: _behaviorTypes.where((final e) {
+            if (e == Relocate || e == ReorderAndRelocate) {
+              return activePositions.length < QueuePosition.values.length ||
+                  setup.dragBehaviorType == e;
+            }
+            return true;
+          }).toList(),
+          itemLabel: _formatBehaviorType,
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(dragBehaviorType: v),
+                ),
+              ),
+        ),
+        if (setup.dragBehaviorType == Relocate ||
+            setup.dragBehaviorType == ReorderAndRelocate) ...[
+          const SizedBox(height: 12),
+          RelocationSelector(
+            selected: setup.relocateTargets,
+            activePositions: activePositions,
+            otherQueuesSlaves: otherQueuesSlaves,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(relocateTargets: v),
+                  ),
+                ),
+          ),
+        ],
+        if (setup.dragBehaviorType == Dismiss) ...[
+          const SizedBox(height: 12),
+          StudioDropdownTile<DismissZone>(
+            label: 'DRAG DISMISS ZONE',
+            value: setup.dragDismissZone,
+            items: DismissZone.values,
+            itemLabel: (final e) => switch (e) {
+              DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
+              DismissZone.naturalDirection =>
+                'NATURAL DIRECTION (UP / DOWN)',
+            },
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(dragDismissZone: v),
+                  ),
+                ),
+          ),
+        ],
+        if (setup.dragBehaviorType == Snooze) ...[
+          const SizedBox(height: 12),
+          StudioSliderTile(
+            label: 'DRAG SNOOZE DURATION: ${setup.dragSnoozeSeconds}s',
+            value: setup.dragSnoozeSeconds.toDouble(),
+            min: 1,
+            max: 30,
+            divisions: 29,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(dragSnoozeSeconds: v.round()),
+                  ),
+                ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        StudioDropdownTile<Type>(
+          label: 'LONG PRESS DRAG BEHAVIOR',
+          value: setup.longPressBehaviorType,
+          items: _behaviorTypes.where((final e) {
+            if (e == Relocate || e == ReorderAndRelocate) {
+              return activePositions.length < QueuePosition.values.length ||
+                  setup.longPressBehaviorType == e;
+            }
+            return true;
+          }).toList(),
+          itemLabel: _formatBehaviorType,
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(longPressBehaviorType: v),
+                ),
+              ),
+        ),
+        if (setup.longPressBehaviorType == Relocate ||
+            setup.longPressBehaviorType == ReorderAndRelocate) ...[
+          const SizedBox(height: 12),
+          RelocationSelector(
+            selected: setup.relocateTargets,
+            activePositions: activePositions,
+            otherQueuesSlaves: otherQueuesSlaves,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(relocateTargets: v),
+                  ),
+                ),
+          ),
+        ],
+        if (setup.longPressBehaviorType == Dismiss) ...[
+          const SizedBox(height: 12),
+          StudioDropdownTile<DismissZone>(
+            label: 'LONG PRESS DISMISS ZONE',
+            value: setup.longPressDismissZone,
+            items: DismissZone.values,
+            itemLabel: (final e) => switch (e) {
+              DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
+              DismissZone.naturalDirection =>
+                'NATURAL DIRECTION (UP / DOWN)',
+            },
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(longPressDismissZone: v),
+                  ),
+                ),
+          ),
+        ],
+        if (setup.longPressBehaviorType == Snooze) ...[
+          const SizedBox(height: 12),
+          StudioSliderTile(
+            label: 'LONG-PRESS SNOOZE: ${setup.longPressSnoozeSeconds}s',
+            value: setup.longPressSnoozeSeconds.toDouble(),
+            min: 1,
+            max: 30,
+            divisions: 29,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(longPressSnoozeSeconds: v.round()),
+                  ),
+                ),
+          ),
+        ],
+        const SizedBox(height: 12),
+        StudioDropdownTile<Type>(
+          label: 'CLOSE BUTTON VISIBILITY',
+          value: setup.closeButtonBehaviorType,
+          items: _closeButtonTypes,
+          itemLabel: (final e) => switch (e) {
+            == AlwaysVisible => 'ALWAYS VISIBLE',
+            == VisibleOnHover => 'VISIBLE ON HOVER',
+            == Hidden => 'HIDDEN',
+            _ => e.toString().toUpperCase(),
+          },
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(closeButtonBehaviorType: v),
+                ),
+              ),
+        ),
+        const SizedBox(height: 12),
+        StudioDropdownTile<Type>(
+          label: 'TAP BEHAVIOR',
+          value: setup.tapBehaviorType,
+          items: _tapBehaviorTypes,
+          itemLabel: (final e) => switch (e) {
+            == TapToDismiss => 'DISMISS',
+            == TapToExpand => 'EXPAND / COLLAPSE',
+            == TapToAct => 'ACT (CALLBACK)',
+            == TapDisabled => 'DISABLED',
+            _ => e.toString().toUpperCase(),
+          },
+          onChanged: (final v) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(tapBehaviorType: v),
+                ),
+              ),
+        ),
+        if (setup.tapBehaviorType == TapToAct) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: colorScheme.primary.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.code_rounded,
+                  size: 13,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'In production, supply a TapToAct(onTap: fn) '
+                    'callback on the queue or per-notification.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStackingCategory(
+    final BuildContext context,
+    final QueuePosition position,
+    final QueueSetup setup,
+  ) {
+    final colorScheme = StudioTheme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        StudioToggleTile(
+          label: 'ENABLE BUNDLING',
+          value: setup.groupingEnabled,
+          onChanged: (final enable) => context.read<SetupBloc>().add(
+                UpdateQueue(
+                  position,
+                  setup.copyWith(groupingEnabled: enable),
+                ),
+              ),
+        ),
+        if (setup.groupingEnabled) ...[
+          const SizedBox(height: 12),
+          StudioSliderTile(
+            label: 'BUNDLE AFTER (N CARDS)',
+            value: setup.groupingThreshold.toDouble(),
+            min: 2,
+            max: 10,
+            divisions: 8,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(groupingThreshold: v.round()),
+                  ),
+                ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer.withValues(alpha: 0.25),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: colorScheme.secondary.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Icon(
+                    Icons.layers_outlined,
+                    size: 13,
+                    color: colorScheme.secondary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Cards sharing the same channelName (or groupKey) '
+                    'collapse into a bundle once their count reaches the '
+                    'threshold. Swipe the visible card — only that one '
+                    'exits. Hidden members’ timers are suspended while '
+                    'off-screen.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colorScheme.secondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          _DismissGroupButton(position: position),
+        ] else ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            decoration: BoxDecoration(
+              color: colorScheme.onSurface.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: colorScheme.onSurface.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 14,
+                  color: colorScheme.onSurface.withValues(alpha: 0.45),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'When bundling is disabled, notifications stack '
+                    'individually up to the Max Visible limit set in '
+                    'Anatomy & Bounds.',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

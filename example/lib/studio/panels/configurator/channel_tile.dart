@@ -43,9 +43,44 @@ class ChannelTile extends StatelessWidget {
           size: 18,
           color: setup.color ?? colorScheme.onSurface,
         ),
-        title: Text(
-          setup.name,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+        title: Row(
+          children: [
+            Text(
+              setup.name,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+              decoration: BoxDecoration(
+                color: colorScheme.onSurface.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: colorScheme.onSurface.withValues(alpha: 0.12),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 9,
+                    color: colorScheme.onSurface.withValues(alpha: 0.45),
+                  ),
+                  const SizedBox(width: 3),
+                  Text(
+                    setup.position?.name.toUpperCase() ?? 'DEFAULT',
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.4,
+                      color: colorScheme.onSurface.withValues(alpha: 0.65),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         trailing: IconButton(
           icon: Icon(

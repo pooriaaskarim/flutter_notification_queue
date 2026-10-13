@@ -97,9 +97,9 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
                       child: SystemOptionsSection(setupState: setupState),
                     ),
 
-                    // ── Section 3: Preview ──
+                    // ── Section 3: Notification Draft ──
                     _StudioExpansionSection(
-                      title: 'PREVIEW',
+                      title: 'NOTIFICATION DRAFT',
                       icon: Icons.send_outlined,
                       initiallyExpanded: true,
                       child: PreviewSection(

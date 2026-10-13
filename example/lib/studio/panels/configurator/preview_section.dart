@@ -29,11 +29,24 @@ class PreviewSection extends StatelessWidget {
     final channelNames = setupState.setup.channels.keys.toList();
     final colorScheme = StudioTheme.colorScheme;
 
+    final channelSetup = setupState.setup.channels[draft.channelName];
+    final targetPosition = draft.positionOverride ??
+        channelSetup?.position ??
+        setupState.activeQueuePosition;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const StudioSectionHeader(title: 'PREVIEW'),
-        const SizedBox(height: 8),
+        const StudioSectionHeader(
+          title: 'NOTIFICATION DRAFT (AppNotification)',
+        ),
+        const SizedBox(height: 6),
+        _RoutingPipelineBadge(
+          channelName: draft.channelName,
+          targetPosition: targetPosition,
+          isOverridden: draft.positionOverride != null,
+        ),
+        const SizedBox(height: 10),
 
         // ── Cascade Resolution Inspector (Gears) ──
         ResolutionInspector(
@@ -519,6 +532,89 @@ class _NotificationThemeOverrideTile extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoutingPipelineBadge extends StatelessWidget {
+  const _RoutingPipelineBadge({
+    required this.channelName,
+    required this.targetPosition,
+    required this.isOverridden,
+  });
+
+  final String channelName;
+  final QueuePosition targetPosition;
+  final bool isOverridden;
+
+  @override
+  Widget build(final BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: colorScheme.onSurface.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.alt_route_rounded,
+            size: 13,
+            color: colorScheme.primary,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '#$channelName',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: colorScheme.primary,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Icon(
+              Icons.arrow_forward_rounded,
+              size: 11,
+              color: colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: (isOverridden
+                      ? const Color(0xFFEC4899)
+                      : const Color(0xFF10B981))
+                  .withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: (isOverridden
+                        ? const Color(0xFFEC4899)
+                        : const Color(0xFF10B981))
+                    .withValues(alpha: 0.3),
+              ),
+            ),
+            child: Text(
+              targetPosition.name.toUpperCase() +
+                  (isOverridden ? ' (OVERRIDE)' : ''),
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.4,
+                color: isOverridden
+                    ? const Color(0xFFEC4899)
+                    : const Color(0xFF10B981),
+              ),
+            ),
           ),
         ],
       ),

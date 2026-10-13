@@ -304,24 +304,18 @@ class _CodeEditorPanelState extends State<CodeEditorPanel> {
   String _hintForState(
     final SetupState setupState,
     final NotificationDraft draft,
-  ) {
-    final queues = setupState.setup.queues;
-    final channels = setupState.setup.channels;
-
-    if (queues.length > 1) {
-      return '💡 ${queues.length} queues configured. '
-          'Each generates its own NotificationQueue block.';
-    }
-    if (channels.length > 4) {
-      return '💡 ${channels.length} channels including custom ones. '
-          'Nice!';
-    }
-    if (draft.dismissSeconds == null) {
-      return '💡 Permanent notification — user must manually dismiss.';
-    }
-    return '💡 Adjust parameters in the configurator to see '
-        'code update live.';
-  }
+  ) =>
+      switch (_selectedScope) {
+        CodeSnippetScope.fullSetup =>
+          '📁 Place in lib/main.dart — wraps your root MaterialApp via builder.',
+        CodeSnippetScope.dispatchOnly =>
+          '⚡ Contextless dispatch — call from any Bloc, Service, or ViewModel '
+          'without BuildContext.',
+        CodeSnippetScope.channelsOnly =>
+          '📁 Place in lib/config/notification_channels.dart — defines channel routing table.',
+        CodeSnippetScope.queuesOnly =>
+          '📁 Place in lib/config/notification_queues.dart — defines screen positions & gesture rules.',
+      };
 }
 
 /// Renders [code] with a line-number gutter and Dart syntax highlighting.
