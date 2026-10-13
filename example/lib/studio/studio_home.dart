@@ -10,6 +10,7 @@ import 'panels/code_editor_panel.dart';
 import 'panels/configurator_panel.dart';
 import 'panels/event_log_panel.dart';
 import 'studio_theme.dart';
+import 'widgets/pane_splitter.dart';
 import 'widgets/project_info_dialog.dart';
 import 'widgets/quick_fire_cockpit.dart';
 
@@ -49,6 +50,20 @@ class _StudioShellState extends State<_StudioShell> {
               const SingleActivator(LogicalKeyboardKey.enter, control: true):
                   () {
                 context.read<NotificationBloc>().add(const FirePreview());
+              },
+              const SingleActivator(LogicalKeyboardKey.keyE, meta: true): () {
+                context.read<StudioBloc>().add(const ToggleCodeEditor());
+              },
+              const SingleActivator(LogicalKeyboardKey.keyE, control: true):
+                  () {
+                context.read<StudioBloc>().add(const ToggleCodeEditor());
+              },
+              const SingleActivator(LogicalKeyboardKey.keyL, meta: true): () {
+                context.read<StudioBloc>().add(const ToggleEventLog());
+              },
+              const SingleActivator(LogicalKeyboardKey.keyL, control: true):
+                  () {
+                context.read<StudioBloc>().add(const ToggleEventLog());
               },
             },
             child: Scaffold(
@@ -107,6 +122,46 @@ class _StudioShellState extends State<_StudioShell> {
                         onPressed: () => QuickFireCockpit.showModal(context),
                       ),
                     ),
+                  ] else ...[
+                    // Desktop Pane Toggles
+                    BlocBuilder<StudioBloc, StudioState>(
+                      builder: (final context, final state) => Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _PaneToggleAction(
+                            icon: Icons.code,
+                            label: 'CODE',
+                            isOpen: state.isCodeEditorOpen,
+                            tooltip: state.isCodeEditorOpen
+                                ? 'Collapse Code Editor (Ctrl+E)'
+                                : 'Expand Code Editor (Ctrl+E)',
+                            onPressed: () => context
+                                .read<StudioBloc>()
+                                .add(const ToggleCodeEditor()),
+                          ),
+                          const SizedBox(width: 4),
+                          _PaneToggleAction(
+                            icon: Icons.stream_rounded,
+                            label: 'EVENTS',
+                            isOpen: state.isEventLogOpen,
+                            tooltip: state.isEventLogOpen
+                                ? 'Collapse Event Stream (Ctrl+L)'
+                                : 'Expand Event Stream (Ctrl+L)',
+                            onPressed: () => context
+                                .read<StudioBloc>()
+                                .add(const ToggleEventLog()),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 1,
+                            height: 18,
+                            color:
+                                colorScheme.onSurface.withValues(alpha: 0.12),
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                      ),
+                    ),
                   ],
                   IconButton(
                     onPressed: () => ProjectInfoDialog.show(context),
@@ -138,7 +193,9 @@ class _StudioShellState extends State<_StudioShell> {
                       children: [
                         if (!isNarrow) const QuickFireCockpit(),
                         Expanded(
-                          child: isNarrow ? _narrowLayout() : _wideLayout(),
+                          child: isNarrow
+                              ? _narrowLayout()
+                              : _wideLayout(constraints.maxWidth),
                         ),
                       ],
                     ),
@@ -174,20 +231,101 @@ class _StudioShellState extends State<_StudioShell> {
         },
       );
 
-  Widget _wideLayout() => Row(
-        children: [
-          const Expanded(child: ConfiguratorPanel()),
-          Container(
-            width: 1,
-            color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.08),
-          ),
-          const Expanded(child: CodeEditorPanel()),
-          Container(
-            width: 1,
-            color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.08),
-          ),
-          const SizedBox(width: 280, child: EventLogPanel()),
-        ],
+  Widget _wideLayout(final double totalWidth) =>
+      BlocBuilder<StudioBloc, StudioState>(
+        builder: (final context, final state) => Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── Permanent Main Pane ──
+            const Expanded(
+              child: ConfiguratorPanel(),
+            ),
+
+            // ── Code Editor Pane & Splitter ──
+            if (state.isCodeEditorOpen) ...[
+              PaneSplitter(
+                tooltip:
+                    'Drag to resize / Double-click to collapse Code Editor',
+                onDoubleClick: () => context
+                    .read<StudioBloc>()
+                    .add(const ToggleCodeEditor(open: false)),
+                onDragDelta: (final delta) {
+                  context.read<StudioBloc>().add(
+                        ResizeCodeEditor(
+                          delta: delta,
+                          totalWidth: totalWidth,
+                        ),
+                      );
+                },
+              ),
+              SizedBox(
+                width: state.codeEditorWidth,
+                child: const CodeEditorPanel(),
+              ),
+            ] else ...[
+              CollapsedPaneRail(
+                icon: Icons.code,
+                label: 'CODE',
+                tooltip: 'Expand Code Editor',
+                onExpand: () => context
+                    .read<StudioBloc>()
+                    .add(const ToggleCodeEditor(open: true)),
+                onDragExpand: (final delta) {
+                  if (delta < 0) {
+                    context.read<StudioBloc>().add(
+                          ResizeCodeEditor(
+                            delta: delta,
+                            totalWidth: totalWidth,
+                          ),
+                        );
+                  }
+                },
+              ),
+            ],
+
+            // ── Event Stream Pane & Splitter ──
+            if (state.isEventLogOpen) ...[
+              PaneSplitter(
+                tooltip:
+                    'Drag to resize / Double-click to collapse Event Stream',
+                onDoubleClick: () => context
+                    .read<StudioBloc>()
+                    .add(const ToggleEventLog(open: false)),
+                onDragDelta: (final delta) {
+                  context.read<StudioBloc>().add(
+                        ResizeEventLog(
+                          delta: delta,
+                          totalWidth: totalWidth,
+                        ),
+                      );
+                },
+              ),
+              SizedBox(
+                width: state.eventLogWidth,
+                child: const EventLogPanel(),
+              ),
+            ] else ...[
+              CollapsedPaneRail(
+                icon: Icons.stream_rounded,
+                label: 'EVENTS',
+                tooltip: 'Expand Event Stream',
+                onExpand: () => context
+                    .read<StudioBloc>()
+                    .add(const ToggleEventLog(open: true)),
+                onDragExpand: (final delta) {
+                  if (delta < 0) {
+                    context.read<StudioBloc>().add(
+                          ResizeEventLog(
+                            delta: delta,
+                            totalWidth: totalWidth,
+                          ),
+                        );
+                  }
+                },
+              ),
+            ],
+          ],
+        ),
       );
 
   Widget _narrowLayout() => IndexedStack(
@@ -198,6 +336,74 @@ class _StudioShellState extends State<_StudioShell> {
           EventLogPanel(),
         ],
       );
+}
+
+class _PaneToggleAction extends StatelessWidget {
+  const _PaneToggleAction({
+    required this.icon,
+    required this.label,
+    required this.isOpen,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isOpen;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(final BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: isOpen
+                ? colorScheme.primary.withValues(alpha: 0.14)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isOpen
+                  ? colorScheme.primary.withValues(alpha: 0.35)
+                  : colorScheme.onSurface.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isOpen
+                    ? colorScheme.primary
+                    : colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: isOpen ? FontWeight.w800 : FontWeight.w600,
+                  letterSpacing: 0.8,
+                  color: isOpen
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _StudioBackground extends StatelessWidget {

@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
+
+import '../bloc/studio_bloc.dart';
 
 /// Filter categories for the event log stream.
 enum EventLogFilter {
@@ -254,6 +257,24 @@ class _EventLogPanelState extends State<EventLogPanel> {
                         padding: const EdgeInsets.all(4),
                         child: Icon(
                           Icons.delete_sweep_outlined,
+                          size: 16,
+                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Tooltip(
+                    message: 'Collapse Event Stream',
+                    child: InkWell(
+                      onTap: () => context
+                          .read<StudioBloc>()
+                          .add(const ToggleEventLog(open: false)),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.close,
                           size: 16,
                           color: colorScheme.onSurface.withValues(alpha: 0.5),
                         ),

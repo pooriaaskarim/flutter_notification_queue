@@ -9,7 +9,9 @@ import 'package:flutter_notification_queue_example/studio/engine/code_generator.
 import 'package:flutter_notification_queue_example/studio/models/channel_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/queue_setup.dart';
 import 'package:flutter_notification_queue_example/studio/models/studio_setup.dart';
+import 'package:flutter_notification_queue_example/studio/panels/code_editor_panel.dart';
 import 'package:flutter_notification_queue_example/studio/panels/configurator/channel_tile.dart';
+import 'package:flutter_notification_queue_example/studio/panels/configurator_panel.dart';
 import 'package:flutter_notification_queue_example/studio/panels/event_log_panel.dart';
 import 'package:flutter_notification_queue_example/studio/studio_home.dart';
 import 'package:flutter_notification_queue_example/studio/studio_theme.dart';
@@ -349,6 +351,79 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('QUICK FIRE COCKPIT'), findsOneWidget);
         expect(find.text('PRESET SCENARIOS'), findsOneWidget);
+
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  });
+
+  group('StudioHome Resizable Panes Widget Tests', () {
+    testWidgets(
+      'Renders 3-pane layout, allows collapse, and keeps main pane permanent',
+      (final tester) async {
+        tester.view.physicalSize = const Size(1400, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final setupBloc = SetupBloc();
+        final notificationBloc = NotificationBloc(setupBloc: setupBloc);
+        final studioBloc = StudioBloc();
+
+        await tester.pumpWidget(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: setupBloc),
+              BlocProvider.value(value: notificationBloc),
+              BlocProvider.value(value: studioBloc),
+            ],
+            child: MaterialApp(
+              theme: StudioTheme.dark(),
+              builder: (final context, final child) {
+                StudioTheme.update(context);
+                return NotificationScope(
+                  controller: setupBloc.controller,
+                  child: child!,
+                );
+              },
+              home: const StudioHome(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        addTearDown(() {
+          notificationBloc.close();
+          setupBloc.close();
+          studioBloc.close();
+        });
+
+        // Verify initial 3 panes are present
+        expect(find.byType(ConfiguratorPanel), findsOneWidget);
+        expect(find.byType(CodeEditorPanel), findsOneWidget);
+        expect(find.byType(EventLogPanel), findsOneWidget);
+
+        // Collapse Code Editor via AppBar toggle
+        await tester.tap(find.byTooltip('Collapse Code Editor (Ctrl+E)'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CodeEditorPanel), findsNothing);
+        expect(find.byType(ConfiguratorPanel), findsOneWidget); // Permanent!
+        expect(find.byType(EventLogPanel), findsOneWidget);
+
+        // Collapse Event Stream via AppBar toggle
+        await tester.tap(find.byTooltip('Collapse Event Stream (Ctrl+L)'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CodeEditorPanel), findsNothing);
+        expect(find.byType(EventLogPanel), findsNothing);
+        expect(find.byType(ConfiguratorPanel), findsOneWidget); // Permanent!
+
+        // Re-expand Code Editor
+        await tester.tap(find.byTooltip('Expand Code Editor (Ctrl+E)'));
+        await tester.pumpAndSettle();
+        expect(find.byType(CodeEditorPanel), findsOneWidget);
+        expect(find.byType(ConfiguratorPanel), findsOneWidget);
 
         await tester.pumpWidget(const SizedBox());
       },

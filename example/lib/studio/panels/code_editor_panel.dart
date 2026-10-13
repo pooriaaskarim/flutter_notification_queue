@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/notification_bloc.dart';
 import '../bloc/setup_bloc.dart';
+import '../bloc/studio_bloc.dart';
 import '../engine/code_generator.dart';
 import '../engine/dart_syntax_highlighter.dart';
 
@@ -64,16 +65,19 @@ class _CodeEditorPanelState extends State<CodeEditorPanel> {
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'GENERATED CODE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.54),
+                      Flexible(
+                        child: Text(
+                          'GENERATED CODE',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w900,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.54),
+                          ),
                         ),
                       ),
                       const Spacer(),
@@ -106,6 +110,27 @@ class _CodeEditorPanelState extends State<CodeEditorPanel> {
                               .read<NotificationBloc>()
                               .add(const ResetDraft());
                         },
+                      ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                        message: 'Collapse Code Panel',
+                        child: InkWell(
+                          onTap: () => context
+                              .read<StudioBloc>()
+                              .add(const ToggleCodeEditor(open: false)),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ),
