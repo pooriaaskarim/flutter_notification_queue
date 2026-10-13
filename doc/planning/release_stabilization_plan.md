@@ -16,7 +16,7 @@ This plan is split into two major tracks that run in phases:
 |---|---|---|---|
 | **Track A — Critique** | UX + DX stability & practicality | [UX & DX Critique Report](ux_dx_critique.md) | ✅ Complete |
 | **Track B — Performance** | Platform perf on all supported targets | [Performance Audit](performance_audit.md) | ✅ Complete |
-| **Track C — Stability** | Core resource safety & lifecycle hardening | [Stability Plan](../../../brain/574cb1fe-7cb5-432e-9973-f51af1060ec6/fnq_stability_plan.md) | ✅ Complete (v0.5.0) |
+| **Track C — Stability & Governance** | Core resource safety, 3-tier architecture & lifecycle hardening | [Unified Roadmap](../roadmap.md) & [Theme Token Spec](theme_token_architecture_spec.md) | ✅ Complete (v0.5.0) |
 
 ---
 
@@ -179,7 +179,7 @@ Walk the exported symbols in `lib/flutter_notification_queue.dart` and answer:
 | README: `FnqEvent` stream | Missing docs entirely | Add observability section |
 | README: Overflow / backpressure | Missing | Add section |
 | API docs (dartdoc) | Coverage unknown | Run `dart doc` and audit |
-| Migration guide | Only 0.3→0.4, missing 0.4→0.5 | Write 0.4→0.5 migration section |
+| Migration guide | Completed for 0.4→0.5 | [Migration Guide v0.5](../migration_v0_5.md) |
 | CHANGELOG 0.5.0 | Detailed; good | — |
 
 ---
