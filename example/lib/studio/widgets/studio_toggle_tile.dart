@@ -19,13 +19,16 @@ class StudioToggleTile extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: colorScheme.onSurface.withValues(alpha: 0.6),
-            fontSize: 12,
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: colorScheme.onSurface.withValues(alpha: 0.6),
+              fontSize: 12,
+            ),
           ),
         ),
+        const SizedBox(width: 8),
         Switch(
           value: value,
           onChanged: onChanged,

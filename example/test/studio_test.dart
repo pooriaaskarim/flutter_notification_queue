@@ -15,6 +15,7 @@ import 'package:flutter_notification_queue_example/studio/panels/configurator_pa
 import 'package:flutter_notification_queue_example/studio/panels/event_log_panel.dart';
 import 'package:flutter_notification_queue_example/studio/studio_home.dart';
 import 'package:flutter_notification_queue_example/studio/studio_theme.dart';
+import 'package:flutter_notification_queue_example/studio/widgets/queue_position_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -586,6 +587,114 @@ void main() {
       expect(find.text('Queued'), findsOneWidget);
 
       controller.dispose();
+    });
+  });
+
+  group('Adaptive Layout & Proportions Tests', () {
+    testWidgets(
+      'ConfiguratorPanel adapts to 1-col, 2-col, and 3-col layouts',
+      (final tester) async {
+        final setupBloc = SetupBloc();
+        final notificationBloc = NotificationBloc(setupBloc: setupBloc);
+
+        Widget buildConfigurator(final double width) => MaterialApp(
+              theme: StudioTheme.dark(),
+              home: Builder(
+                builder: (final context) {
+                  StudioTheme.update(context);
+                  return Scaffold(
+                    body: MultiBlocProvider(
+                      providers: [
+                        BlocProvider.value(value: setupBloc),
+                        BlocProvider.value(value: notificationBloc),
+                      ],
+                      child: SizedBox(
+                        width: width,
+                        height: 900,
+                        child: const ConfiguratorPanel(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+
+        // 1. Sidebar width (700px) -> Single-Column Mode (ListView)
+        await tester.binding.setSurfaceSize(const Size(700, 900));
+        await tester.pumpWidget(buildConfigurator(700));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ListView), findsOneWidget);
+        expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
+        expect(find.text('CHANNELS'), findsAtLeastNWidgets(1));
+
+        // 2. Wide width (1100px) -> 2-Column Responsive Mode
+        await tester.binding.setSurfaceSize(const Size(1100, 900));
+      await tester.pumpWidget(buildConfigurator(1100));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SingleChildScrollView), findsWidgets);
+      expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
+      expect(find.text('NOTIFICATION DRAFT'), findsAtLeastNWidgets(1));
+
+      // 3. Ultra-wide width (1600px) -> 3-Column Studio Dashboard
+      await tester.binding.setSurfaceSize(const Size(1600, 900));
+      await tester.pumpWidget(buildConfigurator(1600));
+      await tester.pumpAndSettle();
+
+      expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
+      expect(find.text('CHANNELS'), findsAtLeastNWidgets(1));
+      expect(find.text('NOTIFICATION DRAFT'), findsAtLeastNWidgets(1));
+
+      // Verify QueuePositionMap container width is bounded to <= 440px
+      final mapFinder = find.byType(QueuePositionMap);
+      expect(mapFinder, findsOneWidget);
+
+      await tester.binding.setSurfaceSize(null);
+    });
+
+    testWidgets('CodeEditorPanel maintains max width bound on action button',
+        (final tester) async {
+      final setupBloc = SetupBloc();
+      final notificationBloc = NotificationBloc(setupBloc: setupBloc);
+      final studioBloc = StudioBloc();
+
+      await tester.binding.setSurfaceSize(const Size(1000, 900));
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: StudioTheme.dark(),
+          home: Builder(
+            builder: (final context) {
+              StudioTheme.update(context);
+              return Scaffold(
+                body: MultiBlocProvider(
+                  providers: [
+                    BlocProvider.value(value: setupBloc),
+                    BlocProvider.value(value: notificationBloc),
+                    BlocProvider.value(value: studioBloc),
+                  ],
+                  child: const SizedBox(
+                    width: 900,
+                    height: 900,
+                    child: CodeEditorPanel(),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Find the FIRE PREVIEW ElevatedButton
+      final btnFinder = find.widgetWithText(ElevatedButton, 'FIRE PREVIEW');
+      expect(btnFinder, findsOneWidget);
+
+      final btnSize = tester.getSize(btnFinder);
+      // Button width should be capped (<= 420), not stretched to 900px
+      expect(btnSize.width, lessThanOrEqualTo(420.0));
+
+      await tester.binding.setSurfaceSize(null);
     });
   });
 }

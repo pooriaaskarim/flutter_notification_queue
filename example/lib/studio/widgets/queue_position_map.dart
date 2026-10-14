@@ -98,7 +98,10 @@ class QueuePositionMap extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Container(
           decoration: BoxDecoration(
             border: Border.all(
               color: colorScheme.outlineVariant.withValues(alpha: 0.5),
@@ -196,6 +199,8 @@ class QueuePositionMap extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    ),
         const SizedBox(height: 8),
         // Legend
         Wrap(

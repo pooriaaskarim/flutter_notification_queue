@@ -603,36 +603,91 @@ class _InspectorDrawer extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          ...details.entries.map(
-            (final e) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1.5),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 70,
-                    child: Text(
-                      e.key,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface.withValues(alpha: 0.45),
+          LayoutBuilder(
+            builder: (final context, final constraints) {
+              final isWide = constraints.maxWidth >= 480;
+              if (isWide) {
+                final itemWidth = (constraints.maxWidth - 12) / 2;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: details.entries
+                      .map(
+                        (final e) => SizedBox(
+                          width: itemWidth,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 70,
+                                child: Text(
+                                  e.key,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.45),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  e.value,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontFamily: 'monospace',
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: details.entries
+                    .map(
+                      (final e) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 1.5),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 70,
+                              child: Text(
+                                e.key,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.45),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                e.value,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontFamily: 'monospace',
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      e.value,
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontFamily: 'monospace',
-                        color: colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                    )
+                    .toList(),
+              );
+            },
           ),
         ],
       ),

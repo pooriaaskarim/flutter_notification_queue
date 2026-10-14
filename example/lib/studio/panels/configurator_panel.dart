@@ -70,54 +70,10 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
                   );
                 }
 
-                return ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  children: [
-                    // ── Section 1: Queues ──
-                    _StudioExpansionSection(
-                      title: 'QUEUES',
-                      icon: Icons.view_quilt_outlined,
-                      initiallyExpanded: true,
-                      child: QueueSection(setupState: setupState),
-                    ),
-
-                    // ── Section 2: Channels ──
-                    _StudioExpansionSection(
-                      title: 'CHANNELS',
-                      icon: Icons.tune_outlined,
-                      initiallyExpanded: true,
-                      child: ChannelSection(setupState: setupState),
-                    ),
-
-                    // ── Section 2.5: System Options ──
-                    _StudioExpansionSection(
-                      title: 'SYSTEM OPTIONS',
-                      icon: Icons.settings_outlined,
-                      initiallyExpanded: false,
-                      child: SystemOptionsSection(setupState: setupState),
-                    ),
-
-                    // ── Section 3: Notification Draft ──
-                    _StudioExpansionSection(
-                      title: 'NOTIFICATION DRAFT',
-                      icon: Icons.send_outlined,
-                      initiallyExpanded: true,
-                      child: PreviewSection(
-                        setupState: setupState,
-                        draft: draft,
-                      ),
-                    ),
-
-                    // ── Section 4: Scenarios ──
-                    const _StudioExpansionSection(
-                      title: 'SCENARIOS',
-                      icon: Icons.bolt_outlined,
-                      initiallyExpanded: false,
-                      child: ScenariosSection(),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
+                return _buildDesktopContent(
+                  constraints.maxWidth,
+                  setupState,
+                  draft,
                 );
               },
             ),
@@ -198,6 +154,160 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
     );
   }
 
+  Widget _buildDesktopContent(
+    final double maxWidth,
+    final SetupState setupState,
+    final NotificationDraft draft,
+  ) {
+    final queuesSection = _StudioExpansionSection(
+      title: 'QUEUES',
+      icon: Icons.view_quilt_outlined,
+      initiallyExpanded: true,
+      child: QueueSection(setupState: setupState),
+    );
+
+    final channelsSection = _StudioExpansionSection(
+      title: 'CHANNELS',
+      icon: Icons.tune_outlined,
+      initiallyExpanded: true,
+      child: ChannelSection(setupState: setupState),
+    );
+
+    final optionsSection = _StudioExpansionSection(
+      title: 'SYSTEM OPTIONS',
+      icon: Icons.settings_outlined,
+      initiallyExpanded: false,
+      child: SystemOptionsSection(setupState: setupState),
+    );
+
+    final draftSection = _StudioExpansionSection(
+      title: 'NOTIFICATION DRAFT',
+      icon: Icons.send_outlined,
+      initiallyExpanded: true,
+      child: PreviewSection(
+        setupState: setupState,
+        draft: draft,
+      ),
+    );
+
+    const scenariosSection = _StudioExpansionSection(
+      title: 'SCENARIOS',
+      icon: Icons.bolt_outlined,
+      initiallyExpanded: false,
+      child: ScenariosSection(),
+    );
+
+    // ── Ultra-Wide Mode (≥ 1360px): 3-Column Studio Command Center ──
+    if (maxWidth >= 1360) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1680),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Col 1: Spatial Architecture & System Options
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      queuesSection,
+                      optionsSection,
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Col 2: Channel Chromatics & Styles
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      channelsSection,
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Col 3: Dispatch Playground & Scenarios
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      draftSection,
+                      scenariosSection,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Wide Desktop Mode (≥ 880px): 2-Column Responsive Dashboard ──
+    if (maxWidth >= 880) {
+      return SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1320),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Col 1: Architecture & Config
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      queuesSection,
+                      channelsSection,
+                      optionsSection,
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                // Col 2: Dispatch Playground & Scenarios
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      draftSection,
+                      scenariosSection,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ── Standard Sidebar Mode (< 880px): Single-Column Accordion ──
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      children: [
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                queuesSection,
+                channelsSection,
+                optionsSection,
+                draftSection,
+                scenariosSection,
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildMobileContent(
     final SetupState setupState,
     final NotificationDraft draft,
@@ -215,10 +325,9 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
       };
 }
 
-/// A premium collapsible section used throughout the configurator panel.
+/// A premium collapsible card section used throughout the configurator panel.
 ///
-/// Uses [ExpansionTile] with custom styling to provide expand/collapse
-/// affordance with a consistent studio aesthetic.
+/// Features surface elevations, crisp subtle borders, and an icon badge.
 class _StudioExpansionSection extends StatelessWidget {
   const _StudioExpansionSection({
     required this.title,
@@ -236,27 +345,50 @@ class _StudioExpansionSection extends StatelessWidget {
   Widget build(final BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Theme(
-      // Override the divider that ExpansionTile normally inserts
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        initiallyExpanded: initiallyExpanded,
-        tilePadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-        childrenPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-        expandedCrossAxisAlignment: CrossAxisAlignment.start,
-        leading: Icon(icon, size: 16, color: colorScheme.primary),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.8,
-            color: colorScheme.onSurface.withValues(alpha: 0.7),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: colorScheme.surfaceContainerLow.withValues(alpha: 0.45),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
           ),
         ),
-        iconColor: colorScheme.primary,
-        collapsedIconColor: colorScheme.onSurface.withValues(alpha: 0.4),
-        children: [child],
+        clipBehavior: Clip.antiAlias,
+        child: Theme(
+          // Override the divider that ExpansionTile normally inserts
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            initiallyExpanded: initiallyExpanded,
+            tilePadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 3,
+            ),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            expandedCrossAxisAlignment: CrossAxisAlignment.start,
+            leading: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 15, color: colorScheme.primary),
+            ),
+            title: Text(
+              title,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.6,
+                color: colorScheme.onSurface.withValues(alpha: 0.8),
+              ),
+            ),
+            iconColor: colorScheme.primary,
+            collapsedIconColor: colorScheme.onSurface.withValues(alpha: 0.4),
+            children: [child],
+          ),
+        ),
       ),
     );
   }
