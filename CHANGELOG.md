@@ -107,7 +107,7 @@ All features from early pre-releases (`0.4.0` - `0.7.0`) consolidated into a sin
 - **Hover-to-Pause Dismissal:** Hovering over a notification card pauses its auto-dismiss timer, which resumes smoothly when the pointer leaves.
 
 #### Core API & Observability
-- **Dynamic Channel Parking:** Introduced runtime routing updates where dragging/relocating a notification card dynamically updates the routing rules for all future notifications of its channel.
+- **Permanent Queue Relocation:** Introduced runtime queue relocation via `Relocate.to(..., permanent: true)` where dragging a card permanently redirects future queue traffic and migrates active cards together.
 - **Event History Log:** Added an in-memory, LIFO bounded ring buffer (`maxHistoryEntries`) to capture notification events. Added `getHistory()` for querying with filters (channelName, dismissReason, since, limit) and `clearHistory()` for cache management.
 - **Zero-overhead Disabling:** When disabled (`maxHistoryEntries` is set to `0` or less), the history subscription is completely cancelled and detached, guaranteeing zero runtime performance or memory overhead.
 - **Logd Core Integration:** Upgraded logging package to `logd` version `^0.8.6` and integrated package-wide structured log handlers.

@@ -27,7 +27,7 @@ A developer exploring the studio must intuitively understand how the library ope
    - Contains content (`title`, `message`), priorities (`high`, `normal`, `low`), optional duration (`dismissDuration`), permanent flag, and optional experimental content accent tint (`accentColor`).
 2. **`NotificationChannel` (The Routing Engine)**:
    - Categorizes alerts by domain (`info`, `billing`, `orders`, `security`).
-   - Declares the default target `QueuePosition` and parking policies.
+   - Declares the default target `QueuePosition`.
    - Supplies shared channel theme (chromatic tokens and typography).
 3. **`NotificationQueue` (The Spatial Container)**:
    - Anchored to one of the 9 screen positions (`QueuePosition.topLeft`, `topCenter`, etc.).

@@ -11,7 +11,7 @@ A production-grade, overlay-based spatial notification engine for Flutter applic
 
 [![Try NFQ Studio Web Demo](https://img.shields.io/badge/Try_Live_Demo-NFQ_Studio-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://pooriaaskarim.github.io/flutter_notification_queue/)
 
-`FlutterNotificationQueue` (FNQ) provides a comprehensive solution for displaying in-app notifications with spatial queue placement, Intent-First interactive drag/reorder/relocate gestures, notification bundling, priority triage preemption, dynamic channel parking, real-time observability, and deep theming.
+`FlutterNotificationQueue` (FNQ) provides a comprehensive solution for displaying in-app notifications with spatial queue placement, Intent-First interactive drag/reorder/relocate gestures, notification bundling, priority triage preemption, permanent queue relocation, real-time observability, and deep theming.
 
 ---
 
@@ -285,17 +285,21 @@ const AppNotification(
 
 ---
 
-### 4. Dynamic Channel Parking
+### 4. Permanent Queue Relocation
 
-Enable channels to dynamically learn new queue positions when users drag notifications across the screen:
+Configure a queue to dynamically relocate to other screen positions upon drag, migrating active notifications and redirecting future queue traffic:
 
 ```dart
-final controller = NotificationController(
-  enableDynamicChannelParking: true,
-);
+NotificationQueue(
+  position: QueuePosition.topRight,
+  longPressDragBehavior: Relocate.to(
+    {QueuePosition.topLeft, QueuePosition.bottomRight},
+    permanent: true, // Queue redirects future notifications here & migrates active cards
+  ),
+)
 ```
 
-When enabled, relocating a card from `topRight` to `bottomRight` dynamically re-routes future notifications dispatched on that channel to `bottomRight`.
+When `permanent: true` is set, relocating any card moves the entire queue: active sibling cards smoothly migrate to join it, and future incoming notifications targeting that queue are automatically delivered to the new position.
 
 ---
 
@@ -313,6 +317,8 @@ controller.events.listen((event) {
       print('Dismissed: ${notification.id} ($reason)');
     case NotificationRelocated(:final notification, :final from, :final to):
       print('Relocated from ${from.name} to ${to.name}');
+    case QueuePositionRelocated(:final from, :final to, :final permanent):
+      print('Queue moved from ${from.name} to ${to.name} (permanent: $permanent)');
     default:
       break;
   }
@@ -332,7 +338,7 @@ final history = controller.getHistory(
 
 ### 6. In-Place Runtime Reconfiguration
 
-Update queues, channels, dynamic parking, and history settings live **without re-instantiating the controller** or clearing active visible cards:
+Update queues, channels, and history settings live **without re-instantiating the controller** or clearing active visible cards:
 
 ```dart
 controller.reconfigure(
@@ -342,7 +348,7 @@ controller.reconfigure(
       maxStackSize: 5,
     ),
   },
-  enableDynamicChannelParking: true,
+  maxHistoryEntries: 50,
 );
 ```
 
