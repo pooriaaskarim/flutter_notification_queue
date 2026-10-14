@@ -1,4 +1,4 @@
-# Queue System (v0.4.x)
+# Queue System (v0.5.0)
 
 The **Queue System** determines *where* notifications appear on the screen, *how* they stack, how overflow/capacity rules behave, and how gesture intents operate.
 
@@ -7,11 +7,12 @@ The **Queue System** determines *where* notifications appear on the screen, *how
 A `NotificationQueue` is an immutable configuration value object that defines:
 - **Position**: Spatial anchor on the screen (`QueuePosition`).
 - **Drag Behavior**: Interaction intent (`Dismiss`, `Reorder`, `Relocate`, `ReorderAndRelocate`, `Disabled`).
+- **Permanent Relocation**: Redirection target (`QueuePosition?`) routing all incoming and pending notifications to another queue.
 - **Transition**: Entrance and exit animation strategy (`Slide`, `Scale`, `Fade`, `Custom`).
 - **Close Button**: Visibility strategy (`AlwaysVisible`, `VisibleOnHover`, `Hidden`).
-- **Style**: Visual layout template (`StackedQueueStyle`, `FlatQueueStyle`, `OutlinedQueueStyle`).
+- **Style**: Visual layout template (`FilledQueueStyle`, `OutlinedQueueStyle`, `FlatQueueStyle`).
 - **Grouping**: Deck aggregation rules (`QueueGroupingBehavior`).
-- **Constraints**: Maximum stack size (`maxStackSize`), capacity strategy (`overflowStrategy`), and margins.
+- **Constraints**: Maximum stack size (`maxStackSize`), capacity strategy (`overflowStrategy`), margins, and spacing.
 
 ---
 
@@ -20,6 +21,24 @@ A `NotificationQueue` is an immutable configuration value object that defines:
 The `QueuePosition` enum defines 8 spatial anchor points on screen:
 - **Corners**: `topLeft`, `topRight`, `bottomLeft`, `bottomRight`.
 - **Centers**: `topCenter`, `bottomCenter`, `centerLeft`, `centerRight`.
+
+---
+
+## Permanent Queue Relocation
+
+Queues can define a `permanentRelocation` destination. When configured, any notification targeting this queue—or waiting in its pending backlog—is automatically rerouted to the destination queue:
+
+```dart
+NotificationQueue(
+  position: QueuePosition.topCenter,
+  behavior: const QueueBehavior(
+    permanentRelocation: QueuePosition.topRight,
+  ),
+);
+```
+
+> [!NOTE]
+> Relocation is strictly a **Queue Behavior**. Channels do not configure relocation, ensuring domain logic remains independent of physical screen layout changes.
 
 ---
 
@@ -32,8 +51,6 @@ Queue behavior governs how users interact with notification cards in the stack:
 - **`Relocate()`**: Drag notification cards across queue positions.
 - **`ReorderAndRelocate()`**: Hybrid spatial drag supporting both in-queue reordering and cross-queue relocation.
 - **`Disabled()`**: Non-interactive notification cards.
-
-> **Relocation Intelligence**: Defining relocation destinations automatically provisions sibling target queues with inherited styles and transitions.
 
 ---
 
@@ -79,27 +96,32 @@ Configure queues by passing a `Set<NotificationQueue>` to your `NotificationCont
 ```dart
 final controller = NotificationController(
   queues: {
-    // 1. Stacked Deck in Top Right
+    // 1. Filled Deck in Top Right
     const NotificationQueue(
       position: QueuePosition.topRight,
       maxStackSize: 5,
-      style: StackedQueueStyle(),
+      spacing: 8.0,
+      margin: EdgeInsets.all(16),
+      style: FilledQueueStyle(
+        borderRadius: BorderRadius.all(Radius.circular(14)),
+        elevation: 4.0,
+      ),
       dragBehavior: ReorderAndRelocate(),
     ),
     
-    // 2. Snackbar Toast in Bottom Center
+    // 2. Outlined Toast in Bottom Center
     const NotificationQueue(
       position: QueuePosition.bottomCenter,
       maxStackSize: 1,
       margin: EdgeInsets.all(24),
+      style: OutlinedQueueStyle(),
       dragBehavior: Dismiss(),
     ),
 
-    // 3. Persistent Alert Log in Bottom Left
+    // 3. Relocated Top-Center (redirects to Top-Right)
     const NotificationQueue(
-      position: QueuePosition.bottomLeft,
-      maxStackSize: 10,
-      dragBehavior: Disabled(),
+      position: QueuePosition.topCenter,
+      permanentRelocation: QueuePosition.topRight,
     ),
   },
 );
