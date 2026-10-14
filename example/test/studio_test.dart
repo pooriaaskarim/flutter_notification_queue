@@ -588,6 +588,46 @@ void main() {
 
       controller.dispose();
     });
+
+    testWidgets(
+        'Renders relocation events without pixel overflow at minimum width',
+        (final tester) async {
+      final controller = NotificationController(
+        queues: {
+          const NotificationQueue(position: QueuePosition.centerLeft),
+          const NotificationQueue(position: QueuePosition.topCenter),
+        },
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: NotificationScope(
+              controller: controller,
+              child: const SizedBox(
+                width: 220, // minimum studio event log width
+                height: 600,
+                child: EventLogPanel(),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      const notif = AppNotification(
+        id: 'test-evt-reloc',
+        message: 'Hello from NFQ',
+        channelName: 'info',
+      );
+      controller.show(notif);
+      await tester.pump();
+
+      controller.relocate(notif, QueuePosition.topCenter);
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      controller.dispose();
+    });
   });
 
   group('Adaptive Layout & Proportions Tests', () {

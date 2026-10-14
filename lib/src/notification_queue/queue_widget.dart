@@ -430,9 +430,40 @@ class QueueWidgetState extends State<QueueWidget>
   List<NotificationWidget> get activeNotifications =>
       _items.map((final item) => item.widget).toList();
 
+  /// The list of notifications currently waiting/pending in this queue.
+  List<NotificationWidget> get pendingNotifications =>
+      _pendingNotifications.map((final item) => item.blueprint).toList();
+
+  /// Drains and returns all pending notifications waiting in this queue,
+  /// optionally preserving an [excludeId] notification so it can be handled
+  /// separately (e.g. by [remove]).
+  List<NotificationWidget> drainPendingNotifications({
+    final String? excludeId,
+  }) {
+    final list = <NotificationWidget>[];
+    final remaining = Queue<NotificationEntry>();
+    while (_pendingNotifications.isNotEmpty) {
+      final entry = _pendingNotifications.removeFirst();
+      if (excludeId != null && entry.id == excludeId) {
+        remaining.add(entry);
+      } else {
+        list.add(entry.blueprint);
+      }
+    }
+    _pendingNotifications.addAll(remaining);
+    _checkEmpty();
+    return list;
+  }
+
   /// The active-list index of [notification], or -1 if not found.
   int indexOf(final NotificationWidget notification) => _visibleItems
       .indexWhere((final item) => item.widget.id == notification.id);
+
+  /// Returns whether this queue currently contains a notification with [id],
+  /// either as an active notification or waiting in the pending queue.
+  bool containsId(final String id) =>
+      _indexOf(id) != -1 ||
+      _pendingNotifications.any((final n) => n.id == id);
 
   /// The [GlobalKey]s of active notification widgets, in stack order.
   ///

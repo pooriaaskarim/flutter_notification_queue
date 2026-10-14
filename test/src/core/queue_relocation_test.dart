@@ -181,6 +181,122 @@ void main() {
       );
     });
 
+    testWidgets(
+        'permanent relocation migrates pending notifications to new queue',
+        (final tester) async {
+      final controller = NotificationController(
+        channels: {
+          const NotificationChannel(
+            name: 'test_info',
+            position: QueuePosition.topRight,
+            defaultDismissDuration: null,
+          ),
+        },
+        queues: {
+          NotificationQueue(
+            position: QueuePosition.topRight,
+            maxStackSize: 2,
+            longPressDragBehavior: Relocate.to(
+              {QueuePosition.topLeft},
+              permanent: true,
+            ),
+          ),
+        },
+      );
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (final context, final child) => NotificationScope(
+            controller: controller,
+            child: child!,
+          ),
+          home: const Scaffold(body: SizedBox.expand()),
+        ),
+      );
+
+      // Fire 4 notifications (2 active, 2 pending)
+      final n1 = NotificationWidget(
+        id: 'notif_1',
+        message: 'Message 1',
+        channelName: 'test_info',
+        coordinator: controller.coordinator,
+      )..show();
+
+      final n2 = NotificationWidget(
+        id: 'notif_2',
+        message: 'Message 2',
+        channelName: 'test_info',
+        coordinator: controller.coordinator,
+      )..show();
+
+      final n3 = NotificationWidget(
+        id: 'notif_3',
+        message: 'Message 3',
+        channelName: 'test_info',
+        coordinator: controller.coordinator,
+      )..show();
+
+      final n4 = NotificationWidget(
+        id: 'notif_4',
+        message: 'Message 4',
+        channelName: 'test_info',
+        coordinator: controller.coordinator,
+      )..show();
+
+      await tester.pump();
+      await tester.pump();
+      await _driveAnimation(tester);
+
+      expect(find.text('Message 1'), findsOneWidget);
+      expect(find.text('Message 2'), findsOneWidget);
+      expect(find.text('Message 3'), findsNothing);
+      expect(find.text('Message 4'), findsNothing);
+
+      // Permanently relocate n1 to topLeft
+      controller.coordinator?.relocateWidget(n1, QueuePosition.topLeft);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // n1 and n2 should both be relocated to topLeft
+      final n1Key = GlobalObjectKey<NotificationWidgetState>(n1.id);
+      final n2Key = GlobalObjectKey<NotificationWidgetState>(n2.id);
+      expect(
+        n1Key.currentState?.widget.queue.position,
+        equals(QueuePosition.topLeft),
+      );
+      expect(
+        n2Key.currentState?.widget.queue.position,
+        equals(QueuePosition.topLeft),
+      );
+
+      // Dismiss n1 so the waiting item (n3) mounts
+      controller.coordinator?.dismissWidget(n1);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // n3 must be visible and at topLeft (not topRight!)
+      expect(find.text('Message 3'), findsOneWidget);
+      final n3Key = GlobalObjectKey<NotificationWidgetState>(n3.id);
+      expect(
+        n3Key.currentState?.widget.queue.position,
+        equals(QueuePosition.topLeft),
+      );
+
+      // Dismiss n2 so the second waiting item (n4) mounts
+      controller.coordinator?.dismissWidget(n2);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // n4 must be visible and at topLeft (not topRight!)
+      expect(find.text('Message 4'), findsOneWidget);
+      final n4Key = GlobalObjectKey<NotificationWidgetState>(n4.id);
+      expect(
+        n4Key.currentState?.widget.queue.position,
+        equals(QueuePosition.topLeft),
+      );
+    });
+
     test(
         'Cluster Invariance: configuring target landing pad as standalone '
         'queue throws', () {

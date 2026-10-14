@@ -43,9 +43,15 @@ class ChannelTile extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Text(
-              setup.name,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            Flexible(
+              child: Text(
+                setup.name,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             const SizedBox(width: 8),
             Container(

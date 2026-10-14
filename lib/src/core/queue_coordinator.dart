@@ -231,7 +231,17 @@ class QueueCoordinator implements NotificationScopeState {
     );
 
     final notificationQueue = notification.queue;
-    final key = _widgetStateKeys[notificationQueue.position];
+    var key = _widgetStateKeys[notificationQueue.position];
+    if (key?.currentState == null ||
+        !key!.currentState!.containsId(notification.id)) {
+      for (final candidate in _widgetStateKeys.values) {
+        if (candidate.currentState != null &&
+            candidate.currentState!.containsId(notification.id)) {
+          key = candidate;
+          break;
+        }
+      }
+    }
     if (key?.currentState != null) {
       key!.currentState!.dismiss(notification, reason: reason);
     } else {
@@ -332,8 +342,19 @@ class QueueCoordinator implements NotificationScopeState {
   }) {
     final notificationQueue = notification.queue;
     NotificationWidget? newNotification;
-    final fromPosition = notificationQueue.position;
-    final sourceKey = _widgetStateKeys[fromPosition];
+    QueuePosition fromPosition = notificationQueue.position;
+    var sourceKey = _widgetStateKeys[fromPosition];
+    if (sourceKey?.currentState == null ||
+        !sourceKey!.currentState!.containsId(notification.id)) {
+      for (final entry in _widgetStateKeys.entries) {
+        if (entry.value.currentState != null &&
+            entry.value.currentState!.containsId(notification.id)) {
+          fromPosition = entry.key;
+          sourceKey = entry.value;
+          break;
+        }
+      }
+    }
 
     // Determine if relocation is permanent for this queue
     bool isPermanent = false;
@@ -352,20 +373,44 @@ class QueueCoordinator implements NotificationScopeState {
       }
     }
 
-    // Capture sibling active notifications before removing the dragged card
-    final siblingsToMigrate = <NotificationWidget>[];
-    if (isPermanent && migrateSiblings && sourceKey?.currentState != null) {
-      siblingsToMigrate.addAll(
-        sourceKey!.currentState!.activeNotifications.where(
-          (final n) => n.id != notification.id,
-        ),
-      );
+    // Capture sibling notifications before removing the dragged card.
+    // In permanent relocation, ALL notifications (active and pending) migrate.
+    final pendingToMigrate = <NotificationWidget>[];
+    final activeToMigrate = <NotificationWidget>[];
+
+    if (isPermanent && migrateSiblings) {
+      final state = sourceKey?.currentState;
+      if (state != null) {
+        // Drain pending notifications first so remove() does NOT promote them
+        // into the old queue!
+        pendingToMigrate.addAll(
+          state.drainPendingNotifications(
+            excludeId: notification.id,
+          ),
+        );
+        activeToMigrate.addAll(
+          state.activeNotifications.where(
+            (final n) => n.id != notification.id,
+          ),
+        );
+      }
+      // Capture any unmounted notifications in _initializationQueue
+      final initQueue = _initializationQueue[fromPosition];
+      if (initQueue != null) {
+        pendingToMigrate.addAll(
+          initQueue
+              .where((final e) => e.id != notification.id)
+              .map((final e) => e.blueprint),
+        );
+        initQueue.clear();
+      }
     }
 
     // 1. Remove from source
     bool removed = false;
-    if (sourceKey?.currentState != null) {
-      removed = sourceKey!.currentState!.remove(notification);
+    final sourceState = sourceKey?.currentState;
+    if (sourceState != null) {
+      removed = sourceState.remove(notification);
     } else {
       // Check initialization queue
       final initQueue = _initializationQueue[fromPosition];
@@ -379,7 +424,13 @@ class QueueCoordinator implements NotificationScopeState {
     // 2. Add to target if removed
     if (removed) {
       final targetQueue = newPosition.generateQueueFrom(notification.queue);
-      newNotification = notification.copyToQueue(targetQueue);
+      final migrated = notification.copyToQueue(targetQueue);
+      newNotification = migrated;
+
+      // Register dragged notification callback first
+      WidgetsBinding.instance.addPostFrameCallback((final _) {
+        queue(migrated);
+      });
 
       final config = configuration;
       if (isPermanent && migrateSiblings) {
@@ -392,10 +443,25 @@ class QueueCoordinator implements NotificationScopeState {
           ),
         );
 
-        // Approach 1: Migrate all remaining active notifications in this queue
-        for (final sibling in siblingsToMigrate) {
+        // Migrate all remaining active notifications in this queue
+        for (final sibling in activeToMigrate) {
           relocateWidget(sibling, newPosition, migrateSiblings: false);
         }
+
+        // Migrate all pending notifications to the new queue
+        WidgetsBinding.instance.addPostFrameCallback((final _) {
+          for (final pending in pendingToMigrate) {
+            final targetPending = pending.copyToQueue(targetQueue);
+            _eventController.add(
+              NotificationRelocated(
+                notification: targetPending,
+                from: fromPosition,
+                to: newPosition,
+              ),
+            );
+            queue(targetPending);
+          }
+        });
       }
 
       _eventController.add(
@@ -405,11 +471,6 @@ class QueueCoordinator implements NotificationScopeState {
           to: newPosition,
         ),
       );
-      // Defer addition to next frame to avoid Duplicate GlobalKey error
-      // if the source queue animates the exit (keeping the key alive).
-      WidgetsBinding.instance.addPostFrameCallback((final _) {
-        queue(newNotification!);
-      });
     }
 
     return newNotification;
@@ -661,6 +722,22 @@ class QueueCoordinator implements NotificationScopeState {
       if (state != null) {
         list.addAll(state.activeNotifications);
       }
+    }
+    return list;
+  }
+
+  /// Returns a list of all currently pending notifications waiting across all
+  /// queues and initializing queues.
+  List<NotificationWidget> get pendingNotifications {
+    final list = <NotificationWidget>[];
+    for (final key in _widgetStateKeys.values) {
+      final state = key.currentState;
+      if (state != null) {
+        list.addAll(state.pendingNotifications);
+      }
+    }
+    for (final entries in _initializationQueue.values) {
+      list.addAll(entries.map((final e) => e.blueprint));
     }
     return list;
   }

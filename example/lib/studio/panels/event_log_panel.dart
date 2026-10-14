@@ -163,126 +163,151 @@ class _EventLogPanelState extends State<EventLogPanel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Header ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: colorScheme.onSurface.withValues(alpha: 0.08),
+        LayoutBuilder(
+          builder: (final context, final constraints) {
+            final isCompact = constraints.maxWidth < 260;
+            return Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 8 : 12,
+                vertical: 10,
               ),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.onSurface.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Live Pulse Dot
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF10B981),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF10B981)
-                              .withValues(alpha: 0.45),
-                          blurRadius: 4,
-                          spreadRadius: 1,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Live Pulse Dot
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFF10B981),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981)
+                                        .withValues(alpha: 0.45),
+                                    blurRadius: 4,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'EVENTS',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: isCompact ? 0.8 : 1.5,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                      const SizedBox(width: 4),
+                      if (_activeIds.isNotEmpty) ...[
+                        _Badge(
+                          label: isCompact
+                              ? '${_activeIds.length}'
+                              : '${_activeIds.length} active',
+                          tooltip: '${_activeIds.length} active',
+                          color: const Color(0xFF10B981),
+                        ),
+                        SizedBox(width: isCompact ? 2 : 4),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'EVENTS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.5,
-                      color: colorScheme.onSurface.withValues(alpha: 0.7),
-                    ),
-                  ),
-                  const Spacer(),
-                  if (_activeIds.isNotEmpty) ...[
-                    _Badge(
-                      label: '${_activeIds.length} active',
-                      color: const Color(0xFF10B981),
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  _Badge(
-                    label: '${_events.length}',
-                    color: colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Tooltip(
-                    message: _searchOpen ? 'Close search' : 'Search events',
-                    child: InkWell(
-                      onTap: () {
-                        setState(() {
-                          _searchOpen = !_searchOpen;
-                          if (!_searchOpen) {
-                            _searchController.clear();
-                          }
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          _searchOpen ? Icons.close : Icons.search,
-                          size: 16,
-                          color: _searchOpen
-                              ? colorScheme.primary
-                              : colorScheme.onSurface.withValues(alpha: 0.5),
+                      _Badge(
+                        label: '${_events.length}',
+                        tooltip: '${_events.length} total events',
+                        color: colorScheme.primary,
+                      ),
+                      SizedBox(width: isCompact ? 2 : 4),
+                      Tooltip(
+                        message: _searchOpen ? 'Close search' : 'Search events',
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _searchOpen = !_searchOpen;
+                              if (!_searchOpen) {
+                                _searchController.clear();
+                              }
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: EdgeInsets.all(isCompact ? 2 : 4),
+                            child: Icon(
+                              _searchOpen ? Icons.close : Icons.search,
+                              size: 16,
+                              color: _searchOpen
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Tooltip(
-                    message: 'Clear log',
-                    child: InkWell(
-                      onTap: () {
-                        NotificationScope.of(context).clearHistory();
-                        setState(() {
-                          _events.clear();
-                          _activeIds.clear();
-                          _selectedEntry = null;
-                        });
-                      },
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.delete_sweep_outlined,
-                          size: 16,
-                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      SizedBox(width: isCompact ? 2 : 4),
+                      Tooltip(
+                        message: 'Clear log',
+                        child: InkWell(
+                          onTap: () {
+                            NotificationScope.of(context).clearHistory();
+                            setState(() {
+                              _events.clear();
+                              _activeIds.clear();
+                              _selectedEntry = null;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: EdgeInsets.all(isCompact ? 2 : 4),
+                            child: Icon(
+                              Icons.delete_sweep_outlined,
+                              size: 16,
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Tooltip(
-                    message: 'Collapse Event Stream',
-                    child: InkWell(
-                      onTap: () => context
-                          .read<StudioBloc>()
-                          .add(const ToggleEventLog(open: false)),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.close,
-                          size: 16,
-                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      SizedBox(width: isCompact ? 2 : 4),
+                      Tooltip(
+                        message: 'Collapse Event Stream',
+                        child: InkWell(
+                          onTap: () => context
+                              .read<StudioBloc>()
+                              .add(const ToggleEventLog(open: false)),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: EdgeInsets.all(isCompact ? 2 : 4),
+                            child: Icon(
+                              Icons.close,
+                              size: 16,
+                              color: colorScheme.onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
               ),
               if (_searchOpen) ...[
                 const SizedBox(height: 8),
@@ -359,7 +384,9 @@ class _EventLogPanelState extends State<EventLogPanel> {
               ),
             ],
           ),
-        ),
+        );
+      },
+    ),
 
         // ── Event list ──
         Expanded(
@@ -462,19 +489,44 @@ class _EventTile extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                meta.label,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface
-                                      .withValues(alpha: 0.85),
+                              Expanded(
+                                child: LayoutBuilder(
+                                  builder: (final context, final constraints) =>
+                                      Row(
+                                    children: [
+                                      ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: meta.badge != null
+                                              ? (constraints.maxWidth - 36)
+                                                  .clamp(0.0, double.infinity)
+                                              : constraints.maxWidth,
+                                        ),
+                                        child: Text(
+                                          meta.label,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: colorScheme.onSurface
+                                                .withValues(alpha: 0.85),
+                                          ),
+                                        ),
+                                      ),
+                                      if (meta.badge != null) ...[
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: _Badge(
+                                            label: meta.badge!,
+                                            color: meta.color,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              if (meta.badge != null)
-                                _Badge(label: meta.badge!, color: meta.color),
-                              const Spacer(),
+                              const SizedBox(width: 4),
                               Icon(
                                 isSelected
                                     ? Icons.keyboard_arrow_up
@@ -936,26 +988,37 @@ class _EventMeta {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.label, required this.color});
+  const _Badge({
+    required this.label,
+    required this.color,
+    this.tooltip,
+  });
 
   final String label;
   final Color color;
+  final String? tooltip;
 
   @override
-  Widget build(final BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w700,
-            color: color,
-            letterSpacing: 0.4,
+  Widget build(final BuildContext context) => Tooltip(
+        message: tooltip ?? label,
+        waitDuration: const Duration(milliseconds: 300),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.4,
+            ),
           ),
         ),
       );
