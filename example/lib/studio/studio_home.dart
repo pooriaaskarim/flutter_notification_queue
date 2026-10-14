@@ -37,6 +37,47 @@ class _StudioShellState extends State<_StudioShell> {
   int _tabIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    HardwareKeyboard.instance.addHandler(_handleKeyEvent);
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleKeyEvent);
+    super.dispose();
+  }
+
+  bool _handleKeyEvent(final KeyEvent event) {
+    if (event is! KeyDownEvent) {
+      return false;
+    }
+
+    final isCtrlOrCmd = HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    if (!isCtrlOrCmd) {
+      return false;
+    }
+
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      context.read<NotificationBloc>().add(const FirePreview());
+      return true;
+    }
+    if (key == LogicalKeyboardKey.keyE) {
+      context.read<StudioBloc>().add(const ToggleCodeEditor());
+      return true;
+    }
+    if (key == LogicalKeyboardKey.keyL) {
+      context.read<StudioBloc>().add(const ToggleEventLog());
+      return true;
+    }
+
+    return false;
+  }
+
+  @override
   Widget build(final BuildContext context) => LayoutBuilder(
         builder: (final context, final constraints) {
           final isNarrow = constraints.maxWidth <= 1000;
@@ -49,6 +90,16 @@ class _StudioShellState extends State<_StudioShell> {
               },
               const SingleActivator(LogicalKeyboardKey.enter, control: true):
                   () {
+                context.read<NotificationBloc>().add(const FirePreview());
+              },
+              const SingleActivator(LogicalKeyboardKey.numpadEnter, meta: true):
+                  () {
+                context.read<NotificationBloc>().add(const FirePreview());
+              },
+              const SingleActivator(
+                LogicalKeyboardKey.numpadEnter,
+                control: true,
+              ): () {
                 context.read<NotificationBloc>().add(const FirePreview());
               },
               const SingleActivator(LogicalKeyboardKey.keyE, meta: true): () {

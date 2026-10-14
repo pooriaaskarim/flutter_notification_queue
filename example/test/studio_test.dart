@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_notification_queue/src/core/core.dart';
@@ -742,6 +743,65 @@ void main() {
         expect(find.text('GENERATED CODE'), findsOneWidget);
 
         await tester.binding.setSurfaceSize(null);
+      },
+    );
+
+    testWidgets(
+      'Hardware keyboard shortcuts (Ctrl+Enter, Ctrl+E, Ctrl+L) '
+      'operate cleanly',
+      (final tester) async {
+        await tester.binding.setSurfaceSize(const Size(1400, 900));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final setupBloc = SetupBloc();
+        final notificationBloc = NotificationBloc(setupBloc: setupBloc);
+        final studioBloc = StudioBloc();
+
+        await tester.pumpWidget(
+          MultiBlocProvider(
+            providers: [
+              BlocProvider.value(value: setupBloc),
+              BlocProvider.value(value: notificationBloc),
+              BlocProvider.value(value: studioBloc),
+            ],
+            child: MaterialApp(
+              theme: StudioTheme.dark(),
+              home: Builder(
+                builder: (final context) {
+                  StudioTheme.update(context);
+                  return NotificationScope(
+                    controller: setupBloc.controller,
+                    child: const StudioHome(),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // 1. Send Ctrl+Enter to trigger FirePreview
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // 2. Send Ctrl+E to toggle code editor
+        expect(studioBloc.state.isCodeEditorOpen, isTrue);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyE);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        expect(studioBloc.state.isCodeEditorOpen, isFalse);
+
+        // 3. Send Ctrl+L to toggle event log
+        expect(studioBloc.state.isEventLogOpen, isTrue);
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await tester.pump();
+        expect(studioBloc.state.isEventLogOpen, isFalse);
       },
     );
   });

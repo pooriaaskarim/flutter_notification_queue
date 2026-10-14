@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
@@ -69,7 +70,9 @@ class QuickFireCockpit extends StatelessWidget {
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
-                    '⌘↵',
+                    defaultTargetPlatform == TargetPlatform.macOS
+                        ? '⌘↵'
+                        : 'Ctrl+↵',
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.bold,
