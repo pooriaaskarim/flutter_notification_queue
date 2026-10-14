@@ -259,8 +259,7 @@ class _QueueOverlayLayoutDelegate extends MultiChildLayoutDelegate {
   /// the FlutterView without touching MediaQuery, so this delegate never
   /// subscribes to inherited widget changes.
   EdgeInsets _viewPadding() {
-    final view =
-        flutterView ?? PlatformDispatcher.instance.implicitView;
+    final view = flutterView ?? PlatformDispatcher.instance.implicitView;
     if (view == null) {
       return EdgeInsets.zero;
     }

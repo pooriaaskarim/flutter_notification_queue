@@ -523,10 +523,8 @@ class _QueueEditorState extends State<_QueueEditor> {
               == SlideTransitionStrategy => 'SLIDE',
               == FadeTransitionStrategy => 'FADE',
               == ScaleTransitionStrategy => 'SCALE',
-              _ => t
-                  .toString()
-                  .replaceAll('TransitionStrategy', '')
-                  .toUpperCase(),
+              _ =>
+                t.toString().replaceAll('TransitionStrategy', '').toUpperCase(),
             },
             onChanged: (final v) => context.read<SetupBloc>().add(
                   UpdateQueue(
@@ -639,8 +637,7 @@ class _QueueEditorState extends State<_QueueEditor> {
             items: DismissZone.values,
             itemLabel: (final e) => switch (e) {
               DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
-              DismissZone.naturalDirection =>
-                'NATURAL DIRECTION (UP / DOWN)',
+              DismissZone.naturalDirection => 'NATURAL DIRECTION (UP / DOWN)',
             },
             onChanged: (final v) => context.read<SetupBloc>().add(
                   UpdateQueue(
@@ -719,8 +716,7 @@ class _QueueEditorState extends State<_QueueEditor> {
             items: DismissZone.values,
             itemLabel: (final e) => switch (e) {
               DismissZone.sideEdges => 'SIDE EDGES (LEFT / RIGHT)',
-              DismissZone.naturalDirection =>
-                'NATURAL DIRECTION (UP / DOWN)',
+              DismissZone.naturalDirection => 'NATURAL DIRECTION (UP / DOWN)',
             },
             onChanged: (final v) => context.read<SetupBloc>().add(
                   UpdateQueue(

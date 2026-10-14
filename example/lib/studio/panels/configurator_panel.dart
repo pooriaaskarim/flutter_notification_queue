@@ -135,9 +135,8 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
                         tab.label,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: isSelected
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
                           color: isSelected
                               ? colorScheme.primary
                               : colorScheme.onSurface.withValues(alpha: 0.7),
@@ -197,10 +196,8 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
       child: ScenariosSection(),
     );
 
-    final dividerColor = Theme.of(context)
-        .colorScheme
-        .outlineVariant
-        .withValues(alpha: 0.22);
+    final dividerColor =
+        Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.22);
 
     // ── Ultra-Wide Mode (≥ 1200px): 3-Column Studio Command Center ──
     if (maxWidth >= 1200) {
@@ -299,8 +296,7 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
             draft: draft,
           ),
         ConfigSubTab.scenarios => const ScenariosSection(),
-        ConfigSubTab.options =>
-          SystemOptionsSection(setupState: setupState),
+        ConfigSubTab.options => SystemOptionsSection(setupState: setupState),
       };
 }
 

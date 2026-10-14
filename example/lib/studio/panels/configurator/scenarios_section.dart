@@ -571,8 +571,7 @@ final _scenarios = [
   // ── 12. Interactive Snooze & Return ──
   _Scenario(
     title: 'Interactive Snooze & Return',
-    subtitle:
-        'Tap SNOOZE — programmatic snooze hides and resurfaces after 5s.',
+    subtitle: 'Tap SNOOZE — programmatic snooze hides and resurfaces after 5s.',
     icon: Icons.snooze_rounded,
     color: const Color(0xFFFB7185),
     onFire: (final context) {
@@ -597,8 +596,7 @@ final _scenarios = [
   // ── 13. Pinned Critical Alert ──
   _Scenario(
     title: 'Pinned Critical Alert',
-    subtitle:
-        'Sticky card — immune to swipe dismiss & timers until unpinned.',
+    subtitle: 'Sticky card — immune to swipe dismiss & timers until unpinned.',
     icon: Icons.push_pin_rounded,
     color: const Color(0xFFF59E0B),
     onFire: (final context) {

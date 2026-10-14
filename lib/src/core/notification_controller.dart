@@ -164,8 +164,8 @@ class NotificationController {
     );
     if (_attachedState is QueueCoordinator) {
       (_attachedState! as QueueCoordinator).historyLogger.updateMaxEntries(
-        configuration.maxHistoryEntries,
-      );
+            configuration.maxHistoryEntries,
+          );
     }
   }
 

@@ -153,6 +153,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     _snapBackController.dispose();
     super.dispose();
   }
+
   QueueCoordinator get coordinator {
     final c = widget.notification.coordinator ??
         NotificationScope.maybeCoordinatorOf(context);

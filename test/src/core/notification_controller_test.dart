@@ -300,10 +300,9 @@ void main() {
       expect(controller.dispose, returnsNormally);
     });
 
-    test(
-      'captureFlutterErrors chains original FlutterError.onError handler',
-      () {
-        final originalHandler = FlutterError.onError;
+    test('captureFlutterErrors chains original FlutterError.onError handler',
+        () {
+      final originalHandler = FlutterError.onError;
       var originalCalled = false;
 
       FlutterError.onError = (final details) {

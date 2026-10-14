@@ -292,7 +292,7 @@ class _CodeEditorPanelState extends State<CodeEditorPanel> {
           '📁 Place in lib/main.dart — wraps your root MaterialApp via builder.',
         CodeSnippetScope.dispatchOnly =>
           '⚡ Contextless dispatch — call from any Bloc, Service, or ViewModel '
-          'without BuildContext.',
+              'without BuildContext.',
         CodeSnippetScope.channelsOnly =>
           '📁 Place in lib/config/notification_channels.dart — defines channel routing table.',
         CodeSnippetScope.queuesOnly =>

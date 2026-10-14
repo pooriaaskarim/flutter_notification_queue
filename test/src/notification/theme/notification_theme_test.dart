@@ -384,8 +384,7 @@ void main() {
           titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           messageTextStyle:
               TextStyle(fontSize: 15, fontStyle: FontStyle.italic),
-          actionTextStyle:
-              TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          actionTextStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
           iconTheme: IconThemeData(color: Color(0xFF118833), size: 30),
         );
 

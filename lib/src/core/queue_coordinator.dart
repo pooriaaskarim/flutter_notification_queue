@@ -154,8 +154,6 @@ class QueueCoordinator implements NotificationScopeState {
   @override
   void clearHistory() => _historyLogger.clear();
 
-
-
   // --- Actions ---
 
   void queue(

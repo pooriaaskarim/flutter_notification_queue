@@ -37,7 +37,8 @@ class NotificationThemeData extends ThemeExtension<NotificationThemeData> {
     final NotificationPriority priority = NotificationPriority.normal,
   }) {
     final tokenColor = switch (priority) {
-      NotificationPriority.critical || NotificationPriority.high =>
+      NotificationPriority.critical ||
+      NotificationPriority.high =>
         colorScheme.error,
       NotificationPriority.low => colorScheme.secondary,
       NotificationPriority.normal => colorScheme.primary,

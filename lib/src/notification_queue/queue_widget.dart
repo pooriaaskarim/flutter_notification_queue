@@ -462,8 +462,7 @@ class QueueWidgetState extends State<QueueWidget>
   /// Returns whether this queue currently contains a notification with [id],
   /// either as an active notification or waiting in the pending queue.
   bool containsId(final String id) =>
-      _indexOf(id) != -1 ||
-      _pendingNotifications.any((final n) => n.id == id);
+      _indexOf(id) != -1 || _pendingNotifications.any((final n) => n.id == id);
 
   /// The [GlobalKey]s of active notification widgets, in stack order.
   ///

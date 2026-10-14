@@ -282,8 +282,8 @@ class _EventLogPanelState extends State<EventLogPanel> {
                             child: Icon(
                               Icons.delete_sweep_outlined,
                               size: 16,
-                              color: colorScheme.onSurface
-                                  .withValues(alpha: 0.5),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                         ),
@@ -301,92 +301,98 @@ class _EventLogPanelState extends State<EventLogPanel> {
                             child: Icon(
                               Icons.close,
                               size: 16,
-                              color: colorScheme.onSurface
-                                  .withValues(alpha: 0.5),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                         ),
                       ),
                     ],
-              ),
-              if (_searchOpen) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 32,
-                  child: TextField(
-                    controller: _searchController,
-                    style: const TextStyle(fontSize: 11),
-                    decoration: InputDecoration(
-                      hintText: 'Filter by message, id, badge…',
-                      hintStyle: TextStyle(
-                        fontSize: 11,
-                        color: colorScheme.onSurface.withValues(alpha: 0.35),
-                      ),
-                      prefixIcon: const Icon(Icons.search, size: 14),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                      filled: true,
-                      fillColor: colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.5),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
                   ),
-                ),
-              ],
-              const SizedBox(height: 8),
-              // Filter pills
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: EventLogFilter.values.map((final filter) {
-                    final isSelected = _currentFilter == filter;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: InkWell(
-                        onTap: () => setState(() => _currentFilter = filter),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 3,
+                  if (_searchOpen) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 32,
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(fontSize: 11),
+                        decoration: InputDecoration(
+                          hintText: 'Filter by message, id, badge…',
+                          hintStyle: TextStyle(
+                            fontSize: 11,
+                            color:
+                                colorScheme.onSurface.withValues(alpha: 0.35),
                           ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? colorScheme.primary.withValues(alpha: 0.16)
-                                : colorScheme.onSurface.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? colorScheme.primary.withValues(alpha: 0.4)
-                                  : Colors.transparent,
-                            ),
-                          ),
-                          child: Text(
-                            filter.label,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                              color: isSelected
-                                  ? colorScheme.primary
-                                  : colorScheme.onSurface
-                                      .withValues(alpha: 0.55),
-                            ),
+                          prefixIcon: const Icon(Icons.search, size: 14),
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 8),
+                          filled: true,
+                          fillColor: colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  // Filter pills
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: EventLogFilter.values.map((final filter) {
+                        final isSelected = _currentFilter == filter;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InkWell(
+                            onTap: () =>
+                                setState(() => _currentFilter = filter),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colorScheme.primary
+                                        .withValues(alpha: 0.16)
+                                    : colorScheme.onSurface
+                                        .withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? colorScheme.primary
+                                          .withValues(alpha: 0.4)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                              child: Text(
+                                filter.label,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurface
+                                          .withValues(alpha: 0.55),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      },
-    ),
+            );
+          },
+        ),
 
         // ── Event list ──
         Expanded(

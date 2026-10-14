@@ -61,8 +61,7 @@ class ConfigurationManager {
     // Update any queue currently pointing to sourcePosition to point to
     // newPosition
     _relocatedQueuePositions.updateAll(
-      (final key, final value) =>
-          value == sourcePosition ? newPosition : value,
+      (final key, final value) => value == sourcePosition ? newPosition : value,
     );
     _relocatedQueuePositions[sourcePosition] = newPosition;
   }

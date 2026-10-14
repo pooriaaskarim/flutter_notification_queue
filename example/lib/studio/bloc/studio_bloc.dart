@@ -112,10 +112,9 @@ class StudioBloc extends Bloc<StudioEvent, StudioState> {
       }
       final otherOccupied =
           (state.isEventLogOpen ? state.eventLogWidth : 28.0) + 30.0;
-      final maxAllowed = (event.totalWidth -
-              otherOccupied -
-              StudioState.minMainPaneWidth)
-          .clamp(
+      final maxAllowed =
+          (event.totalWidth - otherOccupied - StudioState.minMainPaneWidth)
+              .clamp(
         StudioState.minCodeEditorWidth,
         StudioState.maxCodeEditorWidth,
       );
@@ -147,8 +146,7 @@ class StudioBloc extends Bloc<StudioEvent, StudioState> {
               otherOccupied -
               StudioState.minMainPaneWidth)
           .clamp(StudioState.minEventLogWidth, StudioState.maxEventLogWidth);
-      final clamped =
-          newWidth.clamp(StudioState.minEventLogWidth, maxAllowed);
+      final clamped = newWidth.clamp(StudioState.minEventLogWidth, maxAllowed);
       emit(state.copyWith(eventLogWidth: clamped, isEventLogOpen: true));
     });
 

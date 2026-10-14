@@ -538,8 +538,8 @@ class _VersionBadgeState extends State<_VersionBadge> {
       )) {
         try {
           final content = await rootBundle.loadString(key);
-          final match =
-              RegExp(r'^version:\s*([^\s+]+)', multiLine: true).firstMatch(content);
+          final match = RegExp(r'^version:\s*([^\s+]+)', multiLine: true)
+              .firstMatch(content);
           if (match?.group(1) != null) {
             return match!.group(1);
           }
@@ -557,8 +557,8 @@ class _VersionBadgeState extends State<_VersionBadge> {
     for (final candidate in candidates) {
       try {
         final content = await rootBundle.loadString(candidate);
-        final match =
-            RegExp(r'^version:\s*([^\s+]+)', multiLine: true).firstMatch(content);
+        final match = RegExp(r'^version:\s*([^\s+]+)', multiLine: true)
+            .firstMatch(content);
         if (match?.group(1) != null) {
           return match!.group(1);
         }

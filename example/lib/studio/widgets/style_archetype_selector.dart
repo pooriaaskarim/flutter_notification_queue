@@ -142,9 +142,8 @@ class StyleArchetypeSelector extends StatelessWidget {
                           opt.$2,
                           style: TextStyle(
                             fontSize: 10,
-                            fontWeight: isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
+                            fontWeight:
+                                isSelected ? FontWeight.bold : FontWeight.w500,
                             letterSpacing: 0.5,
                             color: isSelected
                                 ? colorScheme.primary

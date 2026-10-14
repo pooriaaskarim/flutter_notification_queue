@@ -22,7 +22,6 @@ class SystemOptionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-
         // Bounded History Log limit
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,

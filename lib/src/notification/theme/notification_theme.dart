@@ -41,14 +41,13 @@ class NotificationTheme {
         cTheme?.color ??
         ambientExtension?.color;
     final tokenShadowColor = themeData.shadowColor;
-    final titleTextStyle = cTheme?.titleTextStyle ??
-        ambientExtension?.titleTextStyle;
-    final messageTextStyle = cTheme?.messageTextStyle ??
-        ambientExtension?.messageTextStyle;
-    final actionTextStyle = cTheme?.actionTextStyle ??
-        ambientExtension?.actionTextStyle;
-    final iconTheme = cTheme?.iconTheme ??
-        ambientExtension?.iconTheme;
+    final titleTextStyle =
+        cTheme?.titleTextStyle ?? ambientExtension?.titleTextStyle;
+    final messageTextStyle =
+        cTheme?.messageTextStyle ?? ambientExtension?.messageTextStyle;
+    final actionTextStyle =
+        cTheme?.actionTextStyle ?? ambientExtension?.actionTextStyle;
+    final iconTheme = cTheme?.iconTheme ?? ambientExtension?.iconTheme;
 
     // Fallbacks to deprecated scalar color properties:
     // ignore: deprecated_member_use_from_same_package

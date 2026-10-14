@@ -301,8 +301,7 @@ void main() {
     });
 
     // 13. Cluster Invariance: Pre-configuring target queue is forbidden
-    test(
-        'Cluster Invariance: Target queue cannot be independently configured',
+    test('Cluster Invariance: Target queue cannot be independently configured',
         () {
       const customStyle = FilledQueueStyle(opacity: 0.9);
 

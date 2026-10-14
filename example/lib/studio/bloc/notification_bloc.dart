@@ -190,8 +190,7 @@ class NotificationDraft {
             : (themeOverride != null
                 ? themeOverride()?.color
                 : this.accentColorOverride),
-        themeOverride:
-            themeOverride != null ? themeOverride() : _themeOverride,
+        themeOverride: themeOverride != null ? themeOverride() : _themeOverride,
         dragBehaviorOverrideType: dragBehaviorOverrideType != null
             ? dragBehaviorOverrideType()
             : this.dragBehaviorOverrideType,

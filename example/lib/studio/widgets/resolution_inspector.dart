@@ -236,8 +236,7 @@ class ResolutionInspector extends StatelessWidget {
       };
 
   static String _colorHex(final Color c) {
-    final hex =
-        (c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
+    final hex = (c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
     return '#${hex.toUpperCase()}';
   }
 }

@@ -45,7 +45,6 @@ part 'interaction/zones/slots.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
 
-
 /// A widget representing an individual notification card in a queue.
 ///
 /// [NotificationWidget] encapsulates the content (title, message, icon),
@@ -116,8 +115,7 @@ class NotificationWidget extends StatefulWidget {
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
     final resolveChannel = config.getChannel(channelName);
     final targetPosition = position ?? resolveChannel.position;
-    final effectivePosition =
-        config.getEffectiveQueuePosition(targetPosition);
+    final effectivePosition = config.getEffectiveQueuePosition(targetPosition);
     final resolvedQueue = config.getQueue(effectivePosition);
 
     // permanent: true forces null dismiss duration regardless of channel
@@ -572,8 +570,8 @@ class NotificationWidgetState extends State<NotificationWidget>
   }
 
   QueueCoordinator get coordinator {
-    final c = widget.coordinator ??
-        NotificationScope.maybeCoordinatorOf(context);
+    final c =
+        widget.coordinator ?? NotificationScope.maybeCoordinatorOf(context);
     if (c == null) {
       throw StateError(
         'No QueueCoordinator available for NotificationWidget. '
@@ -773,8 +771,7 @@ class NotificationWidgetState extends State<NotificationWidget>
                                       child: Text(
                                         widget.message,
                                         style: theme.messageTextStyle ??
-                                            theme
-                                                .themeData.textTheme.bodyMedium
+                                            theme.themeData.textTheme.bodyMedium
                                                 ?.copyWith(
                                               color: theme.foregroundColor,
                                             ),

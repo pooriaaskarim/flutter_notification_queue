@@ -7,8 +7,6 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });
 
-
-
   group('NotificationScope', () {
     testWidgets('mounts scope, attaches controller, and dispatches to overlay',
         (final widgetTester) async {
