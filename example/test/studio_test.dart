@@ -610,7 +610,7 @@ void main() {
                       ],
                       child: SizedBox(
                         width: width,
-                        height: 900,
+                        height: 1200,
                         child: const ConfiguratorPanel(),
                       ),
                     ),
@@ -619,39 +619,42 @@ void main() {
               ),
             );
 
-        // 1. Sidebar width (700px) -> Single-Column Mode (ListView)
-        await tester.binding.setSurfaceSize(const Size(700, 900));
-        await tester.pumpWidget(buildConfigurator(700));
+        // 1. Sidebar width (550px < 660px) -> Single-Column Mode
+        await tester.binding.setSurfaceSize(const Size(550, 900));
+        await tester.pumpWidget(buildConfigurator(550));
         await tester.pumpAndSettle();
 
         expect(find.byType(ListView), findsOneWidget);
         expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
+
+        // 2. Dual-Workbench width (850px >= 660px) -> 2 Coordinated Panes
+        await tester.binding.setSurfaceSize(const Size(850, 900));
+        await tester.pumpWidget(buildConfigurator(850));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ListView), findsNWidgets(2));
+        expect(find.byType(VerticalDivider), findsOneWidget);
+        expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
+        expect(find.text('NOTIFICATION DRAFT'), findsAtLeastNWidgets(1));
+
+        // 3. Ultra-wide width (1400px >= 1200px) -> 3 Coordinated Panes
+        await tester.binding.setSurfaceSize(const Size(1400, 900));
+        await tester.pumpWidget(buildConfigurator(1400));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ListView), findsNWidgets(3));
+        expect(find.byType(VerticalDivider), findsNWidgets(2));
+        expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
         expect(find.text('CHANNELS'), findsAtLeastNWidgets(1));
+        expect(find.text('NOTIFICATION DRAFT'), findsAtLeastNWidgets(1));
 
-        // 2. Wide width (1100px) -> 2-Column Responsive Mode
-        await tester.binding.setSurfaceSize(const Size(1100, 900));
-      await tester.pumpWidget(buildConfigurator(1100));
-      await tester.pumpAndSettle();
+        // Verify QueuePositionMap container width is bounded to <= 440px
+        final mapFinder = find.byType(QueuePositionMap);
+        expect(mapFinder, findsOneWidget);
 
-      expect(find.byType(SingleChildScrollView), findsWidgets);
-      expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
-      expect(find.text('NOTIFICATION DRAFT'), findsAtLeastNWidgets(1));
-
-      // 3. Ultra-wide width (1600px) -> 3-Column Studio Dashboard
-      await tester.binding.setSurfaceSize(const Size(1600, 900));
-      await tester.pumpWidget(buildConfigurator(1600));
-      await tester.pumpAndSettle();
-
-      expect(find.text('QUEUES'), findsAtLeastNWidgets(1));
-      expect(find.text('CHANNELS'), findsAtLeastNWidgets(1));
-      expect(find.text('NOTIFICATION DRAFT'), findsAtLeastNWidgets(1));
-
-      // Verify QueuePositionMap container width is bounded to <= 440px
-      final mapFinder = find.byType(QueuePositionMap);
-      expect(mapFinder, findsOneWidget);
-
-      await tester.binding.setSurfaceSize(null);
-    });
+        await tester.binding.setSurfaceSize(null);
+      },
+    );
 
     testWidgets('CodeEditorPanel maintains max width bound on action button',
         (final tester) async {

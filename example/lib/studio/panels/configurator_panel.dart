@@ -44,7 +44,7 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
   @override
   Widget build(final BuildContext context) => LayoutBuilder(
         builder: (final context, final constraints) {
-          final isMobile = constraints.maxWidth <= 640;
+          final isMobile = constraints.maxWidth < 480;
 
           return BlocBuilder<SetupBloc, SetupState>(
             builder: (final context, final setupState) =>
@@ -197,113 +197,92 @@ class _ConfiguratorPanelState extends State<ConfiguratorPanel> {
       child: ScenariosSection(),
     );
 
-    // ── Ultra-Wide Mode (≥ 1360px): 3-Column Studio Command Center ──
-    if (maxWidth >= 1360) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1680),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final dividerColor = Theme.of(context)
+        .colorScheme
+        .outlineVariant
+        .withValues(alpha: 0.22);
+
+    // ── Ultra-Wide Mode (≥ 1200px): 3-Column Studio Command Center ──
+    if (maxWidth >= 1200) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Col 1: Spatial Architecture & System Options
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 10, 10, 24),
               children: [
-                // Col 1: Spatial Architecture & System Options
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      queuesSection,
-                      optionsSection,
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Col 2: Channel Chromatics & Styles
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      channelsSection,
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Col 3: Dispatch Playground & Scenarios
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      draftSection,
-                      scenariosSection,
-                    ],
-                  ),
-                ),
+                queuesSection,
+                optionsSection,
               ],
             ),
           ),
-        ),
-      );
-    }
-
-    // ── Wide Desktop Mode (≥ 880px): 2-Column Responsive Dashboard ──
-    if (maxWidth >= 880) {
-      return SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1320),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          VerticalDivider(width: 1, thickness: 1, color: dividerColor),
+          // Col 2: Channel Chromatics & Styles
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(10, 10, 10, 24),
               children: [
-                // Col 1: Architecture & Config
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      queuesSection,
-                      channelsSection,
-                      optionsSection,
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Col 2: Dispatch Playground & Scenarios
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      draftSection,
-                      scenariosSection,
-                    ],
-                  ),
-                ),
+                channelsSection,
               ],
             ),
           ),
-        ),
+          VerticalDivider(width: 1, thickness: 1, color: dividerColor),
+          // Col 3: Dispatch Playground & Scenarios
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(10, 10, 14, 24),
+              children: [
+                draftSection,
+                scenariosSection,
+              ],
+            ),
+          ),
+        ],
       );
     }
 
-    // ── Standard Sidebar Mode (< 880px): Single-Column Accordion ──
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      children: [
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 680),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    // ── Dual-Workbench Mode (≥ 660px): 2 Side-by-Side Coordinated Panes ──
+    if (maxWidth >= 660) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Left Pane: Setup & Architecture (Queues, Channels, Options)
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 10, 10, 24),
               children: [
                 queuesSection,
                 channelsSection,
                 optionsSection,
-                draftSection,
-                scenariosSection,
-                const SizedBox(height: 24),
               ],
             ),
           ),
-        ),
+          VerticalDivider(width: 1, thickness: 1, color: dividerColor),
+          // Right Pane: Playground & Dispatch (Draft, Scenarios)
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(10, 10, 14, 24),
+              children: [
+                draftSection,
+                scenariosSection,
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    // ── Standard Sidebar Mode (< 660px): Single-Column Accordion ──
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      children: [
+        queuesSection,
+        channelsSection,
+        optionsSection,
+        draftSection,
+        scenariosSection,
+        const SizedBox(height: 24),
       ],
     );
   }

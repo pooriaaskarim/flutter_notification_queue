@@ -6,7 +6,6 @@ import '../../bloc/setup_bloc.dart';
 import '../../models/channel_setup.dart';
 import '../../models/queue_setup.dart';
 import '../../studio_theme.dart';
-import '../../widgets/studio_section_header.dart';
 
 /// A curated set of one-click demo scenarios that showcase different FNQ
 /// features in realistic use cases.
@@ -21,8 +20,6 @@ class ScenariosSection extends StatelessWidget {
   Widget build(final BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const StudioSectionHeader(title: 'SCENARIOS'),
-          const SizedBox(height: 4),
           Text(
             'One-click demos — fires into your current configuration.',
             style: TextStyle(

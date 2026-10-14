@@ -43,7 +43,15 @@ class QueueSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const StudioSectionHeader(title: 'QUEUES'),
+            Text(
+              '${setupState.setup.queues.length} ACTIVE POSITION(S)',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+                color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
             const Spacer(),
             IconButton(
               icon: Icon(
@@ -298,17 +306,21 @@ class _QueueEditorState extends State<_QueueEditor> {
                                       .withValues(alpha: 0.5),
                             ),
                             const SizedBox(width: 5),
-                            Text(
-                              label,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
-                                color: isSelected
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurface
-                                        .withValues(alpha: 0.7),
+                            Flexible(
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurface
+                                          .withValues(alpha: 0.7),
+                                ),
                               ),
                             ),
                           ],

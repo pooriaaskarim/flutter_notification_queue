@@ -35,10 +35,6 @@ class PreviewSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const StudioSectionHeader(
-          title: 'NOTIFICATION DRAFT (AppNotification)',
-        ),
-        const SizedBox(height: 6),
         _RoutingPipelineBadge(
           channelName: draft.channelName,
           targetPosition: targetPosition,

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/setup_bloc.dart';
-import '../../widgets/studio_section_header.dart';
 
 class SystemOptionsSection extends StatelessWidget {
   const SystemOptionsSection({
@@ -24,9 +23,6 @@ class SystemOptionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const StudioSectionHeader(title: 'SYSTEM OPTIONS'),
-        const SizedBox(height: 12),
-
         // Dynamic Channel Parking switch
         SwitchListTile(
           title: const Text(
