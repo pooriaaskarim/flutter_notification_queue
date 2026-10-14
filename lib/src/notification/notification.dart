@@ -115,9 +115,9 @@ class NotificationWidget extends StatefulWidget {
         id ?? 'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
     final resolveChannel = config.getChannel(channelName);
-    final effectivePosition = position ??
-        config.getEffectiveChannelPosition(channelName) ??
-        resolveChannel.position;
+    final targetPosition = position ?? resolveChannel.position;
+    final effectivePosition =
+        config.getEffectiveQueuePosition(targetPosition);
     final resolvedQueue = config.getQueue(effectivePosition);
 
     // permanent: true forces null dismiss duration regardless of channel

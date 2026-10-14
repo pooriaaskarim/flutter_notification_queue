@@ -79,9 +79,6 @@ String generateCode({
 
       buf.writeln('  },');
 
-      if (setup.enableDynamicChannelParking) {
-        buf.writeln('  enableDynamicChannelParking: true,');
-      }
       if (setup.maxHistoryEntries != 0) {
         buf.writeln('  maxHistoryEntries: ${setup.maxHistoryEntries},');
       }

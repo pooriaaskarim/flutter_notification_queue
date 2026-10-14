@@ -21,9 +21,6 @@ void main() {
             dragBehavior: Relocate.to({QueuePosition.topLeft}),
             longPressDragBehavior: const Dismiss(),
           ),
-          const NotificationQueue(
-            position: QueuePosition.topLeft,
-          ), // Needed for relocation target
         },
       );
     });

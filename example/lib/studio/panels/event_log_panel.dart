@@ -129,6 +129,7 @@ class _EventLogPanelState extends State<EventLogPanel> {
             event is NotificationGroupDismissed;
       case EventLogFilter.alerts:
         return event is QueueOverflowed ||
+            event is QueuePositionRelocated ||
             event is NotificationChannelRouteUpdated;
     }
   }
@@ -751,6 +752,10 @@ class _InspectorDrawer extends StatelessWidget {
         map['Cards'] = '$count';
       case NotificationGroupDismissed(:final groupKey):
         map['GroupKey'] = groupKey;
+      case QueuePositionRelocated(:final from, :final to, :final permanent):
+        map['From'] = from.name;
+        map['To'] = to.name;
+        map['Permanent'] = '$permanent';
       case NotificationChannelRouteUpdated(
           :final channelName,
           :final oldPosition,
@@ -898,6 +903,19 @@ class _EventMeta {
                 : const Color(0xFF0E7490), // cyan-500 : cyan-700
             badge: 'all',
             subtitle: groupKey,
+          ),
+        QueuePositionRelocated(
+          :final from,
+          :final to,
+          :final permanent,
+        ) =>
+          _EventMeta(
+            label: permanent ? 'Queue Relocated' : 'Queue Moved',
+            color: isDark
+                ? const Color(0xFFEC4899)
+                : const Color(0xFFBE185D), // pink-500 : pink-700
+            badge: '${from.name} → ${to.name}',
+            subtitle: permanent ? 'Permanent redirect' : 'Ephemeral move',
           ),
         NotificationChannelRouteUpdated(
           :final channelName,

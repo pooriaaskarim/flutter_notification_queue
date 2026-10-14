@@ -327,11 +327,40 @@ class QueueCoordinator implements NotificationScopeState {
   /// Used internally by gesture plugins.
   NotificationWidget? relocateWidget(
     final NotificationWidget notification,
-    final QueuePosition newPosition,
-  ) {
+    final QueuePosition newPosition, {
+    final bool migrateSiblings = true,
+  }) {
     final notificationQueue = notification.queue;
     NotificationWidget? newNotification;
-    final sourceKey = _widgetStateKeys[notificationQueue.position];
+    final fromPosition = notificationQueue.position;
+    final sourceKey = _widgetStateKeys[fromPosition];
+
+    // Determine if relocation is permanent for this queue
+    bool isPermanent = false;
+    for (final behavior in [
+      notificationQueue.longPressDragBehavior,
+      notificationQueue.dragBehavior,
+    ]) {
+      if (behavior is Relocate && (behavior as Relocate).permanent) {
+        isPermanent = true;
+        break;
+      }
+      if (behavior is ReorderAndRelocate &&
+          (behavior as ReorderAndRelocate).permanent) {
+        isPermanent = true;
+        break;
+      }
+    }
+
+    // Capture sibling active notifications before removing the dragged card
+    final siblingsToMigrate = <NotificationWidget>[];
+    if (isPermanent && migrateSiblings && sourceKey?.currentState != null) {
+      siblingsToMigrate.addAll(
+        sourceKey!.currentState!.activeNotifications.where(
+          (final n) => n.id != notification.id,
+        ),
+      );
+    }
 
     // 1. Remove from source
     bool removed = false;
@@ -339,7 +368,7 @@ class QueueCoordinator implements NotificationScopeState {
       removed = sourceKey!.currentState!.remove(notification);
     } else {
       // Check initialization queue
-      final initQueue = _initializationQueue[notificationQueue.position];
+      final initQueue = _initializationQueue[fromPosition];
       if (initQueue != null) {
         final initialLen = initQueue.length;
         initQueue.removeWhere((final n) => n.id == notification.id);
@@ -353,22 +382,26 @@ class QueueCoordinator implements NotificationScopeState {
       newNotification = notification.copyToQueue(targetQueue);
 
       final config = configuration;
-      if (config.enableDynamicChannelParking) {
-        final oldPosition = notificationQueue.position;
-        config.updateChannelRoute(notification.channelName, newPosition);
+      if (isPermanent && migrateSiblings) {
+        config.relocateQueuePosition(fromPosition, newPosition);
         _eventController.add(
-          NotificationChannelRouteUpdated(
-            channelName: notification.channelName,
-            oldPosition: oldPosition,
-            newPosition: newPosition,
+          QueuePositionRelocated(
+            from: fromPosition,
+            to: newPosition,
+            permanent: true,
           ),
         );
+
+        // Approach 1: Migrate all remaining active notifications in this queue
+        for (final sibling in siblingsToMigrate) {
+          relocateWidget(sibling, newPosition, migrateSiblings: false);
+        }
       }
 
       _eventController.add(
         NotificationRelocated(
           notification: newNotification,
-          from: notificationQueue.position,
+          from: fromPosition,
           to: newPosition,
         ),
       );

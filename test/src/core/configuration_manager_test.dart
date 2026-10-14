@@ -300,28 +300,30 @@ void main() {
       expect(manager.queues.length, equals(1));
     });
 
-    // 13. Pre-configured target is not overwritten
-    test('Pre-Configured Target: Existing target queue is preserved', () {
+    // 13. Cluster Invariance: Pre-configuring target queue is forbidden
+    test(
+        'Cluster Invariance: Target queue cannot be independently configured',
+        () {
       const customStyle = FilledQueueStyle(opacity: 0.9);
 
-      final manager = ConfigurationManager(
-        queues: {
-          NotificationQueue(
-            position: QueuePosition.topCenter,
-            longPressDragBehavior: Relocate<OnLongPress>.to(
-              {QueuePosition.topRight},
+      expect(
+        () => ConfigurationManager(
+          queues: {
+            NotificationQueue(
+              position: QueuePosition.topCenter,
+              longPressDragBehavior: Relocate<OnLongPress>.to(
+                {QueuePosition.topRight},
+              ),
+              style: const FlatQueueStyle(),
             ),
-            style: const FlatQueueStyle(), // source style
-          ),
-          const NotificationQueue(
-            position: QueuePosition.topRight,
-            style: customStyle, // explicitly configured
-          ),
-        },
+            const NotificationQueue(
+              position: QueuePosition.topRight,
+              style: customStyle,
+            ),
+          },
+        ),
+        throwsArgumentError,
       );
-
-      final topRight = manager.getQueue(QueuePosition.topRight);
-      expect(topRight.style, equals(customStyle));
     });
   });
 }

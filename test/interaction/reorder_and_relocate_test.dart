@@ -23,9 +23,6 @@ void main() {
               escapeThresholdInPixels: 50.0,
             ),
           ),
-          const NotificationQueue(
-            position: QueuePosition.topLeft,
-          ), // Destination queue
         },
       );
     });

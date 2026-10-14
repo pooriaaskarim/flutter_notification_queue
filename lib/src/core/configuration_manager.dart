@@ -12,7 +12,6 @@ class ConfigurationManager {
     final Set<NotificationQueue> queues = const {},
     this.channels = const {},
     this.strictChannelLookup = false,
-    this.enableDynamicChannelParking = false,
     this.maxHistoryEntries = 0,
   }) : queues = _initQueues(queues);
 
@@ -27,7 +26,6 @@ class ConfigurationManager {
   Set<NotificationQueue> queues;
   Set<NotificationChannel> channels;
   bool strictChannelLookup;
-  bool enableDynamicChannelParking;
   int maxHistoryEntries;
 
   /// Updates the configuration settings in-place.
@@ -35,7 +33,6 @@ class ConfigurationManager {
     final Set<NotificationQueue>? queues,
     final Set<NotificationChannel>? channels,
     final bool? strictChannelLookup,
-    final bool? enableDynamicChannelParking,
     final int? maxHistoryEntries,
   }) {
     if (queues != null) {
@@ -47,32 +44,43 @@ class ConfigurationManager {
     if (strictChannelLookup != null) {
       this.strictChannelLookup = strictChannelLookup;
     }
-    if (enableDynamicChannelParking != null) {
-      this.enableDynamicChannelParking = enableDynamicChannelParking;
-    }
     if (maxHistoryEntries != null) {
       this.maxHistoryEntries = maxHistoryEntries;
     }
   }
 
-  /// Stores dynamically parked channel positions mapping channel names to
-  /// their new positions.
-  final Map<String, QueuePosition> _parkedChannelRoutes = {};
+  /// Stores dynamically relocated queue positions mapping source positions
+  /// to their new effective positions.
+  final Map<QueuePosition, QueuePosition> _relocatedQueuePositions = {};
 
-  /// Updates the parked queue position route for a channel.
-  void updateChannelRoute(
-    final String channelName,
+  /// Updates the relocated queue position route.
+  void relocateQueuePosition(
+    final QueuePosition sourcePosition,
     final QueuePosition newPosition,
   ) {
-    _parkedChannelRoutes[channelName] = newPosition;
+    // Update any queue currently pointing to sourcePosition to point to
+    // newPosition
+    _relocatedQueuePositions.updateAll(
+      (final key, final value) =>
+          value == sourcePosition ? newPosition : value,
+    );
+    _relocatedQueuePositions[sourcePosition] = newPosition;
   }
 
+  /// Returns the effective queue position, taking into account any permanent
+  /// relocations.
+  QueuePosition? getEffectiveQueuePosition(final QueuePosition? position) {
+    if (position == null) {
+      return null;
+    }
+    return _relocatedQueuePositions[position] ?? position;
+  }
+
+  /// Returns the effective position for a channel.
+  @Deprecated('Use getEffectiveQueuePosition instead.')
   QueuePosition? getEffectiveChannelPosition(final String channelName) {
     final channel = getChannel(channelName);
-    if (!enableDynamicChannelParking) {
-      return channel.position;
-    }
-    return _parkedChannelRoutes[channelName] ?? channel.position;
+    return getEffectiveQueuePosition(channel.position);
   }
 
   /// Returns a concise summary of the configuration.
@@ -132,41 +140,57 @@ class ConfigurationManager {
     return expanded;
   }
 
-  /// Validates that no [QueuePosition] appears in multiple relocation groups.
+  /// Validates relocation groups:
+  /// 1. Ensures no [QueuePosition] is targeted by multiple relocation groups.
+  /// 2. Enforces Cluster Invariance: ensures no target landing pad is
+  ///    independently configured in [queues].
   static void _validateRelocationGroups(
     final Set<NotificationQueue> queues,
   ) {
-    final seen = <QueuePosition, NotificationQueue>{};
+    final targetToSourceMap = <QueuePosition, NotificationQueue>{};
 
     for (final queue in queues) {
-      final group = <QueuePosition>{};
-      var hasRelocate = false;
+      final targets = <QueuePosition>{};
       for (final behavior in [
         queue.longPressDragBehavior,
         queue.dragBehavior,
       ]) {
         if (behavior is Relocate) {
-          hasRelocate = true;
-          group.addAll((behavior as Relocate).positions);
+          targets.addAll((behavior as Relocate).positions);
         } else if (behavior is ReorderAndRelocate) {
-          hasRelocate = true;
-          group.addAll((behavior as ReorderAndRelocate).positions);
+          targets.addAll((behavior as ReorderAndRelocate).positions);
         }
       }
-      if (!hasRelocate) {
-        continue;
-      }
-      // Include self in group for validation
-      group.add(queue.position);
 
-      for (final position in group) {
-        if (seen.containsKey(position) && seen[position] != queue) {
+      for (final target in targets) {
+        if (target == queue.position) {
+          continue;
+        }
+        if (targetToSourceMap.containsKey(target) &&
+            targetToSourceMap[target] != queue) {
           throw ArgumentError(
-            '$position appears in both $queue and ${seen[position]} groups. '
-            'Relocation is only allowed within the same group.',
+            '$target appears in multiple relocation groups '
+            '(${queue.position.name} and '
+            '${targetToSourceMap[target]!.position.name}). '
+            'Relocation groups must be disjoint.',
           );
         }
-        seen[position] = queue;
+        targetToSourceMap[target] = queue;
+      }
+    }
+
+    // Enforce Cluster Invariance:
+    // None of the explicitly provided queues can be a target of another queue.
+    for (final queue in queues) {
+      if (targetToSourceMap.containsKey(queue.position)) {
+        final sourceQueue = targetToSourceMap[queue.position]!;
+        final sourceName = sourceQueue.position.name;
+        throw ArgumentError(
+          'QueuePosition.${queue.position.name} cannot be configured as an '
+          'independent queue because it is already a target landing pad in '
+          'the relocation cluster defined on QueuePosition.$sourceName. '
+          'Target positions inherit their cluster styles automatically.',
+        );
       }
     }
   }

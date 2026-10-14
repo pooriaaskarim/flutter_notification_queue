@@ -101,7 +101,6 @@ class NotificationController {
     required final Set<NotificationQueue> queues,
     final Set<NotificationChannel>? channels,
     final bool strictChannelLookup = false,
-    final bool enableDynamicChannelParking = false,
     final int maxHistoryEntries = 0,
     final LogLevel? logLevel,
     final List<Handler>? logHandlers,
@@ -110,7 +109,6 @@ class NotificationController {
           queues: queues,
           channels: channels ?? NotificationChannel.standardChannels(),
           strictChannelLookup: strictChannelLookup,
-          enableDynamicChannelParking: enableDynamicChannelParking,
           maxHistoryEntries: maxHistoryEntries,
         ) {
     _configureLogger(
@@ -156,14 +154,12 @@ class NotificationController {
     final Set<NotificationQueue>? queues,
     final Set<NotificationChannel>? channels,
     final bool? strictChannelLookup,
-    final bool? enableDynamicChannelParking,
     final int? maxHistoryEntries,
   }) {
     configuration.reconfigure(
       queues: queues,
       channels: channels,
       strictChannelLookup: strictChannelLookup,
-      enableDynamicChannelParking: enableDynamicChannelParking,
       maxHistoryEntries: maxHistoryEntries,
     );
     if (_attachedState is QueueCoordinator) {

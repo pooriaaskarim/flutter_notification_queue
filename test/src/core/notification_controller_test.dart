@@ -269,22 +269,22 @@ void main() {
       final controller = NotificationController(
         queues: {const NotificationQueue(position: QueuePosition.topCenter)},
         channels: {const NotificationChannel(name: 'default')},
-        enableDynamicChannelParking: false,
+        maxHistoryEntries: 10,
       );
 
       expect(controller.configuration.queues.length, equals(1));
-      expect(controller.configuration.enableDynamicChannelParking, isFalse);
+      expect(controller.configuration.maxHistoryEntries, equals(10));
 
       controller.reconfigure(
         queues: {
           const NotificationQueue(position: QueuePosition.topCenter),
           const NotificationQueue(position: QueuePosition.bottomRight),
         },
-        enableDynamicChannelParking: true,
+        maxHistoryEntries: 50,
       );
 
       expect(controller.configuration.queues.length, equals(2));
-      expect(controller.configuration.enableDynamicChannelParking, isTrue);
+      expect(controller.configuration.maxHistoryEntries, equals(50));
 
       controller.dispose();
     });

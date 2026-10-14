@@ -14,7 +14,6 @@ class SystemOptionsSection extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final setup = setupState.setup;
-    final enableDynamicParking = setup.enableDynamicChannelParking;
     final maxHistory = setup.maxHistoryEntries;
 
     final theme = Theme.of(context);
@@ -23,33 +22,6 @@ class SystemOptionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Dynamic Channel Parking switch
-        SwitchListTile(
-          title: const Text(
-            'Dynamic Parking',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: Text(
-            'Re-route channels dynamically when dragged to a new position.',
-            style: TextStyle(
-              fontSize: 9,
-              color: colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
-          value: enableDynamicParking,
-          onChanged: (final value) {
-            context.read<SetupBloc>().add(
-                  UpdateGlobalConfig(enableDynamicChannelParking: value),
-                );
-          },
-          contentPadding: EdgeInsets.zero,
-          activeTrackColor: colorScheme.primary,
-        ),
-
-        const SizedBox(height: 8),
 
         // Bounded History Log limit
         Column(

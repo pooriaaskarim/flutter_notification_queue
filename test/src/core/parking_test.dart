@@ -9,12 +9,11 @@ Future<void> _driveAnimation(final WidgetTester tester) async {
 }
 
 void main() {
-  group('F-03 Desktop Parking & Runtime Config Tests', () {
+  group('Queue Relocation & Cluster Invariance Tests', () {
     testWidgets(
-        'dynamic channel parking: disabled by default and does not change '
-        'routes', (final tester) async {
+        'ephemeral relocation (permanent: false): single card moves, '
+        'future cards stay at original position', (final tester) async {
       final controller = NotificationController(
-        enableDynamicChannelParking: false,
         channels: {
           const NotificationChannel(
             name: 'test_info',
@@ -25,10 +24,10 @@ void main() {
         queues: {
           NotificationQueue(
             position: QueuePosition.topRight,
-            longPressDragBehavior: Relocate.to({QueuePosition.topLeft}),
-          ),
-          const NotificationQueue(
-            position: QueuePosition.topLeft,
+            longPressDragBehavior: Relocate.to(
+              {QueuePosition.topLeft},
+              permanent: false,
+            ),
           ),
         },
       );
@@ -72,8 +71,7 @@ void main() {
       await tester.pump();
       await _driveAnimation(tester);
 
-      // Verify that n2 is still routed to the original position (topRight),
-      // not topLeft
+      // Verify that n2 is still routed to the original position (topRight)
       final stateKey = GlobalObjectKey<NotificationWidgetState>(n2.id);
       expect(
         stateKey.currentState?.widget.queue.position,
@@ -81,10 +79,10 @@ void main() {
       );
     });
 
-    testWidgets('dynamic channel parking: enabled updates routes dynamically',
-        (final tester) async {
+    testWidgets(
+        'permanent relocation (Approach 1): migrates active siblings and '
+        'redirects future cards to new position', (final tester) async {
       final controller = NotificationController(
-        enableDynamicChannelParking: true,
         channels: {
           const NotificationChannel(
             name: 'test_info',
@@ -95,10 +93,11 @@ void main() {
         queues: {
           NotificationQueue(
             position: QueuePosition.topRight,
-            longPressDragBehavior: Relocate.to({QueuePosition.topLeft}),
-          ),
-          const NotificationQueue(
-            position: QueuePosition.topLeft,
+            maxStackSize: 5,
+            longPressDragBehavior: Relocate.to(
+              {QueuePosition.topLeft},
+              permanent: true,
+            ),
           ),
         },
       );
@@ -117,6 +116,13 @@ void main() {
       final n1 = NotificationWidget(
         id: 'notif_1',
         message: 'Message 1',
+        channelName: 'test_info',
+        coordinator: controller.coordinator,
+      )..show();
+
+      final n2 = NotificationWidget(
+        id: 'notif_2',
+        message: 'Message 2',
         channelName: 'test_info',
         coordinator: controller.coordinator,
       )..show();
@@ -128,28 +134,36 @@ void main() {
       await _driveAnimation(tester);
 
       expect(find.text('Message 1'), findsOneWidget);
+      expect(find.text('Message 2'), findsOneWidget);
 
       // Relocate n1 to topLeft
       controller.coordinator?.relocateWidget(n1, QueuePosition.topLeft);
       await tester.pump();
       await tester.pumpAndSettle();
 
-      // Verify dynamic route update event was fired
+      // Verify QueuePositionRelocated event was emitted
       expect(
         capturedEvents.any(
           (final e) =>
-              e is NotificationChannelRouteUpdated &&
-              e.channelName == 'test_info' &&
-              e.oldPosition == QueuePosition.topRight &&
-              e.newPosition == QueuePosition.topLeft,
+              e is QueuePositionRelocated &&
+              e.from == QueuePosition.topRight &&
+              e.to == QueuePosition.topLeft &&
+              e.permanent,
         ),
         isTrue,
       );
 
-      // Fire a second notification of the same channel
-      final n2 = NotificationWidget(
-        id: 'notif_2',
-        message: 'Message 2',
+      // Approach 1 Check: Verify n2 also migrated to topLeft!
+      final n2Key = GlobalObjectKey<NotificationWidgetState>(n2.id);
+      expect(
+        n2Key.currentState?.widget.queue.position,
+        equals(QueuePosition.topLeft),
+      );
+
+      // Fire a third notification of the same channel
+      final n3 = NotificationWidget(
+        id: 'notif_3',
+        message: 'Message 3',
         channelName: 'test_info',
         coordinator: controller.coordinator,
       )..show();
@@ -159,11 +173,30 @@ void main() {
 
       sub.cancel(); // ignore: unawaited_futures
 
-      // Verify that n2 is now routed to topLeft!
-      final stateKey = GlobalObjectKey<NotificationWidgetState>(n2.id);
+      // Verify that n3 was routed to topLeft!
+      final n3Key = GlobalObjectKey<NotificationWidgetState>(n3.id);
       expect(
-        stateKey.currentState?.widget.queue.position,
+        n3Key.currentState?.widget.queue.position,
         equals(QueuePosition.topLeft),
+      );
+    });
+
+    test(
+        'Cluster Invariance: configuring target landing pad as standalone '
+        'queue throws', () {
+      expect(
+        () => NotificationController(
+          queues: {
+            NotificationQueue(
+              position: QueuePosition.topRight,
+              longPressDragBehavior: Relocate.to({QueuePosition.topLeft}),
+            ),
+            const NotificationQueue(
+              position: QueuePosition.topLeft,
+            ),
+          },
+        ),
+        throwsArgumentError,
       );
     });
   });

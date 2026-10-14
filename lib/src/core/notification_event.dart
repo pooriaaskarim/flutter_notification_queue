@@ -294,8 +294,30 @@ final class NotificationGroupDismissed extends NotificationEvent {
       'position: ${position.name})';
 }
 
-/// Emitted when a channel's default queue route is updated at runtime
-/// (Desktop Parking).
+/// Emitted when a queue position is permanently relocated at runtime.
+final class QueuePositionRelocated extends NotificationEvent {
+  const QueuePositionRelocated({
+    required this.from,
+    required this.to,
+    this.permanent = true,
+  });
+
+  /// The original queue position before relocation.
+  final QueuePosition from;
+
+  /// The new queue position destination.
+  final QueuePosition to;
+
+  /// Whether this relocation permanently redirected future queue traffic.
+  final bool permanent;
+
+  @override
+  String toString() => 'QueuePositionRelocated(from: ${from.name}, '
+      'to: ${to.name}, permanent: $permanent)';
+}
+
+/// Emitted when a channel's default queue route is updated at runtime.
+@Deprecated('Use QueuePositionRelocated instead.')
 final class NotificationChannelRouteUpdated extends NotificationEvent {
   const NotificationChannelRouteUpdated({
     required this.channelName,

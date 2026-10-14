@@ -20,7 +20,8 @@ export 'src/core/core.dart'
         NotificationSnoozed,
         NotificationTapped,
         NotificationUnpinned,
-        QueueOverflowed;
+        QueueOverflowed,
+        QueuePositionRelocated;
 export 'src/enums/enums.dart';
 export 'src/models/offset_pair.dart';
 export 'src/notification/notification.dart' hide NotificationActionType;
