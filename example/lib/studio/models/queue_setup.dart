@@ -28,6 +28,7 @@ class QueueSetup extends Equatable {
     this.longPressDismissZone = DismissZone.sideEdges,
     this.longPressSnoozeSeconds = 5,
     this.relocateTargets = const {},
+    this.relocatePermanent = false,
     this.closeButtonBehaviorType = AlwaysVisible,
     this.tapBehaviorType = TapToDismiss,
     this.maxWidth,
@@ -61,6 +62,7 @@ class QueueSetup extends Equatable {
   final DismissZone longPressDismissZone;
   final int longPressSnoozeSeconds;
   final Set<QueuePosition> relocateTargets;
+  final bool relocatePermanent;
   final Type closeButtonBehaviorType;
 
   // ── Tap ──
@@ -100,6 +102,7 @@ class QueueSetup extends Equatable {
     final DismissZone? longPressDismissZone,
     final int? longPressSnoozeSeconds,
     final Set<QueuePosition>? relocateTargets,
+    final bool? relocatePermanent,
     final Type? closeButtonBehaviorType,
     final Type? tapBehaviorType,
     final double? maxWidth,
@@ -129,6 +132,7 @@ class QueueSetup extends Equatable {
         longPressSnoozeSeconds:
             longPressSnoozeSeconds ?? this.longPressSnoozeSeconds,
         relocateTargets: relocateTargets ?? this.relocateTargets,
+        relocatePermanent: relocatePermanent ?? this.relocatePermanent,
         closeButtonBehaviorType:
             closeButtonBehaviorType ?? this.closeButtonBehaviorType,
         tapBehaviorType: tapBehaviorType ?? this.tapBehaviorType,
@@ -196,12 +200,15 @@ class QueueSetup extends Equatable {
     if (dragBehaviorType == Relocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : Relocate.to(relocateTargets);
+          : Relocate.to(relocateTargets, permanent: relocatePermanent);
     }
     if (dragBehaviorType == ReorderAndRelocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : ReorderAndRelocate.to(positions: relocateTargets);
+          : ReorderAndRelocate.to(
+              positions: relocateTargets,
+              permanent: relocatePermanent,
+            );
     }
     if (dragBehaviorType == Reorder) {
       return const Reorder();
@@ -223,12 +230,15 @@ class QueueSetup extends Equatable {
     if (longPressBehaviorType == Relocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : Relocate.to(relocateTargets);
+          : Relocate.to(relocateTargets, permanent: relocatePermanent);
     }
     if (longPressBehaviorType == ReorderAndRelocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : ReorderAndRelocate.to(positions: relocateTargets);
+          : ReorderAndRelocate.to(
+              positions: relocateTargets,
+              permanent: relocatePermanent,
+            );
     }
     if (longPressBehaviorType == Reorder) {
       return const Reorder();
@@ -308,6 +318,7 @@ class QueueSetup extends Equatable {
         longPressDismissZone,
         longPressSnoozeSeconds,
         relocateTargets,
+        relocatePermanent,
         closeButtonBehaviorType,
         tapBehaviorType,
         maxWidth,

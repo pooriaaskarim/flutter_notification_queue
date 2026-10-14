@@ -297,20 +297,29 @@ String _behaviorSnippet(final Type t, final QueueSetup q, final bool isDrag) {
     return 'const Pin()';
   }
   if (t == Relocate) {
-    return q.relocateTargets.isEmpty
-        ? 'Relocate.to({}) // ERROR: Relocation targets must not be empty!'
-        : 'Relocate.to({${q.relocateTargets.map(
-              (final p) => 'QueuePosition.${p.name}',
-            ).join(', ')}})';
+    if (q.relocateTargets.isEmpty) {
+      return 'Relocate.to({}) // ERROR: Relocation targets must not be empty!';
+    }
+    final targets = q.relocateTargets
+        .map((final p) => 'QueuePosition.${p.name}')
+        .join(', ');
+    return q.relocatePermanent
+        ? 'Relocate.to({$targets}, permanent: true)'
+        : 'Relocate.to({$targets})';
   }
   if (t == ReorderAndRelocate) {
-    return q.relocateTargets.isEmpty
-        ? 'ReorderAndRelocate.to(positions: {}) // ERROR: Relocation targets must not be empty!'
-        : 'ReorderAndRelocate.to(\n'
-            '        positions: {${q.relocateTargets.map(
-                  (final p) => 'QueuePosition.${p.name}',
-                ).join(', ')}},\n'
-            '      )';
+    if (q.relocateTargets.isEmpty) {
+      return 'ReorderAndRelocate.to(positions: {}) // ERROR: Relocation targets must not be empty!';
+    }
+    final targets = q.relocateTargets
+        .map((final p) => 'QueuePosition.${p.name}')
+        .join(', ');
+    final permanentParam =
+        q.relocatePermanent ? '        permanent: true,\n' : '';
+    return 'ReorderAndRelocate.to(\n'
+        '        positions: {$targets},\n'
+        '$permanentParam'
+        '      )';
   }
   if (t == Reorder) {
     return 'const Reorder()';

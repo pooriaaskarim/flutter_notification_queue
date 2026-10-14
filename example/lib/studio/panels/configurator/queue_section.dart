@@ -619,6 +619,17 @@ class _QueueEditorState extends State<_QueueEditor> {
                   ),
                 ),
           ),
+          const SizedBox(height: 8),
+          StudioToggleTile(
+            label: 'PERMANENT QUEUE RELOCATION',
+            value: setup.relocatePermanent,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(relocatePermanent: v),
+                  ),
+                ),
+          ),
         ],
         if (setup.dragBehaviorType == Dismiss) ...[
           const SizedBox(height: 12),
@@ -685,6 +696,17 @@ class _QueueEditorState extends State<_QueueEditor> {
                   UpdateQueue(
                     position,
                     setup.copyWith(relocateTargets: v),
+                  ),
+                ),
+          ),
+          const SizedBox(height: 8),
+          StudioToggleTile(
+            label: 'PERMANENT QUEUE RELOCATION',
+            value: setup.relocatePermanent,
+            onChanged: (final v) => context.read<SetupBloc>().add(
+                  UpdateQueue(
+                    position,
+                    setup.copyWith(relocatePermanent: v),
                   ),
                 ),
           ),
