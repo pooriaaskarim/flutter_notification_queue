@@ -656,48 +656,53 @@ void main() {
       },
     );
 
-    testWidgets('CodeEditorPanel maintains max width bound on action button',
-        (final tester) async {
-      final setupBloc = SetupBloc();
-      final notificationBloc = NotificationBloc(setupBloc: setupBloc);
-      final studioBloc = StudioBloc();
+    testWidgets(
+      'CodeEditorPanel is a code viewer without duplicate fire buttons',
+      (final tester) async {
+        final setupBloc = SetupBloc();
+        final notificationBloc = NotificationBloc(setupBloc: setupBloc);
+        final studioBloc = StudioBloc();
 
-      await tester.binding.setSurfaceSize(const Size(1000, 900));
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: StudioTheme.dark(),
-          home: Builder(
-            builder: (final context) {
-              StudioTheme.update(context);
-              return Scaffold(
-                body: MultiBlocProvider(
-                  providers: [
-                    BlocProvider.value(value: setupBloc),
-                    BlocProvider.value(value: notificationBloc),
-                    BlocProvider.value(value: studioBloc),
-                  ],
-                  child: const SizedBox(
-                    width: 900,
-                    height: 900,
-                    child: CodeEditorPanel(),
+        await tester.binding.setSurfaceSize(const Size(1000, 900));
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: StudioTheme.dark(),
+            home: Builder(
+              builder: (final context) {
+                StudioTheme.update(context);
+                return Scaffold(
+                  body: MultiBlocProvider(
+                    providers: [
+                      BlocProvider.value(value: setupBloc),
+                      BlocProvider.value(value: notificationBloc),
+                      BlocProvider.value(value: studioBloc),
+                    ],
+                    child: const SizedBox(
+                      width: 900,
+                      height: 900,
+                      child: CodeEditorPanel(),
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Find the FIRE PREVIEW ElevatedButton
-      final btnFinder = find.widgetWithText(ElevatedButton, 'FIRE PREVIEW');
-      expect(btnFinder, findsOneWidget);
+        // Verify that redundant preview button is purged from CodeEditorPanel
+        expect(
+          find.widgetWithText(ElevatedButton, 'FIRE PREVIEW'),
+          findsNothing,
+        );
 
-      final btnSize = tester.getSize(btnFinder);
-      // Button width should be capped (<= 420), not stretched to 900px
-      expect(btnSize.width, lessThanOrEqualTo(420.0));
+        // Verify standard code actions remain intact
+        expect(find.text('Copy'), findsOneWidget);
+        expect(find.text('Reset'), findsOneWidget);
+        expect(find.text('GENERATED CODE'), findsOneWidget);
 
-      await tester.binding.setSurfaceSize(null);
-    });
+        await tester.binding.setSurfaceSize(null);
+      },
+    );
   });
 }

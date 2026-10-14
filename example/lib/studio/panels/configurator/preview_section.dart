@@ -223,31 +223,38 @@ class PreviewSection extends StatelessWidget {
           ),
         const SizedBox(height: 20),
 
-        // ── Fire Button ──
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primaryContainer,
-              foregroundColor: colorScheme.onPrimaryContainer,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+        // ── Cockpit Firing Hint ──
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.2),
             ),
-            icon: const Icon(Icons.send_rounded, size: 18),
-            label: const Text(
-              'FIRE NOTIFICATION',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.bolt_rounded,
+                size: 16,
+                color: colorScheme.primary,
               ),
-            ),
-            onPressed: () =>
-                context.read<NotificationBloc>().add(const FirePreview()),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Draft armed. Fire via Top Cockpit or ⌘↵ / Ctrl+Enter',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface.withValues(alpha: 0.65),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
 
         // ── Programmatic Control ──
         _ProgrammaticControls(setupState: setupState),
