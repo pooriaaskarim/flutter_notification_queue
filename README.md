@@ -74,12 +74,12 @@ class MyApp extends StatelessWidget {
         const NotificationChannel(
           name: 'info',
           position: QueuePosition.topRight,
-          defaultColor: Color(0xFF0EA5E9),
+          theme: NotificationThemeData(color: Color(0xFF0EA5E9)),
         ),
         const NotificationChannel(
           name: 'error',
           position: QueuePosition.topRight,
-          defaultColor: Color(0xFFEF4444),
+          theme: NotificationThemeData(color: Color(0xFFEF4444)),
         ),
       },
       queues: {
@@ -196,21 +196,24 @@ const AppNotification(
 ### Permanent & Sticky Notifications
 
 ```dart
-// Permanent card (no auto-dismiss countdown)
+// Permanent card (no auto-dismiss countdown, stays until user action)
 const AppNotification(
   title: 'Ongoing Download',
   message: 'Downloading asset pack (45%)...',
   channelName: 'info',
-  dismissDuration: null,
+  permanent: true,
 );
 
-// Sticky Alert (Disables swipe gestures for this specific card)
+// Sticky Alert with button action
 AppNotification(
   title: 'Critical Alert',
   message: 'System requires immediate attention.',
   channelName: 'error',
-  dismissDuration: null,
-  dragBehavior: const Disabled(),
+  permanent: true,
+  action: NotificationAction.button(
+    label: 'ACKNOWLEDGE',
+    onPressed: () => handleAlert(),
+  ),
 );
 ```
 
@@ -411,7 +414,9 @@ NotificationQueue(
 | `NotificationScope.of(context).show(...)` | `NotificationScope.of(context).show(AppNotification(...))` | Context-aware dispatching |
 | `FlutterNotificationQueue.events` | `controller.events` | Stable broadcast stream |
 
-For full step-by-step details, see [doc/migration_v0_4.md](doc/migration_v0_4.md).
+For full step-by-step details, see the migration guides:
+* [**Upgrading to v0.5.0**](doc/migration_v0_5.md) (Four architectural tiers, permanent queue relocation, `NotificationThemeData`)
+* [**Upgrading to v0.4.0**](doc/migration_v0_4.md) (Migration to `NotificationController` and `NotificationScope`)
 
 ---
 

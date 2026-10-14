@@ -14,14 +14,22 @@
 - **Lifecycle & Chaining Unit Tests**: Added unit tests covering `NotificationController` and `QueueCoordinator` disposal idempotency, snooze timer cancellation on detach/dispose, and `FlutterError.onError` preservation.
 
 ### Code Quality & Documentation
-### Architectural Governance & Migration Phase 1
+### Architectural Governance & Design System
+- **Permanent Queue Relocation**: Added `permanentRelocation: QueuePosition?` to `QueueBehavior` and `NotificationQueue`. All incoming notifications and pending backlog items are automatically routed to the destination queue. Decoupled relocation strictly to the queue layer (channels have zero relocation logic).
+- **The Four Architectural Tiers**: Formalized the separation between Surface Owner (`NotificationScope`), Spatial Anchor (`NotificationQueue`), Domain Routing (`NotificationChannel`), and Event Payload (`AppNotification`).
+- **`QueueStyle` Strict Single Ownership**: `QueueStyle` (`FilledQueueStyle`, `OutlinedQueueStyle`, `FlatQueueStyle`) lives strictly on `NotificationQueue` to govern physical card geometry (`borderRadius`, `padding`, `elevation`, `opacity` for glassmorphism). Neither channels nor payloads take styling archetypes.
+- **Parametric Theme Token System (`NotificationThemeData`)**: Introduced unified, dark-mode reactive `NotificationThemeData` driven parametrically by `color` and Material 3 design tokens, deterministically controlling archetype role distribution with automatic WCAG contrast.
+- **Standardized Box Model Spacing**: Standardized `margin` (safe-area boundary spacing), `spacing` (inter-card gap in stacks), and `padding` (intra-card content insets).
 - **Contextual Dispatch-Time Routing (`targetPosition`)**: Added `targetPosition` parameter to `NotificationController.show()`, `controller.tryShow()`, and `QueueCoordinator.show()`, enabling callers to specify placement contextually without hardcoding coordinates on data payloads.
-- **Architectural Hierarchy & Removal of Archiving**: Removed phantom `Archive<T>` drag intent and plugin. Standardized on the 3-tier hierarchy (Queue for physics/layout, Channel for semantics/defaults, Notification for payload content).
-- **Payload Deprecation Window (v0.5.x $\rightarrow$ v0.6.0)**: Marked `AppNotification.position`, `dragBehavior`, `longPressDragBehavior`, `initialIsPinned`, and `snoozedAt` as `@Deprecated` with non-breaking fallbacks, initiating the transition to a pure data payload.
+- **Removal of Archiving**: Removed phantom `Archive<T>` drag intent and plugin. Use `Dismiss` or listen to `NotificationDismissed` / `HistoryLogger`.
+- **Payload Deprecation Window (v0.5.x → v0.6.0)**: Marked `AppNotification.position`, `dragBehavior`, `longPressDragBehavior`, `initialIsPinned`, `snoozedAt`, and loose scalar colors as `@Deprecated` with non-breaking fallbacks.
 - **Multi-Window Layout Modernization**: Migrated `_QueueOverlayLayoutDelegate` from `PlatformDispatcher.instance.implicitView` to context-aware `View.maybeOf(context)`, future-proofing for multi-window Flutter.
 - **Experimental Drag Intents**: Annotated `Pin<T>`, `Snooze<T>`, and `CustomAction<T>` with `@experimental`.
 
-### Studio & Tooling
+### Studio & Observability
+- **Live In-Place Draft Card Preview (`LiveCardPreview`)**: Real-time presentational sandbox resolving the 3-gear theme cascade with zero dismiss timers or queue side-effects, featuring an optical checkerboard canvas to highlight glassmorphic transparency.
+- **Live Spatial Stage Radar (`LiveStageRadar`)**: 3×3 spatial radar monitoring active counts, pending counts, and permanent relocations across all 8 queue positions with instant stage controls (`Dismiss Newest`, `Dismiss All`).
+- **Global Hardware Keyboard Shortcuts**: Bound `Ctrl+Enter` (`⌘Enter`) to fire preview drafts, `Ctrl+E` to reset drafts, and `Ctrl+L` to load random drafts, operating cleanly even when input fields are focused.
 - **Snooze & Pin Studio Integration**: Added interactive configurator controls, live preview actions, and dedicated demo scenarios for Snooze duration and Pin toggling.
 - **Multi-Platform Toolchain**: Modernized Gradle build configuration and added unified multi-platform launcher script (`example/scripts/run.sh`).
 
