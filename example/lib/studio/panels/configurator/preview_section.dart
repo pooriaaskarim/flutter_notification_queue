@@ -5,6 +5,8 @@ import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import '../../bloc/notification_bloc.dart';
 import '../../bloc/setup_bloc.dart';
 import '../../studio_theme.dart';
+import '../../widgets/live_card_preview.dart';
+import '../../widgets/live_stage_radar.dart';
 import '../../widgets/resolution_inspector.dart';
 import '../../widgets/studio_dropdown_tile.dart';
 import '../../widgets/studio_section_header.dart';
@@ -35,6 +37,13 @@ class PreviewSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ── LIVE DRAFT CARD PREVIEW ──
+        LiveCardPreview(
+          setupState: setupState,
+          draft: draft,
+        ),
+        const SizedBox(height: 16),
+
         _RoutingPipelineBadge(
           channelName: draft.channelName,
           targetPosition: targetPosition,
@@ -254,6 +263,10 @@ class PreviewSection extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 20),
+
+        // ── LIVE STAGE RADAR & STATUS ──
+        LiveStageRadar(setupState: setupState),
         const SizedBox(height: 20),
 
         // ── Programmatic Control ──
