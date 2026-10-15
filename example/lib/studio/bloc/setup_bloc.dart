@@ -69,10 +69,8 @@ final class ResetSetup extends SetupEvent {
 
 final class UpdateGlobalConfig extends SetupEvent {
   const UpdateGlobalConfig({
-    this.enableDynamicChannelParking,
     this.maxHistoryEntries,
   });
-  final bool? enableDynamicChannelParking;
   final int? maxHistoryEntries;
 }
 
@@ -203,7 +201,6 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
       emit(
         state.copyWith(
           setup: state.setup.copyWith(
-            enableDynamicChannelParking: event.enableDynamicChannelParking,
             maxHistoryEntries: event.maxHistoryEntries,
           ),
         ),
@@ -236,7 +233,6 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
       controller = NotificationController(
         queues: setup.toLibraryQueues(),
         channels: setup.toLibraryChannels(),
-        enableDynamicChannelParking: setup.enableDynamicChannelParking,
         maxHistoryEntries: setup.maxHistoryEntries,
       );
       _isControllerInitialized = true;
@@ -244,7 +240,6 @@ class SetupBloc extends Bloc<SetupEvent, SetupState> {
       controller.reconfigure(
         queues: setup.toLibraryQueues(),
         channels: setup.toLibraryChannels(),
-        enableDynamicChannelParking: setup.enableDynamicChannelParking,
         maxHistoryEntries: setup.maxHistoryEntries,
       );
     }

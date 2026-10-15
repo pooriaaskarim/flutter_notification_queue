@@ -16,7 +16,6 @@ extension QueueNotificationBehaviorResolver on QueueNotificationBehavior {
           ),
         final Snooze behavior => SnoozeGesturePlugin(behavior: behavior),
         final Pin behavior => PinGesturePlugin(behavior: behavior),
-        final Archive behavior => ArchiveGesturePlugin(behavior: behavior),
         final CustomAction behavior => CustomActionGesturePlugin(
             behavior: behavior,
           ),

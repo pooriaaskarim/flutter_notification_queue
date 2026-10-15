@@ -199,6 +199,7 @@ class _NotificationQueueStackState extends State<_NotificationQueueStack> {
             delegate: _QueueOverlayLayoutDelegate(
               activePositions: activeQueues.keys.toList(),
               activeQueues: activeQueues,
+              flutterView: View.maybeOf(context),
             ),
             children: activeQueues.values
                 .map(
@@ -247,16 +248,18 @@ class _QueueOverlayLayoutDelegate extends MultiChildLayoutDelegate {
   _QueueOverlayLayoutDelegate({
     required this.activePositions,
     required this.activeQueues,
+    this.flutterView,
   });
 
   final List<QueuePosition> activePositions;
   final Map<QueuePosition, NotificationQueue> activeQueues;
+  final FlutterView? flutterView;
 
   /// Reads the OS-level insets (status bar, notch, home indicator) from
-  /// the FlutterView without touching MediaQuery or BuildContext, so this
-  /// delegate never subscribes to inherited widget changes.
+  /// the FlutterView without touching MediaQuery, so this delegate never
+  /// subscribes to inherited widget changes.
   EdgeInsets _viewPadding() {
-    final view = PlatformDispatcher.instance.implicitView;
+    final view = flutterView ?? PlatformDispatcher.instance.implicitView;
     if (view == null) {
       return EdgeInsets.zero;
     }

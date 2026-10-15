@@ -98,102 +98,108 @@ class QueuePositionMap extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-            ),
-            borderRadius: BorderRadius.circular(12),
-            color: colorScheme.surface.withValues(alpha: 0.4),
-          ),
-          padding: const EdgeInsets.all(6),
-          child: Stack(
-            children: [
-              // ── Canvas-drawn Infographic Connection Lines ──
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: QueueConnectionsPainter(
-                    queues: queues,
-                    colorScheme: colorScheme,
-                    getPositionColor: _getPositionColor,
-                  ),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
                 ),
+                borderRadius: BorderRadius.circular(12),
+                color: colorScheme.surface.withValues(alpha: 0.4),
               ),
-              // ── 3x3 Grid Layout ──
-              Column(
-                children: _grid.asMap().entries.map((final rowEntry) {
-                  final rowIndex = rowEntry.key;
-                  final row = rowEntry.value;
-                  return Padding(
-                    padding: EdgeInsets.only(top: rowIndex == 0 ? 0 : 4),
-                    child: Row(
-                      children: row.asMap().entries.map((final colEntry) {
-                        final colIndex = colEntry.key;
-                        final position = colEntry.value;
+              padding: const EdgeInsets.all(6),
+              child: Stack(
+                children: [
+                  // ── Canvas-drawn Infographic Connection Lines ──
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: QueueConnectionsPainter(
+                        queues: queues,
+                        colorScheme: colorScheme,
+                        getPositionColor: _getPositionColor,
+                      ),
+                    ),
+                  ),
+                  // ── 3x3 Grid Layout ──
+                  Column(
+                    children: _grid.asMap().entries.map((final rowEntry) {
+                      final rowIndex = rowEntry.key;
+                      final row = rowEntry.value;
+                      return Padding(
+                        padding: EdgeInsets.only(top: rowIndex == 0 ? 0 : 4),
+                        child: Row(
+                          children: row.asMap().entries.map((final colEntry) {
+                            final colIndex = colEntry.key;
+                            final position = colEntry.value;
 
-                        if (position == null) {
-                          // Center dead zone
-                          return Expanded(
-                            child: Container(
-                              height: 52,
-                              margin: EdgeInsets.only(
-                                left: colIndex == 0 ? 0 : 4,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: 0.03,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  '···',
-                                  style: TextStyle(
+                            if (position == null) {
+                              // Center dead zone
+                              return Expanded(
+                                child: Container(
+                                  height: 52,
+                                  margin: EdgeInsets.only(
+                                    left: colIndex == 0 ? 0 : 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(6),
                                     color: colorScheme.onSurface.withValues(
-                                      alpha: 0.2,
+                                      alpha: 0.03,
                                     ),
-                                    fontSize: 12,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '···',
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                   ),
                                 ),
+                              );
+                            }
+
+                            // Find which master owns this slave, if any
+                            QueuePosition? masterPosition;
+                            for (final entry in queues.entries) {
+                              if (entry.value.relocateTargets
+                                  .contains(position)) {
+                                masterPosition = entry.key;
+                                break;
+                              }
+                            }
+
+                            return Expanded(
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  left: colIndex == 0 ? 0 : 4,
+                                ),
+                                child: _PositionCell(
+                                  position: position,
+                                  isActive: activePositions.contains(position),
+                                  isSlave: slavePositions.contains(position),
+                                  isSelected: selectedPosition == position,
+                                  masterPosition: masterPosition,
+                                  canRemove: activePositions.length > 1,
+                                  getPositionColor: _getPositionColor,
+                                  onSelect: onSelect,
+                                  onAdd: onAdd,
+                                  onRemove: onRemove,
+                                ),
                               ),
-                            ),
-                          );
-                        }
-
-                        // Find which master owns this slave, if any
-                        QueuePosition? masterPosition;
-                        for (final entry in queues.entries) {
-                          if (entry.value.relocateTargets.contains(position)) {
-                            masterPosition = entry.key;
-                            break;
-                          }
-                        }
-
-                        return Expanded(
-                          child: Padding(
-                            padding: EdgeInsets.only(
-                              left: colIndex == 0 ? 0 : 4,
-                            ),
-                            child: _PositionCell(
-                              position: position,
-                              isActive: activePositions.contains(position),
-                              isSlave: slavePositions.contains(position),
-                              isSelected: selectedPosition == position,
-                              masterPosition: masterPosition,
-                              canRemove: activePositions.length > 1,
-                              getPositionColor: _getPositionColor,
-                              onSelect: onSelect,
-                              onAdd: onAdd,
-                              onRemove: onRemove,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  );
-                }).toList(),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
         const SizedBox(height: 8),

@@ -35,12 +35,14 @@ sealed class QueueNotificationBehavior<T> {
 final class Relocate<T> extends QueueNotificationBehavior<T> {
   const Relocate._({
     required this.positions,
+    this.permanent = false,
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
     super.springPhysics = const SpringPhysicsConfiguration.premium(),
   });
 
   factory Relocate.to(
     final Set<QueuePosition> positions, {
+    final bool permanent = false,
     final SpringPhysicsConfiguration springPhysics =
         const SpringPhysicsConfiguration.premium(),
   }) {
@@ -53,11 +55,16 @@ final class Relocate<T> extends QueueNotificationBehavior<T> {
     }
     return Relocate._(
       positions: positions,
+      permanent: permanent,
       springPhysics: springPhysics,
     );
   }
 
   final Set<QueuePosition> positions;
+
+  /// Whether relocating to a new position permanently redirects the queue
+  /// and migrates remaining notifications to the new destination.
+  final bool permanent;
 }
 
 /// Dismisses the notification.
@@ -92,6 +99,7 @@ final class Reorder<T> extends QueueNotificationBehavior<T> {
 final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
   const ReorderAndRelocate._({
     required this.positions,
+    this.permanent = false,
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
     super.springPhysics = const SpringPhysicsConfiguration.premium(),
     this.escapeThresholdInPixels = 80.0,
@@ -99,6 +107,7 @@ final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
 
   factory ReorderAndRelocate.to({
     required final Set<QueuePosition> positions,
+    final bool permanent = false,
     final double escapeThresholdInPixels = 80.0,
     final SpringPhysicsConfiguration springPhysics =
         const SpringPhysicsConfiguration.premium(),
@@ -112,12 +121,17 @@ final class ReorderAndRelocate<T> extends QueueNotificationBehavior<T> {
     }
     return ReorderAndRelocate._(
       positions: positions,
+      permanent: permanent,
       escapeThresholdInPixels: escapeThresholdInPixels,
       springPhysics: springPhysics,
     );
   }
 
   final Set<QueuePosition> positions;
+
+  /// Whether relocating to a new position permanently redirects the queue
+  /// and migrates remaining notifications to the new destination.
+  final bool permanent;
 
   /// Pixels beyond the source queue's rendered bounding box at which the
   /// system switches from Reorder to Relocate mode.

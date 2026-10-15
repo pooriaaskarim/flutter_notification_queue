@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../bloc/setup_bloc.dart';
-import '../../widgets/studio_section_header.dart';
 
 class SystemOptionsSection extends StatelessWidget {
   const SystemOptionsSection({
@@ -15,7 +14,6 @@ class SystemOptionsSection extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final setup = setupState.setup;
-    final enableDynamicParking = setup.enableDynamicChannelParking;
     final maxHistory = setup.maxHistoryEntries;
 
     final theme = Theme.of(context);
@@ -24,37 +22,6 @@ class SystemOptionsSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const StudioSectionHeader(title: 'SYSTEM OPTIONS'),
-        const SizedBox(height: 12),
-
-        // Dynamic Channel Parking switch
-        SwitchListTile(
-          title: const Text(
-            'Dynamic Parking',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: Text(
-            'Re-route channels dynamically when dragged to a new position.',
-            style: TextStyle(
-              fontSize: 9,
-              color: colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
-          value: enableDynamicParking,
-          onChanged: (final value) {
-            context.read<SetupBloc>().add(
-                  UpdateGlobalConfig(enableDynamicChannelParking: value),
-                );
-          },
-          contentPadding: EdgeInsets.zero,
-          activeTrackColor: colorScheme.primary,
-        ),
-
-        const SizedBox(height: 8),
-
         // Bounded History Log limit
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,

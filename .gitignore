@@ -43,3 +43,9 @@ migrate_working_dir/
 # Golden test failures
 /test/golden/failures/
 
+# Local developer environment & private configs
+.env
+.env.*
+!.env.example
+*.local
+

@@ -153,6 +153,7 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     _snapBackController.dispose();
     super.dispose();
   }
+
   QueueCoordinator get coordinator {
     final c = widget.notification.coordinator ??
         NotificationScope.maybeCoordinatorOf(context);
@@ -339,7 +340,6 @@ class DraggableTransitionsState extends State<DraggableTransitions>
         ReorderAndRelocate() => stateIndexOfThisItem(),
         Snooze() => position.alignment,
         Pin() => position.alignment,
-        Archive() => position.alignment,
         CustomAction() => position.alignment,
         _ => position,
       };
@@ -371,7 +371,6 @@ class DraggableTransitionsState extends State<DraggableTransitions>
       ReorderAndRelocate() => stateIndexOfThisItem(),
       Snooze() => position.alignment,
       Pin() => position.alignment,
-      Archive() => position.alignment,
       CustomAction() => position.alignment,
       _ => position,
     };
@@ -404,8 +403,6 @@ class DraggableTransitionsState extends State<DraggableTransitions>
     } else if (behavior is Snooze) {
       return edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is Pin) {
-      return edgesFromDismissZone(DismissZone.sideEdges, position);
-    } else if (behavior is Archive) {
       return edgesFromDismissZone(DismissZone.sideEdges, position);
     } else if (behavior is CustomAction) {
       return edgesFromDismissZone(DismissZone.sideEdges, position);

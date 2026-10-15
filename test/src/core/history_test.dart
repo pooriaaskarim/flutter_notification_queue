@@ -291,8 +291,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(controller.getHistory().length, equals(1));
-      final firstEvent =
-          controller.getHistory().first as NotificationQueued;
+      final firstEvent = controller.getHistory().first as NotificationQueued;
       expect(
         firstEvent.notification.id,
         equals('test_3'),

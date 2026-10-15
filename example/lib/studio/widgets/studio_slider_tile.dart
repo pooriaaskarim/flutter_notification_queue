@@ -28,13 +28,18 @@ class StudioSliderTile extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: colorScheme.onSurface.withValues(alpha: 0.6),
-                fontSize: 12,
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontSize: 12,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             Text(
               value == value.roundToDouble()
                   ? value.round().toString()

@@ -1,9 +1,10 @@
 # FNQ Release Stabilization Plan
 
-> **Target**: `flutter_notification_queue` v1.0 public release on pub.dev
-> **Current version**: 0.6.0
-> **Scope**: UX/DX critique, real-world use case validation, and platform performance hardening.
-> **Baseline**: `dart analyze` — no issues. `flutter test` — 177/177 passed.
+> **Target**: `flutter_notification_queue` v1.0 public release on pub.dev  
+> **Current Version**: 0.5.0  
+> **Scope**: UX/DX critique, real-world use case validation, stability, and platform performance hardening.  
+> **Baseline**: `dart analyze` — 0 issues | `flutter test` — 231/231 passed.  
+> **Unified Roadmap & Tracker**: See [Unified Roadmap](../roadmap.md) for multi-release tracking.
 
 ---
 
@@ -14,7 +15,8 @@ This plan is split into two major tracks that run in phases:
 | Track | Focus | Deliverable | Status |
 |---|---|---|---|
 | **Track A — Critique** | UX + DX stability & practicality | [UX & DX Critique Report](ux_dx_critique.md) | ✅ Complete |
-| **Track B — Performance** | Platform perf on all supported targets | [Performance Audit](performance_audit.md) | ✅ B1–B3 Complete, B4 Pending |
+| **Track B — Performance** | Platform perf on all supported targets | [Performance Audit](performance_audit.md) | ✅ Complete |
+| **Track C — Stability & Governance** | Core resource safety, 3-tier architecture & lifecycle hardening | [Unified Roadmap](../roadmap.md) & [Theme Token Spec](theme_token_architecture_spec.md) | ✅ Complete (v0.5.0) |
 
 ---
 
@@ -177,7 +179,7 @@ Walk the exported symbols in `lib/flutter_notification_queue.dart` and answer:
 | README: `FnqEvent` stream | Missing docs entirely | Add observability section |
 | README: Overflow / backpressure | Missing | Add section |
 | API docs (dartdoc) | Coverage unknown | Run `dart doc` and audit |
-| Migration guide | Only 0.3→0.4, missing 0.4→0.5 | Write 0.4→0.5 migration section |
+| Migration guide | Completed for 0.4→0.5 | [Migration Guide v0.5](../migration_v0_5.md) |
 | CHANGELOG 0.5.0 | Detailed; good | — |
 
 ---

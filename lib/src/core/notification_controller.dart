@@ -8,7 +8,10 @@ abstract class NotificationScopeState {
   Stream<NotificationEvent> get events;
 
   /// Enqueues [notification] for display.
-  void show(final AppNotification notification);
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  });
 
   /// Dismisses the notification described by [notification] by matching its id.
   void dismiss(
@@ -98,7 +101,6 @@ class NotificationController {
     required final Set<NotificationQueue> queues,
     final Set<NotificationChannel>? channels,
     final bool strictChannelLookup = false,
-    final bool enableDynamicChannelParking = false,
     final int maxHistoryEntries = 0,
     final LogLevel? logLevel,
     final List<Handler>? logHandlers,
@@ -107,7 +109,6 @@ class NotificationController {
           queues: queues,
           channels: channels ?? NotificationChannel.standardChannels(),
           strictChannelLookup: strictChannelLookup,
-          enableDynamicChannelParking: enableDynamicChannelParking,
           maxHistoryEntries: maxHistoryEntries,
         ) {
     _configureLogger(
@@ -153,20 +154,18 @@ class NotificationController {
     final Set<NotificationQueue>? queues,
     final Set<NotificationChannel>? channels,
     final bool? strictChannelLookup,
-    final bool? enableDynamicChannelParking,
     final int? maxHistoryEntries,
   }) {
     configuration.reconfigure(
       queues: queues,
       channels: channels,
       strictChannelLookup: strictChannelLookup,
-      enableDynamicChannelParking: enableDynamicChannelParking,
       maxHistoryEntries: maxHistoryEntries,
     );
     if (_attachedState is QueueCoordinator) {
       (_attachedState! as QueueCoordinator).historyLogger.updateMaxEntries(
-        configuration.maxHistoryEntries,
-      );
+            configuration.maxHistoryEntries,
+          );
     }
   }
 
@@ -202,9 +201,15 @@ class NotificationController {
 
   /// Enqueues [notification] for display.
   ///
+  /// Optionally supply [targetPosition] to route the notification to a
+  /// specific queue position, overriding channel defaults.
+  ///
   /// Throws [StateError] if no `NotificationScope` is currently attached.
   /// Use [tryShow] for race conditions where the scope may not yet be mounted.
-  void show(final AppNotification notification) {
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
     if (!isAttached) {
       throw StateError(
         'Cannot show notification: No NotificationScope is currently attached '
@@ -212,18 +217,24 @@ class NotificationController {
         'in the widget tree with this controller.',
       );
     }
-    _attachedState!.show(notification);
+    _attachedState!.show(notification, targetPosition: targetPosition);
   }
 
   /// Enqueues [notification] if a `NotificationScope` is attached; silently
   /// no-ops otherwise.
   ///
+  /// Optionally supply [targetPosition] to route the notification to a
+  /// specific queue position, overriding channel defaults.
+  ///
   /// Follows Dart's `tryXxx` convention: the safe, non-throwing alternative.
   /// Use this for app-startup race conditions where a BLoC or service may emit
   /// a notification before the first frame renders the scope.
-  void tryShow(final AppNotification notification) {
+  void tryShow(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
     if (isAttached) {
-      show(notification);
+      show(notification, targetPosition: targetPosition);
     }
   }
 
@@ -338,8 +349,17 @@ class NotificationController {
   Future<T> nextEvent<T extends NotificationEvent>() =>
       events.where((final e) => e is T).cast<T>().first;
 
+  bool _isDisposed = false;
+
+  /// Whether this controller has been disposed.
+  bool get isDisposed => _isDisposed;
+
   /// Disposes this controller and releases resources.
   void dispose() {
+    if (_isDisposed) {
+      return;
+    }
+    _isDisposed = true;
     _attachedState?.dispose();
     detach();
     if (!_proxyController.isClosed) {
@@ -379,11 +399,13 @@ class NotificationController {
     }
 
     if (captureFlutterErrors) {
+      final originalOnError = FlutterError.onError;
       FlutterError.onError = (final details) {
         Logger.get('fnq').error(
           details.exceptionAsString(),
           stackTrace: details.stack,
         );
+        originalOnError?.call(details);
       };
     }
   }

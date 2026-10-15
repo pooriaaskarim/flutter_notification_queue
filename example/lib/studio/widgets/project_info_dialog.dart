@@ -43,7 +43,7 @@ class ProjectInfoDialog extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final displayVersion =
-        version != null && version!.isNotEmpty ? 'v$version' : 'v0.4.0';
+        version != null && version!.isNotEmpty ? 'v$version' : 'v0.5.0';
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -133,8 +133,8 @@ class ProjectInfoDialog extends StatelessWidget {
                           Text(
                             'BSD 3-Clause License • Pure Dart & Flutter Engine',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface
-                                  .withValues(alpha: 0.55),
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.55),
                             ),
                           ),
                         ],
@@ -313,8 +313,7 @@ class ProjectInfoDialog extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
                         foregroundColor: colorScheme.primary,
-                        textStyle:
-                            const TextStyle(fontWeight: FontWeight.w700),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       child: const Text('Close'),
                     ),

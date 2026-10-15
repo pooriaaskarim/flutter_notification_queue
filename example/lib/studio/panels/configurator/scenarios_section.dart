@@ -6,7 +6,6 @@ import '../../bloc/setup_bloc.dart';
 import '../../models/channel_setup.dart';
 import '../../models/queue_setup.dart';
 import '../../studio_theme.dart';
-import '../../widgets/studio_section_header.dart';
 
 /// A curated set of one-click demo scenarios that showcase different FNQ
 /// features in realistic use cases.
@@ -21,8 +20,6 @@ class ScenariosSection extends StatelessWidget {
   Widget build(final BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const StudioSectionHeader(title: 'SCENARIOS'),
-          const SizedBox(height: 4),
           Text(
             'One-click demos — fires into your current configuration.',
             style: TextStyle(
@@ -275,30 +272,30 @@ final _scenarios = [
     },
   ),
 
-  // ── 7. Sticky Alert (Override) ──
+  // ── 7. Sticky Alert (Permanent) ──
   _Scenario(
-    title: 'Sticky Alert (Override)',
-    subtitle: 'un-swipeable card inside swipeable queue — override demo',
+    title: 'Sticky Alert (Permanent)',
+    subtitle: 'Permanent card — stays until action button tapped',
     icon: Icons.pin_drop_outlined,
     color: const Color(0xFFF59E0B),
     onFire: (final context) {
-      NotificationScope.of(context).show(
-        AppNotification(
-          title: 'CRITICAL SECURITY UPDATE',
-          message: 'This notification has dragBehavior: Disabled override. '
-              'It cannot be swiped away, but other notifications in this queue '
-              'can!',
-          channelName: 'error',
-          dismissDuration: null,
-          dragBehavior: const Disabled(),
-          action: NotificationAction.button(
-            label: 'OK',
-            onPressed: () {
-              debugPrint('[Scenario] Sticky Alert OK tapped');
-            },
-          ),
+      final scope = NotificationScope.of(context);
+      late final AppNotification notification;
+      notification = AppNotification(
+        title: 'CRITICAL SECURITY UPDATE',
+        message: 'This notification is configured with permanent: true. '
+            'It stays in place until explicitly dismissed or acknowledged.',
+        channelName: 'error',
+        permanent: true,
+        action: NotificationAction.button(
+          label: 'OK',
+          onPressed: () {
+            scope.dismiss(notification);
+            debugPrint('[Scenario] Sticky Alert OK tapped');
+          },
         ),
       );
+      scope.show(notification);
     },
   ),
 
@@ -568,6 +565,99 @@ final _scenarios = [
           scope.dismissGroup(groupKey);
         });
       });
+    },
+  ),
+
+  // ── 12. Interactive Snooze & Return ──
+  _Scenario(
+    title: 'Interactive Snooze & Return',
+    subtitle: 'Tap SNOOZE — programmatic snooze hides and resurfaces after 5s.',
+    icon: Icons.snooze_rounded,
+    color: const Color(0xFFFB7185),
+    onFire: (final context) {
+      final scope = NotificationScope.of(context);
+      late final AppNotification notification;
+      notification = AppNotification(
+        title: 'Meeting in 15 Minutes',
+        message: 'Product sync with mobile core team. Tap to snooze for 5s.',
+        channelName: 'info',
+        dismissDuration: const Duration(seconds: 25),
+        action: NotificationAction.button(
+          label: 'SNOOZE 5s',
+          onPressed: () {
+            scope.snooze(notification, const Duration(seconds: 5));
+          },
+        ),
+      );
+      scope.show(notification);
+    },
+  ),
+
+  // ── 13. Pinned Critical Alert ──
+  _Scenario(
+    title: 'Pinned Critical Alert',
+    subtitle: 'Sticky card — immune to swipe dismiss & timers until unpinned.',
+    icon: Icons.push_pin_rounded,
+    color: const Color(0xFFF59E0B),
+    onFire: (final context) {
+      final scope = NotificationScope.of(context);
+      late final AppNotification notification;
+      notification = AppNotification(
+        title: '⚠ Active Security Incident',
+        message: 'Locked in place by permanent intent. '
+            'Tap to acknowledge & unlock.',
+        channelName: 'warning',
+        permanent: true,
+        priority: NotificationPriority.critical,
+        dismissDuration: null,
+        action: NotificationAction.button(
+          label: 'ACKNOWLEDGE & UNPIN',
+          onPressed: () {
+            scope
+              ..unpin(notification)
+              ..dismiss(notification);
+          },
+        ),
+      );
+      scope.show(notification);
+    },
+  ),
+
+  // ── 14. Content Accent Tint (v0.5.0) ──
+  _Scenario(
+    title: 'Content Accent Tint',
+    subtitle: 'AppNotification.accentColor — dynamic content-driven accent',
+    icon: Icons.palette_outlined,
+    color: const Color(0xFF8B5CF6),
+    onFire: (final context) {
+      NotificationScope.of(context).show(
+        const AppNotification(
+          title: 'Content Accent Override',
+          message: 'Tints card accent without overriding channel typography.',
+          channelName: 'info',
+          accentColor: Color(0xFF8B5CF6),
+          dismissDuration: Duration(seconds: 8),
+        ),
+      );
+    },
+  ),
+
+  // ── 15. Contextual Dispatch Routing (v0.5.0) ──
+  _Scenario(
+    title: 'Contextual Dispatch Routing',
+    subtitle: 'controller.show(..., targetPosition:) — dynamic corner override',
+    icon: Icons.alt_route_rounded,
+    color: const Color(0xFF06B6D4),
+    onFire: (final context) {
+      NotificationScope.of(context).show(
+        const AppNotification(
+          title: 'Dynamic Routing Override',
+          message: 'Routed to bottomCenter via dispatch targetPosition!',
+          channelName: 'info',
+          dismissDuration: Duration(seconds: 6),
+        ),
+        targetPosition: QueuePosition.bottomCenter,
+      );
     },
   ),
 ];

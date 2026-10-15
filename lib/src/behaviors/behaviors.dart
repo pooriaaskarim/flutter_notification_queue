@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
+import 'package:meta/meta.dart';
 
 import '../enums/enums.dart';
 

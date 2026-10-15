@@ -88,5 +88,54 @@ void main() {
         expect(items2.isEmpty, isTrue);
       });
     });
+
+    group('Lifecycle & Snooze Timer', () {
+      test('dispose is idempotent and marks isDisposed', () {
+        expect(coordinator.isDisposed, isFalse);
+        coordinator.dispose();
+        expect(coordinator.isDisposed, isTrue);
+        // Calling again should not throw
+        expect(coordinator.dispose, returnsNormally);
+      });
+
+      test('snooze timer is cancelled on dispose', () async {
+        final notification = NotificationWidget(
+          id: 'snooze_test',
+          message: 'Snooze Test',
+          coordinator: coordinator,
+        );
+        coordinator
+          ..queue(notification)
+          ..snoozeWidget(
+            notification,
+            const Duration(milliseconds: 100),
+          )
+          ..dispose();
+
+        // Wait past timer duration to ensure callback does not throw
+        // or re-queue.
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        expect(coordinator.isDisposed, isTrue);
+      });
+
+      test('snooze timer is cancelled on detach', () async {
+        final notification = NotificationWidget(
+          id: 'snooze_detach_test',
+          message: 'Snooze Detach Test',
+          coordinator: coordinator,
+        );
+        coordinator
+          ..queue(notification)
+          ..snoozeWidget(
+            notification,
+            const Duration(milliseconds: 100),
+          )
+          ..detach();
+
+        // Wait past timer duration
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        expect(coordinator.activeQueues.value.isEmpty, isTrue);
+      });
+    });
   });
 }

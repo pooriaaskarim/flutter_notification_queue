@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 class _FakeNotificationScopeState implements NotificationScopeState {
   final _eventController = StreamController<NotificationEvent>.broadcast();
   final List<AppNotification> shownNotifications = [];
+  final List<QueuePosition?> shownPositions = [];
   final List<AppNotification> dismissedNotifications = [];
   bool dismissedAll = false;
   bool dismissedNewest = false;
@@ -22,8 +24,12 @@ class _FakeNotificationScopeState implements NotificationScopeState {
   Stream<NotificationEvent> get events => _eventController.stream;
 
   @override
-  void show(final AppNotification notification) {
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
     shownNotifications.add(notification);
+    shownPositions.add(targetPosition);
   }
 
   @override
@@ -263,24 +269,83 @@ void main() {
       final controller = NotificationController(
         queues: {const NotificationQueue(position: QueuePosition.topCenter)},
         channels: {const NotificationChannel(name: 'default')},
-        enableDynamicChannelParking: false,
+        maxHistoryEntries: 10,
       );
 
       expect(controller.configuration.queues.length, equals(1));
-      expect(controller.configuration.enableDynamicChannelParking, isFalse);
+      expect(controller.configuration.maxHistoryEntries, equals(10));
 
       controller.reconfigure(
         queues: {
           const NotificationQueue(position: QueuePosition.topCenter),
           const NotificationQueue(position: QueuePosition.bottomRight),
         },
-        enableDynamicChannelParking: true,
+        maxHistoryEntries: 50,
       );
 
       expect(controller.configuration.queues.length, equals(2));
-      expect(controller.configuration.enableDynamicChannelParking, isTrue);
+      expect(controller.configuration.maxHistoryEntries, equals(50));
 
       controller.dispose();
+    });
+
+    test('dispose is idempotent and marks isDisposed', () {
+      final controller = NotificationController(
+        queues: {const NotificationQueue()},
+      );
+
+      expect(controller.isDisposed, isFalse);
+      controller.dispose();
+      expect(controller.isDisposed, isTrue);
+      expect(controller.dispose, returnsNormally);
+    });
+
+    test('captureFlutterErrors chains original FlutterError.onError handler',
+        () {
+      final originalHandler = FlutterError.onError;
+      var originalCalled = false;
+
+      FlutterError.onError = (final details) {
+        originalCalled = true;
+      };
+
+      try {
+        final controller = NotificationController(
+          queues: {const NotificationQueue()},
+          captureFlutterErrors: true,
+        );
+        addTearDown(controller.dispose);
+
+        FlutterError.onError?.call(
+          FlutterErrorDetails(exception: Exception('test error')),
+        );
+
+        expect(originalCalled, isTrue);
+      } finally {
+        FlutterError.onError = originalHandler;
+      }
+    });
+
+    test('show and tryShow forward targetPosition to attached scope', () {
+      final controller = NotificationController(
+        queues: {const NotificationQueue()},
+      );
+      final fakeScope = _FakeNotificationScopeState();
+      controller.attach(fakeScope);
+      addTearDown(controller.dispose);
+
+      const notif1 = AppNotification(message: 'Default routing');
+      const notif2 = AppNotification(message: 'Targeted routing');
+
+      controller
+        ..show(notif1)
+        ..show(notif2, targetPosition: QueuePosition.bottomCenter)
+        ..tryShow(notif1, targetPosition: QueuePosition.topRight);
+
+      expect(fakeScope.shownNotifications.length, equals(3));
+      expect(fakeScope.shownPositions[0], isNull);
+      expect(fakeScope.shownPositions[1], equals(QueuePosition.bottomCenter));
+      expect(fakeScope.shownPositions[2], equals(QueuePosition.topRight));
     });
   });
 }

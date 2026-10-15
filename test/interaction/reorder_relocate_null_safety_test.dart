@@ -25,9 +25,6 @@ void main() {
               },
             ),
           ),
-          const NotificationQueue(
-            position: QueuePosition.topLeft,
-          ),
         },
       );
     });

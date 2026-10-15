@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:flutter/material.dart' show BorderRadius, EdgeInsets;
+import 'package:flutter/material.dart'
+    show BorderRadius, EdgeInsets, EdgeInsetsGeometry;
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
 /// The immutable setup for a single [NotificationQueue].
@@ -13,6 +14,8 @@ class QueueSetup extends Equatable {
     this.opacity = 0.7,
     this.elevation = 3.0,
     this.borderRadius = 8.0,
+    this.padding,
+    this.borderWidth,
     this.transitionType = SlideTransitionStrategy,
     this.maxStackSize = 3,
     this.spacing = 4.0,
@@ -20,9 +23,12 @@ class QueueSetup extends Equatable {
     this.horizontalMargin = 36.0,
     this.dragBehaviorType = Dismiss,
     this.dragDismissZone = DismissZone.sideEdges,
+    this.dragSnoozeSeconds = 5,
     this.longPressBehaviorType = Disabled,
     this.longPressDismissZone = DismissZone.sideEdges,
+    this.longPressSnoozeSeconds = 5,
     this.relocateTargets = const {},
+    this.relocatePermanent = false,
     this.closeButtonBehaviorType = AlwaysVisible,
     this.tapBehaviorType = TapToDismiss,
     this.maxWidth,
@@ -35,6 +41,8 @@ class QueueSetup extends Equatable {
   final double opacity;
   final double elevation;
   final double borderRadius;
+  final double? padding;
+  final double? borderWidth;
 
   // ── Animation ──
   final Type transitionType;
@@ -49,9 +57,12 @@ class QueueSetup extends Equatable {
   // ── Gestures ──
   final Type dragBehaviorType;
   final DismissZone dragDismissZone;
+  final int dragSnoozeSeconds;
   final Type longPressBehaviorType;
   final DismissZone longPressDismissZone;
+  final int longPressSnoozeSeconds;
   final Set<QueuePosition> relocateTargets;
+  final bool relocatePermanent;
   final Type closeButtonBehaviorType;
 
   // ── Tap ──
@@ -75,6 +86,10 @@ class QueueSetup extends Equatable {
     final double? opacity,
     final double? elevation,
     final double? borderRadius,
+    final double? padding,
+    final bool clearPadding = false,
+    final double? borderWidth,
+    final bool clearBorderWidth = false,
     final Type? transitionType,
     final int? maxStackSize,
     final double? spacing,
@@ -82,9 +97,12 @@ class QueueSetup extends Equatable {
     final double? horizontalMargin,
     final Type? dragBehaviorType,
     final DismissZone? dragDismissZone,
+    final int? dragSnoozeSeconds,
     final Type? longPressBehaviorType,
     final DismissZone? longPressDismissZone,
+    final int? longPressSnoozeSeconds,
     final Set<QueuePosition>? relocateTargets,
+    final bool? relocatePermanent,
     final Type? closeButtonBehaviorType,
     final Type? tapBehaviorType,
     final double? maxWidth,
@@ -97,6 +115,9 @@ class QueueSetup extends Equatable {
         opacity: opacity ?? this.opacity,
         elevation: elevation ?? this.elevation,
         borderRadius: borderRadius ?? this.borderRadius,
+        padding: clearPadding ? null : (padding ?? this.padding),
+        borderWidth:
+            clearBorderWidth ? null : (borderWidth ?? this.borderWidth),
         transitionType: transitionType ?? this.transitionType,
         maxStackSize: maxStackSize ?? this.maxStackSize,
         spacing: spacing ?? this.spacing,
@@ -104,10 +125,14 @@ class QueueSetup extends Equatable {
         horizontalMargin: horizontalMargin ?? this.horizontalMargin,
         dragBehaviorType: dragBehaviorType ?? this.dragBehaviorType,
         dragDismissZone: dragDismissZone ?? this.dragDismissZone,
+        dragSnoozeSeconds: dragSnoozeSeconds ?? this.dragSnoozeSeconds,
         longPressBehaviorType:
             longPressBehaviorType ?? this.longPressBehaviorType,
         longPressDismissZone: longPressDismissZone ?? this.longPressDismissZone,
+        longPressSnoozeSeconds:
+            longPressSnoozeSeconds ?? this.longPressSnoozeSeconds,
         relocateTargets: relocateTargets ?? this.relocateTargets,
+        relocatePermanent: relocatePermanent ?? this.relocatePermanent,
         closeButtonBehaviorType:
             closeButtonBehaviorType ?? this.closeButtonBehaviorType,
         tapBehaviorType: tapBehaviorType ?? this.tapBehaviorType,
@@ -118,6 +143,9 @@ class QueueSetup extends Equatable {
 
   // ── Library Mapping Helpers ──
 
+  EdgeInsetsGeometry? get _padding =>
+      padding != null ? EdgeInsets.all(padding!) : null;
+
   /// Builds the [QueueStyle] for this setup.
   QueueStyle toQueueStyle() {
     if (styleType == FlatQueueStyle) {
@@ -125,6 +153,8 @@ class QueueSetup extends Equatable {
         opacity: opacity,
         elevation: elevation,
         borderRadius: _borderRadius,
+        padding: _padding,
+        borderWidth: borderWidth ?? 4.0,
       );
     }
     if (styleType == OutlinedQueueStyle) {
@@ -132,12 +162,16 @@ class QueueSetup extends Equatable {
         opacity: opacity,
         elevation: elevation,
         borderRadius: _borderRadius,
+        padding: _padding,
+        borderWidth: borderWidth ?? 1.0,
       );
     }
     return FilledQueueStyle(
       opacity: opacity,
       elevation: elevation,
       borderRadius: _borderRadius,
+      padding: _padding,
+      borderWidth: borderWidth ?? 1.0,
     );
   }
 
@@ -157,15 +191,24 @@ class QueueSetup extends Equatable {
     if (dragBehaviorType == Dismiss) {
       return Dismiss(zones: dragDismissZone);
     }
+    if (dragBehaviorType == Snooze) {
+      return Snooze(duration: Duration(seconds: dragSnoozeSeconds));
+    }
+    if (dragBehaviorType == Pin) {
+      return const Pin();
+    }
     if (dragBehaviorType == Relocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : Relocate.to(relocateTargets);
+          : Relocate.to(relocateTargets, permanent: relocatePermanent);
     }
     if (dragBehaviorType == ReorderAndRelocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : ReorderAndRelocate.to(positions: relocateTargets);
+          : ReorderAndRelocate.to(
+              positions: relocateTargets,
+              permanent: relocatePermanent,
+            );
     }
     if (dragBehaviorType == Reorder) {
       return const Reorder();
@@ -178,15 +221,24 @@ class QueueSetup extends Equatable {
     if (longPressBehaviorType == Dismiss) {
       return Dismiss(zones: longPressDismissZone);
     }
+    if (longPressBehaviorType == Snooze) {
+      return Snooze(duration: Duration(seconds: longPressSnoozeSeconds));
+    }
+    if (longPressBehaviorType == Pin) {
+      return const Pin();
+    }
     if (longPressBehaviorType == Relocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : Relocate.to(relocateTargets);
+          : Relocate.to(relocateTargets, permanent: relocatePermanent);
     }
     if (longPressBehaviorType == ReorderAndRelocate) {
       return relocateTargets.isEmpty
           ? const Disabled()
-          : ReorderAndRelocate.to(positions: relocateTargets);
+          : ReorderAndRelocate.to(
+              positions: relocateTargets,
+              permanent: relocatePermanent,
+            );
     }
     if (longPressBehaviorType == Reorder) {
       return const Reorder();
@@ -252,6 +304,8 @@ class QueueSetup extends Equatable {
         opacity,
         elevation,
         borderRadius,
+        padding,
+        borderWidth,
         transitionType,
         maxStackSize,
         spacing,
@@ -259,9 +313,12 @@ class QueueSetup extends Equatable {
         horizontalMargin,
         dragBehaviorType,
         dragDismissZone,
+        dragSnoozeSeconds,
         longPressBehaviorType,
         longPressDismissZone,
+        longPressSnoozeSeconds,
         relocateTargets,
+        relocatePermanent,
         closeButtonBehaviorType,
         tapBehaviorType,
         maxWidth,

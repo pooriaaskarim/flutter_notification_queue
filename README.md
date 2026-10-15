@@ -11,7 +11,7 @@ A production-grade, overlay-based spatial notification engine for Flutter applic
 
 [![Try NFQ Studio Web Demo](https://img.shields.io/badge/Try_Live_Demo-NFQ_Studio-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://pooriaaskarim.github.io/flutter_notification_queue/)
 
-`FlutterNotificationQueue` (FNQ) provides a comprehensive solution for displaying in-app notifications with spatial queue placement, Intent-First interactive drag/reorder/relocate gestures, notification bundling, priority triage preemption, dynamic channel parking, real-time observability, and deep theming.
+`FlutterNotificationQueue` (FNQ) provides a comprehensive solution for displaying in-app notifications with spatial queue placement, Intent-First interactive drag/reorder/relocate gestures, notification bundling, priority triage preemption, permanent queue relocation, real-time observability, and deep theming.
 
 ---
 
@@ -48,7 +48,7 @@ Add `flutter_notification_queue` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_notification_queue: ^0.4.0
+  flutter_notification_queue: ^0.5.0
 ```
 
 ### 2. Initialize and Mount Scope
@@ -74,12 +74,12 @@ class MyApp extends StatelessWidget {
         const NotificationChannel(
           name: 'info',
           position: QueuePosition.topRight,
-          defaultColor: Color(0xFF0EA5E9),
+          theme: NotificationThemeData(color: Color(0xFF0EA5E9)),
         ),
         const NotificationChannel(
           name: 'error',
           position: QueuePosition.topRight,
-          defaultColor: Color(0xFFEF4444),
+          theme: NotificationThemeData(color: Color(0xFFEF4444)),
         ),
       },
       queues: {
@@ -196,21 +196,24 @@ const AppNotification(
 ### Permanent & Sticky Notifications
 
 ```dart
-// Permanent card (no auto-dismiss countdown)
+// Permanent card (no auto-dismiss countdown, stays until user action)
 const AppNotification(
   title: 'Ongoing Download',
   message: 'Downloading asset pack (45%)...',
   channelName: 'info',
-  dismissDuration: null,
+  permanent: true,
 );
 
-// Sticky Alert (Disables swipe gestures for this specific card)
+// Sticky Alert with button action
 AppNotification(
   title: 'Critical Alert',
   message: 'System requires immediate attention.',
   channelName: 'error',
-  dismissDuration: null,
-  dragBehavior: const Disabled(),
+  permanent: true,
+  action: NotificationAction.button(
+    label: 'ACKNOWLEDGE',
+    onPressed: () => handleAlert(),
+  ),
 );
 ```
 
@@ -285,17 +288,21 @@ const AppNotification(
 
 ---
 
-### 4. Dynamic Channel Parking
+### 4. Permanent Queue Relocation
 
-Enable channels to dynamically learn new queue positions when users drag notifications across the screen:
+Configure a queue to dynamically relocate to other screen positions upon drag, migrating active notifications and redirecting future queue traffic:
 
 ```dart
-final controller = NotificationController(
-  enableDynamicChannelParking: true,
-);
+NotificationQueue(
+  position: QueuePosition.topRight,
+  longPressDragBehavior: Relocate.to(
+    {QueuePosition.topLeft, QueuePosition.bottomRight},
+    permanent: true, // Queue redirects future notifications here & migrates active cards
+  ),
+)
 ```
 
-When enabled, relocating a card from `topRight` to `bottomRight` dynamically re-routes future notifications dispatched on that channel to `bottomRight`.
+When `permanent: true` is set, relocating any card moves the entire queue: active sibling cards smoothly migrate to join it, and future incoming notifications targeting that queue are automatically delivered to the new position.
 
 ---
 
@@ -313,6 +320,8 @@ controller.events.listen((event) {
       print('Dismissed: ${notification.id} ($reason)');
     case NotificationRelocated(:final notification, :final from, :final to):
       print('Relocated from ${from.name} to ${to.name}');
+    case QueuePositionRelocated(:final from, :final to, :final permanent):
+      print('Queue moved from ${from.name} to ${to.name} (permanent: $permanent)');
     default:
       break;
   }
@@ -332,7 +341,7 @@ final history = controller.getHistory(
 
 ### 6. In-Place Runtime Reconfiguration
 
-Update queues, channels, dynamic parking, and history settings live **without re-instantiating the controller** or clearing active visible cards:
+Update queues, channels, and history settings live **without re-instantiating the controller** or clearing active visible cards:
 
 ```dart
 controller.reconfigure(
@@ -342,7 +351,7 @@ controller.reconfigure(
       maxStackSize: 5,
     ),
   },
-  enableDynamicChannelParking: true,
+  maxHistoryEntries: 50,
 );
 ```
 
@@ -405,7 +414,9 @@ NotificationQueue(
 | `NotificationScope.of(context).show(...)` | `NotificationScope.of(context).show(AppNotification(...))` | Context-aware dispatching |
 | `FlutterNotificationQueue.events` | `controller.events` | Stable broadcast stream |
 
-For full step-by-step details, see [doc/migration_v0_4.md](doc/migration_v0_4.md).
+For full step-by-step details, see the migration guides:
+* [**Upgrading to v0.5.0**](doc/migration_v0_5.md) (Four architectural tiers, permanent queue relocation, `NotificationThemeData`)
+* [**Upgrading to v0.4.0**](doc/migration_v0_4.md) (Migration to `NotificationController` and `NotificationScope`)
 
 ---
 

@@ -65,6 +65,15 @@ class QueueCoordinator implements NotificationScopeState {
   final _activeQueuesNotifier =
       ValueNotifier<Map<QueuePosition, NotificationQueue>>({});
 
+  /// Active snooze timers that need to be cancelled if the coordinator
+  /// detaches or disposes.
+  final _snoozeTimers = <Timer>{};
+
+  bool _isDisposed = false;
+
+  /// Whether this coordinator has been disposed.
+  bool get isDisposed => _isDisposed;
+
   void attach(final OverlayPortalController controller) {
     _logger.debug('Attaching OverlayPortalController...');
     _controller = controller;
@@ -72,19 +81,31 @@ class QueueCoordinator implements NotificationScopeState {
 
   void detach() {
     _logger.debug('Detaching OverlayPortalController...');
+    for (final timer in _snoozeTimers) {
+      timer.cancel();
+    }
+    _snoozeTimers.clear();
     for (final key in _widgetStateKeys.values) {
       key.currentState?.ditchAllDismissTimers();
     }
     _controller = null;
     _widgetStateKeys.clear();
     _initializationQueue.clear();
-    try {
-      _activeQueuesNotifier.value = {};
-    } on Object catch (_) {}
+    if (!_isDisposed) {
+      try {
+        _activeQueuesNotifier.value = {};
+      } on Object catch (e) {
+        _logger.debug('Error resetting active queues notifier on detach: $e');
+      }
+    }
   }
 
   @override
   void dispose() {
+    if (_isDisposed) {
+      return;
+    }
+    _isDisposed = true;
     for (final key in _widgetStateKeys.values) {
       key.currentState?.ditchAllDismissTimers();
     }
@@ -95,7 +116,9 @@ class QueueCoordinator implements NotificationScopeState {
     _historyLogger.dispose();
     try {
       _activeQueuesNotifier.dispose();
-    } on Object catch (_) {}
+    } on Object catch (e) {
+      _logger.debug('Error disposing active queues notifier: $e');
+    }
   }
 
   /// Retrieves and clears pending initialization items for a queue.
@@ -131,8 +154,6 @@ class QueueCoordinator implements NotificationScopeState {
   @override
   void clearHistory() => _historyLogger.clear();
 
-
-
   // --- Actions ---
 
   void queue(
@@ -166,8 +187,17 @@ class QueueCoordinator implements NotificationScopeState {
   }
 
   @override
-  void show(final AppNotification notification) {
-    queue(notification.toWidget(configuration, this));
+  void show(
+    final AppNotification notification, {
+    final QueuePosition? targetPosition,
+  }) {
+    queue(
+      notification.toWidget(
+        configuration,
+        this,
+        targetPosition,
+      ),
+    );
   }
 
   // ── Dismiss ──────────────────────────────────────────────────────────────
@@ -199,7 +229,17 @@ class QueueCoordinator implements NotificationScopeState {
     );
 
     final notificationQueue = notification.queue;
-    final key = _widgetStateKeys[notificationQueue.position];
+    var key = _widgetStateKeys[notificationQueue.position];
+    if (key?.currentState == null ||
+        !key!.currentState!.containsId(notification.id)) {
+      for (final candidate in _widgetStateKeys.values) {
+        if (candidate.currentState != null &&
+            candidate.currentState!.containsId(notification.id)) {
+          key = candidate;
+          break;
+        }
+      }
+    }
     if (key?.currentState != null) {
       key!.currentState!.dismiss(notification, reason: reason);
     } else {
@@ -295,19 +335,83 @@ class QueueCoordinator implements NotificationScopeState {
   /// Used internally by gesture plugins.
   NotificationWidget? relocateWidget(
     final NotificationWidget notification,
-    final QueuePosition newPosition,
-  ) {
+    final QueuePosition newPosition, {
+    final bool migrateSiblings = true,
+  }) {
     final notificationQueue = notification.queue;
     NotificationWidget? newNotification;
-    final sourceKey = _widgetStateKeys[notificationQueue.position];
+    QueuePosition fromPosition = notificationQueue.position;
+    var sourceKey = _widgetStateKeys[fromPosition];
+    if (sourceKey?.currentState == null ||
+        !sourceKey!.currentState!.containsId(notification.id)) {
+      for (final entry in _widgetStateKeys.entries) {
+        if (entry.value.currentState != null &&
+            entry.value.currentState!.containsId(notification.id)) {
+          fromPosition = entry.key;
+          sourceKey = entry.value;
+          break;
+        }
+      }
+    }
+
+    // Determine if relocation is permanent for this queue
+    bool isPermanent = false;
+    for (final behavior in [
+      notificationQueue.longPressDragBehavior,
+      notificationQueue.dragBehavior,
+    ]) {
+      if (behavior is Relocate && (behavior as Relocate).permanent) {
+        isPermanent = true;
+        break;
+      }
+      if (behavior is ReorderAndRelocate &&
+          (behavior as ReorderAndRelocate).permanent) {
+        isPermanent = true;
+        break;
+      }
+    }
+
+    // Capture sibling notifications before removing the dragged card.
+    // In permanent relocation, ALL notifications (active and pending) migrate.
+    final pendingToMigrate = <NotificationWidget>[];
+    final activeToMigrate = <NotificationWidget>[];
+
+    if (isPermanent && migrateSiblings) {
+      final state = sourceKey?.currentState;
+      if (state != null) {
+        // Drain pending notifications first so remove() does NOT promote them
+        // into the old queue!
+        pendingToMigrate.addAll(
+          state.drainPendingNotifications(
+            excludeId: notification.id,
+          ),
+        );
+        activeToMigrate.addAll(
+          state.activeNotifications.where(
+            (final n) => n.id != notification.id,
+          ),
+        );
+      }
+      // Capture any unmounted notifications in _initializationQueue
+      final initQueue = _initializationQueue[fromPosition];
+      if (initQueue != null) {
+        pendingToMigrate.addAll(
+          initQueue
+              .where((final e) => e.id != notification.id)
+              .map((final e) => e.blueprint),
+        );
+        initQueue.clear();
+      }
+    }
 
     // 1. Remove from source
     bool removed = false;
-    if (sourceKey?.currentState != null) {
-      removed = sourceKey!.currentState!.remove(notification);
+    final sourceState = sourceKey?.currentState;
+    if (sourceState != null) {
+      removed = sourceState.remove(notification);
     } else {
       // Check initialization queue
-      final initQueue = _initializationQueue[notificationQueue.position];
+      final initQueue = _initializationQueue[fromPosition];
       if (initQueue != null) {
         final initialLen = initQueue.length;
         initQueue.removeWhere((final n) => n.id == notification.id);
@@ -318,33 +422,53 @@ class QueueCoordinator implements NotificationScopeState {
     // 2. Add to target if removed
     if (removed) {
       final targetQueue = newPosition.generateQueueFrom(notification.queue);
-      newNotification = notification.copyToQueue(targetQueue);
+      final migrated = notification.copyToQueue(targetQueue);
+      newNotification = migrated;
+
+      // Register dragged notification callback first
+      WidgetsBinding.instance.addPostFrameCallback((final _) {
+        queue(migrated);
+      });
 
       final config = configuration;
-      if (config.enableDynamicChannelParking) {
-        final oldPosition = notificationQueue.position;
-        config.updateChannelRoute(notification.channelName, newPosition);
+      if (isPermanent && migrateSiblings) {
+        config.relocateQueuePosition(fromPosition, newPosition);
         _eventController.add(
-          NotificationChannelRouteUpdated(
-            channelName: notification.channelName,
-            oldPosition: oldPosition,
-            newPosition: newPosition,
+          QueuePositionRelocated(
+            from: fromPosition,
+            to: newPosition,
+            permanent: true,
           ),
         );
+
+        // Migrate all remaining active notifications in this queue
+        for (final sibling in activeToMigrate) {
+          relocateWidget(sibling, newPosition, migrateSiblings: false);
+        }
+
+        // Migrate all pending notifications to the new queue
+        WidgetsBinding.instance.addPostFrameCallback((final _) {
+          for (final pending in pendingToMigrate) {
+            final targetPending = pending.copyToQueue(targetQueue);
+            _eventController.add(
+              NotificationRelocated(
+                notification: targetPending,
+                from: fromPosition,
+                to: newPosition,
+              ),
+            );
+            queue(targetPending);
+          }
+        });
       }
 
       _eventController.add(
         NotificationRelocated(
           notification: newNotification,
-          from: notificationQueue.position,
+          from: fromPosition,
           to: newPosition,
         ),
       );
-      // Defer addition to next frame to avoid Duplicate GlobalKey error
-      // if the source queue animates the exit (keeping the key alive).
-      WidgetsBinding.instance.addPostFrameCallback((final _) {
-        queue(newNotification!);
-      });
     }
 
     return newNotification;
@@ -413,10 +537,16 @@ class QueueCoordinator implements NotificationScopeState {
     );
 
     // 3. Schedule auto-re-queue
-    Timer(duration, () {
+    late final Timer timer;
+    timer = Timer(duration, () {
+      _snoozeTimers.remove(timer);
+      if (_isDisposed) {
+        return;
+      }
       final freshCopy = notification.copyForRequeue(snoozedAt: null);
       queue(freshCopy);
     });
+    _snoozeTimers.add(timer);
   }
 
   // ── Pin / Unpin ──────────────────────────────────────────────────────────
@@ -438,11 +568,7 @@ class QueueCoordinator implements NotificationScopeState {
   void pinWidget(final NotificationWidget notification) {
     final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
     final state = stateKey.currentState;
-    if (state != null) {
-      state.widget.isPinned = true;
-    } else {
-      notification.isPinned = true;
-    }
+    notification.isPinnedNotifier.value = true;
     _eventController.add(
       NotificationPinned(notification: state?.widget ?? notification),
     );
@@ -465,11 +591,7 @@ class QueueCoordinator implements NotificationScopeState {
   void unpinWidget(final NotificationWidget notification) {
     final stateKey = GlobalObjectKey<NotificationWidgetState>(notification.id);
     final state = stateKey.currentState;
-    if (state != null) {
-      state.widget.isPinned = false;
-    } else {
-      notification.isPinned = false;
-    }
+    notification.isPinnedNotifier.value = false;
     _eventController.add(
       NotificationUnpinned(notification: state?.widget ?? notification),
     );
@@ -598,6 +720,22 @@ class QueueCoordinator implements NotificationScopeState {
       if (state != null) {
         list.addAll(state.activeNotifications);
       }
+    }
+    return list;
+  }
+
+  /// Returns a list of all currently pending notifications waiting across all
+  /// queues and initializing queues.
+  List<NotificationWidget> get pendingNotifications {
+    final list = <NotificationWidget>[];
+    for (final key in _widgetStateKeys.values) {
+      final state = key.currentState;
+      if (state != null) {
+        list.addAll(state.pendingNotifications);
+      }
+    }
+    for (final entries in _initializationQueue.values) {
+      list.addAll(entries.map((final e) => e.blueprint));
     }
     return list;
   }

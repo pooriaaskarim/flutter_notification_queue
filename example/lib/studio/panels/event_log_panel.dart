@@ -1,10 +1,26 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 
+import '../bloc/studio_bloc.dart';
+
+/// Filter categories for the event log stream.
+enum EventLogFilter {
+  all('All'),
+  flow('Flow'),
+  actions('Actions'),
+  alerts('Alerts');
+
+  const EventLogFilter(this.label);
+  final String label;
+}
+
 /// A live event log that subscribes to [NotificationScope] events and
-/// displays the last `_maxEvents` lifecycle events in real time.
+/// displays the last `_maxEvents` lifecycle events in real time with
+/// filtering, active counter, and tap-to-inspect deep diagnostics.
 class EventLogPanel extends StatefulWidget {
   const EventLogPanel({super.key});
 
@@ -13,11 +29,28 @@ class EventLogPanel extends StatefulWidget {
 }
 
 class _EventLogPanelState extends State<EventLogPanel> {
-  static const _maxEvents = 50;
+  static const _maxEvents = 100;
 
   final _events = <_LogEntry>[];
+  final _activeIds = <String>{};
   StreamSubscription<NotificationEvent>? _sub;
   final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+
+  EventLogFilter _currentFilter = EventLogFilter.all;
+  bool _searchOpen = false;
+  String _searchQuery = '';
+  _LogEntry? _selectedEntry;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
 
   @override
   void didChangeDependencies() {
@@ -26,8 +59,10 @@ class _EventLogPanelState extends State<EventLogPanel> {
     final scope = NotificationScope.of(context);
     final history = scope.getHistory();
     _events.clear();
+    _activeIds.clear();
+
     for (final event in history.reversed) {
-      _events.add(_LogEntry(event: event, time: DateTime.now()));
+      _processEvent(event, recordOnly: true);
     }
     _sub = scope.events.listen(_onEvent);
   }
@@ -36,91 +71,354 @@ class _EventLogPanelState extends State<EventLogPanel> {
   void dispose() {
     _sub?.cancel();
     _scrollController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  void _processEvent(
+    final NotificationEvent event, {
+    required final bool recordOnly,
+  }) {
+    switch (event) {
+      case NotificationQueued(:final notification):
+        _activeIds.add(notification.id);
+      case NotificationDismissed(:final notification):
+        _activeIds.remove(notification.id);
+      case QueueOverflowed(:final dropped):
+        _activeIds.remove(dropped.id);
+      case NotificationGroupDismissed():
+        break;
+      default:
+        break;
+    }
+
+    final entry = _LogEntry(event: event, time: DateTime.now());
+    if (recordOnly) {
+      _events.add(entry);
+    } else {
+      _events.insert(0, entry);
+      if (_events.length > _maxEvents) {
+        _events.removeLast();
+      }
+    }
   }
 
   void _onEvent(final NotificationEvent event) {
     setState(() {
-      _events.insert(0, _LogEntry(event: event, time: DateTime.now()));
-      if (_events.length > _maxEvents) {
-        _events.removeLast();
-      }
+      _processEvent(event, recordOnly: false);
     });
   }
+
+  bool _matchesFilter(final NotificationEvent event) {
+    switch (_currentFilter) {
+      case EventLogFilter.all:
+        return true;
+      case EventLogFilter.flow:
+        return event is NotificationQueued ||
+            event is NotificationDismissed ||
+            event is NotificationRelocated ||
+            event is NotificationReordered;
+      case EventLogFilter.actions:
+        return event is NotificationTapped ||
+            event is NotificationCustomActionTriggered ||
+            event is NotificationPinned ||
+            event is NotificationUnpinned ||
+            event is NotificationSnoozed ||
+            event is NotificationGroupExpanded ||
+            event is NotificationGroupCollapsed ||
+            event is NotificationGroupDismissed;
+      case EventLogFilter.alerts:
+        return event is QueueOverflowed ||
+            event is QueuePositionRelocated ||
+            event is NotificationChannelRouteUpdated;
+    }
+  }
+
+  bool _matchesSearch(final _LogEntry entry) {
+    if (_searchQuery.isEmpty) {
+      return true;
+    }
+    final event = entry.event;
+    final meta = _EventMeta.of(event, isDark: true);
+    final text = [
+      meta.label,
+      meta.badge ?? '',
+      meta.subtitle ?? '',
+      event.runtimeType.toString(),
+    ].join(' ').toLowerCase();
+
+    return text.contains(_searchQuery);
+  }
+
+  List<_LogEntry> get _filteredEvents => _events
+      .where((final e) => _matchesFilter(e.event) && _matchesSearch(e))
+      .toList();
 
   @override
   Widget build(final BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final filtered = _filteredEvents;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // ── Header ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: colorScheme.onSurface.withValues(alpha: 0.08),
+        LayoutBuilder(
+          builder: (final context, final constraints) {
+            final isCompact = constraints.maxWidth < 260;
+            return Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 8 : 12,
+                vertical: 10,
               ),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.stream_rounded,
-                size: 16,
-                color: colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'EVENT LOG',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 2,
-                  color: colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-              const Spacer(),
-              if (_events.isNotEmpty)
-                _Badge(
-                  label: '${_events.length}',
-                  color: colorScheme.primary,
-                ),
-              const SizedBox(width: 8),
-              Tooltip(
-                message: 'Clear log',
-                child: InkWell(
-                  onTap: () {
-                    NotificationScope.of(context).clearHistory();
-                    setState(_events.clear);
-                  },
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.delete_sweep_outlined,
-                      size: 16,
-                      color: colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: colorScheme.onSurface.withValues(alpha: 0.08),
                   ),
                 ),
               ),
-            ],
-          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Live Pulse Dot
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: const Color(0xFF10B981),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981)
+                                        .withValues(alpha: 0.45),
+                                    blurRadius: 4,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'EVENTS',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: isCompact ? 0.8 : 1.5,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      if (_activeIds.isNotEmpty) ...[
+                        _Badge(
+                          label: isCompact
+                              ? '${_activeIds.length}'
+                              : '${_activeIds.length} active',
+                          tooltip: '${_activeIds.length} active',
+                          color: const Color(0xFF10B981),
+                        ),
+                        SizedBox(width: isCompact ? 2 : 4),
+                      ],
+                      _Badge(
+                        label: '${_events.length}',
+                        tooltip: '${_events.length} total events',
+                        color: colorScheme.primary,
+                      ),
+                      SizedBox(width: isCompact ? 2 : 4),
+                      Tooltip(
+                        message: _searchOpen ? 'Close search' : 'Search events',
+                        child: InkWell(
+                          onTap: () {
+                            setState(() {
+                              _searchOpen = !_searchOpen;
+                              if (!_searchOpen) {
+                                _searchController.clear();
+                              }
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: EdgeInsets.all(isCompact ? 2 : 4),
+                            child: Icon(
+                              _searchOpen ? Icons.close : Icons.search,
+                              size: 16,
+                              color: _searchOpen
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurface
+                                      .withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: isCompact ? 2 : 4),
+                      Tooltip(
+                        message: 'Clear log',
+                        child: InkWell(
+                          onTap: () {
+                            NotificationScope.of(context).clearHistory();
+                            setState(() {
+                              _events.clear();
+                              _activeIds.clear();
+                              _selectedEntry = null;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: EdgeInsets.all(isCompact ? 2 : 4),
+                            child: Icon(
+                              Icons.delete_sweep_outlined,
+                              size: 16,
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: isCompact ? 2 : 4),
+                      Tooltip(
+                        message: 'Collapse Event Stream',
+                        child: InkWell(
+                          onTap: () => context
+                              .read<StudioBloc>()
+                              .add(const ToggleEventLog(open: false)),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: EdgeInsets.all(isCompact ? 2 : 4),
+                            child: Icon(
+                              Icons.close,
+                              size: 16,
+                              color:
+                                  colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_searchOpen) ...[
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 32,
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(fontSize: 11),
+                        decoration: InputDecoration(
+                          hintText: 'Filter by message, id, badge…',
+                          hintStyle: TextStyle(
+                            fontSize: 11,
+                            color:
+                                colorScheme.onSurface.withValues(alpha: 0.35),
+                          ),
+                          prefixIcon: const Icon(Icons.search, size: 14),
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 8),
+                          filled: true,
+                          fillColor: colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(6),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  // Filter pills
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: EventLogFilter.values.map((final filter) {
+                        final isSelected = _currentFilter == filter;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InkWell(
+                            onTap: () =>
+                                setState(() => _currentFilter = filter),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 9,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? colorScheme.primary
+                                        .withValues(alpha: 0.16)
+                                    : colorScheme.onSurface
+                                        .withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? colorScheme.primary
+                                          .withValues(alpha: 0.4)
+                                      : Colors.transparent,
+                                ),
+                              ),
+                              child: Text(
+                                filter.label,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                  color: isSelected
+                                      ? colorScheme.primary
+                                      : colorScheme.onSurface
+                                          .withValues(alpha: 0.55),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
 
         // ── Event list ──
         Expanded(
-          child: _events.isEmpty
-              ? _EmptyState(colorScheme: colorScheme)
+          child: filtered.isEmpty
+              ? _EmptyState(
+                  colorScheme: colorScheme,
+                  hasFilter: _currentFilter != EventLogFilter.all ||
+                      _searchQuery.isNotEmpty,
+                )
               : ListView.builder(
                   controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: _events.length,
-                  itemBuilder: (final context, final i) =>
-                      _EventTile(entry: _events[i]),
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  itemCount: filtered.length,
+                  itemBuilder: (final context, final i) {
+                    final entry = filtered[i];
+                    final isSelected = _selectedEntry == entry;
+                    return _EventTile(
+                      entry: entry,
+                      isSelected: isSelected,
+                      onTap: () {
+                        setState(() {
+                          _selectedEntry = isSelected ? null : entry;
+                        });
+                      },
+                    );
+                  },
                 ),
         ),
       ],
@@ -131,9 +429,15 @@ class _EventLogPanelState extends State<EventLogPanel> {
 // ── Tile ────────────────────────────────────────────────────────────────────
 
 class _EventTile extends StatelessWidget {
-  const _EventTile({required this.entry});
+  const _EventTile({
+    required this.entry,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   final _LogEntry entry;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   @override
   Widget build(final BuildContext context) {
@@ -142,69 +446,130 @@ class _EventTile extends StatelessWidget {
     final meta = _EventMeta.of(entry.event, isDark: isDark);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Time
-          SizedBox(
-            width: 52,
-            child: Text(
-              _formatTime(entry.time),
-              style: TextStyle(
-                fontSize: 9,
-                fontFamily: 'monospace',
-                color: colorScheme.onSurface,
-                height: 2.0,
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          // Color dot
-          Container(
-            margin: const EdgeInsets.only(top: 6),
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: meta.color,
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Content
-          Expanded(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      child: Material(
+        color: isSelected
+            ? colorScheme.primary.withValues(alpha: 0.08)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      meta.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface.withValues(alpha: 0.85),
+                    // Time
+                    SizedBox(
+                      width: 50,
+                      child: Text(
+                        _formatTime(entry.time),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontFamily: 'monospace',
+                          color: colorScheme.onSurface.withValues(alpha: 0.5),
+                          height: 1.8,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    if (meta.badge != null)
-                      _Badge(label: meta.badge!, color: meta.color),
+                    const SizedBox(width: 4),
+                    // Color dot
+                    Container(
+                      margin: const EdgeInsets.only(top: 5),
+                      width: 7,
+                      height: 7,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: meta.color,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: LayoutBuilder(
+                                  builder: (final context, final constraints) =>
+                                      Row(
+                                    children: [
+                                      ConstrainedBox(
+                                        constraints: BoxConstraints(
+                                          maxWidth: meta.badge != null
+                                              ? (constraints.maxWidth - 36)
+                                                  .clamp(0.0, double.infinity)
+                                              : constraints.maxWidth,
+                                        ),
+                                        child: Text(
+                                          meta.label,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: colorScheme.onSurface
+                                                .withValues(alpha: 0.85),
+                                          ),
+                                        ),
+                                      ),
+                                      if (meta.badge != null) ...[
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: _Badge(
+                                            label: meta.badge!,
+                                            color: meta.color,
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                isSelected
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
+                                size: 14,
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.3),
+                              ),
+                            ],
+                          ),
+                          if (meta.subtitle != null) ...[
+                            const SizedBox(height: 1),
+                            Text(
+                              meta.subtitle!,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.45),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-                if (meta.subtitle != null)
-                  Text(
-                    meta.subtitle!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                // Inspector Drawer when selected
+                if (isSelected) ...[
+                  const SizedBox(height: 8),
+                  _InspectorDrawer(entry: entry, meta: meta),
+                ],
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -213,6 +578,253 @@ class _EventTile extends StatelessWidget {
       '${t.hour.toString().padLeft(2, '0')}:'
       '${t.minute.toString().padLeft(2, '0')}:'
       '${t.second.toString().padLeft(2, '0')}';
+}
+
+// ── Inspector Drawer ────────────────────────────────────────────────────────
+
+class _InspectorDrawer extends StatelessWidget {
+  const _InspectorDrawer({required this.entry, required this.meta});
+
+  final _LogEntry entry;
+  final _EventMeta meta;
+
+  @override
+  Widget build(final BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final details = _extractDetails(entry.event);
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: colorScheme.onSurface.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text(
+                'DIAGNOSTICS',
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+              const Spacer(),
+              InkWell(
+                onTap: () {
+                  final summary = StringBuffer()
+                    ..writeln('NFQ Event: ${entry.event.runtimeType}')
+                    ..writeln('Timestamp: ${entry.time.toIso8601String()}');
+                  for (final row in details.entries) {
+                    summary.writeln('${row.key}: ${row.value}');
+                  }
+                  Clipboard.setData(ClipboardData(text: summary.toString()));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Diagnostics copied to clipboard'),
+                      duration: Duration(milliseconds: 1200),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.copy,
+                        size: 11,
+                        color: colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Copy',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          LayoutBuilder(
+            builder: (final context, final constraints) {
+              final isWide = constraints.maxWidth >= 480;
+              if (isWide) {
+                final itemWidth = (constraints.maxWidth - 12) / 2;
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 4,
+                  children: details.entries
+                      .map(
+                        (final e) => SizedBox(
+                          width: itemWidth,
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 70,
+                                child: Text(
+                                  e.key,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.45),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  e.value,
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontFamily: 'monospace',
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.8),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: details.entries
+                    .map(
+                      (final e) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 1.5),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 70,
+                              child: Text(
+                                e.key,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.45),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                e.value,
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontFamily: 'monospace',
+                                  color: colorScheme.onSurface
+                                      .withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, String> _extractDetails(final NotificationEvent event) {
+    final map = <String, String>{
+      'Event': event.runtimeType.toString(),
+    };
+
+    switch (event) {
+      case NotificationQueued(:final notification):
+        map['ID'] = notification.id;
+        map['Channel'] = notification.channelName;
+        map['Position'] = notification.queue.position.name;
+        map['Priority'] = notification.priority?.name ?? 'default';
+        if (notification.title != null) {
+          map['Title'] = notification.title!;
+        }
+        map['Message'] = notification.message;
+      case NotificationDismissed(:final notification, :final reason):
+        map['ID'] = notification.id;
+        map['Channel'] = notification.channelName;
+        map['Reason'] = reason.name;
+        if (notification.title != null) {
+          map['Title'] = notification.title!;
+        }
+      case NotificationTapped(:final notification, :final behavior):
+        map['ID'] = notification.id;
+        map['Channel'] = notification.channelName;
+        map['Behavior'] = behavior.runtimeType.toString();
+      case NotificationRelocated(:final from, :final to, :final notification):
+        map['ID'] = notification.id;
+        map['Route'] = '${from.name} → ${to.name}';
+      case NotificationReordered(:final notification, :final toIndex):
+        map['ID'] = notification.id;
+        map['Index'] = '$toIndex';
+      case QueueOverflowed(:final queue, :final dropped):
+        map['Queue'] = queue.position.name;
+        map['Dropped ID'] = dropped.id;
+        map['Dropped Msg'] = dropped.title ?? dropped.message;
+      case NotificationSnoozed(:final notification, :final duration):
+        map['ID'] = notification.id;
+        map['Duration'] = '${duration.inSeconds}s';
+      case NotificationPinned(:final notification):
+        map['ID'] = notification.id;
+      case NotificationUnpinned(:final notification):
+        map['ID'] = notification.id;
+      case NotificationCustomActionTriggered(
+          :final notification,
+          :final actionName,
+        ):
+        map['ID'] = notification.id;
+        map['Action'] = actionName;
+      case NotificationGroupExpanded(:final groupKey, :final count):
+        map['GroupKey'] = groupKey;
+        map['Cards'] = '$count';
+      case NotificationGroupCollapsed(:final groupKey, :final count):
+        map['GroupKey'] = groupKey;
+        map['Cards'] = '$count';
+      case NotificationGroupDismissed(:final groupKey):
+        map['GroupKey'] = groupKey;
+      case QueuePositionRelocated(:final from, :final to, :final permanent):
+        map['From'] = from.name;
+        map['To'] = to.name;
+        map['Permanent'] = '$permanent';
+      case NotificationChannelRouteUpdated(
+          :final channelName,
+          :final oldPosition,
+          :final newPosition,
+        ):
+        map['Channel'] = channelName;
+        map['Change'] = '${oldPosition.name} → ${newPosition.name}';
+    }
+
+    return map;
+  }
 }
 
 // ── Event meta mapping ──────────────────────────────────────────────────────
@@ -350,6 +962,19 @@ class _EventMeta {
             badge: 'all',
             subtitle: groupKey,
           ),
+        QueuePositionRelocated(
+          :final from,
+          :final to,
+          :final permanent,
+        ) =>
+          _EventMeta(
+            label: permanent ? 'Queue Relocated' : 'Queue Moved',
+            color: isDark
+                ? const Color(0xFFEC4899)
+                : const Color(0xFFBE185D), // pink-500 : pink-700
+            badge: '${from.name} → ${to.name}',
+            subtitle: permanent ? 'Permanent redirect' : 'Ephemeral move',
+          ),
         NotificationChannelRouteUpdated(
           :final channelName,
           :final oldPosition,
@@ -369,35 +994,50 @@ class _EventMeta {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 class _Badge extends StatelessWidget {
-  const _Badge({required this.label, required this.color});
+  const _Badge({
+    required this.label,
+    required this.color,
+    this.tooltip,
+  });
 
   final String label;
   final Color color;
+  final String? tooltip;
 
   @override
-  Widget build(final BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w600,
-            color: color,
-            letterSpacing: 0.4,
+  Widget build(final BuildContext context) => Tooltip(
+        message: tooltip ?? label,
+        waitDuration: const Duration(milliseconds: 300),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.4,
+            ),
           ),
         ),
       );
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.colorScheme});
+  const _EmptyState({
+    required this.colorScheme,
+    this.hasFilter = false,
+  });
 
   final ColorScheme colorScheme;
+  final bool hasFilter;
 
   @override
   Widget build(final BuildContext context) => Center(
@@ -405,24 +1045,28 @@ class _EmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.sensors_outlined,
-              size: 36,
+              hasFilter
+                  ? Icons.filter_alt_off_outlined
+                  : Icons.sensors_outlined,
+              size: 32,
               color: colorScheme.onSurface.withValues(alpha: 0.15),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
-              'Waiting for events…',
+              hasFilter ? 'No events match filter' : 'Waiting for events…',
               style: TextStyle(
                 fontSize: 12,
-                color: colorScheme.onSurface.withValues(alpha: 0.3),
+                color: colorScheme.onSurface.withValues(alpha: 0.35),
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Fire a scenario or tap a notification',
+              hasFilter
+                  ? 'Try selecting "All" or clearing search'
+                  : 'Fire a preset or trigger notifications',
               style: TextStyle(
                 fontSize: 10,
-                color: colorScheme.onSurface.withValues(alpha: 0.2),
+                color: colorScheme.onSurface.withValues(alpha: 0.22),
               ),
             ),
           ],

@@ -124,7 +124,7 @@ final class VisibleOnHover extends QueueCloseButtonBehavior {
 /// > **⚠️ Zombie Prevention**: Using [Hidden] requires the queue to have
 /// > at least one gesture-based dismissal method (drag or long-press drag).
 /// > Otherwise, notifications become undismissable "zombies" and
-/// > [ConfigurationManager] will throw an [ArgumentError] at initialization.
+/// > [NotificationController] will throw an [ArgumentError] at initialization.
 ///
 /// ```dart
 /// NotificationQueue(

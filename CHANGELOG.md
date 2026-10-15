@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.5.0] - 2026-10-14
+
+### Architectural Governance & Design System
+- **Permanent Queue Relocation**: Added `permanentRelocation: QueuePosition?` to `QueueBehavior` and `NotificationQueue`. All incoming notifications and pending backlog items are automatically routed to the destination queue. Decoupled relocation strictly to the queue layer (channels have zero relocation logic).
+- **The Four Architectural Tiers**: Formalized the separation between Surface Owner (`NotificationScope`), Spatial Anchor (`NotificationQueue`), Domain Routing (`NotificationChannel`), and Event Payload (`AppNotification`).
+- **`QueueStyle` Strict Single Ownership**: `QueueStyle` (`FilledQueueStyle`, `OutlinedQueueStyle`, `FlatQueueStyle`) lives strictly on `NotificationQueue` to govern physical card geometry (`borderRadius`, `padding`, `elevation`, `opacity` for glassmorphism). Neither channels nor payloads take styling archetypes.
+- **Parametric Theme Token System (`NotificationThemeData`)**: Introduced unified, dark-mode reactive `NotificationThemeData` driven parametrically by `color` and Material 3 design tokens, deterministically controlling archetype role distribution with automatic WCAG contrast.
+- **Standardized Box Model Spacing**: Standardized `margin` (safe-area boundary spacing), `spacing` (inter-card gap in stacks), and `padding` (intra-card content insets).
+- **Contextual Dispatch-Time Routing (`targetPosition`)**: Added `targetPosition` parameter to `NotificationController.show()`, `controller.tryShow()`, and `QueueCoordinator.show()`, enabling callers to specify placement contextually without hardcoding coordinates on data payloads.
+- **Removal of Archiving**: Removed phantom `Archive<T>` drag intent and plugin. Use `Dismiss` or listen to `NotificationDismissed` / `HistoryLogger`.
+- **Payload Deprecation Window (v0.5.x → v0.6.0)**: Marked `AppNotification.position`, `dragBehavior`, `longPressDragBehavior`, `initialIsPinned`, `snoozedAt`, and loose scalar colors as `@Deprecated` with non-breaking fallbacks.
+- **Multi-Window Layout Modernization**: Migrated `_QueueOverlayLayoutDelegate` from `PlatformDispatcher.instance.implicitView` to context-aware `View.maybeOf(context)`, future-proofing for multi-window Flutter.
+- **Experimental Drag Intents**: Annotated `Pin<T>`, `Snooze<T>`, and `CustomAction<T>` with `@experimental`.
+
+### Studio & Observability (Example App)
+- **Live In-Place Draft Card Preview (`LiveCardPreview`)**: Real-time presentational sandbox resolving the 3-gear theme cascade with zero dismiss timers or queue side-effects, featuring an optical checkerboard canvas to highlight glassmorphic transparency.
+- **Live Spatial Stage Radar (`LiveStageRadar`)**: 3×3 spatial radar monitoring active counts, pending counts, and permanent relocations across all 8 queue positions with instant stage controls (`Dismiss Newest`, `Dismiss All`).
+- **Global Hardware Keyboard Shortcuts**: Bound `Ctrl+Enter` (`⌘Enter`) to fire preview drafts, `Ctrl+E` to reset drafts, and `Ctrl+L` to load random drafts, operating cleanly even when input fields are focused.
+- **Top Cockpit & Single Source of Truth**: Consolidated notification firing into the Top Cockpit, eliminating duplicate fire buttons from inner sub-tabs.
+- **Adaptive Multi-Column Dashboard & Resizable Panes**: Added 3-column resizable layout with drag dividers, collapsible sidebars, bounded aesthetic proportions, and an adaptive 660px 2-pane threshold for narrow screens.
+- **Queue & Channel Geometry Editors**: Integrated live radius, elevation, padding, opacity, and margin controls directly into the configurator with real-time code generation.
+- **Snooze & Pin Studio Integration**: Added interactive configurator controls, live preview actions, and dedicated demo scenarios for Snooze duration and Pin toggling.
+- **Multi-Platform Toolchain**: Modernized Gradle build configuration and added unified multi-platform launcher script (`example/scripts/run.sh`).
+
+### Stability & Resource Hardening
+- **Snooze Timer Lifecycle & Leak Protection**: Added active timer registry (`_snoozeTimers`) to `QueueCoordinator`. All pending snooze timers are automatically cancelled upon coordinator detach or disposal, and callbacks guard against invoking actions on disposed instances.
+- **Idempotent Lifecycle Disposal**: Added `_isDisposed` guards and public `isDisposed` getters to both `NotificationController` and `QueueCoordinator`, eliminating double-dispose exceptions when controllers and widget scopes unmount in varying orders.
+- **Chained `FlutterError.onError` Handler**: Replaced destructive `FlutterError.onError` reassignment in `NotificationController` with non-destructive handler chaining, preserving integration with crash reporters (Sentry, Firebase Crashlytics) and Flutter defaults.
+- **Single Source of Truth for `isPinned`**: Linked `NotificationEntry` directly to the blueprint's `isPinnedNotifier`, and refactored `pinWidget` and `unpinWidget` in `QueueCoordinator` to mutate pinned state directly through the notifier.
+- **Robust Detach & Disposal Logging**: Replaced empty `on Object catch (_) {}` exception swallowing in `QueueCoordinator` with contextual debug logging.
+
+### Test Suite & Visual Regression Hardening
+- **Tolerant Golden File Comparator**: Added `_TolerantGoldenComparator` with a 0.5% diff tolerance threshold to `visual_regression_test.dart` to prevent platform-specific sub-pixel anti-aliasing false positives in CI environments.
+- **Queue Relocation & Backlog Migration Tests**: Added test coverage validating queue-level permanent relocation, cluster invariance, and automatic migration of pending/waiting notifications.
+- **Studio Widget & Adaptability Tests**: Added 22 widget tests covering multi-column adaptability, resizable panes, and hardware keyboard shortcuts.
+- **Lifecycle & Chaining Unit Tests**: Added unit tests covering `NotificationController` and `QueueCoordinator` disposal idempotency, snooze timer cancellation on detach/dispose, and `FlutterError.onError` preservation.
+
+### Documentation & Guides
+- **v0.5.0 Migration Guide**: Published [`doc/migration_v0_5.md`](doc/migration_v0_5.md) detailing the four architectural tiers, breaking changes, permanent queue relocation, and deprecation roadmap.
+- **Module Documentation Updates**: Completely modernized [`doc/queue/styles.md`](doc/queue/styles.md), [`doc/queue/README.md`](doc/queue/README.md), and [`doc/channel/README.md`](doc/channel/README.md) for v0.5.0 conventions.
+- **NFQ Studio Guide**: Overhauled [`example/README.md`](example/README.md) with comprehensive feature guides, keyboard shortcuts, and local platform run instructions.
+
 ## [0.4.1] - 2026-09-12
 
 ### Studio & Web Deployment
@@ -82,7 +124,7 @@ All features from early pre-releases (`0.4.0` - `0.7.0`) consolidated into a sin
 - **Hover-to-Pause Dismissal:** Hovering over a notification card pauses its auto-dismiss timer, which resumes smoothly when the pointer leaves.
 
 #### Core API & Observability
-- **Dynamic Channel Parking:** Introduced runtime routing updates where dragging/relocating a notification card dynamically updates the routing rules for all future notifications of its channel.
+- **Permanent Queue Relocation:** Introduced runtime queue relocation via `Relocate.to(..., permanent: true)` where dragging a card permanently redirects future queue traffic and migrates active cards together.
 - **Event History Log:** Added an in-memory, LIFO bounded ring buffer (`maxHistoryEntries`) to capture notification events. Added `getHistory()` for querying with filters (channelName, dismissReason, since, limit) and `clearHistory()` for cache management.
 - **Zero-overhead Disabling:** When disabled (`maxHistoryEntries` is set to `0` or less), the history subscription is completely cancelled and detached, guaranteeing zero runtime performance or memory overhead.
 - **Logd Core Integration:** Upgraded logging package to `logd` version `^0.8.6` and integrated package-wide structured log handlers.

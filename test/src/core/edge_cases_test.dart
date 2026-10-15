@@ -292,8 +292,7 @@ void main() {
       );
     });
 
-    testWidgets(
-        'NotificationController.show creates and displays notification',
+    testWidgets('NotificationController.show creates and displays notification',
         (final tester) async {
       final controller = NotificationController(
         queues: {const NotificationQueue(position: QueuePosition.topCenter)},

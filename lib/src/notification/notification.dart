@@ -15,6 +15,9 @@ import '../notification_channel/notification_channel.dart';
 import '../notification_queue/notification_queue.dart';
 import '../types/type_defs.dart';
 import '../utils/utils.dart';
+import 'theme/notification_theme_data.dart';
+
+export 'theme/notification_theme_data.dart';
 
 part 'app_notification.dart';
 part 'interaction/drag_gesture_context.dart';
@@ -23,7 +26,6 @@ part 'interaction/overlays/dismissal_targets.dart';
 part 'interaction/overlays/intent_targets.dart';
 part 'interaction/overlays/relocation_targets.dart';
 part 'interaction/overlays/reorder_targets.dart';
-part 'interaction/plugins/archive.dart';
 part 'interaction/plugins/base.dart';
 part 'interaction/plugins/custom_action.dart';
 part 'interaction/plugins/dismiss.dart';
@@ -42,7 +44,6 @@ part 'interaction/zones/resolvers.dart';
 part 'interaction/zones/slots.dart';
 part 'notification_action.dart';
 part 'theme/notification_theme.dart';
-
 
 /// A widget representing an individual notification card in a queue.
 ///
@@ -87,6 +88,7 @@ class NotificationWidget extends StatefulWidget {
     final Color? color,
     final Color? foregroundColor,
     final Color? backgroundColor,
+    final Color? accentColor,
     final Duration? dismissDuration,
     final bool permanent = false,
     final NotificationBuilder? builder,
@@ -112,9 +114,8 @@ class NotificationWidget extends StatefulWidget {
         id ?? 'notif_${_idCounter++}_${DateTime.now().microsecondsSinceEpoch}';
     final resolvedKey = GlobalObjectKey<NotificationWidgetState>(resolvedId);
     final resolveChannel = config.getChannel(channelName);
-    final effectivePosition = position ??
-        config.getEffectiveChannelPosition(channelName) ??
-        resolveChannel.position;
+    final targetPosition = position ?? resolveChannel.position;
+    final effectivePosition = config.getEffectiveQueuePosition(targetPosition);
     final resolvedQueue = config.getQueue(effectivePosition);
 
     // permanent: true forces null dismiss duration regardless of channel
@@ -137,6 +138,7 @@ class NotificationWidget extends StatefulWidget {
       color: color,
       foregroundColor: foregroundColor,
       backgroundColor: backgroundColor,
+      accentColor: accentColor,
       dismissDuration: resolvedDismissDuration,
       builder: builder,
       priority: priority,
@@ -159,6 +161,7 @@ class NotificationWidget extends StatefulWidget {
     this.color,
     this.foregroundColor,
     this.backgroundColor,
+    this.accentColor,
     this.dismissDuration,
     this.tapBehavior,
     this.dragBehavior,
@@ -283,6 +286,10 @@ class NotificationWidget extends StatefulWidget {
   /// If null, defaults to Notification Channels
   /// [NotificationChannel.defaultColor] and if that's null
   /// [Theme.of(Context).colorScheme.primary].
+  @Deprecated(
+    'Use theme: NotificationThemeData(color: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? color;
 
   /// Notification foreground color.
@@ -292,6 +299,10 @@ class NotificationWidget extends StatefulWidget {
   /// If null, defaults to Notification Channels
   /// [NotificationChannel.defaultForegroundColor] and if that's null
   /// [Theme.of(Context).colorScheme.onSurface].
+  @Deprecated(
+    'Use theme: NotificationThemeData(foregroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? foregroundColor;
 
   /// Notification background color
@@ -301,15 +312,21 @@ class NotificationWidget extends StatefulWidget {
   /// [NotificationChannel.defaultBackgroundColor] and if that's not provided
   /// (null value or Unregistered [NotificationChannel]),
   /// [Theme.of(Context).colorScheme.surface].
+  @Deprecated(
+    'Use theme: NotificationThemeData(backgroundColor: ...) instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? backgroundColor;
 
-  /// Notification dismiss duration
+  /// Optional experimental accent color override.
+  @experimental
+  final Color? accentColor;
+
+  /// Notification dismiss duration.
   ///
-  /// If null, [NotificationWidget] will be permanent.
-  /// Defaults to [NotificationChannel.defaultDismissDuration] if null.
-  //todo: what if a channel is set with a specific Duration but
-  //todo:  user wants a specific descendant notification to be permanent?
-  //todo: (bool) permanent field for notification or the channel?
+  /// If `null`, defaults to [NotificationChannel.defaultDismissDuration]. If
+  /// that is also null, or if the notification is pinned (`isPinned == true`),
+  /// the notification remains permanent until explicitly dismissed.
   final Duration? dismissDuration;
 
   final NotificationQueue queue;
@@ -528,6 +545,20 @@ class NotificationWidgetState extends State<NotificationWidget>
       oldWidget.isPinnedNotifier.removeListener(_handlePinChanged);
       widget.isPinnedNotifier.addListener(_handlePinChanged);
     }
+    if (oldWidget.accentColor != widget.accentColor ||
+        oldWidget.queue.style != widget.queue.style ||
+        // ignore: deprecated_member_use_from_same_package
+        oldWidget.color != widget.color ||
+        // ignore: deprecated_member_use_from_same_package
+        oldWidget.backgroundColor != widget.backgroundColor ||
+        // ignore: deprecated_member_use_from_same_package
+        oldWidget.foregroundColor != widget.foregroundColor) {
+      theme = NotificationTheme.resolveWith(
+        context,
+        widget.queue.style,
+        widget,
+      );
+    }
   }
 
   void _handlePinChanged() {
@@ -539,8 +570,8 @@ class NotificationWidgetState extends State<NotificationWidget>
   }
 
   QueueCoordinator get coordinator {
-    final c = widget.coordinator ??
-        NotificationScope.maybeCoordinatorOf(context);
+    final c =
+        widget.coordinator ?? NotificationScope.maybeCoordinatorOf(context);
     if (c == null) {
       throw StateError(
         'No QueueCoordinator available for NotificationWidget. '
@@ -699,11 +730,11 @@ class NotificationWidgetState extends State<NotificationWidget>
                           border: theme.border,
                         ),
                         child: Padding(
-                          padding: EdgeInsetsDirectional.symmetric(
-                            vertical: isExpanded ? 8 : 4,
-                            horizontal: 4,
-                          ),
-                          // padding: EdgeInsets.all(8),
+                          padding: theme.padding ??
+                              EdgeInsetsDirectional.symmetric(
+                                vertical: isExpanded ? 8 : 4,
+                                horizontal: 4,
+                              ),
                           child: Column(
                             spacing: 4,
                             children: [
@@ -727,10 +758,11 @@ class NotificationWidgetState extends State<NotificationWidget>
                                   spacing: 8,
                                   children: [
                                     IconTheme(
-                                      data: IconThemeData(
-                                        color: theme.color,
-                                        size: 24,
-                                      ),
+                                      data: theme.iconTheme ??
+                                          IconThemeData(
+                                            color: theme.color,
+                                            size: 24,
+                                          ),
                                       child: widget.icon ??
                                           widget.channel.defaultIcon ??
                                           const SizedBox.shrink(),
@@ -738,11 +770,11 @@ class NotificationWidgetState extends State<NotificationWidget>
                                     Expanded(
                                       child: Text(
                                         widget.message,
-                                        style: theme
-                                            .themeData.textTheme.bodyMedium
-                                            ?.copyWith(
-                                          color: theme.foregroundColor,
-                                        ),
+                                        style: theme.messageTextStyle ??
+                                            theme.themeData.textTheme.bodyMedium
+                                                ?.copyWith(
+                                              color: theme.foregroundColor,
+                                            ),
                                         maxLines: isExpanded ? 10 : 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -788,10 +820,11 @@ class NotificationWidgetState extends State<NotificationWidget>
           textDirection: Utils.estimateDirectionOfText(widget.title ?? ''),
           child: Text(
             widget.title ?? '',
-            style: theme.themeData.textTheme.titleMedium?.copyWith(
-              color: theme.foregroundColor,
-              fontWeight: FontWeight.bold,
-            ),
+            style: theme.titleTextStyle ??
+                theme.themeData.textTheme.titleMedium?.copyWith(
+                  color: theme.foregroundColor,
+                  fontWeight: FontWeight.bold,
+                ),
             maxLines: isExpanded ? 5 : null,
             overflow: TextOverflow.ellipsis,
           ),
@@ -814,8 +847,9 @@ class NotificationWidgetState extends State<NotificationWidget>
             ),
             child: Text(
               widget.action!.label!,
-              style: theme.themeData.textTheme.labelMedium
-                  ?.copyWith(color: theme.foregroundColor),
+              style: theme.actionTextStyle ??
+                  theme.themeData.textTheme.labelMedium
+                      ?.copyWith(color: theme.foregroundColor),
             ),
             onPressed: () {
               widget.action!.onPressed();

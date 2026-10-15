@@ -5,8 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 // Helpers
 // ---------------------------------------------------------------------------
 
-
-
 // ---------------------------------------------------------------------------
 // TapBehavior unit tests
 // ---------------------------------------------------------------------------
@@ -140,8 +138,6 @@ void main() {
   // ── Per-notification tapBehavior override ─────────────────────────────────
 
   group('NotificationWidget.tapBehavior per-notification override', () {
-
-
     test('notification.tapBehavior field stores override', () {
       final n = NotificationWidget(
         message: 'Test',
@@ -178,8 +174,6 @@ void main() {
   // ── Widget-level resolution (_resolvedTapBehavior) ────────────────────────
 
   group('_resolvedTapBehavior resolution priority', () {
-
-
     testWidgets(
       'per-notification TapToExpand overrides queue TapToDismiss',
       (final tester) async {

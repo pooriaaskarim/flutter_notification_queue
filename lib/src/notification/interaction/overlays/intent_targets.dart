@@ -444,32 +444,6 @@ class PinTargets extends StatelessWidget {
       );
 }
 
-class ArchiveTargets extends StatelessWidget {
-  const ArchiveTargets({
-    required this.screenSize,
-    required this.threshold,
-    required this.zones,
-    required this.pointerPositionNotifier,
-    super.key,
-  });
-
-  final double threshold;
-  final Size screenSize;
-  final List<EdgeDropZone> zones;
-  final ValueNotifier<OffsetPair?> pointerPositionNotifier;
-
-  @override
-  Widget build(final BuildContext context) => IntentTargets(
-        screenSize: screenSize,
-        threshold: threshold,
-        zones: zones,
-        pointerPositionNotifier: pointerPositionNotifier,
-        icon: Icons.archive_rounded,
-        activeColor: Colors.green,
-        label: 'ARCHIVE',
-      );
-}
-
 class CustomActionTargets extends StatelessWidget {
   const CustomActionTargets({
     required this.screenSize,
@@ -826,43 +800,6 @@ class PinFeedbackOverlay extends StatelessWidget {
         springPhysics: springPhysics,
         activeColor: Colors.blue,
         labelText: isPinned ? 'RELEASE TO UNPIN' : 'RELEASE TO PIN',
-        child: child,
-      );
-}
-
-class ArchiveFeedbackOverlay extends StatelessWidget {
-  const ArchiveFeedbackOverlay({
-    required this.passedThreshold,
-    required this.dragOffset,
-    required this.thresholdInPixels,
-    required this.screenSize,
-    required this.startData,
-    required this.zones,
-    required this.springPhysics,
-    required this.child,
-    super.key,
-  });
-
-  final bool passedThreshold;
-  final Offset? dragOffset;
-  final int thresholdInPixels;
-  final Size screenSize;
-  final DragStartData? startData;
-  final List<EdgeDropZone> zones;
-  final SpringPhysicsConfiguration springPhysics;
-  final Widget child;
-
-  @override
-  Widget build(final BuildContext context) => IntentFeedbackOverlay(
-        passedThreshold: passedThreshold,
-        dragOffset: dragOffset,
-        thresholdInPixels: thresholdInPixels,
-        screenSize: screenSize,
-        startData: startData,
-        zones: zones,
-        springPhysics: springPhysics,
-        activeColor: Colors.green,
-        labelText: 'RELEASE TO ARCHIVE',
         child: child,
       );
 }

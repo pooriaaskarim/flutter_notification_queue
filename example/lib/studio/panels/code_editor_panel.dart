@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/notification_bloc.dart';
 import '../bloc/setup_bloc.dart';
+import '../bloc/studio_bloc.dart';
 import '../engine/code_generator.dart';
 import '../engine/dart_syntax_highlighter.dart';
 
@@ -12,8 +13,15 @@ import '../engine/dart_syntax_highlighter.dart';
 ///
 /// Reads `StudioSetup` from `SetupBloc` and `NotificationDraft`
 /// from `NotificationBloc`.
-class CodeEditorPanel extends StatelessWidget {
+class CodeEditorPanel extends StatefulWidget {
   const CodeEditorPanel({super.key});
+
+  @override
+  State<CodeEditorPanel> createState() => _CodeEditorPanelState();
+}
+
+class _CodeEditorPanelState extends State<CodeEditorPanel> {
+  CodeSnippetScope _selectedScope = CodeSnippetScope.fullSetup;
 
   @override
   Widget build(final BuildContext context) =>
@@ -24,6 +32,7 @@ class CodeEditorPanel extends StatelessWidget {
             final code = generateCode(
               setup: setupState.setup,
               draft: draft,
+              scope: _selectedScope,
             );
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -56,16 +65,19 @@ class CodeEditorPanel extends StatelessWidget {
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'GENERATED CODE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.54),
+                      Flexible(
+                        child: Text(
+                          'GENERATED CODE',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.w900,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.54),
+                          ),
                         ),
                       ),
                       const Spacer(),
@@ -76,7 +88,10 @@ class CodeEditorPanel extends StatelessWidget {
                           Clipboard.setData(ClipboardData(text: code));
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Code copied to clipboard'),
+                              content: Text(
+                                '${_selectedScope.label} snippet '
+                                'copied to clipboard',
+                              ),
                               backgroundColor:
                                   Theme.of(context).colorScheme.primary,
                               behavior: SnackBarBehavior.floating,
@@ -96,7 +111,119 @@ class CodeEditorPanel extends StatelessWidget {
                               .add(const ResetDraft());
                         },
                       ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                        message: 'Collapse Code Panel',
+                        child: InkWell(
+                          onTap: () => context
+                              .read<StudioBloc>()
+                              .add(const ToggleCodeEditor(open: false)),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.close,
+                              size: 16,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
+                  ),
+                ),
+
+                // ── Snippet Scope Tabs ──
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.06),
+                      ),
+                    ),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: CodeSnippetScope.values.map((final scope) {
+                        final isSelected = _selectedScope == scope;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 6),
+                          child: InkWell(
+                            onTap: () => setState(() => _selectedScope = scope),
+                            borderRadius: BorderRadius.circular(6),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.15)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.1),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    scope.icon,
+                                    size: 13,
+                                    color: isSelected
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    scope.label,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: isSelected
+                                          ? FontWeight.bold
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                          : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
 
@@ -150,49 +277,6 @@ class CodeEditorPanel extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // ── Preview Button ──
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.03),
-                    border: Border(
-                      top: BorderSide(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.08),
-                      ),
-                    ),
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton.icon(
-                      onPressed: () => context
-                          .read<NotificationBloc>()
-                          .add(const FirePreview()),
-                      icon: const Icon(Icons.play_arrow, size: 20),
-                      label: const Text(
-                        'FIRE PREVIEW',
-                        style: TextStyle(
-                          letterSpacing: 2,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
               ],
             );
           },
@@ -202,24 +286,18 @@ class CodeEditorPanel extends StatelessWidget {
   String _hintForState(
     final SetupState setupState,
     final NotificationDraft draft,
-  ) {
-    final queues = setupState.setup.queues;
-    final channels = setupState.setup.channels;
-
-    if (queues.length > 1) {
-      return '💡 ${queues.length} queues configured. '
-          'Each generates its own NotificationQueue block.';
-    }
-    if (channels.length > 4) {
-      return '💡 ${channels.length} channels including custom ones. '
-          'Nice!';
-    }
-    if (draft.dismissSeconds == null) {
-      return '💡 Permanent notification — user must manually dismiss.';
-    }
-    return '💡 Adjust parameters in the configurator to see '
-        'code update live.';
-  }
+  ) =>
+      switch (_selectedScope) {
+        CodeSnippetScope.fullSetup =>
+          '📁 Place in lib/main.dart — wraps your root MaterialApp via builder.',
+        CodeSnippetScope.dispatchOnly =>
+          '⚡ Contextless dispatch — call from any Bloc, Service, or ViewModel '
+              'without BuildContext.',
+        CodeSnippetScope.channelsOnly =>
+          '📁 Place in lib/config/notification_channels.dart — defines channel routing table.',
+        CodeSnippetScope.queuesOnly =>
+          '📁 Place in lib/config/notification_queues.dart — defines screen positions & gesture rules.',
+      };
 }
 
 /// Renders [code] with a line-number gutter and Dart syntax highlighting.

@@ -12,6 +12,13 @@ class NotificationTheme {
     required this.borderRadius,
     required this.shape,
     required this.border,
+    this.padding,
+    this.borderWidth,
+    this.titleTextStyle,
+    this.messageTextStyle,
+    this.actionTextStyle,
+    this.iconTheme,
+    this.theme,
   });
 
   factory NotificationTheme.resolveWith(
@@ -21,78 +28,107 @@ class NotificationTheme {
   ) {
     final themeData = Theme.of(context);
     final colorScheme = themeData.colorScheme;
+    final ambientExtension = themeData.extension<NotificationThemeData>();
+
+    // 1. Structural Archetype (Style belongs exclusively to the Queue):
+    final effectiveStyle = style;
+
+    // 2. Cascade theme tokens:
+    final cTheme = notification.channel.theme;
+
+    final tokenColor = notification.color ??
+        notification.accentColor ??
+        cTheme?.color ??
+        ambientExtension?.color;
+    final tokenShadowColor = themeData.shadowColor;
+    final titleTextStyle =
+        cTheme?.titleTextStyle ?? ambientExtension?.titleTextStyle;
+    final messageTextStyle =
+        cTheme?.messageTextStyle ?? ambientExtension?.messageTextStyle;
+    final actionTextStyle =
+        cTheme?.actionTextStyle ?? ambientExtension?.actionTextStyle;
+    final iconTheme = cTheme?.iconTheme ?? ambientExtension?.iconTheme;
+
+    // Fallbacks to deprecated scalar color properties:
+    // ignore: deprecated_member_use_from_same_package
+    final fallbackColor =
+        notification.color ?? notification.channel.defaultColor;
+
+    final candidateColor = tokenColor ?? fallbackColor;
 
     final Color color;
     final Color backgroundColor;
     final Color foregroundColor;
-    final Color shadowColor = themeData.shadowColor;
     final ShapeBorder? shapeBorder;
     final BoxBorder? border;
-    final borderRadius = style.borderRadius;
-    final elevation = style.elevation;
-    final opacity = style.opacity;
-    switch (style) {
+    final opacity = effectiveStyle.opacity;
+    final tokenBorderRadius = effectiveStyle.borderRadius;
+    final tokenBorderWidth = effectiveStyle.borderWidth;
+    final tokenElevation = effectiveStyle.elevation;
+
+    switch (effectiveStyle) {
       case FilledQueueStyle():
-        backgroundColor = notification.color ??
-            notification.channel.defaultColor ??
-            colorScheme.primary;
-        color = foregroundColor = (backgroundColor.computeLuminance() > 0.5
+        color = candidateColor ?? colorScheme.primary;
+        backgroundColor = color;
+        foregroundColor = (backgroundColor.computeLuminance() > 0.5
             ? Colors.black
             : Colors.white);
         shapeBorder = RoundedSuperellipseBorder(
-          borderRadius: borderRadius,
+          borderRadius: tokenBorderRadius,
         );
         border = null;
+
       case OutlinedQueueStyle():
-        color = notification.color ??
-            notification.channel.defaultColor ??
-            colorScheme.primary;
-        foregroundColor = notification.foregroundColor ??
-            notification.channel.defaultForegroundColor ??
-            colorScheme.onSurface;
-        backgroundColor = notification.backgroundColor ??
-            notification.channel.defaultBackgroundColor ??
-            colorScheme.surface;
+        color = candidateColor ?? colorScheme.primary;
+        foregroundColor = colorScheme.onSurface;
+        backgroundColor = colorScheme.surface;
         shapeBorder = RoundedRectangleBorder(
-          borderRadius: borderRadius,
+          borderRadius: tokenBorderRadius,
           side: BorderSide(
             color: color,
-            width: 1.0,
+            width: tokenBorderWidth ?? 1.0,
           ),
         );
         border = null;
 
       case FlatQueueStyle():
-        color = notification.color ??
-            notification.channel.defaultColor ??
-            colorScheme.onSurface;
-        foregroundColor = notification.foregroundColor ??
-            notification.channel.defaultForegroundColor ??
-            colorScheme.onSurface;
-        backgroundColor = notification.backgroundColor ??
-            notification.channel.defaultBackgroundColor ??
-            colorScheme.surface;
+        color = candidateColor ?? colorScheme.primary;
+        foregroundColor = colorScheme.onSurface;
+        backgroundColor = colorScheme.surface;
         shapeBorder = RoundedRectangleBorder(
-          borderRadius: borderRadius,
+          borderRadius: tokenBorderRadius,
         );
         border = BorderDirectional(
           start: BorderSide(
             color: color,
-            width: 4,
+            width: tokenBorderWidth ?? 4.0,
           ),
         );
     }
+
+    final resolvedIconTheme = (iconTheme ?? const IconThemeData()).copyWith(
+      color: iconTheme?.color ??
+          (effectiveStyle is FilledQueueStyle ? foregroundColor : color),
+    );
+
     return NotificationTheme._(
       themeData: themeData,
       color: color,
       backgroundColor: backgroundColor,
       foregroundColor: foregroundColor,
-      shadowColor: shadowColor,
-      borderRadius: borderRadius,
-      elevation: elevation,
+      shadowColor: tokenShadowColor,
+      borderRadius: tokenBorderRadius,
+      elevation: tokenElevation,
       opacity: opacity,
       border: border,
       shape: shapeBorder,
+      padding: effectiveStyle.padding,
+      borderWidth: tokenBorderWidth,
+      titleTextStyle: titleTextStyle,
+      messageTextStyle: messageTextStyle,
+      actionTextStyle: actionTextStyle,
+      iconTheme: resolvedIconTheme,
+      theme: cTheme ?? ambientExtension,
     );
   }
 
@@ -115,8 +151,7 @@ class NotificationTheme {
   /// with [color].
   final Color backgroundColor;
 
-  /// Notification shadow color.
-  //todo: Configurable??!!
+  /// Notification shadow color, derived from [ThemeData.shadowColor] or tokens.
   final Color shadowColor;
 
   final ShapeBorder? shape;
@@ -124,4 +159,26 @@ class NotificationTheme {
   final double elevation;
   final double opacity;
   final BorderRadiusGeometry borderRadius;
+
+  /// Card internal content padding defined by the [QueueStyle].
+  final EdgeInsetsGeometry? padding;
+
+  /// Card border stroke width defined by the [QueueStyle].
+  final double? borderWidth;
+
+  /// Typography styling override for the notification title.
+  final TextStyle? titleTextStyle;
+
+  /// Typography styling override for the notification message.
+  final TextStyle? messageTextStyle;
+
+  /// Typography styling override for the action button label.
+  final TextStyle? actionTextStyle;
+
+  /// Icon theme override for the leading icon.
+  final IconThemeData? iconTheme;
+
+  /// Effective [NotificationThemeData] token bundle resolved for this
+  /// notification.
+  final NotificationThemeData? theme;
 }

@@ -63,6 +63,7 @@ class AppNotification {
     this.color,
     this.foregroundColor,
     this.backgroundColor,
+    this.accentColor,
     this.dismissDuration,
     this.permanent = false,
     this.initialIsPinned = false,
@@ -92,6 +93,11 @@ class AppNotification {
   ///
   /// When `null`, the position is resolved from the channel's configured
   /// position or the default queue position.
+  @Deprecated(
+    'Do not specify position on data payloads. '
+    'Route via NotificationChannel.position, or supply targetPosition to '
+    'NotificationController.show(). Scheduled for removal in v0.6.0.',
+  )
   final QueuePosition? position;
 
   /// Optional priority rank override for queue triage and backpressure.
@@ -100,19 +106,29 @@ class AppNotification {
   /// [NotificationChannel].
   final NotificationPriority? priority;
 
-  //todo: RationaliZe having tap, drag, longPressDragBehavior overrides 
-  //todo: inside notification, since they are inherently Queue properties.
   /// Per-notification override for tap interaction behavior.
   ///
-  /// When set, this takes precedence over the queue's default [TapBehavior].
+  /// When set, this takes precedence over the queue's default [TapBehavior],
+  /// allowing individual urgent or critical notifications to enforce custom
+  /// interaction policies.
   final TapBehavior? tapBehavior;
 
   /// Per-notification override for drag interaction behavior.
   ///
   /// When set, this takes precedence over the queue's default [DragBehavior].
+  @Deprecated(
+    'Queue-level viewport gesture physics should not be overridden per '
+    'notification. Configure dragBehavior on NotificationQueue, or use '
+    'explicit action buttons. Scheduled for removal in v0.6.0.',
+  )
   final DragBehavior? dragBehavior;
 
   /// Per-notification override for long-press drag interaction behavior.
+  @Deprecated(
+    'Queue-level viewport gesture physics should not be overridden per '
+    'notification. Configure longPressDragBehavior on NotificationQueue. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final LongPressDragBehavior? longPressDragBehavior;
 
   /// Optional grouping key for bundling notifications into stack pills.
@@ -130,19 +146,43 @@ class AppNotification {
   /// Main accent color used for icons, borders, and body highlights.
   ///
   /// If `null`, falls back to the channel's default color or theme primary.
+  @Deprecated(
+    'Use accentColor instead. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? color;
 
   /// Foreground text, action button, and progress indicator color.
   ///
   /// If `null`, falls back to the channel's default foreground color or theme
   /// `onSurface`.
+  @Deprecated(
+    'Configure colors via NotificationChannel.theme. '
+    'Use accentColor for one-off content accents. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? foregroundColor;
 
   /// Card body background color.
   ///
   /// If `null`, falls back to the channel's default background color or theme
   /// `surface`.
+  @Deprecated(
+    'Configure colors via NotificationChannel.theme. '
+    'Use accentColor for one-off content accents. '
+    'Scheduled for removal in v0.6.0.',
+  )
   final Color? backgroundColor;
+
+  /// Optional experimental accent color override.
+  ///
+  /// When provided, this tint color takes precedence over the channel's
+  /// theme accent color solely for content-driven color accents (e.g. status
+  /// tags, brand colors). To maintain design system consistency, full theme
+  /// tokens (typography, borders, elevation) should be configured on
+  /// [NotificationChannel].
+  @experimental
+  final Color? accentColor;
 
   /// Auto-dismiss timer duration for this notification.
   ///
@@ -158,9 +198,17 @@ class AppNotification {
   /// Whether the notification starts in a pinned state upon initial display.
   ///
   /// Pinned notifications are immune to auto-dismiss timers and swipe dismiss.
+  @Deprecated(
+    'Use permanent: true or controller.pin(id) to manage persistent '
+    'notifications. Scheduled for removal in v0.6.0.',
+  )
   final bool initialIsPinned;
 
   /// Optional timestamp recording when this notification was snoozed.
+  @Deprecated(
+    'snoozedAt is internal runtime state managed by QueueCoordinator. '
+    'Do not pass in public constructor. Scheduled for removal in v0.6.0.',
+  )
   final DateTime? snoozedAt;
 
   /// Custom builder for customizing the card indicator or stack appearance.
@@ -175,21 +223,26 @@ class AppNotification {
   NotificationWidget toWidget([
     final ConfigurationManager? configuration,
     final QueueCoordinator? coordinator,
+    final QueuePosition? targetPosition,
   ]) =>
       NotificationWidget(
         message: message,
         id: id,
         channelName: channelName,
         title: title,
-        position: position,
+        position: targetPosition ?? position,
         action: action,
         tapBehavior: tapBehavior,
         dragBehavior: dragBehavior,
         longPressDragBehavior: longPressDragBehavior,
         icon: icon,
+        // ignore: deprecated_member_use_from_same_package
         color: color,
+        // ignore: deprecated_member_use_from_same_package
         foregroundColor: foregroundColor,
+        // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor,
+        accentColor: accentColor,
         dismissDuration: dismissDuration,
         permanent: permanent,
         builder: builder,
@@ -217,6 +270,7 @@ class AppNotification {
     final Color? color,
     final Color? foregroundColor,
     final Color? backgroundColor,
+    final Color? accentColor,
     final Duration? dismissDuration,
     final bool? permanent,
     final bool? initialIsPinned,
@@ -237,9 +291,13 @@ class AppNotification {
             longPressDragBehavior ?? this.longPressDragBehavior,
         groupKey: groupKey ?? this.groupKey,
         icon: icon ?? this.icon,
+        // ignore: deprecated_member_use_from_same_package
         color: color ?? this.color,
+        // ignore: deprecated_member_use_from_same_package
         foregroundColor: foregroundColor ?? this.foregroundColor,
+        // ignore: deprecated_member_use_from_same_package
         backgroundColor: backgroundColor ?? this.backgroundColor,
+        accentColor: accentColor ?? this.accentColor,
         dismissDuration: dismissDuration ?? this.dismissDuration,
         permanent: permanent ?? this.permanent,
         initialIsPinned: initialIsPinned ?? this.initialIsPinned,

@@ -1,3 +1,13 @@
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - web/**
+    - windows/**
+    - linux/**
+  errors:
+    experimental_member_use: ignore
+    deprecated_member_use: ignore
 include: package:flutter_lints/flutter.yaml
 
 linter:

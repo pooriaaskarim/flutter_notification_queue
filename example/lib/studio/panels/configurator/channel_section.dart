@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/setup_bloc.dart';
 import '../../models/channel_setup.dart';
 import '../../studio_theme.dart';
-import '../../widgets/studio_section_header.dart';
 import 'channel_tile.dart';
 
 class ChannelSection extends StatelessWidget {
@@ -24,7 +23,15 @@ class ChannelSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const StudioSectionHeader(title: 'CHANNELS'),
+            Text(
+              '${channels.length} CONFIGURED CHANNEL(S)',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 1.2,
+                color: StudioTheme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
             const Spacer(),
             IconButton(
               icon: Icon(

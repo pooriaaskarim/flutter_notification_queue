@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+.gradle/
+
+# Local developer environment & private configs
+.env
+.env.*
+!.env.example
+*.local
+

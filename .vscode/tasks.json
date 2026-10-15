@@ -2,13 +2,61 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build Windows (Release)",
+      "label": "Phone: Connect over Network (ADB)",
+      "type": "shell",
+      "command": "./scripts/run.sh phone-connect",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Phone: Switch USB to Wireless TCP/IP Mode",
+      "type": "shell",
+      "command": "./scripts/run.sh phone-tcpip",
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Run: Linux Desktop",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-d", "linux"],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run: Web (Chrome)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["run", "-d", "chrome"],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run: Web (Server on port 8080)",
       "type": "shell",
       "command": "flutter",
       "args": [
-        "build",
-        "windows",
-        "--release"
+        "run",
+        "-d",
+        "web-server",
+        "--web-port=8080",
+        "--web-hostname=0.0.0.0"
       ],
       "options": {
         "cwd": "${workspaceFolder}/example"
@@ -16,56 +64,69 @@
       "problemMatcher": []
     },
     {
-      "label": "Build Web (Release)",
+      "label": "Run: Phone over Network",
       "type": "shell",
-      "command": "flutter",
-      "args": [
-        "build",
-        "web",
-        "--release"
-      ],
+      "command": "./scripts/run.sh phone-net",
       "options": {
         "cwd": "${workspaceFolder}/example"
       },
       "problemMatcher": []
     },
     {
-      "label": "Build Android APK (Release)",
+      "label": "Run: Phone via USB / Auto-detected Android",
       "type": "shell",
       "command": "flutter",
-      "args": [
-        "build",
-        "apk",
-        "--release"
-      ],
+      "args": ["run", "-d", "android"],
       "options": {
         "cwd": "${workspaceFolder}/example"
       },
       "problemMatcher": []
     },
     {
-      "label": "Build Android AppBundle (Release)",
+      "label": "Build: Linux (Release)",
       "type": "shell",
       "command": "flutter",
-      "args": [
-        "build",
-        "appbundle",
-        "--release"
-      ],
+      "args": ["build", "linux", "--release"],
       "options": {
         "cwd": "${workspaceFolder}/example"
       },
       "problemMatcher": []
     },
     {
-      "label": "Build Linux (Release)",
+      "label": "Build: Web (Release)",
       "type": "shell",
       "command": "flutter",
-      "args": [
-        "build",
-        "linux",
-        "--release"
-      ],
+      "args": ["build", "web", "--release"],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build: Android APK (Debug)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["build", "apk", "--debug"],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build: Android APK (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["build", "apk", "--release"],
+      "options": {
+        "cwd": "${workspaceFolder}/example"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build: Android AppBundle (Release)",
+      "type": "shell",
+      "command": "flutter",
+      "args": ["build", "appbundle", "--release"],
       "options": {
         "cwd": "${workspaceFolder}/example"
       },

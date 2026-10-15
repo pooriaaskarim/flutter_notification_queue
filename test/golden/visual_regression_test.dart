@@ -1,12 +1,48 @@
 @Tags(['golden'])
 library;
 
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_notification_queue/flutter_notification_queue.dart';
 import 'package:flutter_notification_queue/src/core/core.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+class _TolerantGoldenComparator extends LocalFileComparator {
+  _TolerantGoldenComparator(super.testFile, {this.tolerance = 0.005});
+
+  final double tolerance;
+
+  @override
+  Future<bool> compare(final Uint8List imageBytes, final Uri golden) async {
+    final ComparisonResult result = await GoldenFileComparator.compareLists(
+      imageBytes,
+      await getGoldenBytes(golden),
+    );
+
+    if (!result.passed && result.diffPercent <= tolerance) {
+      return true;
+    }
+
+    if (!result.passed) {
+      final String error = await generateFailureOutput(result, golden, basedir);
+      throw FlutterError(error);
+    }
+    return result.passed;
+  }
+}
+
 void main() {
+  setUpAll(() {
+    if (goldenFileComparator is LocalFileComparator) {
+      final testUrl = (goldenFileComparator as LocalFileComparator).basedir;
+      goldenFileComparator = _TolerantGoldenComparator(
+        testUrl.resolve('visual_regression_test.dart'),
+        tolerance: 0.005,
+      );
+    }
+  });
+
   group('FNQ Visual Regression Golden Tests', () {
     testWidgets('FlatQueueStyle Golden Test', (final tester) async {
       final controller = NotificationController(

@@ -13,7 +13,7 @@
 |---|---|---|
 | `Pin<T>` | `PinGesturePlugin` | `NotificationPinned`, `NotificationUnpinned` |
 | `Snooze<T>` | `SnoozeGesturePlugin` | `NotificationSnoozed` |
-| `Archive<T>` | `ArchiveGesturePlugin` | *(none yet — see below)* |
+| `Archive<T>` | *(removed)* | *(removed — see F-P3 below)* |
 | `CustomAction<T>` | `CustomActionGesturePlugin` | `NotificationCustomActionTriggered` |
 
 All four are defined in
@@ -102,34 +102,12 @@ widget tests.
 
 ---
 
-## F-P3: `Archive` — Drag-to-Edge Semantic Action
+## F-P3: `Archive` — [REMOVED]
 
-### What currently exists
-- `ArchiveGesturePlugin` exists as a class.
-- No dedicated event — `NotificationCustomActionTriggered` is **not** what
-  archive should emit (archive is a distinct semantic concept).
-
-### What is missing / broken
-1. **No dedicated event**: There is no `NotificationArchived` event. Either
-   add one or make a deliberate decision to reuse
-   `NotificationDismissed(reason: DismissReason.archived)` — but this needs
-   to be a conscious, documented choice.
-2. **`onDragEnd` implementation**: Needs to call `dismiss()` and emit the
-   chosen archive event.
-3. **No developer hook**: Unlike `CustomAction`, archive has no `actionName`
-   to distinguish it from other drag intents. The developer needs a way to
-   observe archive events separately from dismissals.
-4. **Overlay feedback**: No archive-specific drop-zone UI (e.g., an archive
-   box icon at the screen edge).
-5. **Tests**: Zero coverage.
-
-### Completion criteria
-- [ ] Define `NotificationArchived` event (or document the
-      `DismissReason.archived` decision).
-- [ ] `ArchiveGesturePlugin.onDragEnd` dismisses the card and emits the event.
-- [ ] Overlay shows an archive affordance at the target edge.
-- [ ] Widget test: drag to archive zone → verify event emitted, card dismissed.
-- [ ] Example studio exposes `Archive` in the dropdown with a scenario.
+### Architectural Decision (v0.5.0 / v0.6.0)
+- **Decision**: `Archive` has been completely removed from FNQ.
+- **Rationale**: FNQ is an in-app transient overlay notification queue (heads-up toasts and banners), not a persistent inbox or notification center. Archiving without a backing database or persistent tray is an incomplete abstraction and confuses developers and end users. Applications needing persistent archiving should handle it in their host app logic (e.g., listening to `NotificationDismissed` or providing an explicit action button).
+- **Status**: Class `Archive<T>`, `ArchiveGesturePlugin`, `ArchiveTargets`, and `ArchiveFeedbackOverlay` removed.
 
 ---
 
@@ -171,7 +149,7 @@ Before any of the above can ship:
    framework covers dismiss/relocate/reorder. Extend it to cover intent
    behaviors (drive a drag to the edge, assert the correct event fires).
 3. **Example studio event log**: Verify that `NotificationPinned`,
-   `NotificationSnoozed`, `NotificationArchived`, and
+   `NotificationSnoozed`, and
    `NotificationCustomActionTriggered` are displayed in the event log panel
    before adding scenarios — otherwise the demo is invisible.
 
@@ -182,7 +160,7 @@ Before any of the above can ship:
 These types **are currently exported** in the public API even though they are
 immature. Before the next public release, consider one of:
 
-- **Option A**: `@experimental` annotate the four classes in their source
+- **Option A**: `@experimental` annotate the remaining behavior classes in their source
   files. This signals caution without breaking the API.
 - **Option B**: Hide them from the barrel export until they ship, then
   re-expose in the release that completes them.
@@ -190,5 +168,5 @@ immature. Before the next public release, consider one of:
   Acceptable short-term; high risk of user confusion if discovered.
 
 **Recommendation**: Apply `@experimental` from `package:meta` to `Pin`,
-`Snooze`, `Archive`, and `CustomAction` immediately as a minimal,
-non-breaking signal.
+`Snooze`, and `CustomAction` immediately as a minimal,
+non-breaking signal (`Archive` has been completely deleted).

@@ -2,6 +2,7 @@ part of 'behaviors.dart';
 
 /// Triggers a snooze action, temporarily dismissing the notification and
 /// re-displaying it after the specified duration.
+@experimental
 final class Snooze<T> extends QueueNotificationBehavior<T> {
   const Snooze({
     required this.duration,
@@ -15,6 +16,7 @@ final class Snooze<T> extends QueueNotificationBehavior<T> {
 
 /// Pins the notification, preventing gesture-based dismissals and styling it
 /// dynamically to indicate its persistent/pinned status.
+@experimental
 final class Pin<T> extends QueueNotificationBehavior<T> {
   const Pin({
     super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
@@ -22,17 +24,9 @@ final class Pin<T> extends QueueNotificationBehavior<T> {
   });
 }
 
-/// Archives the notification, removing it from the queue and triggering
-/// a semantic archive callback.
-final class Archive<T> extends QueueNotificationBehavior<T> {
-  const Archive({
-    super.thresholdInPixels = kDefaultQueueDragBehaviorThreshold,
-    super.springPhysics = const SpringPhysicsConfiguration.premium(),
-  });
-}
-
 /// Triggers a developer-defined custom action identified by a unique action
 /// label.
+@experimental
 final class CustomAction<T> extends QueueNotificationBehavior<T> {
   const CustomAction({
     required this.actionName,
